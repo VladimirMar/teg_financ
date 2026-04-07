@@ -592,8 +592,8 @@ function App() {
               </p>
             </div>
 
-            <div className="dre-layout">
-              <div className="dre-toolbar">
+            <div className="management-layout">
+              <div className="management-toolbar">
                 <button
                   type="button"
                   className="primary-button dre-insert-button"
@@ -603,26 +603,26 @@ function App() {
                   Inserir registro
                 </button>
 
-                <form className="dre-filter-form" onSubmit={handleFilterDreSubmit}>
+                <form className="management-filter-form" onSubmit={handleFilterDreSubmit}>
                   <input
-                    className="dre-filter-input"
+                    className="management-filter-input"
                     type="text"
                     placeholder="Filtrar por codigo ou descricao"
                     value={dreSearch}
                     onChange={(event) => setDreSearch(event.target.value)}
                   />
-                  <button type="submit" className="secondary-button dre-filter-button">
+                  <button type="submit" className="secondary-button management-filter-button">
                     Filtrar
                   </button>
-                  <button type="button" className="secondary-button dre-filter-button" onClick={handleClearDreFilter}>
+                  <button type="button" className="secondary-button management-filter-button" onClick={handleClearDreFilter}>
                     Limpar
                   </button>
                 </form>
               </div>
 
               {isDreFormVisible ? (
-                <form className="dre-card dre-form" onSubmit={handleCreateDre} noValidate>
-                  <h3>{editingDreCodigo ? 'Alterar registro' : 'Novo registro'}</h3>
+                <form className="management-card management-form dre-form" onSubmit={handleCreateDre} noValidate>
+                  <h2>{editingDreCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
 
                   <label className="field-group" htmlFor="dre-codigo">
                     <span>Codigo</span>
@@ -663,15 +663,15 @@ function App() {
                 </form>
               ) : null}
 
-              <div className="dre-card dre-list-card">
-                <div className="dre-list-header">
-                  <h3>Registros cadastrados</h3>
+              <div className="management-card management-grid-card dre-list-card">
+                <div className="management-grid-header">
+                  <h2>Registros cadastrados</h2>
                   <span>
                     {isLoadingDre ? 'Atualizando...' : `${dreTotalItems} item(ns) encontrados`}
                   </span>
                 </div>
 
-                <div className="dre-table-wrapper">
+                <div className="management-grid-wrapper">
                   <table className="dre-table">
                     <thead>
                       <tr>
@@ -709,7 +709,7 @@ function App() {
                   </table>
 
                   {!isLoadingDre && dreItems.length === 0 ? (
-                    <p className="empty-state">Nenhum registro da DRE encontrado.</p>
+                    <p className="management-empty-state">Nenhum registro da DRE encontrado.</p>
                   ) : null}
                 </div>
 
@@ -717,21 +717,21 @@ function App() {
                   {dreStatusMessage}
                 </p>
 
-                <div className="dre-pagination">
+                <div className="management-pagination">
                   <button
                     type="button"
-                    className="secondary-button dre-pagination-button"
+                    className="secondary-button management-pagination-button"
                     onClick={() => setDrePage((currentPage) => currentPage - 1)}
                     disabled={!canGoToPreviousDrePage || isLoadingDre}
                   >
                     Anterior
                   </button>
-                  <span className="dre-pagination-info">
+                  <span className="management-pagination-info">
                     Pagina {drePage} de {dreTotalPages}
                   </span>
                   <button
                     type="button"
-                    className="secondary-button dre-pagination-button"
+                    className="secondary-button management-pagination-button"
                     onClick={() => setDrePage((currentPage) => currentPage + 1)}
                     disabled={!canGoToNextDrePage || isLoadingDre}
                   >

@@ -17,7 +17,7 @@
             <div class="dsc-access-toolbar">
               <form class="dsc-access-filter-form" id="access-filter-form">
                 <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-access-button">Inserir registro</button>
-                <input class="dsc-form-control dsc-access-filter-input" id="access-search" type="text" placeholder="Filtrar por email" />
+                <input class="dsc-form-control dsc-access-filter-input" id="access-search" type="text" placeholder="Filtrar por codigo, nome ou email" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-filter-button">Limpar</button>
               </form>
@@ -25,6 +25,17 @@
 
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="register-form">
               <h2 id="form-title">Novo registro</h2>
+
+              <label class="dsc-field-group" for="codigo">
+                <span>Codigo</span>
+                <input class="dsc-form-control" id="codigo" type="text" placeholder="Gerado automaticamente" readonly disabled />
+              </label>
+
+              <label class="dsc-field-group" for="nome">
+                <span>Nome</span>
+                <input class="dsc-form-control" id="nome" type="text" placeholder="NOME DO USUARIO" maxlength="50" />
+                <div class="dsc-form-error" id="nome-error"></div>
+              </label>
 
               <label class="dsc-field-group" for="email">
                 <span>Email</span>
@@ -58,6 +69,8 @@
                 <table class="dsc-access-grid">
                   <thead>
                     <tr>
+                      <th>Codigo</th>
+                      <th>Nome</th>
                       <th>
                         <button type="button" class="dsc-grid-sort-button" id="sort-email-button">
                           Email <span id="sort-email-indicator">↑</span>
@@ -87,8 +100,11 @@
 
     <script>
       const form = document.getElementById('register-form');
+      const codigoInput = document.getElementById('codigo');
+      const nomeInput = document.getElementById('nome');
       const emailInput = document.getElementById('email');
       const passwordInput = document.getElementById('password');
+      const nomeError = document.getElementById('nome-error');
       const emailError = document.getElementById('email-error');
       const passwordError = document.getElementById('password-error');
       const feedback = document.getElementById('form-feedback');
@@ -112,16 +128,20 @@
       const statusBanner = document.getElementById('status-banner');
 
       const validateEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      const validateName = (value) => /^[A-ZÀ-Ý ]{1,50}$/.test(value);
+      const normalizeName = (value) => value.toUpperCase().replace(/[^A-ZÀ-Ý\s]/g, '').replace(/\s+/g, ' ').trimStart().slice(0, 50);
       const pageSize = 5;
 
       let currentPage = 1;
       let totalPages = 1;
       let currentSearch = '';
+      let currentSortBy = 'codigo';
       let currentSortDirection = 'asc';
-      let editingEmail = null;
+      let editingCodigo = null;
       let bannerTimeoutId = null;
 
       const resetMessages = () => {
+        nomeError.textContent = '';
         emailError.textContent = '';
         passwordError.textContent = '';
         feedback.textContent = '';
@@ -150,7 +170,8 @@
       const showForm = (isEditing = false) => {
         form.classList.remove('dsc-hidden');
         formTitle.textContent = isEditing ? 'Alteracao de acesso' : 'Cadastro de acesso';
-        saveAccessButton.textContent = isEditing ? 'Salvar alteracao' : 'Gravar acesso';
+        saveAccessButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar acesso';
+        codigoInput.value = isEditing && editingCodigo ? editingCodigo : '';
         passwordHint.textContent = isEditing
           ? 'Deixe a senha em branco para manter a atual.'
           : 'Informe email e senha para gravar um novo acesso.';
@@ -159,7 +180,8 @@
       const hideForm = () => {
         form.classList.add('dsc-hidden');
         form.reset();
-        editingEmail = null;
+        codigoInput.value = '';
+        editingCodigo = null;
         resetMessages();
       };
 
@@ -175,6 +197,7 @@
         const params = new URLSearchParams({
           page: String(currentPage),
           pageSize: String(pageSize),
+          sortBy: currentSortBy,
           sortDirection: currentSortDirection,
         });
 
@@ -198,11 +221,13 @@
         items.forEach((item) => {
           const row = document.createElement('tr');
           row.innerHTML = `
+            <td>${item.codigo}</td>
+            <td>${item.nome}</td>
             <td>${item.email}</td>
             <td>
               <div class="dsc-grid-actions">
-                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-email="${item.email}">Alterar</button>
-                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-email="${item.email}">Excluir</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}" data-nome="${item.nome}" data-email="${item.email}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}" data-nome="${item.nome}" data-email="${item.email}">Excluir</button>
               </div>
             </td>
           `;
@@ -215,7 +240,7 @@
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
-        sortEmailIndicator.textContent = currentSortDirection === 'asc' ? '↑' : '↓';
+        sortEmailIndicator.textContent = currentSortBy === 'email' && currentSortDirection === 'desc' ? '↓' : '↑';
       };
 
       const loadAccesses = async () => {
@@ -246,29 +271,33 @@
       };
 
       const startInsert = () => {
-        editingEmail = null;
+        editingCodigo = null;
         form.reset();
+        codigoInput.value = '';
+        nomeInput.value = '';
         resetMessages();
         showForm(false);
       };
 
-      const startEdit = (email) => {
-        editingEmail = email;
-        emailInput.value = email;
+      const startEdit = (item) => {
+        editingCodigo = item.codigo;
+        codigoInput.value = item.codigo;
+        nomeInput.value = item.nome;
+        emailInput.value = item.email;
         passwordInput.value = '';
         resetMessages();
         showForm(true);
       };
 
-      const handleDelete = async (email) => {
-        if (!window.confirm(`Excluir o acesso ${email}?`)) {
+      const handleDelete = async (item) => {
+        if (!window.confirm(`Excluir o acesso ${item.codigo} - ${item.nome}?`)) {
           return;
         }
 
-        setGridMessage(`Excluindo acesso ${email}...`);
+        setGridMessage(`Excluindo acesso ${item.codigo}...`);
 
         try {
-          const response = await fetch(`/api/access/${encodeURIComponent(email)}`, {
+          const response = await fetch(`/api/access/${encodeURIComponent(item.codigo)}`, {
             method: 'DELETE',
             headers: { Accept: 'application/json' },
           });
@@ -279,8 +308,8 @@
           }
 
           setGridMessage('Acesso excluido com sucesso.', 'success');
-          showBanner(`Acesso ${email} excluido com sucesso.`, 'success');
-          if (editingEmail === email) {
+          showBanner(`Acesso ${item.codigo} excluido com sucesso.`, 'success');
+          if (editingCodigo === item.codigo) {
             hideForm();
           }
           await loadAccesses();
@@ -298,30 +327,47 @@
           return;
         }
 
-        const { action, email } = target.dataset;
+        const { action, codigo, nome, email } = target.dataset;
 
-        if (!email) {
+        if (!codigo || !email || !nome) {
           return;
         }
 
+        const item = { codigo, nome, email };
+
         if (action === 'edit') {
-          startEdit(email);
+          startEdit(item);
           return;
         }
 
         if (action === 'delete') {
-          void handleDelete(email);
+          void handleDelete(item);
         }
+      });
+
+      nomeInput.addEventListener('input', () => {
+        nomeInput.value = normalizeName(nomeInput.value);
       });
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
+        const nome = normalizeName(nomeInput.value);
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
         let hasError = false;
 
         resetMessages();
+
+        nomeInput.value = nome;
+
+        if (!nome) {
+          nomeError.textContent = 'Informe o nome.';
+          hasError = true;
+        } else if (!validateName(nome)) {
+          nomeError.textContent = 'Use apenas letras maiusculas e no maximo 50 caracteres.';
+          hasError = true;
+        }
 
         if (!email) {
           emailError.textContent = 'Informe o email.';
@@ -331,7 +377,7 @@
           hasError = true;
         }
 
-        if (!password && !editingEmail) {
+        if (!password && !editingCodigo) {
           passwordError.textContent = 'Informe a senha.';
           hasError = true;
         }
@@ -343,13 +389,13 @@
         }
 
         try {
-          const response = await fetch(editingEmail ? `/api/access/${encodeURIComponent(editingEmail)}` : '/api/access', {
-            method: editingEmail ? 'PUT' : 'POST',
+          const response = await fetch(editingCodigo ? `/api/access/${encodeURIComponent(editingCodigo)}` : '/api/access', {
+            method: editingCodigo ? 'PUT' : 'POST',
             headers: {
               'Content-Type': 'application/json',
               Accept: 'application/json',
             },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ nome, email, password }),
           });
 
           const payload = await response.json();
@@ -358,15 +404,15 @@
             throw new Error(payload.message || 'Falha ao gravar acesso.');
           }
 
-          const savedEmail = editingEmail ? payload.item.email : payload.user.email;
-          feedback.textContent = editingEmail
-            ? `Acesso alterado para ${savedEmail}.`
-            : `Acesso gravado para ${savedEmail}.`;
+          const savedItem = payload.item || payload.user;
+          feedback.textContent = editingCodigo
+            ? `Acesso ${savedItem.codigo} alterado com sucesso.`
+            : `Acesso ${savedItem.codigo} gravado com sucesso.`;
           feedback.classList.add('dsc-feedback-success');
           showBanner(
-            editingEmail
-              ? `Acesso ${savedEmail} alterado com sucesso.`
-              : `Acesso ${savedEmail} gravado com sucesso.`,
+            editingCodigo
+              ? `Acesso ${savedItem.codigo} alterado com sucesso.`
+              : `Acesso ${savedItem.codigo} gravado com sucesso.`,
             'success',
           );
           hideForm();
@@ -415,6 +461,7 @@
       });
 
       sortEmailButton.addEventListener('click', () => {
+        currentSortBy = 'email';
         currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
         currentPage = 1;
         void loadAccesses();

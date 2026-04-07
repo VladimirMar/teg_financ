@@ -53,6 +53,25 @@ const normalizeRequestValue = (value) => {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+const normalizeAccessName = (value) => {
+  return normalizeRequestValue(value)
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+}
+
+const isAccessNameValid = (value) => {
+  return /^[A-ZÀ-Ý ]{1,50}$/.test(value)
+}
+
+const buildGeneratedAccessName = (email, sequenceNumber) => {
+  const emailBaseName = normalizeAccessName(email.split('@')[0] ?? '')
+    .replace(/[^A-ZÀ-Ý ]/g, '')
+  const fallbackBase = emailBaseName || 'USUARIO'
+  const suffix = sequenceNumber > 1 ? ` ${sequenceNumber}` : ''
+
+  return `${fallbackBase}${suffix}`.slice(0, 50)
+}
+
 const createToken = (email) => {
   return Buffer.from(`${email}:${Date.now()}`).toString('base64url')
 }
@@ -95,7 +114,7 @@ const getDreCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
-const getAccessEmailFromUrl = (url) => {
+const getAccessCodigoFromUrl = (url) => {
   const match = url.match(/^\/api\/access\/([^/]+)$/)
   return match ? decodeURIComponent(match[1]) : null
 }
@@ -109,33 +128,142 @@ const createAccessHashPayload = (password) => {
   }
 }
 
-const createAccess = async (email, password) => {
+const validateAccessPayload = async ({ nome, email, password, originalCodigo = null, requirePassword = true }) => {
+  const normalizedNome = normalizeAccessName(nome)
+  const normalizedEmail = normalizeRequestValue(email)
+  const normalizedPassword = normalizeRequestValue(password)
+
+  if (!normalizedNome) {
+    return { status: 400, payload: { message: 'Nome e obrigatorio.' } }
+  }
+
+  if (!isAccessNameValid(normalizedNome)) {
+    return { status: 400, payload: { message: 'Nome deve conter apenas letras maiusculas e no maximo 50 caracteres.' } }
+  }
+
+  if (!normalizedEmail) {
+    return { status: 400, payload: { message: 'Email e obrigatorio.' } }
+  }
+
+  if (requirePassword && !normalizedPassword) {
+    return { status: 400, payload: { message: 'Senha e obrigatoria.' } }
+  }
+
+  const duplicateNameResult = await pool.query(
+    `SELECT 1
+     FROM login
+     WHERE UPPER(BTRIM(nome)) = UPPER($1)
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedNome, originalCodigo],
+  )
+
+  if (duplicateNameResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Nome ja cadastrado.' } }
+  }
+
+  const duplicateEmailResult = await pool.query(
+    `SELECT 1
+     FROM login
+     WHERE LOWER(TRIM(email)) = LOWER($1)
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedEmail, originalCodigo],
+  )
+
+  if (duplicateEmailResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Email ja cadastrado.' } }
+  }
+
+  return {
+    status: 200,
+    payload: {
+      nome: normalizedNome,
+      email: normalizedEmail,
+      password: normalizedPassword,
+    },
+  }
+}
+
+const createAccess = async (nome, email, password) => {
+  const validationResult = await validateAccessPayload({
+    nome,
+    email,
+    password,
+    requirePassword: true,
+  })
+
+  if (validationResult.status !== 200) {
+    return validationResult
+  }
+
+  const { nome: normalizedNome, email: normalizedEmail, password: normalizedPassword } = validationResult.payload
   const existingUser = await pool.query(
     'SELECT 1 FROM login WHERE LOWER(TRIM(email)) = LOWER($1) LIMIT 1',
-    [email],
+    [normalizedEmail],
   )
 
   if (existingUser.rowCount > 0) {
     return { status: 409, payload: { message: 'Email ja cadastrado.' } }
   }
 
-  const passwordPayload = createAccessHashPayload(password)
-  await pool.query(
-    'INSERT INTO login (email, password, descricao) VALUES ($1, $2, $3)',
-    [email, passwordPayload.password, passwordPayload.descricao],
+  const passwordPayload = createAccessHashPayload(normalizedPassword)
+  const insertResult = await pool.query(
+    `INSERT INTO login (nome, email, password, descricao)
+     VALUES ($1, $2, $3, $4)
+     RETURNING codigo::text AS codigo, BTRIM(nome) AS nome, TRIM(email) AS email`,
+    [normalizedNome, normalizedEmail, passwordPayload.password, passwordPayload.descricao],
   )
 
   return {
     status: 201,
     payload: {
       message: 'Acesso cadastrado com sucesso.',
-      user: { email },
+      item: insertResult.rows[0],
+      user: insertResult.rows[0],
     },
   }
 }
 
 const ensureDatabaseSchema = async () => {
+  await pool.query('CREATE SEQUENCE IF NOT EXISTS login_codigo_seq START WITH 1 INCREMENT BY 1')
+  await pool.query('ALTER TABLE login ADD COLUMN IF NOT EXISTS codigo integer')
+  await pool.query('ALTER TABLE login ALTER COLUMN codigo SET DEFAULT nextval(\'login_codigo_seq\')')
+  await pool.query('ALTER SEQUENCE login_codigo_seq OWNED BY login.codigo')
+  await pool.query('UPDATE login SET codigo = nextval(\'login_codigo_seq\') WHERE codigo IS NULL')
+  await pool.query('SELECT setval(\'login_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM login), 0), 1), true)')
+  await pool.query('ALTER TABLE login ADD COLUMN IF NOT EXISTS nome varchar(50)')
   await pool.query('ALTER TABLE login ADD COLUMN IF NOT EXISTS descricao text')
+  await pool.query(`
+    WITH pending_names AS (
+      SELECT
+        ctid,
+        ROW_NUMBER() OVER (ORDER BY codigo, LOWER(TRIM(email))) AS sequence_number,
+        TRIM(email) AS email
+      FROM login
+      WHERE nome IS NULL OR BTRIM(nome) = ''
+    )
+    UPDATE login AS target
+    SET nome = generated.nome
+    FROM (
+      SELECT
+        ctid,
+        LEFT(
+          CONCAT(
+            COALESCE(NULLIF(REGEXP_REPLACE(UPPER(SPLIT_PART(email, '@', 1)), '[^A-ZÀ-Ý ]', '', 'g'), ''), 'USUARIO'),
+            CASE WHEN sequence_number > 1 THEN CONCAT(' ', sequence_number::text) ELSE '' END
+          ),
+          50
+        ) AS nome
+      FROM pending_names
+    ) AS generated
+    WHERE target.ctid = generated.ctid
+  `)
+  await pool.query('UPDATE login SET nome = LEFT(UPPER(BTRIM(nome)), 50) WHERE nome IS NOT NULL')
+  await pool.query('ALTER TABLE login ALTER COLUMN codigo SET NOT NULL')
+  await pool.query('ALTER TABLE login ALTER COLUMN nome SET NOT NULL')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_codigo_unique_idx ON login (codigo)')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_nome_unique_idx ON login (UPPER(BTRIM(nome)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_email_unique_idx ON login (LOWER(TRIM(email)))')
 }
 
@@ -221,16 +349,26 @@ const server = createServer(async (request, response) => {
       const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
       const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
       const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
         ? 'DESC'
         : 'ASC'
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
+      const orderByClause = sortBy === 'nome'
+        ? `UPPER(BTRIM(nome)) ${sortDirection}, codigo ASC`
+        : sortBy === 'email'
+          ? `LOWER(TRIM(email)) ${sortDirection}, codigo ASC`
+          : `codigo ${sortDirection}`
 
       if (search) {
         values.push(`%${search}%`)
-        filters.push(`LOWER(TRIM(email)) ILIKE LOWER($${values.length})`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR UPPER(BTRIM(nome)) ILIKE UPPER($${values.length})
+          OR LOWER(TRIM(email)) ILIKE LOWER($${values.length})
+        )`)
       }
 
       const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
@@ -242,10 +380,10 @@ const server = createServer(async (request, response) => {
       values.push(pageSize)
       values.push(offset)
       const result = await pool.query(
-        `SELECT TRIM(email) AS email
+        `SELECT codigo::text AS codigo, BTRIM(nome) AS nome, TRIM(email) AS email
          FROM login
          ${whereClause}
-         ORDER BY LOWER(TRIM(email)) ${sortDirection}
+         ORDER BY ${orderByClause}
          LIMIT $${values.length - 1}
          OFFSET $${values.length}`,
         values,
@@ -258,7 +396,7 @@ const server = createServer(async (request, response) => {
         page,
         pageSize,
         totalPages: Math.max(Math.ceil(total / pageSize), 1),
-        sortBy: 'email',
+        sortBy: sortBy === 'nome' || sortBy === 'email' ? sortBy : 'codigo',
         sortDirection: sortDirection.toLowerCase(),
       })
     } catch (error) {
@@ -284,7 +422,7 @@ const server = createServer(async (request, response) => {
       }
 
       const result = await pool.query(
-        'SELECT email, password, descricao FROM login WHERE LOWER(TRIM(email)) = LOWER($1) LIMIT 1',
+        'SELECT codigo, nome, email, password, descricao FROM login WHERE LOWER(TRIM(email)) = LOWER($1) LIMIT 1',
         [email],
       )
 
@@ -305,6 +443,8 @@ const server = createServer(async (request, response) => {
       sendJson(response, 200, {
         token: createToken(email),
         user: {
+          codigo: String(dbUser.codigo ?? ''),
+          name: normalizeDbValue(dbUser.nome),
           email: normalizeDbValue(dbUser.email),
         },
       })
@@ -322,20 +462,11 @@ const server = createServer(async (request, response) => {
   if (request.method === 'POST' && pathname === '/api/auth/register') {
     try {
       const body = await readJsonBody(request)
+      const nome = normalizeRequestValue(body.nome)
       const email = normalizeRequestValue(body.email)
       const password = normalizeRequestValue(body.password)
 
-      if (!email) {
-        sendJson(response, 400, { message: 'Email e obrigatorio.' })
-        return
-      }
-
-      if (!password) {
-        sendJson(response, 400, { message: 'Senha e obrigatoria.' })
-        return
-      }
-
-      const result = await createAccess(email, password)
+      const result = await createAccess(nome, email, password)
       sendJson(response, result.status, result.payload)
     } catch (error) {
       const message = error instanceof Error
@@ -351,20 +482,11 @@ const server = createServer(async (request, response) => {
   if (request.method === 'POST' && pathname === '/api/access') {
     try {
       const body = await readJsonBody(request)
+      const nome = normalizeRequestValue(body.nome)
       const email = normalizeRequestValue(body.email)
       const password = normalizeRequestValue(body.password)
 
-      if (!email) {
-        sendJson(response, 400, { message: 'Email e obrigatorio.' })
-        return
-      }
-
-      if (!password) {
-        sendJson(response, 400, { message: 'Senha e obrigatoria.' })
-        return
-      }
-
-      const result = await createAccess(email, password)
+      const result = await createAccess(nome, email, password)
       sendJson(response, result.status, result.payload)
     } catch (error) {
       const message = error instanceof Error
@@ -503,26 +625,35 @@ const server = createServer(async (request, response) => {
     return
   }
 
-  if (request.method === 'PUT' && getAccessEmailFromUrl(pathname)) {
+  if (request.method === 'PUT' && getAccessCodigoFromUrl(pathname)) {
     try {
-      const originalEmail = getAccessEmailFromUrl(pathname)
+      const originalCodigo = Number(getAccessCodigoFromUrl(pathname))
       const body = await readJsonBody(request)
+      const nome = normalizeRequestValue(body.nome)
       const email = normalizeRequestValue(body.email)
       const password = normalizeRequestValue(body.password)
 
-      if (!originalEmail) {
-        sendJson(response, 400, { message: 'Email original invalido.' })
+      if (!Number.isInteger(originalCodigo) || originalCodigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo original invalido.' })
         return
       }
 
-      if (!email) {
-        sendJson(response, 400, { message: 'Email e obrigatorio.' })
+      const validationResult = await validateAccessPayload({
+        nome,
+        email,
+        password,
+        originalCodigo,
+        requirePassword: false,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
         return
       }
 
       const existingResult = await pool.query(
-        'SELECT email, password, descricao FROM login WHERE LOWER(TRIM(email)) = LOWER($1) LIMIT 1',
-        [originalEmail],
+        'SELECT codigo, nome, email, password, descricao FROM login WHERE codigo = $1 LIMIT 1',
+        [originalCodigo],
       )
 
       if (existingResult.rowCount === 0) {
@@ -530,27 +661,21 @@ const server = createServer(async (request, response) => {
         return
       }
 
-      const duplicateEmailResult = await pool.query(
-        'SELECT 1 FROM login WHERE LOWER(TRIM(email)) = LOWER($1) AND LOWER(TRIM(email)) <> LOWER($2) LIMIT 1',
-        [email, originalEmail],
-      )
-
-      if (duplicateEmailResult.rowCount > 0) {
-        sendJson(response, 409, { message: 'Email ja cadastrado.' })
-        return
-      }
-
       const currentUser = existingResult.rows[0]
+      const { nome: normalizedNome, email: normalizedEmail, password: normalizedPassword } = validationResult.payload
       const passwordPayload = password
-        ? createAccessHashPayload(password)
+        ? createAccessHashPayload(normalizedPassword)
         : {
             password: currentUser.password,
             descricao: currentUser.descricao,
           }
 
       const updateResult = await pool.query(
-        'UPDATE login SET email = $1, password = $2, descricao = $3 WHERE LOWER(TRIM(email)) = LOWER($4) RETURNING TRIM(email) AS email',
-        [email, passwordPayload.password, passwordPayload.descricao, originalEmail],
+        `UPDATE login
+         SET nome = $1, email = $2, password = $3, descricao = $4
+         WHERE codigo = $5
+         RETURNING codigo::text AS codigo, BTRIM(nome) AS nome, TRIM(email) AS email`,
+        [normalizedNome, normalizedEmail, passwordPayload.password, passwordPayload.descricao, originalCodigo],
       )
 
       sendJson(response, 200, {
@@ -600,18 +725,18 @@ const server = createServer(async (request, response) => {
     return
   }
 
-  if (request.method === 'DELETE' && getAccessEmailFromUrl(pathname)) {
+  if (request.method === 'DELETE' && getAccessCodigoFromUrl(pathname)) {
     try {
-      const email = getAccessEmailFromUrl(pathname)
+      const codigo = Number(getAccessCodigoFromUrl(pathname))
 
-      if (!email) {
-        sendJson(response, 400, { message: 'Email invalido para exclusao.' })
+      if (!Number.isInteger(codigo) || codigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo invalido para exclusao.' })
         return
       }
 
       const deleteResult = await pool.query(
-        'DELETE FROM login WHERE LOWER(TRIM(email)) = LOWER($1) RETURNING TRIM(email) AS email',
-        [email],
+        'DELETE FROM login WHERE codigo = $1 RETURNING codigo::text AS codigo, TRIM(email) AS email',
+        [codigo],
       )
 
       if (deleteResult.rowCount === 0) {
@@ -620,6 +745,7 @@ const server = createServer(async (request, response) => {
       }
 
       sendJson(response, 200, {
+        deletedCodigo: deleteResult.rows[0].codigo,
         deletedEmail: deleteResult.rows[0].email,
       })
     } catch (error) {

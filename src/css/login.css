@@ -141,6 +141,14 @@ main {
   transform: translateY(-1px);
 }
 
+.dsc-form-control:disabled,
+.dsc-form-control[readonly] {
+  color: #556761;
+  background: rgba(229, 235, 232, 0.9);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .dsc-card {
   border: none;
   border-radius: 28px;
