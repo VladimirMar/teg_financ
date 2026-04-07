@@ -12,13 +12,7 @@ export type AuthResult = {
 }
 
 const getAuthUrl = () => {
-  const authUrl = import.meta.env.VITE_AUTH_URL?.trim()
-
-  if (!authUrl) {
-    throw new Error('Defina VITE_AUTH_URL para autenticar no backend.')
-  }
-
-  return authUrl
+  return import.meta.env.VITE_AUTH_URL?.trim() || '/api/auth/login'
 }
 
 const parseJsonSafely = (value: string) => {

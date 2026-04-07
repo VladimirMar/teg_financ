@@ -7,6 +7,7 @@ type StatusTone = 'idle' | 'error' | 'success'
 
 type StoredSession = {
   email: string
+  displayName: string
   token: string | null
   user: unknown
   payload: Record<string, unknown>
@@ -80,6 +81,22 @@ function getStoredSession() {
   }
 }
 
+function getUserDisplayName(user: unknown, fallbackEmail: string) {
+  if (user && typeof user === 'object') {
+    const candidateName = 'name' in user ? user.name : null
+    if (typeof candidateName === 'string' && candidateName.trim()) {
+      return candidateName.trim()
+    }
+
+    const candidateEmail = 'email' in user ? user.email : null
+    if (typeof candidateEmail === 'string' && candidateEmail.trim()) {
+      return candidateEmail.trim()
+    }
+  }
+
+  return fallbackEmail
+}
+
 function App() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -141,6 +158,7 @@ function App() {
 
       const nextSession: StoredSession = {
         email: trimmedEmail,
+        displayName: getUserDisplayName(result.user, trimmedEmail),
         token: result.token,
         user: result.user,
         payload: result.payload,
@@ -150,7 +168,7 @@ function App() {
       sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextSession))
       setSession(nextSession)
       setStatusTone('success')
-      setStatusMessage('Login realizado com sucesso.')
+      setStatusMessage(`Login realizado com sucesso para ${nextSession.displayName}.`)
       setPassword('')
     } catch (error) {
       const message = error instanceof Error
@@ -282,7 +300,7 @@ function App() {
 
         <div className="sidebar-footer">
           <p>Usuario autenticado</p>
-          <strong>{session.email}</strong>
+          <strong>{session.displayName}</strong>
           <button type="button" className="logout-button" onClick={handleLogout}>
             Sair
           </button>
