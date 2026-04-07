@@ -119,6 +119,11 @@ const getAccessCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+const getCondutorCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/condutor\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 const getLoginDrePairFromUrl = (url) => {
   const match = url.match(/^\/api\/login-dre\/([^/]+)\/([^/]+)$/)
 
@@ -138,6 +143,141 @@ const createAccessHashPayload = (password) => {
   return {
     password: passwordHash,
     descricao: passwordHash,
+  }
+}
+
+const normalizeCondutorName = (value) => {
+  return normalizeRequestValue(value)
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+}
+
+const isCondutorNameValid = (value) => {
+  return /^[A-ZÀ-Ý ]{1,100}$/.test(value)
+}
+
+const normalizeCpf = (value) => {
+  const digits = normalizeRequestValue(value).replace(/\D/g, '').slice(0, 11)
+
+  if (digits.length <= 3) {
+    return digits
+  }
+
+  if (digits.length <= 6) {
+    return `${digits.slice(0, 3)}.${digits.slice(3)}`
+  }
+
+  if (digits.length <= 9) {
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
+  }
+
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`
+}
+
+const isCpfValid = (value) => {
+  const digits = value.replace(/\D/g, '')
+  return digits.length === 11
+}
+
+const normalizeCrmc = (value) => {
+  return normalizeRequestValue(value)
+    .toUpperCase()
+    .replace(/[^A-Z0-9/-]/g, '')
+    .slice(0, 10)
+}
+
+const isCrmcValid = (value) => {
+  return /^[A-Z0-9/-]{1,10}$/.test(value)
+}
+
+const normalizeTipoVinculo = (value) => {
+  return normalizeRequestValue(value)
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .slice(0, 11)
+}
+
+const normalizeHistorico = (value) => {
+  return normalizeRequestValue(value).slice(0, 200)
+}
+
+const isDateInputValid = (value) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false
+  }
+
+  const parsed = new Date(`${value}T00:00:00`)
+  return !Number.isNaN(parsed.getTime())
+}
+
+const validateCondutorPayload = async ({
+  condutor,
+  cpfCondutor,
+  crmc,
+  validadeCrmc,
+  validadeCurso,
+  tipoVinculo,
+  historico,
+}) => {
+  const normalizedCondutor = normalizeCondutorName(condutor)
+  const normalizedCpf = normalizeCpf(cpfCondutor)
+  const normalizedCrmc = normalizeCrmc(crmc)
+  const normalizedValidadeCrmc = normalizeRequestValue(validadeCrmc)
+  const normalizedValidadeCurso = normalizeRequestValue(validadeCurso)
+  const normalizedTipoVinculo = normalizeTipoVinculo(tipoVinculo)
+  const normalizedHistorico = normalizeHistorico(historico)
+
+  if (!normalizedCondutor) {
+    return { status: 400, payload: { message: 'Nome do condutor e obrigatorio.' } }
+  }
+
+  if (!isCondutorNameValid(normalizedCondutor)) {
+    return { status: 400, payload: { message: 'Condutor deve conter apenas letras maiusculas e no maximo 100 caracteres.' } }
+  }
+
+  if (!normalizedCpf) {
+    return { status: 400, payload: { message: 'CPF do condutor e obrigatorio.' } }
+  }
+
+  if (!isCpfValid(normalizedCpf)) {
+    return { status: 400, payload: { message: 'CPF do condutor deve conter 11 digitos.' } }
+  }
+
+  if (!normalizedCrmc) {
+    return { status: 400, payload: { message: 'CRMC e obrigatorio.' } }
+  }
+
+  if (!isCrmcValid(normalizedCrmc)) {
+    return { status: 400, payload: { message: 'CRMC deve ter no maximo 10 caracteres alfanumericos.' } }
+  }
+
+  if (!normalizedValidadeCrmc) {
+    return { status: 400, payload: { message: 'Validade do CRMC e obrigatoria.' } }
+  }
+
+  if (!isDateInputValid(normalizedValidadeCrmc)) {
+    return { status: 400, payload: { message: 'Validade do CRMC invalida.' } }
+  }
+
+  if (!normalizedValidadeCurso) {
+    return { status: 400, payload: { message: 'Validade do curso e obrigatoria.' } }
+  }
+
+  if (!isDateInputValid(normalizedValidadeCurso)) {
+    return { status: 400, payload: { message: 'Validade do curso invalida.' } }
+  }
+
+  return {
+    status: 200,
+    payload: {
+      condutor: normalizedCondutor,
+      cpfCondutor: normalizedCpf,
+      crmc: normalizedCrmc,
+      validadeCrmc: normalizedValidadeCrmc,
+      validadeCurso: normalizedValidadeCurso,
+      tipoVinculo: normalizedTipoVinculo,
+      historico: normalizedHistorico,
+    },
   }
 }
 
@@ -355,6 +495,10 @@ const ensureDatabaseSchema = async () => {
   await pool.query('UPDATE login SET nome = LEFT(UPPER(BTRIM(nome)), 50) WHERE nome IS NOT NULL')
   await pool.query('ALTER TABLE login ALTER COLUMN codigo SET NOT NULL')
   await pool.query('ALTER TABLE login ALTER COLUMN nome SET NOT NULL')
+  await pool.query('CREATE SEQUENCE IF NOT EXISTS condutor_codigo_seq START WITH 1 INCREMENT BY 1')
+  await pool.query('ALTER TABLE condutor ALTER COLUMN codigo SET DEFAULT nextval(\'condutor_codigo_seq\')')
+  await pool.query('ALTER SEQUENCE condutor_codigo_seq OWNED BY condutor.codigo')
+  await pool.query('SELECT setval(\'condutor_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM condutor), 0), 1), true)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_codigo_unique_idx ON login (codigo)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_nome_unique_idx ON login (UPPER(BTRIM(nome)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_email_unique_idx ON login (LOWER(TRIM(email)))')
@@ -497,6 +641,79 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar acessos.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/condutor') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
+      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
+        ? 'DESC'
+        : 'ASC'
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+      const orderByClause = sortBy === 'condutor'
+        ? `UPPER(BTRIM(condutor)) ${sortDirection}, codigo ASC`
+        : `codigo ${sortDirection}`
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR UPPER(BTRIM(condutor)) ILIKE UPPER($${values.length})
+          OR BTRIM(cpf_condutor) ILIKE $${values.length}
+          OR UPPER(BTRIM(crmc)) ILIKE UPPER($${values.length})
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM condutor ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           codigo::text AS codigo,
+           BTRIM(condutor) AS condutor,
+           BTRIM(cpf_condutor) AS cpf_condutor,
+           BTRIM(crmc) AS crmc,
+           TO_CHAR(validade_crmc::date, 'YYYY-MM-DD') AS validade_crmc,
+           TO_CHAR(validade_curso::date, 'YYYY-MM-DD') AS validade_curso,
+           COALESCE(BTRIM(tipo_vinculo), '') AS tipo_vinculo,
+           COALESCE(BTRIM(historico), '') AS historico
+         FROM condutor
+         ${whereClause}
+         ORDER BY ${orderByClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: sortBy === 'condutor' ? 'condutor' : 'codigo',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar condutores.'
 
       sendJson(response, 500, { message })
     }
@@ -850,6 +1067,61 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'POST' && pathname === '/api/condutor') {
+    try {
+      const body = await readJsonBody(request)
+      const validationResult = await validateCondutorPayload({
+        condutor: body.condutor,
+        cpfCondutor: body.cpfCondutor,
+        crmc: body.crmc,
+        validadeCrmc: body.validadeCrmc,
+        validadeCurso: body.validadeCurso,
+        tipoVinculo: body.tipoVinculo,
+        historico: body.historico,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const insertResult = await pool.query(
+        `INSERT INTO condutor (condutor, cpf_condutor, crmc, validade_crmc, validade_curso, tipo_vinculo, historico)
+         VALUES ($1, $2, $3, $4::date, $5::date, NULLIF($6, ''), NULLIF($7, ''))
+         RETURNING
+           codigo::text AS codigo,
+           BTRIM(condutor) AS condutor,
+           BTRIM(cpf_condutor) AS cpf_condutor,
+           BTRIM(crmc) AS crmc,
+           TO_CHAR(validade_crmc::date, 'YYYY-MM-DD') AS validade_crmc,
+           TO_CHAR(validade_curso::date, 'YYYY-MM-DD') AS validade_curso,
+           COALESCE(BTRIM(tipo_vinculo), '') AS tipo_vinculo,
+           COALESCE(BTRIM(historico), '') AS historico`,
+        [
+          validationResult.payload.condutor,
+          validationResult.payload.cpfCondutor,
+          validationResult.payload.crmc,
+          validationResult.payload.validadeCrmc,
+          validationResult.payload.validadeCurso,
+          validationResult.payload.tipoVinculo,
+          validationResult.payload.historico,
+        ],
+      )
+
+      sendJson(response, 201, {
+        item: insertResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao cadastrar condutor.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'PUT' && getDreCodigoFromUrl(pathname)) {
     try {
       const originalCodigo = getDreCodigoFromUrl(pathname)
@@ -988,6 +1260,86 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'PUT' && getCondutorCodigoFromUrl(pathname)) {
+    try {
+      const originalCodigo = Number(getCondutorCodigoFromUrl(pathname))
+      const body = await readJsonBody(request)
+
+      if (!Number.isInteger(originalCodigo) || originalCodigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo original invalido.' })
+        return
+      }
+
+      const existingResult = await pool.query(
+        'SELECT 1 FROM condutor WHERE codigo = $1 LIMIT 1',
+        [originalCodigo],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Condutor nao encontrado.' })
+        return
+      }
+
+      const validationResult = await validateCondutorPayload({
+        condutor: body.condutor,
+        cpfCondutor: body.cpfCondutor,
+        crmc: body.crmc,
+        validadeCrmc: body.validadeCrmc,
+        validadeCurso: body.validadeCurso,
+        tipoVinculo: body.tipoVinculo,
+        historico: body.historico,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE condutor
+         SET condutor = $1,
+             cpf_condutor = $2,
+             crmc = $3,
+             validade_crmc = $4::date,
+             validade_curso = $5::date,
+             tipo_vinculo = NULLIF($6, ''),
+             historico = NULLIF($7, '')
+         WHERE codigo = $8
+         RETURNING
+           codigo::text AS codigo,
+           BTRIM(condutor) AS condutor,
+           BTRIM(cpf_condutor) AS cpf_condutor,
+           BTRIM(crmc) AS crmc,
+           TO_CHAR(validade_crmc::date, 'YYYY-MM-DD') AS validade_crmc,
+           TO_CHAR(validade_curso::date, 'YYYY-MM-DD') AS validade_curso,
+           COALESCE(BTRIM(tipo_vinculo), '') AS tipo_vinculo,
+           COALESCE(BTRIM(historico), '') AS historico`,
+        [
+          validationResult.payload.condutor,
+          validationResult.payload.cpfCondutor,
+          validationResult.payload.crmc,
+          validationResult.payload.validadeCrmc,
+          validationResult.payload.validadeCurso,
+          validationResult.payload.tipoVinculo,
+          validationResult.payload.historico,
+          originalCodigo,
+        ],
+      )
+
+      sendJson(response, 200, {
+        item: updateResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao alterar condutor.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'PUT' && getLoginDrePairFromUrl(pathname)) {
     try {
       const pair = getLoginDrePairFromUrl(pathname)
@@ -1109,6 +1461,39 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao excluir acesso.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'DELETE' && getCondutorCodigoFromUrl(pathname)) {
+    try {
+      const codigo = Number(getCondutorCodigoFromUrl(pathname))
+
+      if (!Number.isInteger(codigo) || codigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo invalido para exclusao.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        'DELETE FROM condutor WHERE codigo = $1 RETURNING codigo::text AS codigo',
+        [codigo],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Condutor nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, {
+        deletedCodigo: deleteResult.rows[0].codigo,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao excluir condutor.'
 
       sendJson(response, 500, { message })
     }

@@ -357,6 +357,11 @@ main {
   font-weight: 400;
 }
 
+.dsc-form-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
 .dsc-feedback {
   min-height: 24px;
   margin-top: 16px;

@@ -6,7 +6,7 @@ import { createDreItem, deleteDreItem, listDreItemsPaginated, updateDreItem } fr
 import type { DreItem } from './services/dre'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'acesso' | 'loginDre'
+type ActiveView = 'inicio' | 'dre' | 'acesso' | 'loginDre' | 'condutor'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
 
@@ -557,7 +557,12 @@ function App() {
             </li>
             <li className="menu-item">Rotas</li>
             <li className="menu-item">Alunos</li>
-            <li className="menu-item">Motoristas</li>
+            <li
+              className={`menu-item ${activeView === 'condutor' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('condutor')}
+            >
+              Motoristas
+            </li>
             <li className="menu-item">Relatorios</li>
           </ul>
         </nav>
@@ -766,7 +771,7 @@ function App() {
               />
             </div>
           </>
-        ) : (
+        ) : activeView === 'loginDre' ? (
           <>
             <div className="content-copy">
               <p className="content-kicker">Relacionamento administrativo</p>
@@ -781,6 +786,24 @@ function App() {
                 className="access-embed-frame"
                 src="/src/loginDre.html"
                 title="Login x DRE"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Cadastro operacional</p>
+              <h2 id="content-title">Tabela Condutor</h2>
+              <p className="content-description">
+                Consulte, inclua e altere os registros de condutores no mesmo padrao do controle de acesso.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/condutor.html"
+                title="Cadastro de condutor"
               />
             </div>
           </>

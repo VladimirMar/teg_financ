@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro de condutor</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
+    <main class="dsc-access-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-management-layout">
+            <div class="dsc-access-toolbar">
+              <form class="dsc-access-filter-form" id="condutor-filter-form">
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-condutor-button">Inserir registro</button>
+                <input class="dsc-form-control dsc-access-filter-input" id="condutor-search" type="text" placeholder="Filtrar por codigo, condutor, CPF ou CRMC" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-condutor-filter-button">Limpar</button>
+              </form>
+            </div>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="condutor-form">
+              <h2 id="condutor-form-title">Novo registro</h2>
+
+              <label class="dsc-field-group" for="condutor-codigo">
+                <span>Codigo</span>
+                <input class="dsc-form-control" id="condutor-codigo" type="text" placeholder="Gerado automaticamente" readonly disabled />
+              </label>
+
+              <label class="dsc-field-group" for="condutor-nome">
+                <span>Condutor</span>
+                <input class="dsc-form-control" id="condutor-nome" type="text" placeholder="NOME DO CONDUTOR" maxlength="100" />
+                <div class="dsc-form-error" id="condutor-nome-error"></div>
+              </label>
+
+              <div class="dsc-form-row">
+                <label class="dsc-field-group" for="condutor-cpf">
+                  <span>CPF</span>
+                  <input class="dsc-form-control" id="condutor-cpf" type="text" placeholder="000.000.000-00" maxlength="14" />
+                  <div class="dsc-form-error" id="condutor-cpf-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="condutor-crmc">
+                  <span>CRMC</span>
+                  <input class="dsc-form-control" id="condutor-crmc" type="text" placeholder="CRMC" maxlength="10" />
+                  <div class="dsc-form-error" id="condutor-crmc-error"></div>
+                </label>
+              </div>
+
+              <div class="dsc-form-row">
+                <label class="dsc-field-group" for="condutor-validade-crmc">
+                  <span>Validade do CRMC</span>
+                  <input class="dsc-form-control" id="condutor-validade-crmc" type="date" />
+                  <div class="dsc-form-error" id="condutor-validade-crmc-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="condutor-validade-curso">
+                  <span>Validade do curso</span>
+                  <input class="dsc-form-control" id="condutor-validade-curso" type="date" />
+                  <div class="dsc-form-error" id="condutor-validade-curso-error"></div>
+                </label>
+              </div>
+
+              <label class="dsc-field-group" for="condutor-tipo-vinculo">
+                <span>Tipo de vinculo</span>
+                <input class="dsc-form-control" id="condutor-tipo-vinculo" type="text" placeholder="EFETIVO" maxlength="11" />
+              </label>
+
+              <label class="dsc-field-group" for="condutor-historico">
+                <span>Historico</span>
+                <textarea class="dsc-form-control dsc-form-textarea" id="condutor-historico" placeholder="Observacoes do condutor" maxlength="200"></textarea>
+              </label>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-condutor-button">Salvar condutor</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-condutor-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="condutor-form-feedback"></p>
+            </form>
+
+            <div class="dsc-card dsc-access-grid-card">
+              <div class="dsc-access-grid-header">
+                <h2>Registros cadastrados</h2>
+                <span id="condutor-total"></span>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Codigo</th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-condutor-button">
+                          Condutor <span id="sort-condutor-indicator">↑</span>
+                        </button>
+                      </th>
+                      <th>CPF</th>
+                      <th>CRMC</th>
+                      <th>Validade CRMC</th>
+                      <th>Validade curso</th>
+                      <th>Tipo vinculo</th>
+                      <th>Historico</th>
+                      <th class="dsc-grid-actions-column">Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="condutor-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="condutor-empty-state">Nenhum condutor encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="condutor-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-condutor-page-button">Anterior</button>
+                <span id="condutor-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-condutor-page-button">Proxima</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('condutor-form');
+      const codigoInput = document.getElementById('condutor-codigo');
+      const nomeInput = document.getElementById('condutor-nome');
+      const cpfInput = document.getElementById('condutor-cpf');
+      const crmcInput = document.getElementById('condutor-crmc');
+      const validadeCrmcInput = document.getElementById('condutor-validade-crmc');
+      const validadeCursoInput = document.getElementById('condutor-validade-curso');
+      const tipoVinculoInput = document.getElementById('condutor-tipo-vinculo');
+      const historicoInput = document.getElementById('condutor-historico');
+      const nomeError = document.getElementById('condutor-nome-error');
+      const cpfError = document.getElementById('condutor-cpf-error');
+      const crmcError = document.getElementById('condutor-crmc-error');
+      const validadeCrmcError = document.getElementById('condutor-validade-crmc-error');
+      const validadeCursoError = document.getElementById('condutor-validade-curso-error');
+      const feedback = document.getElementById('condutor-form-feedback');
+      const gridFeedback = document.getElementById('condutor-grid-feedback');
+      const insertButton = document.getElementById('insert-condutor-button');
+      const cancelButton = document.getElementById('cancel-condutor-button');
+      const filterForm = document.getElementById('condutor-filter-form');
+      const clearFilterButton = document.getElementById('clear-condutor-filter-button');
+      const searchInput = document.getElementById('condutor-search');
+      const gridBody = document.getElementById('condutor-grid-body');
+      const emptyState = document.getElementById('condutor-empty-state');
+      const totalLabel = document.getElementById('condutor-total');
+      const previousPageButton = document.getElementById('previous-condutor-page-button');
+      const nextPageButton = document.getElementById('next-condutor-page-button');
+      const paginationInfo = document.getElementById('condutor-pagination-info');
+      const sortCondutorButton = document.getElementById('sort-condutor-button');
+      const sortCondutorIndicator = document.getElementById('sort-condutor-indicator');
+      const formTitle = document.getElementById('condutor-form-title');
+      const saveButton = document.getElementById('save-condutor-button');
+      const statusBanner = document.getElementById('status-banner');
+
+      const pageSize = 5;
+      let currentPage = 1;
+      let totalPages = 1;
+      let currentSearch = '';
+      let currentSortBy = 'codigo';
+      let currentSortDirection = 'asc';
+      let editingCodigo = null;
+      let bannerTimeoutId = null;
+
+      const normalizeName = (value) => value.toUpperCase().replace(/[^A-ZÀ-Ý\s]/g, '').replace(/\s+/g, ' ').trimStart().slice(0, 100);
+      const normalizeCpf = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+
+        if (digits.length <= 3) {
+          return digits;
+        }
+
+        if (digits.length <= 6) {
+          return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+        }
+
+        if (digits.length <= 9) {
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+        }
+
+        return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+      };
+      const normalizeCrmc = (value) => value.toUpperCase().replace(/[^A-Z0-9/-]/g, '').slice(0, 10);
+      const normalizeTipoVinculo = (value) => value.toUpperCase().replace(/\s+/g, ' ').trimStart().slice(0, 11);
+      const formatDateLabel = (value) => value ? value.split('-').reverse().join('/') : '';
+
+      const resetMessages = () => {
+        nomeError.textContent = '';
+        cpfError.textContent = '';
+        crmcError.textContent = '';
+        validadeCrmcError.textContent = '';
+        validadeCursoError.textContent = '';
+        feedback.textContent = '';
+        feedback.className = 'dsc-feedback';
+      };
+
+      const setGridMessage = (message, tone = '') => {
+        gridFeedback.textContent = message;
+        gridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          gridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const showBanner = (message, tone = 'success') => {
+        if (bannerTimeoutId) {
+          window.clearTimeout(bannerTimeoutId);
+        }
+
+        statusBanner.textContent = message;
+        statusBanner.className = `dsc-status-banner dsc-status-banner-${tone}`;
+
+        bannerTimeoutId = window.setTimeout(() => {
+          statusBanner.className = 'dsc-status-banner dsc-hidden';
+          statusBanner.textContent = '';
+        }, 3500);
+      };
+
+      const showForm = (isEditing = false) => {
+        form.classList.remove('dsc-hidden');
+        formTitle.textContent = isEditing ? 'Alteracao de condutor' : 'Cadastro de condutor';
+        saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar condutor';
+      };
+
+      const hideForm = () => {
+        form.classList.add('dsc-hidden');
+        form.reset();
+        codigoInput.value = '';
+        editingCodigo = null;
+        resetMessages();
+      };
+
+      const buildUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          pageSize: String(pageSize),
+          sortBy: currentSortBy,
+          sortDirection: currentSortDirection,
+        });
+
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+
+        return `/api/condutor?${params.toString()}`;
+      };
+
+      const renderGrid = (items) => {
+        gridBody.innerHTML = '';
+
+        if (!items.length) {
+          emptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        emptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.codigo}</td>
+            <td>${item.condutor}</td>
+            <td>${item.cpf_condutor}</td>
+            <td>${item.crmc}</td>
+            <td>${formatDateLabel(item.validade_crmc)}</td>
+            <td>${formatDateLabel(item.validade_curso)}</td>
+            <td>${item.tipo_vinculo || ''}</td>
+            <td>${item.historico || ''}</td>
+            <td>
+              <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}" data-condutor="${item.condutor}">Excluir</button>
+              </div>
+            </td>
+          `;
+          row.dataset.item = JSON.stringify(item);
+          gridBody.appendChild(row);
+        });
+      };
+
+      const updatePagination = (totalItems) => {
+        totalLabel.textContent = `${totalItems} item(ns) encontrados`;
+        paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        previousPageButton.disabled = currentPage <= 1;
+        nextPageButton.disabled = currentPage >= totalPages;
+        sortCondutorIndicator.textContent = currentSortBy === 'condutor' && currentSortDirection === 'desc' ? '↓' : '↑';
+      };
+
+      const loadItems = async () => {
+        setGridMessage('Carregando condutores...');
+
+        try {
+          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar condutores.');
+          }
+
+          totalPages = payload.totalPages || 1;
+          currentPage = payload.page || 1;
+          renderGrid(payload.items || []);
+          updatePagination(payload.total || 0);
+          setGridMessage(payload.items && payload.items.length ? '' : 'Nenhum condutor encontrado.');
+        } catch (error) {
+          gridBody.innerHTML = '';
+          emptyState.classList.remove('dsc-hidden');
+          setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar condutores.', 'error');
+        }
+      };
+
+      const startInsert = () => {
+        editingCodigo = null;
+        form.reset();
+        codigoInput.value = '';
+        resetMessages();
+        showForm(false);
+      };
+
+      const startEdit = (item) => {
+        editingCodigo = item.codigo;
+        codigoInput.value = item.codigo;
+        nomeInput.value = item.condutor;
+        cpfInput.value = item.cpf_condutor;
+        crmcInput.value = item.crmc;
+        validadeCrmcInput.value = item.validade_crmc;
+        validadeCursoInput.value = item.validade_curso;
+        tipoVinculoInput.value = item.tipo_vinculo || '';
+        historicoInput.value = item.historico || '';
+        resetMessages();
+        showForm(true);
+      };
+
+      const handleDelete = async (item) => {
+        if (!window.confirm(`Excluir o condutor ${item.codigo} - ${item.condutor}?`)) {
+          return;
+        }
+
+        setGridMessage(`Excluindo condutor ${item.codigo}...`);
+
+        try {
+          const response = await fetch(`/api/condutor/${encodeURIComponent(item.codigo)}`, {
+            method: 'DELETE',
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao excluir condutor.');
+          }
+
+          setGridMessage('Condutor excluido com sucesso.', 'success');
+          showBanner(`Condutor ${item.codigo} excluido com sucesso.`, 'success');
+          if (editingCodigo === item.codigo) {
+            hideForm();
+          }
+          await loadItems();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao excluir condutor.';
+          setGridMessage(message, 'error');
+          showBanner(message, 'error');
+        }
+      };
+
+      gridBody.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (!(target instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const action = target.dataset.action;
+        const row = target.closest('tr');
+        const rawItem = row ? row.dataset.item : '';
+
+        if (!rawItem) {
+          return;
+        }
+
+        const item = JSON.parse(rawItem);
+
+        if (action === 'edit') {
+          startEdit(item);
+          return;
+        }
+
+        if (action === 'delete') {
+          void handleDelete(item);
+        }
+      });
+
+      nomeInput.addEventListener('input', () => {
+        nomeInput.value = normalizeName(nomeInput.value);
+      });
+
+      cpfInput.addEventListener('input', () => {
+        cpfInput.value = normalizeCpf(cpfInput.value);
+      });
+
+      crmcInput.addEventListener('input', () => {
+        crmcInput.value = normalizeCrmc(crmcInput.value);
+      });
+
+      tipoVinculoInput.addEventListener('input', () => {
+        tipoVinculoInput.value = normalizeTipoVinculo(tipoVinculoInput.value);
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const condutor = normalizeName(nomeInput.value);
+        const cpfCondutor = normalizeCpf(cpfInput.value);
+        const crmc = normalizeCrmc(crmcInput.value);
+        const validadeCrmc = validadeCrmcInput.value;
+        const validadeCurso = validadeCursoInput.value;
+        const tipoVinculo = normalizeTipoVinculo(tipoVinculoInput.value);
+        const historico = historicoInput.value.trim();
+        let hasError = false;
+
+        resetMessages();
+        nomeInput.value = condutor;
+        cpfInput.value = cpfCondutor;
+        crmcInput.value = crmc;
+        tipoVinculoInput.value = tipoVinculo;
+
+        if (!condutor) {
+          nomeError.textContent = 'Informe o condutor.';
+          hasError = true;
+        }
+
+        if (cpfCondutor.replace(/\D/g, '').length !== 11) {
+          cpfError.textContent = 'CPF deve conter 11 digitos.';
+          hasError = true;
+        }
+
+        if (!crmc) {
+          crmcError.textContent = 'Informe o CRMC.';
+          hasError = true;
+        }
+
+        if (!validadeCrmc) {
+          validadeCrmcError.textContent = 'Informe a validade do CRMC.';
+          hasError = true;
+        }
+
+        if (!validadeCurso) {
+          validadeCursoError.textContent = 'Informe a validade do curso.';
+          hasError = true;
+        }
+
+        if (hasError) {
+          feedback.textContent = 'Corrija os campos para continuar.';
+          feedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        try {
+          const response = await fetch(editingCodigo ? `/api/condutor/${encodeURIComponent(editingCodigo)}` : '/api/condutor', {
+            method: editingCodigo ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({
+              condutor,
+              cpfCondutor,
+              crmc,
+              validadeCrmc,
+              validadeCurso,
+              tipoVinculo,
+              historico,
+            }),
+          });
+
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao gravar condutor.');
+          }
+
+          const savedItem = payload.item;
+          feedback.textContent = editingCodigo
+            ? `Condutor ${savedItem.codigo} alterado com sucesso.`
+            : `Condutor ${savedItem.codigo} gravado com sucesso.`;
+          feedback.classList.add('dsc-feedback-success');
+          showBanner(feedback.textContent, 'success');
+          hideForm();
+          await loadItems();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao gravar condutor.';
+          feedback.textContent = message;
+          feedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
+
+      insertButton.addEventListener('click', startInsert);
+      cancelButton.addEventListener('click', hideForm);
+
+      filterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentSearch = searchInput.value.trim();
+        currentPage = 1;
+        void loadItems();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      previousPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage -= 1;
+        void loadItems();
+      });
+
+      nextPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage += 1;
+        void loadItems();
+      });
+
+      sortCondutorButton.addEventListener('click', () => {
+        currentSortDirection = currentSortBy === 'condutor' && currentSortDirection === 'asc' ? 'desc' : 'asc';
+        currentSortBy = 'condutor';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      hideForm();
+      void loadItems();
+    </script>
+  </body>
+</html>
