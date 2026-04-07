@@ -561,7 +561,7 @@ function App() {
               className={`menu-item ${activeView === 'condutor' ? 'menu-item-active' : ''}`}
               onClick={() => setActiveView('condutor')}
             >
-              Motoristas
+              Condutor
             </li>
             <li className="menu-item">Relatorios</li>
           </ul>

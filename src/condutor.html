@@ -28,7 +28,8 @@
 
               <label class="dsc-field-group" for="condutor-codigo">
                 <span>Codigo</span>
-                <input class="dsc-form-control" id="condutor-codigo" type="text" placeholder="Gerado automaticamente" readonly disabled />
+                <input class="dsc-form-control" id="condutor-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
+                <div class="dsc-form-error" id="condutor-codigo-error"></div>
               </label>
 
               <label class="dsc-field-group" for="condutor-nome">
@@ -46,7 +47,7 @@
 
                 <label class="dsc-field-group" for="condutor-crmc">
                   <span>CRMC</span>
-                  <input class="dsc-form-control" id="condutor-crmc" type="text" placeholder="CRMC" maxlength="10" />
+                  <input class="dsc-form-control" id="condutor-crmc" type="text" inputmode="numeric" placeholder="999.999-99" maxlength="10" />
                   <div class="dsc-form-error" id="condutor-crmc-error"></div>
                 </label>
               </div>
@@ -65,10 +66,27 @@
                 </label>
               </div>
 
-              <label class="dsc-field-group" for="condutor-tipo-vinculo">
+              <fieldset class="dsc-field-group dsc-radio-field-group">
                 <span>Tipo de vinculo</span>
-                <input class="dsc-form-control" id="condutor-tipo-vinculo" type="text" placeholder="EFETIVO" maxlength="11" />
-              </label>
+                <div class="dsc-radio-group" id="condutor-tipo-vinculo-group">
+                  <label class="dsc-radio-option" for="condutor-tipo-vinculo-branco">
+                    <input id="condutor-tipo-vinculo-branco" type="radio" name="condutor-tipo-vinculo" value="" checked />
+                    <span>Em branco</span>
+                  </label>
+                  <label class="dsc-radio-option" for="condutor-tipo-vinculo-cooperado">
+                    <input id="condutor-tipo-vinculo-cooperado" type="radio" name="condutor-tipo-vinculo" value="Cooperado" />
+                    <span>Cooperado</span>
+                  </label>
+                  <label class="dsc-radio-option" for="condutor-tipo-vinculo-socio">
+                    <input id="condutor-tipo-vinculo-socio" type="radio" name="condutor-tipo-vinculo" value="Socio" />
+                    <span>S&oacute;cio</span>
+                  </label>
+                  <label class="dsc-radio-option" for="condutor-tipo-vinculo-funcionario">
+                    <input id="condutor-tipo-vinculo-funcionario" type="radio" name="condutor-tipo-vinculo" value="Funcionario" />
+                    <span>Funcion&aacute;rio</span>
+                  </label>
+                </div>
+              </fieldset>
 
               <label class="dsc-field-group" for="condutor-historico">
                 <span>Historico</span>
@@ -104,7 +122,6 @@
                       <th>Validade CRMC</th>
                       <th>Validade curso</th>
                       <th>Tipo vinculo</th>
-                      <th>Historico</th>
                       <th class="dsc-grid-actions-column">Acoes</th>
                     </tr>
                   </thead>
@@ -130,12 +147,12 @@
     <script>
       const form = document.getElementById('condutor-form');
       const codigoInput = document.getElementById('condutor-codigo');
+      const codigoError = document.getElementById('condutor-codigo-error');
       const nomeInput = document.getElementById('condutor-nome');
       const cpfInput = document.getElementById('condutor-cpf');
       const crmcInput = document.getElementById('condutor-crmc');
       const validadeCrmcInput = document.getElementById('condutor-validade-crmc');
       const validadeCursoInput = document.getElementById('condutor-validade-curso');
-      const tipoVinculoInput = document.getElementById('condutor-tipo-vinculo');
       const historicoInput = document.getElementById('condutor-historico');
       const nomeError = document.getElementById('condutor-nome-error');
       const cpfError = document.getElementById('condutor-cpf-error');
@@ -160,6 +177,7 @@
       const formTitle = document.getElementById('condutor-form-title');
       const saveButton = document.getElementById('save-condutor-button');
       const statusBanner = document.getElementById('status-banner');
+      const tipoVinculoRadios = Array.from(document.querySelectorAll('input[name="condutor-tipo-vinculo"]'));
 
       const pageSize = 5;
       let currentPage = 1;
@@ -170,7 +188,26 @@
       let editingCodigo = null;
       let bannerTimeoutId = null;
 
+      const normalizeTipoVinculoValue = (value) => (value || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+      const getSelectedTipoVinculo = () => {
+        const selectedRadio = tipoVinculoRadios.find((radio) => radio.checked);
+        return selectedRadio ? selectedRadio.value : '';
+      };
+
+      const setSelectedTipoVinculo = (value) => {
+        const selectedRadio = tipoVinculoRadios.find((radio) => normalizeTipoVinculoValue(radio.value) === normalizeTipoVinculoValue(value)) || tipoVinculoRadios[0];
+        tipoVinculoRadios.forEach((radio) => {
+          radio.checked = radio === selectedRadio;
+        });
+      };
+
       const normalizeName = (value) => value.toUpperCase().replace(/[^A-ZÀ-Ý\s]/g, '').replace(/\s+/g, ' ').trimStart().slice(0, 100);
+      const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
       const normalizeCpf = (value) => {
         const digits = value.replace(/\D/g, '').slice(0, 11);
 
@@ -188,11 +225,23 @@
 
         return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
       };
-      const normalizeCrmc = (value) => value.toUpperCase().replace(/[^A-Z0-9/-]/g, '').slice(0, 10);
-      const normalizeTipoVinculo = (value) => value.toUpperCase().replace(/\s+/g, ' ').trimStart().slice(0, 11);
+      const normalizeCrmc = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 8);
+
+        if (digits.length <= 3) {
+          return digits;
+        }
+
+        if (digits.length <= 6) {
+          return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+        }
+
+        return `${digits.slice(0, 3)}.${digits.slice(3, 6)}-${digits.slice(6, 8)}`;
+      };
       const formatDateLabel = (value) => value ? value.split('-').reverse().join('/') : '';
 
       const resetMessages = () => {
+        codigoError.textContent = '';
         nomeError.textContent = '';
         cpfError.textContent = '';
         crmcError.textContent = '';
@@ -234,6 +283,7 @@
         form.classList.add('dsc-hidden');
         form.reset();
         codigoInput.value = '';
+        setSelectedTipoVinculo('');
         editingCodigo = null;
         resetMessages();
       };
@@ -273,7 +323,6 @@
             <td>${formatDateLabel(item.validade_crmc)}</td>
             <td>${formatDateLabel(item.validade_curso)}</td>
             <td>${item.tipo_vinculo || ''}</td>
-            <td>${item.historico || ''}</td>
             <td>
               <div class="dsc-grid-actions">
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
@@ -321,6 +370,7 @@
         editingCodigo = null;
         form.reset();
         codigoInput.value = '';
+        setSelectedTipoVinculo('');
         resetMessages();
         showForm(false);
       };
@@ -333,7 +383,7 @@
         crmcInput.value = item.crmc;
         validadeCrmcInput.value = item.validade_crmc;
         validadeCursoInput.value = item.validade_curso;
-        tipoVinculoInput.value = item.tipo_vinculo || '';
+        setSelectedTipoVinculo(item.tipo_vinculo || '');
         historicoInput.value = item.historico || '';
         resetMessages();
         showForm(true);
@@ -397,6 +447,10 @@
         }
       });
 
+      codigoInput.addEventListener('input', () => {
+        codigoInput.value = normalizeCodigo(codigoInput.value);
+      });
+
       nomeInput.addEventListener('input', () => {
         nomeInput.value = normalizeName(nomeInput.value);
       });
@@ -409,27 +463,29 @@
         crmcInput.value = normalizeCrmc(crmcInput.value);
       });
 
-      tipoVinculoInput.addEventListener('input', () => {
-        tipoVinculoInput.value = normalizeTipoVinculo(tipoVinculoInput.value);
-      });
-
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
+        const codigo = normalizeCodigo(codigoInput.value);
         const condutor = normalizeName(nomeInput.value);
         const cpfCondutor = normalizeCpf(cpfInput.value);
         const crmc = normalizeCrmc(crmcInput.value);
         const validadeCrmc = validadeCrmcInput.value;
         const validadeCurso = validadeCursoInput.value;
-        const tipoVinculo = normalizeTipoVinculo(tipoVinculoInput.value);
+        const tipoVinculo = getSelectedTipoVinculo();
         const historico = historicoInput.value.trim();
         let hasError = false;
 
         resetMessages();
+        codigoInput.value = codigo;
         nomeInput.value = condutor;
         cpfInput.value = cpfCondutor;
         crmcInput.value = crmc;
-        tipoVinculoInput.value = tipoVinculo;
+
+        if (!codigo) {
+          codigoError.textContent = 'Informe o codigo.';
+          hasError = true;
+        }
 
         if (!condutor) {
           nomeError.textContent = 'Informe o condutor.';
@@ -441,8 +497,8 @@
           hasError = true;
         }
 
-        if (!crmc) {
-          crmcError.textContent = 'Informe o CRMC.';
+        if (crmc.replace(/\D/g, '').length !== 8) {
+          crmcError.textContent = 'CRMC deve seguir o formato 999.999-99.';
           hasError = true;
         }
 
@@ -470,6 +526,7 @@
               Accept: 'application/json',
             },
             body: JSON.stringify({
+              codigo,
               condutor,
               cpfCondutor,
               crmc,

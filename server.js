@@ -152,6 +152,17 @@ const normalizeCondutorName = (value) => {
     .replace(/\s+/g, ' ')
 }
 
+const normalizeCondutorCodigo = (value) => {
+  const normalizedValue = normalizeRequestValue(value)
+
+  if (!normalizedValue) {
+    return null
+  }
+
+  const numericValue = Number(normalizedValue)
+  return Number.isInteger(numericValue) && numericValue > 0 ? numericValue : Number.NaN
+}
+
 const isCondutorNameValid = (value) => {
   return /^[A-ZÀ-Ý ]{1,100}$/.test(value)
 }
@@ -180,21 +191,48 @@ const isCpfValid = (value) => {
 }
 
 const normalizeCrmc = (value) => {
-  return normalizeRequestValue(value)
-    .toUpperCase()
-    .replace(/[^A-Z0-9/-]/g, '')
-    .slice(0, 10)
+  const digits = normalizeRequestValue(value).replace(/\D/g, '').slice(0, 8)
+
+  if (digits.length <= 3) {
+    return digits
+  }
+
+  if (digits.length <= 6) {
+    return `${digits.slice(0, 3)}.${digits.slice(3)}`
+  }
+
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}-${digits.slice(6, 8)}`
 }
 
 const isCrmcValid = (value) => {
-  return /^[A-Z0-9/-]{1,10}$/.test(value)
+  return /^\d{3}\.\d{3}-\d{2}$/.test(value)
 }
 
 const normalizeTipoVinculo = (value) => {
-  return normalizeRequestValue(value)
-    .toUpperCase()
-    .replace(/\s+/g, ' ')
-    .slice(0, 11)
+  const normalizedValue = normalizeRequestValue(value)
+
+  if (!normalizedValue) {
+    return ''
+  }
+
+  const normalizedKey = normalizedValue
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+
+  if (normalizedKey === 'cooperado') {
+    return 'Cooperado'
+  }
+
+  if (normalizedKey === 'socio') {
+    return 'Sócio'
+  }
+
+  if (normalizedKey === 'funcionario') {
+    return 'Funcionário'
+  }
+
+  return null
 }
 
 const normalizeHistorico = (value) => {
@@ -211,6 +249,7 @@ const isDateInputValid = (value) => {
 }
 
 const validateCondutorPayload = async ({
+  codigo,
   condutor,
   cpfCondutor,
   crmc,
@@ -218,7 +257,9 @@ const validateCondutorPayload = async ({
   validadeCurso,
   tipoVinculo,
   historico,
+  originalCodigo = null,
 }) => {
+  const normalizedCodigo = normalizeCondutorCodigo(codigo)
   const normalizedCondutor = normalizeCondutorName(condutor)
   const normalizedCpf = normalizeCpf(cpfCondutor)
   const normalizedCrmc = normalizeCrmc(crmc)
@@ -226,6 +267,14 @@ const validateCondutorPayload = async ({
   const normalizedValidadeCurso = normalizeRequestValue(validadeCurso)
   const normalizedTipoVinculo = normalizeTipoVinculo(tipoVinculo)
   const normalizedHistorico = normalizeHistorico(historico)
+
+  if (normalizedCodigo === null) {
+    return { status: 400, payload: { message: 'Codigo e obrigatorio.' } }
+  }
+
+  if (Number.isNaN(normalizedCodigo)) {
+    return { status: 400, payload: { message: 'Codigo deve ser um numero inteiro positivo.' } }
+  }
 
   if (!normalizedCondutor) {
     return { status: 400, payload: { message: 'Nome do condutor e obrigatorio.' } }
@@ -267,9 +316,27 @@ const validateCondutorPayload = async ({
     return { status: 400, payload: { message: 'Validade do curso invalida.' } }
   }
 
+  if (normalizedTipoVinculo === null) {
+    return { status: 400, payload: { message: 'Tipo de vinculo invalido.' } }
+  }
+
+  const duplicateCodeResult = await pool.query(
+    `SELECT 1
+     FROM condutor
+     WHERE codigo = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedCodigo, originalCodigo],
+  )
+
+  if (duplicateCodeResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
+  }
+
   return {
     status: 200,
     payload: {
+      codigo: normalizedCodigo,
       condutor: normalizedCondutor,
       cpfCondutor: normalizedCpf,
       crmc: normalizedCrmc,
@@ -1071,6 +1138,7 @@ const server = createServer(async (request, response) => {
     try {
       const body = await readJsonBody(request)
       const validationResult = await validateCondutorPayload({
+        codigo: body.codigo,
         condutor: body.condutor,
         cpfCondutor: body.cpfCondutor,
         crmc: body.crmc,
@@ -1086,8 +1154,8 @@ const server = createServer(async (request, response) => {
       }
 
       const insertResult = await pool.query(
-        `INSERT INTO condutor (condutor, cpf_condutor, crmc, validade_crmc, validade_curso, tipo_vinculo, historico)
-         VALUES ($1, $2, $3, $4::date, $5::date, NULLIF($6, ''), NULLIF($7, ''))
+        `INSERT INTO condutor (codigo, condutor, cpf_condutor, crmc, validade_crmc, validade_curso, tipo_vinculo, historico)
+         VALUES ($1, $2, $3, $4, $5::date, $6::date, NULLIF($7, ''), NULLIF($8, ''))
          RETURNING
            codigo::text AS codigo,
            BTRIM(condutor) AS condutor,
@@ -1098,6 +1166,7 @@ const server = createServer(async (request, response) => {
            COALESCE(BTRIM(tipo_vinculo), '') AS tipo_vinculo,
            COALESCE(BTRIM(historico), '') AS historico`,
         [
+          validationResult.payload.codigo,
           validationResult.payload.condutor,
           validationResult.payload.cpfCondutor,
           validationResult.payload.crmc,
@@ -1281,6 +1350,7 @@ const server = createServer(async (request, response) => {
       }
 
       const validationResult = await validateCondutorPayload({
+        codigo: body.codigo,
         condutor: body.condutor,
         cpfCondutor: body.cpfCondutor,
         crmc: body.crmc,
@@ -1288,6 +1358,7 @@ const server = createServer(async (request, response) => {
         validadeCurso: body.validadeCurso,
         tipoVinculo: body.tipoVinculo,
         historico: body.historico,
+        originalCodigo,
       })
 
       if (validationResult.status !== 200) {
@@ -1297,14 +1368,15 @@ const server = createServer(async (request, response) => {
 
       const updateResult = await pool.query(
         `UPDATE condutor
-         SET condutor = $1,
-             cpf_condutor = $2,
-             crmc = $3,
-             validade_crmc = $4::date,
-             validade_curso = $5::date,
-             tipo_vinculo = NULLIF($6, ''),
-             historico = NULLIF($7, '')
-         WHERE codigo = $8
+         SET codigo = $1,
+             condutor = $2,
+             cpf_condutor = $3,
+             crmc = $4,
+             validade_crmc = $5::date,
+             validade_curso = $6::date,
+             tipo_vinculo = NULLIF($7, ''),
+             historico = NULLIF($8, '')
+         WHERE codigo = $9
          RETURNING
            codigo::text AS codigo,
            BTRIM(condutor) AS condutor,
@@ -1315,6 +1387,7 @@ const server = createServer(async (request, response) => {
            COALESCE(BTRIM(tipo_vinculo), '') AS tipo_vinculo,
            COALESCE(BTRIM(historico), '') AS historico`,
         [
+          validationResult.payload.codigo,
           validationResult.payload.condutor,
           validationResult.payload.cpfCondutor,
           validationResult.payload.crmc,

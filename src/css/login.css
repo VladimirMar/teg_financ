@@ -24,6 +24,10 @@ main {
   max-width: 1120px;
 }
 
+body:has(#condutor-grid-body) .dsc-container {
+  max-width: 1480px;
+}
+
 .dsc-status-banner {
   position: sticky;
   top: 0;
@@ -171,6 +175,7 @@ main {
   gap: 16px;
 }
 
+#condutor-form,
 #login-dre-form {
   max-width: 900px;
 }
@@ -180,6 +185,11 @@ main {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   align-items: start;
+}
+
+.dsc-form-row .dsc-field-group,
+.dsc-form-row .dsc-form-control {
+  min-width: 0;
 }
 
 .dsc-login-dre-form-row .dsc-field-group {
@@ -203,6 +213,34 @@ main {
   gap: 8px;
   font-weight: 700;
   color: #213139;
+}
+
+.dsc-radio-field-group {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.dsc-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.dsc-radio-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+  color: #213139;
+}
+
+.dsc-radio-option input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #c85c2c;
 }
 
 .dsc-access-form-buttons {
@@ -243,6 +281,10 @@ main {
   min-height: 440px;
 }
 
+body:has(#condutor-grid-body) .dsc-access-grid-card {
+  width: min(100%, 1440px);
+}
+
 .dsc-access-grid-header {
   display: flex;
   align-items: center;
@@ -267,11 +309,20 @@ main {
   border-collapse: collapse;
 }
 
+body:has(#condutor-grid-body) .dsc-access-grid {
+  min-width: 1320px;
+}
+
 .dsc-access-grid th,
 .dsc-access-grid td {
   padding: 12px 10px;
   text-align: left;
   border-bottom: 1px solid rgba(33, 49, 57, 0.12);
+}
+
+body:has(#condutor-grid-body) .dsc-access-grid th,
+body:has(#condutor-grid-body) .dsc-access-grid td {
+  white-space: nowrap;
 }
 
 .dsc-access-grid th {
