@@ -1,8 +1,18 @@
 import { createServer } from 'node:http'
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
+import { XMLParser } from 'fast-xml-parser'
+import path from 'node:path'
 import { Pool } from 'pg'
+import { fileURLToPath } from 'node:url'
 
 const port = Number(process.env.PORT ?? 3001)
+const workspaceRoot = path.dirname(fileURLToPath(import.meta.url))
+const importXmlDirectory = path.join(workspaceRoot, 'importXML')
+const xmlParser = new XMLParser({
+  ignoreAttributes: false,
+  trimValues: true,
+})
 
 const pool = new Pool({
   host: process.env.PGHOST ?? 'localhost',
@@ -46,11 +56,11 @@ const readJsonBody = (request) => new Promise((resolve, reject) => {
 })
 
 const normalizeDbValue = (value) => {
-  return typeof value === 'string' ? value.trim() : ''
+  return value === null || value === undefined ? '' : String(value).trim()
 }
 
 const normalizeRequestValue = (value) => {
-  return typeof value === 'string' ? value.trim() : ''
+  return value === null || value === undefined ? '' : String(value).trim()
 }
 
 const normalizeAccessName = (value) => {
@@ -148,8 +158,12 @@ const createAccessHashPayload = (password) => {
 
 const normalizeCondutorName = (value) => {
   return normalizeRequestValue(value)
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[^A-ZÀ-Ýa-zà-ý\s]/g, ' ')
+    .toUpperCase()
     .toUpperCase()
     .replace(/\s+/g, ' ')
+    .trim()
 }
 
 const normalizeCondutorCodigo = (value) => {
@@ -237,6 +251,280 @@ const normalizeTipoVinculo = (value) => {
 
 const normalizeHistorico = (value) => {
   return normalizeRequestValue(value).slice(0, 200)
+}
+
+const normalizeXmlDateInput = (value) => {
+  const normalizedValue = normalizeRequestValue(value)
+
+  if (!normalizedValue) {
+    return ''
+  }
+
+  const match = normalizedValue.match(/^(\d{4}-\d{2}-\d{2})/)
+  return match ? match[1] : ''
+}
+
+const parseCondutorXml = (xmlContent) => {
+  const parsed = xmlParser.parse(xmlContent)
+  const rawRecords = parsed?.dataroot?.Condutor
+  const records = (Array.isArray(rawRecords)
+    ? rawRecords
+    : rawRecords
+      ? [rawRecords]
+      : [])
+    .filter((record) => record && typeof record === 'object')
+
+  return records.map((record) => {
+    const validadeCrmc = normalizeXmlDateInput(record?.VAL_CRMC)
+    const validadeCurso = normalizeXmlDateInput(record?.VCurso_condutor)
+      || normalizeXmlDateInput(record?.Curso_condutor)
+      || validadeCrmc
+
+    return {
+      codigo: normalizeRequestValue(record?.Código),
+      condutor: normalizeRequestValue(record?.Condutor),
+      cpfCondutor: normalizeRequestValue(record?.CPF_condutor),
+      crmc: normalizeRequestValue(record?.CRMC),
+      validadeCrmc,
+      validadeCurso,
+      tipoVinculo: normalizeRequestValue(record?.Tipo_de_vinculo),
+      historico: normalizeRequestValue(record?.Historico),
+    }
+  })
+}
+
+const normalizeImportedCondutorRecord = (record, index) => {
+  const codigo = normalizeCondutorCodigo(record.codigo)
+  const condutor = normalizeCondutorName(record.condutor)
+  const cpfCondutor = normalizeCpf(record.cpfCondutor)
+  const crmc = normalizeCrmc(record.crmc)
+  const validadeCrmc = normalizeXmlDateInput(record.validadeCrmc)
+  const validadeCurso = normalizeXmlDateInput(record.validadeCurso)
+  const tipoVinculo = normalizeTipoVinculo(record.tipoVinculo)
+  const historico = normalizeHistorico(record.historico)
+  const itemLabel = `Registro ${index + 1}`
+
+  if (codigo === null || Number.isNaN(codigo)) {
+    throw new Error(`${itemLabel}: codigo invalido no XML.`)
+  }
+
+  if (!condutor || !isCondutorNameValid(condutor)) {
+    throw new Error(`${itemLabel}: nome do condutor invalido no XML.`)
+  }
+
+  if (!isCpfValid(cpfCondutor)) {
+    throw new Error(`${itemLabel}: CPF invalido no XML.`)
+  }
+
+  if (!isCrmcValid(crmc)) {
+    throw new Error(`${itemLabel}: CRMC invalido no XML.`)
+  }
+
+  if (!validadeCrmc || !isDateInputValid(validadeCrmc)) {
+    throw new Error(`${itemLabel}: validade do CRMC invalida no XML.`)
+  }
+
+  if (validadeCurso && !isDateInputValid(validadeCurso)) {
+    throw new Error(`${itemLabel}: validade do curso invalida no XML.`)
+  }
+
+  if (tipoVinculo === null) {
+    throw new Error(`${itemLabel}: tipo de vinculo invalido no XML.`)
+  }
+
+  return {
+    codigo,
+    condutor,
+    cpfCondutor,
+    crmc,
+    validadeCrmc,
+    validadeCurso,
+    tipoVinculo,
+    historico,
+  }
+}
+
+const condutorSelectClause = `
+  codigo::text AS codigo,
+  BTRIM(condutor) AS condutor,
+  BTRIM(cpf_condutor) AS cpf_condutor,
+  BTRIM(crmc) AS crmc,
+  TO_CHAR(validade_crmc::date, 'YYYY-MM-DD') AS validade_crmc,
+  TO_CHAR(validade_curso::date, 'YYYY-MM-DD') AS validade_curso,
+  COALESCE(BTRIM(tipo_vinculo), '') AS tipo_vinculo,
+  COALESCE(BTRIM(historico), '') AS historico,
+  TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
+  TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
+
+const condutorImportRecusaSelectClause = `
+  id::text AS id,
+  BTRIM(arquivo_xml) AS arquivo_xml,
+  linha_xml::text AS linha_xml,
+  COALESCE(BTRIM(codigo_xml), '') AS codigo_xml,
+  COALESCE(BTRIM(condutor_xml), '') AS condutor_xml,
+  COALESCE(BTRIM(cpf_condutor_xml), '') AS cpf_condutor_xml,
+  COALESCE(BTRIM(crmc_xml), '') AS crmc_xml,
+  COALESCE(BTRIM(tipo_vinculo_xml), '') AS tipo_vinculo_xml,
+  BTRIM(motivo_recusa) AS motivo_recusa,
+  TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
+
+const importCondutorXmlFile = async (fileName) => {
+  const sanitizedFileName = path.basename(normalizeRequestValue(fileName))
+
+  if (!sanitizedFileName) {
+    throw new Error('Nome do arquivo XML e obrigatorio.')
+  }
+
+  if (path.extname(sanitizedFileName).toLowerCase() !== '.xml') {
+    throw new Error('Informe um arquivo XML valido.')
+  }
+
+  const resolvedPath = path.resolve(importXmlDirectory, sanitizedFileName)
+
+  if (!resolvedPath.startsWith(importXmlDirectory)) {
+    throw new Error('Arquivo XML invalido.')
+  }
+
+  const xmlContent = await readFile(resolvedPath, 'utf8')
+  const parsedRecords = parseCondutorXml(xmlContent)
+
+  if (!parsedRecords.length) {
+    throw new Error('Nenhum registro de condutor foi encontrado no XML informado.')
+  }
+
+  const normalizedRecords = []
+  const skippedRecords = []
+
+  parsedRecords.forEach((record, index) => {
+    try {
+      normalizedRecords.push(normalizeImportedCondutorRecord(record, index))
+    } catch (error) {
+      skippedRecords.push({
+        index: index + 1,
+        codigoXml: normalizeRequestValue(record.codigo),
+        condutorXml: normalizeRequestValue(record.condutor),
+        cpfCondutorXml: normalizeRequestValue(record.cpfCondutor),
+        crmcXml: normalizeRequestValue(record.crmc),
+        tipoVinculoXml: normalizeRequestValue(record.tipoVinculo),
+        message: error instanceof Error ? error.message : `Registro ${index + 1}: erro ao validar o XML.`,
+      })
+    }
+  })
+
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+    await client.query('TRUNCATE TABLE condutor_import_recusa RESTART IDENTITY')
+    let inserted = 0
+    let updated = 0
+
+    for (const skippedRecord of skippedRecords) {
+      await client.query(
+        `INSERT INTO condutor_import_recusa (
+           arquivo_xml,
+           linha_xml,
+           codigo_xml,
+           condutor_xml,
+           cpf_condutor_xml,
+           crmc_xml,
+           tipo_vinculo_xml,
+           motivo_recusa,
+           data_importacao
+         )
+         VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, ''), NULLIF($7, ''), $8, NOW())`,
+        [
+          sanitizedFileName,
+          skippedRecord.index,
+          skippedRecord.codigoXml,
+          skippedRecord.condutorXml,
+          skippedRecord.cpfCondutorXml,
+          skippedRecord.crmcXml,
+          skippedRecord.tipoVinculoXml,
+          skippedRecord.message,
+        ],
+      )
+    }
+
+    for (const record of normalizedRecords) {
+      const existingResult = await client.query('SELECT 1 FROM condutor WHERE codigo = $1 LIMIT 1', [record.codigo])
+
+      if (existingResult.rowCount > 0) {
+        await client.query(
+          `UPDATE condutor
+           SET condutor = $1,
+               cpf_condutor = $2,
+               crmc = $3,
+               validade_crmc = $4::date,
+               validade_curso = NULLIF($5, '')::date,
+               tipo_vinculo = NULLIF($6, ''),
+               historico = NULLIF($7, ''),
+               data_modificacao = NOW()
+           WHERE codigo = $8`,
+          [
+            record.condutor,
+            record.cpfCondutor,
+            record.crmc,
+            record.validadeCrmc,
+            record.validadeCurso,
+            record.tipoVinculo,
+            record.historico,
+            record.codigo,
+          ],
+        )
+        updated += 1
+        continue
+      }
+
+      await client.query(
+        `INSERT INTO condutor (
+           codigo,
+           condutor,
+           cpf_condutor,
+           crmc,
+           validade_crmc,
+           validade_curso,
+           tipo_vinculo,
+           historico,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, $3, $4, $5::date, NULLIF($6, '')::date, NULLIF($7, ''), NULLIF($8, ''), NOW(), NOW())`,
+        [
+          record.codigo,
+          record.condutor,
+          record.cpfCondutor,
+          record.crmc,
+          record.validadeCrmc,
+          record.validadeCurso,
+          record.tipoVinculo,
+          record.historico,
+        ],
+      )
+      inserted += 1
+    }
+
+    if (normalizedRecords.length) {
+      await client.query('SELECT setval(\'condutor_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM condutor), 0), 1), true)')
+    }
+    await client.query('COMMIT')
+
+    return {
+      fileName: sanitizedFileName,
+      filePath: resolvedPath,
+      total: parsedRecords.length,
+      processed: normalizedRecords.length,
+      inserted,
+      updated,
+      skipped: skippedRecords.length,
+      skippedRecords: skippedRecords.slice(0, 20),
+    }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
 }
 
 const isDateInputValid = (value) => {
@@ -563,10 +851,37 @@ const ensureDatabaseSchema = async () => {
   await pool.query('ALTER TABLE login ALTER COLUMN codigo SET NOT NULL')
   await pool.query('ALTER TABLE login ALTER COLUMN nome SET NOT NULL')
   await pool.query('CREATE SEQUENCE IF NOT EXISTS condutor_codigo_seq START WITH 1 INCREMENT BY 1')
+  await pool.query('ALTER TABLE condutor ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone')
+  await pool.query('ALTER TABLE condutor ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone')
   await pool.query('ALTER TABLE condutor ALTER COLUMN codigo SET DEFAULT nextval(\'condutor_codigo_seq\')')
+  await pool.query('ALTER TABLE condutor ALTER COLUMN data_inclusao SET DEFAULT NOW()')
+  await pool.query('ALTER TABLE condutor ALTER COLUMN data_modificacao SET DEFAULT NOW()')
   await pool.query('ALTER SEQUENCE condutor_codigo_seq OWNED BY condutor.codigo')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS condutor_import_recusa (
+      id bigserial PRIMARY KEY,
+      arquivo_xml varchar(255) NOT NULL,
+      linha_xml integer NOT NULL,
+      codigo_xml varchar(50),
+      condutor_xml varchar(150),
+      cpf_condutor_xml varchar(20),
+      crmc_xml varchar(20),
+      tipo_vinculo_xml varchar(50),
+      motivo_recusa text NOT NULL,
+      data_importacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query(`
+    UPDATE condutor
+    SET data_inclusao = COALESCE(data_inclusao, NOW()),
+        data_modificacao = COALESCE(data_modificacao, COALESCE(data_inclusao, NOW()))
+    WHERE data_inclusao IS NULL OR data_modificacao IS NULL
+  `)
   await pool.query('SELECT setval(\'condutor_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM condutor), 0), 1), true)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_codigo_unique_idx ON login (codigo)')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS condutor_codigo_unique_idx ON condutor (codigo)')
+  await pool.query('CREATE INDEX IF NOT EXISTS condutor_import_recusa_data_idx ON condutor_import_recusa (data_importacao DESC)')
+  await pool.query('CREATE INDEX IF NOT EXISTS condutor_import_recusa_arquivo_idx ON condutor_import_recusa (arquivo_xml)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_nome_unique_idx ON login (UPPER(BTRIM(nome)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_email_unique_idx ON login (LOWER(TRIM(email)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_dre_unique_idx ON login_dre (login_codigo, dre_codigo)')
@@ -751,14 +1066,7 @@ const server = createServer(async (request, response) => {
       values.push(offset)
       const result = await pool.query(
         `SELECT
-           codigo::text AS codigo,
-           BTRIM(condutor) AS condutor,
-           BTRIM(cpf_condutor) AS cpf_condutor,
-           BTRIM(crmc) AS crmc,
-           TO_CHAR(validade_crmc::date, 'YYYY-MM-DD') AS validade_crmc,
-           TO_CHAR(validade_curso::date, 'YYYY-MM-DD') AS validade_curso,
-           COALESCE(BTRIM(tipo_vinculo), '') AS tipo_vinculo,
-           COALESCE(BTRIM(historico), '') AS historico
+           ${condutorSelectClause}
          FROM condutor
          ${whereClause}
          ORDER BY ${orderByClause}
@@ -781,6 +1089,66 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar condutores.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/condutor/import-rejections') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 10) || 10, 1), 100)
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          arquivo_xml ILIKE $${values.length}
+          OR COALESCE(codigo_xml, '') ILIKE $${values.length}
+          OR COALESCE(condutor_xml, '') ILIKE $${values.length}
+          OR COALESCE(cpf_condutor_xml, '') ILIKE $${values.length}
+          OR COALESCE(crmc_xml, '') ILIKE $${values.length}
+          OR COALESCE(tipo_vinculo_xml, '') ILIKE $${values.length}
+          OR motivo_recusa ILIKE $${values.length}
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM condutor_import_recusa ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           ${condutorImportRecusaSelectClause}
+         FROM condutor_import_recusa
+         ${whereClause}
+         ORDER BY data_importacao DESC, linha_xml ASC, id DESC
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar recusas de importacao do condutor.'
 
       sendJson(response, 500, { message })
     }
@@ -1154,17 +1522,20 @@ const server = createServer(async (request, response) => {
       }
 
       const insertResult = await pool.query(
-        `INSERT INTO condutor (codigo, condutor, cpf_condutor, crmc, validade_crmc, validade_curso, tipo_vinculo, historico)
-         VALUES ($1, $2, $3, $4, $5::date, $6::date, NULLIF($7, ''), NULLIF($8, ''))
-         RETURNING
-           codigo::text AS codigo,
-           BTRIM(condutor) AS condutor,
-           BTRIM(cpf_condutor) AS cpf_condutor,
-           BTRIM(crmc) AS crmc,
-           TO_CHAR(validade_crmc::date, 'YYYY-MM-DD') AS validade_crmc,
-           TO_CHAR(validade_curso::date, 'YYYY-MM-DD') AS validade_curso,
-           COALESCE(BTRIM(tipo_vinculo), '') AS tipo_vinculo,
-           COALESCE(BTRIM(historico), '') AS historico`,
+        `INSERT INTO condutor (
+           codigo,
+           condutor,
+           cpf_condutor,
+           crmc,
+           validade_crmc,
+           validade_curso,
+           tipo_vinculo,
+           historico,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, $3, $4, $5::date, $6::date, NULLIF($7, ''), NULLIF($8, ''), NOW(), NOW())
+         RETURNING ${condutorSelectClause}`,
         [
           validationResult.payload.codigo,
           validationResult.payload.condutor,
@@ -1184,6 +1555,26 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao cadastrar condutor.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/condutor/import-xml') {
+    try {
+      const body = await readJsonBody(request)
+      const result = await importCondutorXmlFile(body.fileName)
+
+      sendJson(response, 200, {
+        message: 'Importacao de condutores concluida com sucesso.',
+        ...result,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao importar condutores do XML.'
 
       sendJson(response, 500, { message })
     }
@@ -1375,17 +1766,10 @@ const server = createServer(async (request, response) => {
              validade_crmc = $5::date,
              validade_curso = $6::date,
              tipo_vinculo = NULLIF($7, ''),
-             historico = NULLIF($8, '')
+             historico = NULLIF($8, ''),
+             data_modificacao = NOW()
          WHERE codigo = $9
-         RETURNING
-           codigo::text AS codigo,
-           BTRIM(condutor) AS condutor,
-           BTRIM(cpf_condutor) AS cpf_condutor,
-           BTRIM(crmc) AS crmc,
-           TO_CHAR(validade_crmc::date, 'YYYY-MM-DD') AS validade_crmc,
-           TO_CHAR(validade_curso::date, 'YYYY-MM-DD') AS validade_curso,
-           COALESCE(BTRIM(tipo_vinculo), '') AS tipo_vinculo,
-           COALESCE(BTRIM(historico), '') AS historico`,
+         RETURNING ${condutorSelectClause}`,
         [
           validationResult.payload.codigo,
           validationResult.payload.condutor,

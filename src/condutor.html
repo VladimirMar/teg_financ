@@ -17,11 +17,75 @@
             <div class="dsc-access-toolbar">
               <form class="dsc-access-filter-form" id="condutor-filter-form">
                 <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-condutor-button">Inserir registro</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-condutor-import-button">Importar XML</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-condutor-rejections-button">Recusas XML</button>
                 <input class="dsc-form-control dsc-access-filter-input" id="condutor-search" type="text" placeholder="Filtrar por codigo, condutor, CPF ou CRMC" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-condutor-filter-button">Limpar</button>
               </form>
             </div>
+
+            <section class="dsc-card dsc-hidden" id="condutor-rejection-panel">
+              <div class="dsc-access-grid-header">
+                <h2>Registros nao importados</h2>
+                <span id="condutor-rejection-total"></span>
+              </div>
+
+              <form class="dsc-access-filter-form" id="condutor-rejection-filter-form">
+                <input class="dsc-form-control dsc-access-filter-input" id="condutor-rejection-search" type="text" placeholder="Filtrar por arquivo, codigo, condutor, CRMC ou motivo" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-condutor-rejection-filter-button">Limpar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="close-condutor-rejection-panel-button">Fechar</button>
+              </form>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Data importacao</th>
+                      <th>Arquivo XML</th>
+                      <th>Linha XML</th>
+                      <th>Codigo XML</th>
+                      <th>Condutor XML</th>
+                      <th>CPF XML</th>
+                      <th>CRMC XML</th>
+                      <th>Tipo vinculo XML</th>
+                      <th>Motivo da recusa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="condutor-rejection-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="condutor-rejection-empty-state">Nenhum registro recusado encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="condutor-rejection-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-condutor-rejection-page-button">Anterior</button>
+                <span id="condutor-rejection-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-condutor-rejection-page-button">Proxima</button>
+              </div>
+            </section>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="condutor-import-form">
+              <h2>Importacao de condutor por XML</h2>
+
+              <label class="dsc-field-group" for="condutor-import-file-name">
+                <span>Nome do arquivo XML</span>
+                <input class="dsc-form-control" id="condutor-import-file-name" type="text" placeholder="Condutor.xml" />
+                <div class="dsc-form-error" id="condutor-import-file-name-error"></div>
+              </label>
+
+              <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-condutor-import-button">Executar importacao</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-condutor-import-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="condutor-import-feedback"></p>
+            </form>
 
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="condutor-form">
               <h2 id="condutor-form-title">Novo registro</h2>
@@ -122,6 +186,8 @@
                       <th>Validade CRMC</th>
                       <th>Validade curso</th>
                       <th>Tipo vinculo</th>
+                      <th>Inclusao</th>
+                      <th>Modificacao</th>
                       <th class="dsc-grid-actions-column">Acoes</th>
                     </tr>
                   </thead>
@@ -162,7 +228,14 @@
       const feedback = document.getElementById('condutor-form-feedback');
       const gridFeedback = document.getElementById('condutor-grid-feedback');
       const insertButton = document.getElementById('insert-condutor-button');
+      const importButton = document.getElementById('open-condutor-import-button');
+      const rejectionButton = document.getElementById('open-condutor-rejections-button');
       const cancelButton = document.getElementById('cancel-condutor-button');
+      const importForm = document.getElementById('condutor-import-form');
+      const importFileNameInput = document.getElementById('condutor-import-file-name');
+      const importFileNameError = document.getElementById('condutor-import-file-name-error');
+      const importFeedback = document.getElementById('condutor-import-feedback');
+      const cancelImportButton = document.getElementById('cancel-condutor-import-button');
       const filterForm = document.getElementById('condutor-filter-form');
       const clearFilterButton = document.getElementById('clear-condutor-filter-button');
       const searchInput = document.getElementById('condutor-search');
@@ -178,13 +251,30 @@
       const saveButton = document.getElementById('save-condutor-button');
       const statusBanner = document.getElementById('status-banner');
       const tipoVinculoRadios = Array.from(document.querySelectorAll('input[name="condutor-tipo-vinculo"]'));
+      const rejectionPanel = document.getElementById('condutor-rejection-panel');
+      const rejectionFilterForm = document.getElementById('condutor-rejection-filter-form');
+      const rejectionSearchInput = document.getElementById('condutor-rejection-search');
+      const rejectionGridBody = document.getElementById('condutor-rejection-grid-body');
+      const rejectionEmptyState = document.getElementById('condutor-rejection-empty-state');
+      const rejectionGridFeedback = document.getElementById('condutor-rejection-grid-feedback');
+      const rejectionTotalLabel = document.getElementById('condutor-rejection-total');
+      const previousRejectionPageButton = document.getElementById('previous-condutor-rejection-page-button');
+      const nextRejectionPageButton = document.getElementById('next-condutor-rejection-page-button');
+      const rejectionPaginationInfo = document.getElementById('condutor-rejection-pagination-info');
+      const clearRejectionFilterButton = document.getElementById('clear-condutor-rejection-filter-button');
+      const closeRejectionPanelButton = document.getElementById('close-condutor-rejection-panel-button');
 
       const pageSize = 5;
+      const rejectionPageSize = 10;
+      const defaultImportFileName = 'Condutor.xml';
       let currentPage = 1;
       let totalPages = 1;
       let currentSearch = '';
       let currentSortBy = 'codigo';
       let currentSortDirection = 'asc';
+      let currentRejectionPage = 1;
+      let totalRejectionPages = 1;
+      let currentRejectionSearch = '';
       let editingCodigo = null;
       let bannerTimeoutId = null;
 
@@ -206,7 +296,13 @@
         });
       };
 
-      const normalizeName = (value) => value.toUpperCase().replace(/[^A-ZÀ-Ý\s]/g, '').replace(/\s+/g, ' ').trimStart().slice(0, 100);
+      const normalizeName = (value) => value
+        .replace(/\([^)]*\)/g, ' ')
+        .toUpperCase()
+        .replace(/[^A-ZÀ-Ý\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trimStart()
+        .slice(0, 100);
       const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
       const normalizeCpf = (value) => {
         const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -239,6 +335,15 @@
         return `${digits.slice(0, 3)}.${digits.slice(3, 6)}-${digits.slice(6, 8)}`;
       };
       const formatDateLabel = (value) => value ? value.split('-').reverse().join('/') : '';
+      const formatDateTimeLabel = (value) => {
+        if (!value) {
+          return '';
+        }
+
+        const [datePart, timePart = ''] = value.split(' ');
+        const formattedDate = formatDateLabel(datePart);
+        return timePart ? `${formattedDate} ${timePart.slice(0, 5)}` : formattedDate;
+      };
 
       const resetMessages = () => {
         codigoError.textContent = '';
@@ -249,6 +354,20 @@
         validadeCursoError.textContent = '';
         feedback.textContent = '';
         feedback.className = 'dsc-feedback';
+      };
+
+      const resetImportMessages = () => {
+        importFileNameError.textContent = '';
+        importFeedback.textContent = '';
+        importFeedback.className = 'dsc-feedback';
+      };
+
+      const setRejectionGridMessage = (message, tone = '') => {
+        rejectionGridFeedback.textContent = message;
+        rejectionGridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          rejectionGridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
       };
 
       const setGridMessage = (message, tone = '') => {
@@ -274,9 +393,29 @@
       };
 
       const showForm = (isEditing = false) => {
+        importForm.classList.add('dsc-hidden');
+        rejectionPanel.classList.add('dsc-hidden');
         form.classList.remove('dsc-hidden');
         formTitle.textContent = isEditing ? 'Alteracao de condutor' : 'Cadastro de condutor';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar condutor';
+      };
+
+      const showImportForm = () => {
+        form.classList.add('dsc-hidden');
+        rejectionPanel.classList.add('dsc-hidden');
+        importForm.classList.remove('dsc-hidden');
+        importFileNameInput.value = defaultImportFileName;
+        resetImportMessages();
+      };
+
+      const showRejectionPanel = async (search = currentRejectionSearch) => {
+        form.classList.add('dsc-hidden');
+        importForm.classList.add('dsc-hidden');
+        rejectionPanel.classList.remove('dsc-hidden');
+        currentRejectionSearch = search;
+        rejectionSearchInput.value = search;
+        currentRejectionPage = 1;
+        await loadRejectionItems();
       };
 
       const hideForm = () => {
@@ -286,6 +425,19 @@
         setSelectedTipoVinculo('');
         editingCodigo = null;
         resetMessages();
+      };
+
+      const hideImportForm = () => {
+        importForm.classList.add('dsc-hidden');
+        importFileNameInput.value = defaultImportFileName;
+        resetImportMessages();
+      };
+
+      const hideRejectionPanel = () => {
+        rejectionPanel.classList.add('dsc-hidden');
+        rejectionGridBody.innerHTML = '';
+        rejectionEmptyState.classList.add('dsc-hidden');
+        setRejectionGridMessage('');
       };
 
       const buildUrl = () => {
@@ -301,6 +453,19 @@
         }
 
         return `/api/condutor?${params.toString()}`;
+      };
+
+      const buildRejectionUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentRejectionPage),
+          pageSize: String(rejectionPageSize),
+        });
+
+        if (currentRejectionSearch) {
+          params.set('search', currentRejectionSearch);
+        }
+
+        return `/api/condutor/import-rejections?${params.toString()}`;
       };
 
       const renderGrid = (items) => {
@@ -323,6 +488,8 @@
             <td>${formatDateLabel(item.validade_crmc)}</td>
             <td>${formatDateLabel(item.validade_curso)}</td>
             <td>${item.tipo_vinculo || ''}</td>
+            <td>${formatDateTimeLabel(item.data_inclusao)}</td>
+            <td>${formatDateTimeLabel(item.data_modificacao)}</td>
             <td>
               <div class="dsc-grid-actions">
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
@@ -335,12 +502,46 @@
         });
       };
 
+      const renderRejectionGrid = (items) => {
+        rejectionGridBody.innerHTML = '';
+
+        if (!items.length) {
+          rejectionEmptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        rejectionEmptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${formatDateTimeLabel(item.data_importacao)}</td>
+            <td>${item.arquivo_xml}</td>
+            <td>${item.linha_xml}</td>
+            <td>${item.codigo_xml || ''}</td>
+            <td>${item.condutor_xml || ''}</td>
+            <td>${item.cpf_condutor_xml || ''}</td>
+            <td>${item.crmc_xml || ''}</td>
+            <td>${item.tipo_vinculo_xml || ''}</td>
+            <td>${item.motivo_recusa}</td>
+          `;
+          rejectionGridBody.appendChild(row);
+        });
+      };
+
       const updatePagination = (totalItems) => {
         totalLabel.textContent = `${totalItems} item(ns) encontrados`;
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
         sortCondutorIndicator.textContent = currentSortBy === 'condutor' && currentSortDirection === 'desc' ? '↓' : '↑';
+      };
+
+      const updateRejectionPagination = (totalItems) => {
+        rejectionTotalLabel.textContent = `${totalItems} recusa(s) encontrada(s)`;
+        rejectionPaginationInfo.textContent = `Pagina ${currentRejectionPage} de ${totalRejectionPages}`;
+        previousRejectionPageButton.disabled = currentRejectionPage <= 1;
+        nextRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
       };
 
       const loadItems = async () => {
@@ -363,6 +564,29 @@
           gridBody.innerHTML = '';
           emptyState.classList.remove('dsc-hidden');
           setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar condutores.', 'error');
+        }
+      };
+
+      const loadRejectionItems = async () => {
+        setRejectionGridMessage('Carregando recusas de importacao...');
+
+        try {
+          const response = await fetch(buildRejectionUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar recusas de importacao.');
+          }
+
+          totalRejectionPages = payload.totalPages || 1;
+          currentRejectionPage = payload.page || 1;
+          renderRejectionGrid(payload.items || []);
+          updateRejectionPagination(payload.total || 0);
+          setRejectionGridMessage(payload.items && payload.items.length ? '' : 'Nenhum registro recusado encontrado.');
+        } catch (error) {
+          rejectionGridBody.innerHTML = '';
+          rejectionEmptyState.classList.remove('dsc-hidden');
+          setRejectionGridMessage(error instanceof Error ? error.message : 'Falha ao carregar recusas de importacao.', 'error');
         }
       };
 
@@ -560,7 +784,70 @@
       });
 
       insertButton.addEventListener('click', startInsert);
+      importButton.addEventListener('click', showImportForm);
+      rejectionButton.addEventListener('click', () => {
+        void showRejectionPanel();
+      });
       cancelButton.addEventListener('click', hideForm);
+      cancelImportButton.addEventListener('click', hideImportForm);
+      closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
+
+      importForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const fileName = importFileNameInput.value.trim();
+        resetImportMessages();
+        importFileNameInput.value = fileName;
+
+        if (!fileName) {
+          importFileNameError.textContent = 'Informe o nome do arquivo XML.';
+          importFeedback.textContent = 'Corrija os campos para continuar.';
+          importFeedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        const confirmed = window.confirm(`Executar a importacao do arquivo ${fileName}? Os registros existentes serao alterados e novos registros serao incluidos.`);
+
+        if (!confirmed) {
+          return;
+        }
+
+        importFeedback.textContent = 'Importando condutores...';
+
+        try {
+          const response = await fetch('/api/condutor/import-xml', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ fileName }),
+          });
+
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao importar condutores do XML.');
+          }
+
+          const skippedMessage = payload.skipped ? ` ${payload.skipped} registro(s) invalido(s) foram ignorado(s).` : '';
+          const successMessage = `Importacao concluida: ${payload.inserted} incluido(s) e ${payload.updated} alterado(s) a partir de ${payload.fileName}.${skippedMessage}`;
+          importFeedback.textContent = successMessage;
+          importFeedback.classList.add('dsc-feedback-success');
+          setGridMessage(successMessage, 'success');
+          showBanner(successMessage, 'success');
+          hideImportForm();
+          await loadItems();
+          if (payload.skipped) {
+            await showRejectionPanel(payload.fileName);
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao importar condutores do XML.';
+          importFeedback.textContent = message;
+          importFeedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
 
       filterForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -569,11 +856,25 @@
         void loadItems();
       });
 
+      rejectionFilterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentRejectionSearch = rejectionSearchInput.value.trim();
+        currentRejectionPage = 1;
+        void loadRejectionItems();
+      });
+
       clearFilterButton.addEventListener('click', () => {
         searchInput.value = '';
         currentSearch = '';
         currentPage = 1;
         void loadItems();
+      });
+
+      clearRejectionFilterButton.addEventListener('click', () => {
+        rejectionSearchInput.value = '';
+        currentRejectionSearch = '';
+        currentRejectionPage = 1;
+        void loadRejectionItems();
       });
 
       previousPageButton.addEventListener('click', () => {
@@ -594,6 +895,24 @@
         void loadItems();
       });
 
+      previousRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage <= 1) {
+          return;
+        }
+
+        currentRejectionPage -= 1;
+        void loadRejectionItems();
+      });
+
+      nextRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage >= totalRejectionPages) {
+          return;
+        }
+
+        currentRejectionPage += 1;
+        void loadRejectionItems();
+      });
+
       sortCondutorButton.addEventListener('click', () => {
         currentSortDirection = currentSortBy === 'condutor' && currentSortDirection === 'asc' ? 'desc' : 'asc';
         currentSortBy = 'condutor';
@@ -602,6 +921,8 @@
       });
 
       hideForm();
+      hideImportForm();
+      hideRejectionPanel();
       void loadItems();
     </script>
   </body>

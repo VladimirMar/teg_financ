@@ -24,7 +24,8 @@ main {
   max-width: 1120px;
 }
 
-body:has(#condutor-grid-body) .dsc-container {
+body:has(#condutor-grid-body) .dsc-container,
+body:has(#condutor-rejection-grid-body) .dsc-container {
   max-width: 1480px;
 }
 
@@ -102,6 +103,11 @@ body:has(#condutor-grid-body) .dsc-container {
   min-width: 200px;
 }
 
+.dsc-access-import-button {
+  flex: 0 0 auto;
+  min-width: 180px;
+}
+
 .dsc-access-bulk-button {
   flex: 0 0 auto;
   min-width: 240px;
@@ -176,6 +182,8 @@ body:has(#condutor-grid-body) .dsc-container {
 }
 
 #condutor-form,
+#condutor-import-form,
+#condutor-rejection-panel,
 #login-dre-form {
   max-width: 900px;
 }
@@ -281,7 +289,8 @@ body:has(#condutor-grid-body) .dsc-container {
   min-height: 440px;
 }
 
-body:has(#condutor-grid-body) .dsc-access-grid-card {
+body:has(#condutor-grid-body) .dsc-access-grid-card,
+body:has(#condutor-rejection-grid-body) .dsc-access-grid-card {
   width: min(100%, 1440px);
 }
 
@@ -310,7 +319,11 @@ body:has(#condutor-grid-body) .dsc-access-grid-card {
 }
 
 body:has(#condutor-grid-body) .dsc-access-grid {
-  min-width: 1320px;
+  min-width: 1580px;
+}
+
+body:has(#condutor-rejection-grid-body) .dsc-access-grid {
+  min-width: 1820px;
 }
 
 .dsc-access-grid th,
@@ -321,7 +334,9 @@ body:has(#condutor-grid-body) .dsc-access-grid {
 }
 
 body:has(#condutor-grid-body) .dsc-access-grid th,
-body:has(#condutor-grid-body) .dsc-access-grid td {
+body:has(#condutor-grid-body) .dsc-access-grid td,
+body:has(#condutor-rejection-grid-body) .dsc-access-grid th,
+body:has(#condutor-rejection-grid-body) .dsc-access-grid td {
   white-space: nowrap;
 }
 
