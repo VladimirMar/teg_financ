@@ -119,12 +119,105 @@ const getAccessCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+const getLoginDrePairFromUrl = (url) => {
+  const match = url.match(/^\/api\/login-dre\/([^/]+)\/([^/]+)$/)
+
+  if (!match) {
+    return null
+  }
+
+  return {
+    loginCodigo: decodeURIComponent(match[1]),
+    dreCodigo: decodeURIComponent(match[2]),
+  }
+}
+
 const createAccessHashPayload = (password) => {
   const passwordHash = createPasswordHash(password)
 
   return {
     password: passwordHash,
     descricao: passwordHash,
+  }
+}
+
+const validateLoginDrePayload = async ({ loginCodigo, dreCodigo, originalLoginCodigo = null, originalDreCodigo = null }) => {
+  const normalizedLoginCodigo = Number(normalizeRequestValue(loginCodigo))
+  const normalizedDreCodigo = Number(normalizeRequestValue(dreCodigo))
+
+  if (!Number.isInteger(normalizedLoginCodigo) || normalizedLoginCodigo <= 0) {
+    return { status: 400, payload: { message: 'Codigo do login e obrigatorio.' } }
+  }
+
+  if (!Number.isInteger(normalizedDreCodigo) || normalizedDreCodigo <= 0) {
+    return { status: 400, payload: { message: 'Codigo da DRE e obrigatorio.' } }
+  }
+
+  const loginResult = await pool.query(
+    'SELECT codigo::text AS codigo, BTRIM(nome) AS nome FROM login WHERE codigo = $1 LIMIT 1',
+    [normalizedLoginCodigo],
+  )
+
+  if (loginResult.rowCount === 0) {
+    return { status: 404, payload: { message: 'Login nao encontrado.' } }
+  }
+
+  const dreResult = await pool.query(
+    'SELECT CAST(codigo AS text) AS codigo, BTRIM(CAST(descricao AS text)) AS descricao FROM dre WHERE codigo = $1 LIMIT 1',
+    [normalizedDreCodigo],
+  )
+
+  if (dreResult.rowCount === 0) {
+    return { status: 404, payload: { message: 'DRE nao encontrada.' } }
+  }
+
+  const duplicateResult = await pool.query(
+    `SELECT 1
+     FROM login_dre
+     WHERE login_codigo = $1
+       AND dre_codigo = $2
+       AND NOT (login_codigo = COALESCE($3, -1) AND dre_codigo = COALESCE($4, -1))
+     LIMIT 1`,
+    [normalizedLoginCodigo, normalizedDreCodigo, originalLoginCodigo, originalDreCodigo],
+  )
+
+  if (duplicateResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Relacionamento login x DRE ja cadastrado.' } }
+  }
+
+  return {
+    status: 200,
+    payload: {
+      loginCodigo: normalizedLoginCodigo,
+      dreCodigo: normalizedDreCodigo,
+      loginNome: loginResult.rows[0].nome,
+      dreDescricao: dreResult.rows[0].descricao,
+    },
+  }
+}
+
+const validateLoginCodigo = async (loginCodigo) => {
+  const normalizedLoginCodigo = Number(normalizeRequestValue(loginCodigo))
+
+  if (!Number.isInteger(normalizedLoginCodigo) || normalizedLoginCodigo <= 0) {
+    return { status: 400, payload: { message: 'Codigo do login e obrigatorio.' } }
+  }
+
+  const loginResult = await pool.query(
+    'SELECT codigo::text AS codigo, BTRIM(nome) AS nome FROM login WHERE codigo = $1 LIMIT 1',
+    [normalizedLoginCodigo],
+  )
+
+  if (loginResult.rowCount === 0) {
+    return { status: 404, payload: { message: 'Login nao encontrado.' } }
+  }
+
+  return {
+    status: 200,
+    payload: {
+      loginCodigo: normalizedLoginCodigo,
+      loginNome: loginResult.rows[0].nome,
+    },
   }
 }
 
@@ -265,6 +358,7 @@ const ensureDatabaseSchema = async () => {
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_codigo_unique_idx ON login (codigo)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_nome_unique_idx ON login (UPPER(BTRIM(nome)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_email_unique_idx ON login (LOWER(TRIM(email)))')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_dre_unique_idx ON login_dre (login_codigo, dre_codigo)')
 }
 
 const server = createServer(async (request, response) => {
@@ -403,6 +497,109 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar acessos.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/login-dre/options') {
+    try {
+      const loginsResult = await pool.query(
+        'SELECT codigo::text AS codigo, BTRIM(nome) AS nome FROM login ORDER BY codigo ASC',
+      )
+      const dreResult = await pool.query(
+        'SELECT CAST(codigo AS text) AS codigo, BTRIM(CAST(descricao AS text)) AS descricao FROM dre ORDER BY codigo ASC',
+      )
+
+      sendJson(response, 200, {
+        loginOptions: loginsResult.rows,
+        dreOptions: dreResult.rows,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao carregar opcoes de login e DRE.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/login-dre') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'login_codigo')
+      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
+        ? 'DESC'
+        : 'ASC'
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+      const orderByClause = sortBy === 'login_nome'
+        ? `UPPER(BTRIM(login_table.nome)) ${sortDirection}, relation.login_codigo ASC, relation.dre_codigo ASC`
+        : sortBy === 'dre_descricao'
+          ? `BTRIM(CAST(dre_table.descricao AS text)) ${sortDirection}, relation.login_codigo ASC, relation.dre_codigo ASC`
+          : sortBy === 'dre_codigo'
+            ? `relation.dre_codigo ${sortDirection}, relation.login_codigo ASC`
+            : `relation.login_codigo ${sortDirection}, relation.dre_codigo ASC`
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(relation.login_codigo AS text) ILIKE $${values.length}
+          OR UPPER(BTRIM(login_table.nome)) ILIKE UPPER($${values.length})
+          OR CAST(relation.dre_codigo AS text) ILIKE $${values.length}
+          OR BTRIM(CAST(dre_table.descricao AS text)) ILIKE $${values.length}
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const fromClause = `
+        FROM login_dre relation
+        INNER JOIN login login_table ON login_table.codigo = relation.login_codigo
+        INNER JOIN dre dre_table ON dre_table.codigo = relation.dre_codigo
+      `
+
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total ${fromClause} ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           relation.login_codigo::text AS login_codigo,
+           BTRIM(login_table.nome) AS login_nome,
+           relation.dre_codigo::text AS dre_codigo,
+           BTRIM(CAST(dre_table.descricao AS text)) AS dre_descricao
+         ${fromClause}
+         ${whereClause}
+         ORDER BY ${orderByClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: ['login_nome', 'dre_codigo', 'dre_descricao'].includes(sortBy) ? sortBy : 'login_codigo',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar login_dre.'
 
       sendJson(response, 500, { message })
     }
@@ -554,6 +751,105 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'POST' && pathname === '/api/login-dre') {
+    try {
+      const body = await readJsonBody(request)
+      const validationResult = await validateLoginDrePayload({
+        loginCodigo: body.loginCodigo,
+        dreCodigo: body.dreCodigo,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const { loginCodigo, dreCodigo } = validationResult.payload
+      const insertResult = await pool.query(
+        `INSERT INTO login_dre (login_codigo, dre_codigo)
+         VALUES ($1, $2)
+         RETURNING login_codigo::text AS login_codigo, dre_codigo::text AS dre_codigo`,
+        [loginCodigo, dreCodigo],
+      )
+
+      sendJson(response, 201, {
+        item: {
+          ...insertResult.rows[0],
+          login_nome: validationResult.payload.loginNome,
+          dre_descricao: validationResult.payload.dreDescricao,
+        },
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao cadastrar login_dre.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/login-dre/assign-all') {
+    try {
+      const body = await readJsonBody(request)
+      const validationResult = await validateLoginCodigo(body.loginCodigo)
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const { loginCodigo, loginNome } = validationResult.payload
+      const totalsResult = await pool.query(
+        `SELECT
+           (SELECT COUNT(*)::int FROM dre) AS total_dres,
+           (SELECT COUNT(*)::int FROM login_dre WHERE login_codigo = $1) AS existing_dres`,
+        [loginCodigo],
+      )
+
+      const insertResult = await pool.query(
+        `INSERT INTO login_dre (login_codigo, dre_codigo)
+         SELECT $1, dre_table.codigo
+         FROM dre dre_table
+         WHERE NOT EXISTS (
+           SELECT 1
+           FROM login_dre relation
+           WHERE relation.login_codigo = $1
+             AND relation.dre_codigo = dre_table.codigo
+         )
+         RETURNING dre_codigo::text AS dre_codigo`,
+        [loginCodigo],
+      )
+
+      const totals = totalsResult.rows[0] ?? { total_dres: 0, existing_dres: 0 }
+      const insertedCount = insertResult.rowCount ?? 0
+      const totalDres = totals.total_dres ?? 0
+      const existingCount = totals.existing_dres ?? 0
+
+      sendJson(response, 201, {
+        message: insertedCount > 0
+          ? `${insertedCount} DRE(s) vinculada(s) ao usuario ${loginNome}.`
+          : `Nenhuma nova DRE foi vinculada ao usuario ${loginNome}.`,
+        item: {
+          login_codigo: String(loginCodigo),
+          login_nome: loginNome,
+          total_dres: totalDres,
+          existing_dres: existingCount,
+          inserted_dres: insertedCount,
+        },
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao vincular DREs ao usuario.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'PUT' && getDreCodigoFromUrl(pathname)) {
     try {
       const originalCodigo = getDreCodigoFromUrl(pathname)
@@ -692,6 +988,67 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'PUT' && getLoginDrePairFromUrl(pathname)) {
+    try {
+      const pair = getLoginDrePairFromUrl(pathname)
+      const originalLoginCodigo = Number(pair?.loginCodigo)
+      const originalDreCodigo = Number(pair?.dreCodigo)
+      const body = await readJsonBody(request)
+
+      if (!Number.isInteger(originalLoginCodigo) || originalLoginCodigo <= 0 || !Number.isInteger(originalDreCodigo) || originalDreCodigo <= 0) {
+        sendJson(response, 400, { message: 'Chave original do relacionamento e invalida.' })
+        return
+      }
+
+      const existingResult = await pool.query(
+        'SELECT 1 FROM login_dre WHERE login_codigo = $1 AND dre_codigo = $2 LIMIT 1',
+        [originalLoginCodigo, originalDreCodigo],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Relacionamento login x DRE nao encontrado.' })
+        return
+      }
+
+      const validationResult = await validateLoginDrePayload({
+        loginCodigo: body.loginCodigo,
+        dreCodigo: body.dreCodigo,
+        originalLoginCodigo,
+        originalDreCodigo,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const { loginCodigo, dreCodigo, loginNome, dreDescricao } = validationResult.payload
+      const updateResult = await pool.query(
+        `UPDATE login_dre
+         SET login_codigo = $1, dre_codigo = $2
+         WHERE login_codigo = $3 AND dre_codigo = $4
+         RETURNING login_codigo::text AS login_codigo, dre_codigo::text AS dre_codigo`,
+        [loginCodigo, dreCodigo, originalLoginCodigo, originalDreCodigo],
+      )
+
+      sendJson(response, 200, {
+        item: {
+          ...updateResult.rows[0],
+          login_nome: loginNome,
+          dre_descricao: dreDescricao,
+        },
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao alterar login_dre.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'DELETE' && getDreCodigoFromUrl(pathname)) {
     try {
       const codigo = getDreCodigoFromUrl(pathname)
@@ -752,6 +1109,44 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao excluir acesso.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'DELETE' && getLoginDrePairFromUrl(pathname)) {
+    try {
+      const pair = getLoginDrePairFromUrl(pathname)
+      const loginCodigo = Number(pair?.loginCodigo)
+      const dreCodigo = Number(pair?.dreCodigo)
+
+      if (!Number.isInteger(loginCodigo) || loginCodigo <= 0 || !Number.isInteger(dreCodigo) || dreCodigo <= 0) {
+        sendJson(response, 400, { message: 'Chave do relacionamento invalida para exclusao.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        `DELETE FROM login_dre
+         WHERE login_codigo = $1 AND dre_codigo = $2
+         RETURNING login_codigo::text AS login_codigo, dre_codigo::text AS dre_codigo`,
+        [loginCodigo, dreCodigo],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Relacionamento login x DRE nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, {
+        deletedLoginCodigo: deleteResult.rows[0].login_codigo,
+        deletedDreCodigo: deleteResult.rows[0].dre_codigo,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao excluir login_dre.'
 
       sendJson(response, 500, { message })
     }

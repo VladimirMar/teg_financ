@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login x DRE</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
+    <main class="dsc-access-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-management-layout">
+            <div class="dsc-access-toolbar">
+              <form class="dsc-access-filter-form" id="login-dre-filter-form">
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-login-dre-button">Inserir registro</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-bulk-button" id="insert-login-dre-bulk-button">Vincular todas as DREs</button>
+                <input class="dsc-form-control dsc-access-filter-input" id="login-dre-search" type="text" placeholder="Filtrar por login, nome, DRE ou descricao" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-login-dre-filter-button">Limpar</button>
+              </form>
+            </div>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="login-dre-form">
+              <h2 id="login-dre-form-title">Novo relacionamento</h2>
+
+              <div class="dsc-form-row dsc-login-dre-form-row">
+                <label class="dsc-field-group" for="login-codigo">
+                  <span>Usuario</span>
+                  <select class="dsc-form-control" id="login-codigo"></select>
+                  <div class="dsc-form-error" id="login-codigo-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="login-nome">
+                  <span>Nome do usuario</span>
+                  <input class="dsc-form-control" id="login-nome" type="text" placeholder="Selecione um login" readonly disabled />
+                </label>
+              </div>
+
+              <div class="dsc-form-row dsc-login-dre-form-row">
+                <label class="dsc-field-group" for="dre-codigo">
+                  <span>DRE</span>
+                  <select class="dsc-form-control" id="dre-codigo"></select>
+                  <div class="dsc-form-error" id="dre-codigo-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="dre-descricao">
+                  <span>Descricao da DRE</span>
+                  <input class="dsc-form-control" id="dre-descricao" type="text" placeholder="Selecione uma DRE" readonly disabled />
+                </label>
+              </div>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-login-dre-button">Salvar relacionamento</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-login-dre-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="login-dre-form-feedback"></p>
+            </form>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="login-dre-bulk-form">
+              <h2>Vincular todas as DREs ao usuario</h2>
+
+              <div class="dsc-form-row dsc-login-dre-form-row">
+                <label class="dsc-field-group" for="bulk-login-codigo">
+                  <span>Usuario</span>
+                  <select class="dsc-form-control" id="bulk-login-codigo"></select>
+                  <div class="dsc-form-error" id="bulk-login-codigo-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="bulk-login-nome">
+                  <span>Nome do usuario</span>
+                  <input class="dsc-form-control" id="bulk-login-nome" type="text" placeholder="Selecione um login" readonly disabled />
+                </label>
+              </div>
+
+              <p class="dsc-form-hint">A operacao gravara apenas as DREs ainda nao vinculadas ao usuario escolhido.</p>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-login-dre-bulk-button">Gravar todas as DREs</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-login-dre-bulk-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="login-dre-bulk-feedback"></p>
+            </form>
+
+            <div class="dsc-card dsc-access-grid-card">
+              <div class="dsc-access-grid-header">
+                <h2>Relacionamentos cadastrados</h2>
+                <span id="login-dre-total"></span>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-login-codigo-button">
+                          Login <span id="sort-login-codigo-indicator">↑</span>
+                        </button>
+                      </th>
+                      <th>Nome</th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-dre-codigo-button">
+                          DRE <span id="sort-dre-codigo-indicator">↕</span>
+                        </button>
+                      </th>
+                      <th>Descricao</th>
+                      <th class="dsc-grid-actions-column">Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="login-dre-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="login-dre-empty-state">Nenhum relacionamento encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="login-dre-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-login-dre-page-button">Anterior</button>
+                <span id="login-dre-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-login-dre-page-button">Proxima</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('login-dre-form');
+      const bulkForm = document.getElementById('login-dre-bulk-form');
+      const loginCodigoSelect = document.getElementById('login-codigo');
+      const loginNomeInput = document.getElementById('login-nome');
+      const dreCodigoSelect = document.getElementById('dre-codigo');
+      const dreDescricaoInput = document.getElementById('dre-descricao');
+      const bulkLoginCodigoSelect = document.getElementById('bulk-login-codigo');
+      const bulkLoginNomeInput = document.getElementById('bulk-login-nome');
+      const loginCodigoError = document.getElementById('login-codigo-error');
+      const dreCodigoError = document.getElementById('dre-codigo-error');
+      const bulkLoginCodigoError = document.getElementById('bulk-login-codigo-error');
+      const formFeedback = document.getElementById('login-dre-form-feedback');
+      const bulkFeedback = document.getElementById('login-dre-bulk-feedback');
+      const gridFeedback = document.getElementById('login-dre-grid-feedback');
+      const insertButton = document.getElementById('insert-login-dre-button');
+      const bulkInsertButton = document.getElementById('insert-login-dre-bulk-button');
+      const cancelButton = document.getElementById('cancel-login-dre-button');
+      const bulkCancelButton = document.getElementById('cancel-login-dre-bulk-button');
+      const filterForm = document.getElementById('login-dre-filter-form');
+      const clearFilterButton = document.getElementById('clear-login-dre-filter-button');
+      const searchInput = document.getElementById('login-dre-search');
+      const gridBody = document.getElementById('login-dre-grid-body');
+      const emptyState = document.getElementById('login-dre-empty-state');
+      const totalLabel = document.getElementById('login-dre-total');
+      const previousPageButton = document.getElementById('previous-login-dre-page-button');
+      const nextPageButton = document.getElementById('next-login-dre-page-button');
+      const paginationInfo = document.getElementById('login-dre-pagination-info');
+      const sortLoginCodigoButton = document.getElementById('sort-login-codigo-button');
+      const sortLoginCodigoIndicator = document.getElementById('sort-login-codigo-indicator');
+      const sortDreCodigoButton = document.getElementById('sort-dre-codigo-button');
+      const sortDreCodigoIndicator = document.getElementById('sort-dre-codigo-indicator');
+      const formTitle = document.getElementById('login-dre-form-title');
+      const saveButton = document.getElementById('save-login-dre-button');
+      const statusBanner = document.getElementById('status-banner');
+
+      const pageSize = 5;
+      let currentPage = 1;
+      let totalPages = 1;
+      let currentSearch = '';
+      let currentSortBy = 'login_codigo';
+      let currentSortDirection = 'asc';
+      let editingPair = null;
+      let bannerTimeoutId = null;
+      let loginOptions = [];
+      let dreOptions = [];
+      let selectedLoginCodigo = '';
+      let selectedDreCodigo = '';
+      let selectedBulkLoginCodigo = '';
+
+      const resetMessages = () => {
+        loginCodigoError.textContent = '';
+        dreCodigoError.textContent = '';
+        formFeedback.textContent = '';
+        formFeedback.className = 'dsc-feedback';
+      };
+
+      const resetBulkMessages = () => {
+        bulkLoginCodigoError.textContent = '';
+        bulkFeedback.textContent = '';
+        bulkFeedback.className = 'dsc-feedback';
+      };
+
+      const setGridMessage = (message, tone = '') => {
+        gridFeedback.textContent = message;
+        gridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          gridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const showBanner = (message, tone = 'success') => {
+        if (bannerTimeoutId) {
+          window.clearTimeout(bannerTimeoutId);
+        }
+
+        statusBanner.textContent = message;
+        statusBanner.className = `dsc-status-banner dsc-status-banner-${tone}`;
+
+        bannerTimeoutId = window.setTimeout(() => {
+          statusBanner.className = 'dsc-status-banner dsc-hidden';
+          statusBanner.textContent = '';
+        }, 3500);
+      };
+
+      const fillSelect = (select, items, placeholder, labelField, selectedValue) => {
+        select.innerHTML = '';
+        const firstOption = document.createElement('option');
+        firstOption.value = '';
+        firstOption.textContent = placeholder;
+        select.appendChild(firstOption);
+
+        items.forEach((item) => {
+          const option = document.createElement('option');
+          option.value = item.codigo;
+          option.textContent = item[labelField];
+          select.appendChild(option);
+        });
+
+        select.value = items.some((item) => item.codigo === selectedValue) ? selectedValue : '';
+      };
+
+      const syncBulkLoginDetails = () => {
+        selectedBulkLoginCodigo = bulkLoginCodigoSelect.value;
+        const selected = loginOptions.find((item) => item.codigo === selectedBulkLoginCodigo);
+        bulkLoginNomeInput.value = selected ? selected.nome : '';
+
+        if (selectedBulkLoginCodigo) {
+          bulkLoginCodigoError.textContent = '';
+        }
+      };
+
+      const syncLoginDetails = () => {
+        selectedLoginCodigo = loginCodigoSelect.value;
+        const selected = loginOptions.find((item) => item.codigo === selectedLoginCodigo);
+        loginNomeInput.value = selected ? selected.nome : '';
+
+        if (selectedLoginCodigo) {
+          loginCodigoError.textContent = '';
+        }
+      };
+
+      const syncDreDetails = () => {
+        selectedDreCodigo = dreCodigoSelect.value;
+        const selected = dreOptions.find((item) => item.codigo === selectedDreCodigo);
+        dreDescricaoInput.value = selected ? selected.descricao : '';
+
+        if (selectedDreCodigo) {
+          dreCodigoError.textContent = '';
+        }
+      };
+
+      const loadOptions = async () => {
+        const response = await fetch('/api/login-dre/options', { headers: { Accept: 'application/json' } });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.message || 'Falha ao carregar opcoes.');
+        }
+
+        loginOptions = payload.loginOptions || [];
+        dreOptions = payload.dreOptions || [];
+        fillSelect(loginCodigoSelect, loginOptions, 'Selecione o usuario', 'nome', selectedLoginCodigo);
+        fillSelect(bulkLoginCodigoSelect, loginOptions, 'Selecione o usuario', 'nome', selectedBulkLoginCodigo);
+        fillSelect(dreCodigoSelect, dreOptions, 'Selecione a DRE', 'descricao', selectedDreCodigo);
+        syncLoginDetails();
+        syncBulkLoginDetails();
+        syncDreDetails();
+      };
+
+      const showForm = (isEditing = false) => {
+        bulkForm.classList.add('dsc-hidden');
+        form.classList.remove('dsc-hidden');
+        formTitle.textContent = isEditing ? 'Alterar relacionamento' : 'Novo relacionamento';
+        saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar relacionamento';
+      };
+
+      const showBulkForm = () => {
+        form.classList.add('dsc-hidden');
+        bulkForm.classList.remove('dsc-hidden');
+      };
+
+      const hideForm = () => {
+        form.classList.add('dsc-hidden');
+        form.reset();
+        editingPair = null;
+        selectedLoginCodigo = '';
+        selectedDreCodigo = '';
+        loginCodigoSelect.value = '';
+        dreCodigoSelect.value = '';
+        syncLoginDetails();
+        syncDreDetails();
+        resetMessages();
+      };
+
+      const hideBulkForm = () => {
+        bulkForm.classList.add('dsc-hidden');
+        bulkForm.reset();
+        selectedBulkLoginCodigo = '';
+        bulkLoginCodigoSelect.value = '';
+        syncBulkLoginDetails();
+        resetBulkMessages();
+      };
+
+      const buildUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          pageSize: String(pageSize),
+          sortBy: currentSortBy,
+          sortDirection: currentSortDirection,
+        });
+
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+
+        return `/api/login-dre?${params.toString()}`;
+      };
+
+      const renderGrid = (items) => {
+        gridBody.innerHTML = '';
+
+        if (!items.length) {
+          emptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        emptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.login_codigo}</td>
+            <td>${item.login_nome}</td>
+            <td>${item.dre_codigo}</td>
+            <td>${item.dre_descricao}</td>
+            <td>
+              <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-login-codigo="${item.login_codigo}" data-dre-codigo="${item.dre_codigo}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-login-codigo="${item.login_codigo}" data-dre-codigo="${item.dre_codigo}" data-login-nome="${item.login_nome}" data-dre-descricao="${item.dre_descricao}">Excluir</button>
+              </div>
+            </td>
+          `;
+          gridBody.appendChild(row);
+        });
+      };
+
+      const updatePagination = (totalItems) => {
+        totalLabel.textContent = `${totalItems} item(ns) encontrados`;
+        paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        previousPageButton.disabled = currentPage <= 1;
+        nextPageButton.disabled = currentPage >= totalPages;
+        sortLoginCodigoIndicator.textContent = currentSortBy === 'login_codigo' ? (currentSortDirection === 'asc' ? '↑' : '↓') : '↕';
+        sortDreCodigoIndicator.textContent = currentSortBy === 'dre_codigo' ? (currentSortDirection === 'asc' ? '↑' : '↓') : '↕';
+      };
+
+      const loadItems = async () => {
+        setGridMessage('Carregando relacionamentos...');
+
+        try {
+          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar relacionamentos.');
+          }
+
+          totalPages = payload.totalPages || 1;
+          currentPage = payload.page || 1;
+          renderGrid(payload.items || []);
+          updatePagination(payload.total || 0);
+          setGridMessage(payload.items && payload.items.length ? '' : 'Nenhum relacionamento encontrado.');
+        } catch (error) {
+          gridBody.innerHTML = '';
+          emptyState.classList.remove('dsc-hidden');
+          setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar relacionamentos.', 'error');
+        }
+      };
+
+      const startInsert = () => {
+        hideBulkForm();
+        editingPair = null;
+        form.reset();
+        selectedLoginCodigo = '';
+        selectedDreCodigo = '';
+        loginCodigoSelect.value = '';
+        dreCodigoSelect.value = '';
+        syncLoginDetails();
+        syncDreDetails();
+        resetMessages();
+        showForm(false);
+      };
+
+      const startBulkInsert = () => {
+        hideForm();
+        bulkForm.reset();
+        selectedBulkLoginCodigo = '';
+        bulkLoginCodigoSelect.value = '';
+        syncBulkLoginDetails();
+        resetBulkMessages();
+        showBulkForm();
+      };
+
+      const startEdit = (item) => {
+        editingPair = { loginCodigo: item.loginCodigo, dreCodigo: item.dreCodigo };
+        selectedLoginCodigo = item.loginCodigo;
+        selectedDreCodigo = item.dreCodigo;
+        loginCodigoSelect.value = item.loginCodigo;
+        dreCodigoSelect.value = item.dreCodigo;
+        syncLoginDetails();
+        syncDreDetails();
+        resetMessages();
+        showForm(true);
+      };
+
+      const handleDelete = async (item) => {
+        if (!window.confirm(`Excluir o relacionamento Login ${item.loginCodigo} x DRE ${item.dreCodigo}?`)) {
+          return;
+        }
+
+        setGridMessage(`Excluindo relacionamento ${item.loginCodigo} x ${item.dreCodigo}...`);
+
+        try {
+          const response = await fetch(`/api/login-dre/${encodeURIComponent(item.loginCodigo)}/${encodeURIComponent(item.dreCodigo)}`, {
+            method: 'DELETE',
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao excluir relacionamento.');
+          }
+
+          setGridMessage('Relacionamento excluido com sucesso.', 'success');
+          showBanner(`Relacionamento ${item.loginCodigo} x ${item.dreCodigo} excluido com sucesso.`, 'success');
+          if (editingPair && editingPair.loginCodigo === item.loginCodigo && editingPair.dreCodigo === item.dreCodigo) {
+            hideForm();
+          }
+          await loadItems();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao excluir relacionamento.';
+          setGridMessage(message, 'error');
+          showBanner(message, 'error');
+        }
+      };
+
+      gridBody.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (!(target instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const action = target.dataset.action;
+        const loginCodigo = target.dataset.loginCodigo;
+        const dreCodigo = target.dataset.dreCodigo;
+
+        if (!loginCodigo || !dreCodigo) {
+          return;
+        }
+
+        if (action === 'edit') {
+          startEdit({ loginCodigo, dreCodigo });
+          return;
+        }
+
+        if (action === 'delete') {
+          void handleDelete({ loginCodigo, dreCodigo });
+        }
+      });
+
+      loginCodigoSelect.addEventListener('change', syncLoginDetails);
+      dreCodigoSelect.addEventListener('change', syncDreDetails);
+      bulkLoginCodigoSelect.addEventListener('change', syncBulkLoginDetails);
+      loginCodigoSelect.addEventListener('change', () => {
+        formFeedback.textContent = '';
+        formFeedback.className = 'dsc-feedback';
+      });
+      dreCodigoSelect.addEventListener('change', () => {
+        formFeedback.textContent = '';
+        formFeedback.className = 'dsc-feedback';
+      });
+      bulkLoginCodigoSelect.addEventListener('change', () => {
+        bulkFeedback.textContent = '';
+        bulkFeedback.className = 'dsc-feedback';
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const loginCodigo = loginCodigoSelect.value;
+        const dreCodigo = dreCodigoSelect.value;
+        let hasError = false;
+
+        resetMessages();
+
+        if (!loginCodigo) {
+          loginCodigoError.textContent = 'Selecione o usuario.';
+          hasError = true;
+        }
+
+        if (!dreCodigo) {
+          dreCodigoError.textContent = 'Selecione a DRE.';
+          hasError = true;
+        }
+
+        if (hasError) {
+          formFeedback.textContent = 'Corrija os campos para continuar.';
+          formFeedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        try {
+          const endpoint = editingPair
+            ? `/api/login-dre/${encodeURIComponent(editingPair.loginCodigo)}/${encodeURIComponent(editingPair.dreCodigo)}`
+            : '/api/login-dre';
+          const response = await fetch(endpoint, {
+            method: editingPair ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ loginCodigo, dreCodigo }),
+          });
+
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao gravar relacionamento.');
+          }
+
+          const savedItem = payload.item;
+          formFeedback.textContent = editingPair
+            ? `Relacionamento ${savedItem.login_codigo} x ${savedItem.dre_codigo} alterado com sucesso.`
+            : `Relacionamento ${savedItem.login_codigo} x ${savedItem.dre_codigo} gravado com sucesso.`;
+          formFeedback.classList.add('dsc-feedback-success');
+          showBanner(formFeedback.textContent, 'success');
+          hideForm();
+          await loadItems();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao gravar relacionamento.';
+          formFeedback.textContent = message;
+          formFeedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
+
+      bulkForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const loginCodigo = bulkLoginCodigoSelect.value;
+        resetBulkMessages();
+
+        if (!loginCodigo) {
+          bulkLoginCodigoError.textContent = 'Selecione o usuario.';
+          bulkFeedback.textContent = 'Escolha um usuario para continuar.';
+          bulkFeedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        const selectedLogin = loginOptions.find((item) => item.codigo === loginCodigo);
+        const loginLabel = selectedLogin ? `${selectedLogin.codigo} - ${selectedLogin.nome}` : loginCodigo;
+        const confirmed = window.confirm(`Confirmar a gravacao de todas as DREs ainda nao vinculadas para o usuario ${loginLabel}?`);
+
+        if (!confirmed) {
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/login-dre/assign-all', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ loginCodigo }),
+          });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao vincular DREs ao usuario.');
+          }
+
+          const summary = payload.item;
+          const message = summary.inserted_dres > 0
+            ? `${summary.inserted_dres} DRE(s) gravada(s) para ${summary.login_nome}.`
+            : `Nenhuma nova DRE foi gravada para ${summary.login_nome}.`;
+
+          bulkFeedback.textContent = `${message} Ja existiam ${summary.existing_dres} vinculacao(oes) para um total de ${summary.total_dres} DRE(s).`;
+          bulkFeedback.classList.add('dsc-feedback-success');
+          showBanner(payload.message || message, 'success');
+          hideBulkForm();
+          await loadItems();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao vincular DREs ao usuario.';
+          bulkFeedback.textContent = message;
+          bulkFeedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
+
+      insertButton.addEventListener('click', startInsert);
+      bulkInsertButton.addEventListener('click', startBulkInsert);
+      cancelButton.addEventListener('click', hideForm);
+      bulkCancelButton.addEventListener('click', hideBulkForm);
+
+      filterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentSearch = searchInput.value.trim();
+        currentPage = 1;
+        void loadItems();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      previousPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage -= 1;
+        void loadItems();
+      });
+
+      nextPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage += 1;
+        void loadItems();
+      });
+
+      sortLoginCodigoButton.addEventListener('click', () => {
+        currentSortDirection = currentSortBy === 'login_codigo' && currentSortDirection === 'asc' ? 'desc' : 'asc';
+        currentSortBy = 'login_codigo';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      sortDreCodigoButton.addEventListener('click', () => {
+        currentSortDirection = currentSortBy === 'dre_codigo' && currentSortDirection === 'asc' ? 'desc' : 'asc';
+        currentSortBy = 'dre_codigo';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      hideForm();
+      hideBulkForm();
+      Promise.all([loadOptions(), loadItems()]).catch((error) => {
+        const message = error instanceof Error ? error.message : 'Falha ao inicializar tela login x DRE.';
+        setGridMessage(message, 'error');
+      });
+    </script>
+  </body>
+</html>

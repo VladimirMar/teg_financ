@@ -98,6 +98,11 @@ main {
   min-width: 200px;
 }
 
+.dsc-access-bulk-button {
+  flex: 0 0 auto;
+  min-width: 240px;
+}
+
 .dsc-access-filter-form {
   display: flex;
   align-items: center;
@@ -164,6 +169,25 @@ main {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+#login-dre-form {
+  max-width: 900px;
+}
+
+.dsc-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.dsc-login-dre-form-row .dsc-field-group {
+  min-width: 0;
+}
+
+.dsc-login-dre-form-row .dsc-form-control {
+  min-width: 0;
 }
 
 .dsc-access-form h2,
@@ -376,5 +400,9 @@ main {
   .dsc-access-pagination {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .dsc-form-row {
+    grid-template-columns: 1fr;
   }
 }

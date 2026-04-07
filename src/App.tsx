@@ -6,7 +6,7 @@ import { createDreItem, deleteDreItem, listDreItemsPaginated, updateDreItem } fr
 import type { DreItem } from './services/dre'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'acesso'
+type ActiveView = 'inicio' | 'dre' | 'acesso' | 'loginDre'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
 
@@ -549,6 +549,12 @@ function App() {
             >
               Controle de acesso
             </li>
+            <li
+              className={`menu-item ${activeView === 'loginDre' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('loginDre')}
+            >
+              Login x DRE
+            </li>
             <li className="menu-item">Rotas</li>
             <li className="menu-item">Alunos</li>
             <li className="menu-item">Motoristas</li>
@@ -741,7 +747,7 @@ function App() {
               </div>
             </div>
           </>
-        ) : (
+        ) : activeView === 'acesso' ? (
           <>
             <div className="content-copy">
               <p className="content-kicker">Seguranca administrativa</p>
@@ -757,6 +763,24 @@ function App() {
                 className="access-embed-frame"
                 src="/src/cadastroAcesso.html"
                 title="Controle de acesso"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Relacionamento administrativo</p>
+              <h2 id="content-title">Login x DRE</h2>
+              <p className="content-description">
+                Consulte e mantenha os relacionamentos entre usuarios e DRE com selecao por codigo.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/loginDre.html"
+                title="Login x DRE"
               />
             </div>
           </>
