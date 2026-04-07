@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro de acesso</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
+    <main class="dsc-access-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-management-layout">
+            <div class="dsc-access-toolbar">
+              <form class="dsc-access-filter-form" id="access-filter-form">
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-access-button">Inserir registro</button>
+                <input class="dsc-form-control dsc-access-filter-input" id="access-search" type="text" placeholder="Filtrar por email" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-filter-button">Limpar</button>
+              </form>
+            </div>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="register-form">
+              <h2 id="form-title">Novo registro</h2>
+
+              <label class="dsc-field-group" for="email">
+                <span>Email</span>
+                <input class="dsc-form-control" id="email" type="email" placeholder="nome@empresa.com" />
+                <div class="dsc-form-error" id="email-error"></div>
+              </label>
+
+              <label class="dsc-field-group" for="password">
+                <span>Senha</span>
+                <input class="dsc-form-control" id="password" type="password" placeholder="Digite a senha" />
+                <div class="dsc-form-error" id="password-error"></div>
+              </label>
+
+              <p class="dsc-form-hint" id="password-hint"></p>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-access-button">Salvar acesso</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-access-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="form-feedback"></p>
+            </form>
+
+            <div class="dsc-card dsc-access-grid-card">
+              <div class="dsc-access-grid-header">
+                <h2>Registros cadastrados</h2>
+                <span id="access-total"></span>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-email-button">
+                          Email <span id="sort-email-indicator">↑</span>
+                        </button>
+                      </th>
+                      <th class="dsc-grid-actions-column">Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="access-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="access-empty-state">Nenhum acesso encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-page-button">Anterior</button>
+                <span id="pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-page-button">Proxima</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('register-form');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const emailError = document.getElementById('email-error');
+      const passwordError = document.getElementById('password-error');
+      const feedback = document.getElementById('form-feedback');
+      const gridFeedback = document.getElementById('grid-feedback');
+      const insertAccessButton = document.getElementById('insert-access-button');
+      const cancelAccessButton = document.getElementById('cancel-access-button');
+      const filterForm = document.getElementById('access-filter-form');
+      const clearFilterButton = document.getElementById('clear-filter-button');
+      const accessSearchInput = document.getElementById('access-search');
+      const accessGridBody = document.getElementById('access-grid-body');
+      const accessEmptyState = document.getElementById('access-empty-state');
+      const accessTotal = document.getElementById('access-total');
+      const previousPageButton = document.getElementById('previous-page-button');
+      const nextPageButton = document.getElementById('next-page-button');
+      const paginationInfo = document.getElementById('pagination-info');
+      const sortEmailButton = document.getElementById('sort-email-button');
+      const sortEmailIndicator = document.getElementById('sort-email-indicator');
+      const formTitle = document.getElementById('form-title');
+      const passwordHint = document.getElementById('password-hint');
+      const saveAccessButton = document.getElementById('save-access-button');
+      const statusBanner = document.getElementById('status-banner');
+
+      const validateEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      const pageSize = 5;
+
+      let currentPage = 1;
+      let totalPages = 1;
+      let currentSearch = '';
+      let currentSortDirection = 'asc';
+      let editingEmail = null;
+      let bannerTimeoutId = null;
+
+      const resetMessages = () => {
+        emailError.textContent = '';
+        passwordError.textContent = '';
+        feedback.textContent = '';
+        feedback.className = 'dsc-feedback';
+      };
+
+      const resetGridFeedback = () => {
+        gridFeedback.textContent = '';
+        gridFeedback.className = 'dsc-feedback';
+      };
+
+      const showBanner = (message, tone = 'success') => {
+        if (bannerTimeoutId) {
+          window.clearTimeout(bannerTimeoutId);
+        }
+
+        statusBanner.textContent = message;
+        statusBanner.className = `dsc-status-banner dsc-status-banner-${tone}`;
+
+        bannerTimeoutId = window.setTimeout(() => {
+          statusBanner.className = 'dsc-status-banner dsc-hidden';
+          statusBanner.textContent = '';
+        }, 3500);
+      };
+
+      const showForm = (isEditing = false) => {
+        form.classList.remove('dsc-hidden');
+        formTitle.textContent = isEditing ? 'Alteracao de acesso' : 'Cadastro de acesso';
+        saveAccessButton.textContent = isEditing ? 'Salvar alteracao' : 'Gravar acesso';
+        passwordHint.textContent = isEditing
+          ? 'Deixe a senha em branco para manter a atual.'
+          : 'Informe email e senha para gravar um novo acesso.';
+      };
+
+      const hideForm = () => {
+        form.classList.add('dsc-hidden');
+        form.reset();
+        editingEmail = null;
+        resetMessages();
+      };
+
+      const setGridMessage = (message, tone = '') => {
+        gridFeedback.textContent = message;
+        gridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          gridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const buildAccessUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          pageSize: String(pageSize),
+          sortDirection: currentSortDirection,
+        });
+
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+
+        return `/api/access?${params.toString()}`;
+      };
+
+      const renderGrid = (items) => {
+        accessGridBody.innerHTML = '';
+
+        if (!items.length) {
+          accessEmptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        accessEmptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.email}</td>
+            <td>
+              <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-email="${item.email}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-email="${item.email}">Excluir</button>
+              </div>
+            </td>
+          `;
+          accessGridBody.appendChild(row);
+        });
+      };
+
+      const updatePagination = (totalItems) => {
+        accessTotal.textContent = `${totalItems} item(ns) encontrados`;
+        paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        previousPageButton.disabled = currentPage <= 1;
+        nextPageButton.disabled = currentPage >= totalPages;
+        sortEmailIndicator.textContent = currentSortDirection === 'asc' ? '↑' : '↓';
+      };
+
+      const loadAccesses = async () => {
+        setGridMessage('Carregando acessos...');
+
+        try {
+          const response = await fetch(buildAccessUrl(), {
+            headers: {
+              Accept: 'application/json',
+            },
+          });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar acessos.');
+          }
+
+          totalPages = payload.totalPages || 1;
+          currentPage = payload.page || 1;
+          renderGrid(payload.items || []);
+          updatePagination(payload.total || 0);
+          setGridMessage(payload.items && payload.items.length ? '' : 'Nenhum acesso encontrado.');
+        } catch (error) {
+          accessGridBody.innerHTML = '';
+          accessEmptyState.classList.remove('dsc-hidden');
+          setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar acessos.', 'error');
+        }
+      };
+
+      const startInsert = () => {
+        editingEmail = null;
+        form.reset();
+        resetMessages();
+        showForm(false);
+      };
+
+      const startEdit = (email) => {
+        editingEmail = email;
+        emailInput.value = email;
+        passwordInput.value = '';
+        resetMessages();
+        showForm(true);
+      };
+
+      const handleDelete = async (email) => {
+        if (!window.confirm(`Excluir o acesso ${email}?`)) {
+          return;
+        }
+
+        setGridMessage(`Excluindo acesso ${email}...`);
+
+        try {
+          const response = await fetch(`/api/access/${encodeURIComponent(email)}`, {
+            method: 'DELETE',
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao excluir acesso.');
+          }
+
+          setGridMessage('Acesso excluido com sucesso.', 'success');
+          showBanner(`Acesso ${email} excluido com sucesso.`, 'success');
+          if (editingEmail === email) {
+            hideForm();
+          }
+          await loadAccesses();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao excluir acesso.';
+          setGridMessage(message, 'error');
+          showBanner(message, 'error');
+        }
+      };
+
+      accessGridBody.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (!(target instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const { action, email } = target.dataset;
+
+        if (!email) {
+          return;
+        }
+
+        if (action === 'edit') {
+          startEdit(email);
+          return;
+        }
+
+        if (action === 'delete') {
+          void handleDelete(email);
+        }
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+        let hasError = false;
+
+        resetMessages();
+
+        if (!email) {
+          emailError.textContent = 'Informe o email.';
+          hasError = true;
+        } else if (!validateEmail(email)) {
+          emailError.textContent = 'Digite um email valido.';
+          hasError = true;
+        }
+
+        if (!password && !editingEmail) {
+          passwordError.textContent = 'Informe a senha.';
+          hasError = true;
+        }
+
+        if (hasError) {
+          feedback.textContent = 'Corrija os campos para continuar.';
+          feedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        try {
+          const response = await fetch(editingEmail ? `/api/access/${encodeURIComponent(editingEmail)}` : '/api/access', {
+            method: editingEmail ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao gravar acesso.');
+          }
+
+          const savedEmail = editingEmail ? payload.item.email : payload.user.email;
+          feedback.textContent = editingEmail
+            ? `Acesso alterado para ${savedEmail}.`
+            : `Acesso gravado para ${savedEmail}.`;
+          feedback.classList.add('dsc-feedback-success');
+          showBanner(
+            editingEmail
+              ? `Acesso ${savedEmail} alterado com sucesso.`
+              : `Acesso ${savedEmail} gravado com sucesso.`,
+            'success',
+          );
+          hideForm();
+          await loadAccesses();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao gravar acesso.';
+          feedback.textContent = message;
+          feedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
+
+      insertAccessButton.addEventListener('click', startInsert);
+      cancelAccessButton.addEventListener('click', hideForm);
+
+      filterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentSearch = accessSearchInput.value.trim();
+        currentPage = 1;
+        void loadAccesses();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        accessSearchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadAccesses();
+      });
+
+      previousPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage -= 1;
+        void loadAccesses();
+      });
+
+      nextPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage += 1;
+        void loadAccesses();
+      });
+
+      sortEmailButton.addEventListener('click', () => {
+        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        currentPage = 1;
+        void loadAccesses();
+      });
+
+      hideForm();
+      void loadAccesses();
+    </script>
+  </body>
+</html>

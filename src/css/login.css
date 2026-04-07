@@ -1,21 +1,372 @@
 @import url("styles.css");
 
-#login-section {
-  padding: 20px 0;
+html,
+body {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.72), transparent 30%),
+    linear-gradient(180deg, #f6efe0 0%, #e6f0ed 100%);
 }
 
-.dsc-login-form-container {
-  width: 100%;
-  max-width: 360px;
-  margin: 0 auto;
+body {
+  color: #213139;
+}
+
+main {
+  padding: 24px;
+}
+
+.dsc-access-page {
+  min-height: 100vh;
+}
+
+.dsc-container {
+  max-width: 1120px;
+}
+
+.dsc-status-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 14px 20px;
+  text-align: center;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.dsc-status-banner-success {
+  background: linear-gradient(90deg, #166534, #22c55e);
+}
+
+.dsc-status-banner-error {
+  background: linear-gradient(90deg, #991b1b, #ef4444);
+}
+
+#login-section {
+  padding: 0;
+}
+
+.dsc-access-layout {
+  display: grid;
+  gap: 20px;
+}
+
+.dsc-access-management-layout {
+  display: grid;
+  gap: 20px;
+}
+
+.dsc-access-copy {
+  padding: 10px 6px;
+}
+
+.dsc-access-kicker {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.78rem;
+  color: #56746f;
+}
+
+.dsc-access-copy h1 {
+  margin: 10px 0 0;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 1;
+  color: #213139;
+}
+
+.dsc-access-description {
+  margin-top: 14px;
+  max-width: 44rem;
+  color: #556761;
+  font-size: 1.05rem;
 }
 
 .dsc-login-form-buttons {
   width: 100%;
 }
 
-@media (min-width: 576px) {
-  #login-section {
-    padding: 40px 0;
+.dsc-access-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.dsc-access-insert-button {
+  flex: 0 0 auto;
+  min-width: 200px;
+}
+
+.dsc-access-filter-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.dsc-access-filter-input,
+.dsc-form-control {
+  min-width: 280px;
+  width: 100%;
+  border: 1px solid rgba(121, 91, 56, 0.24);
+  border-radius: 18px;
+  padding: 15px 18px;
+  font: inherit;
+  color: #213139;
+  background: rgba(255, 255, 255, 0.86);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.dsc-access-filter-input {
+  flex: 1 1 320px;
+  min-width: 320px;
+  border-radius: 999px;
+  padding: 13px 16px;
+}
+
+.dsc-access-filter-form .dsc-btn {
+  width: auto;
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+
+.dsc-access-filter-input:focus,
+.dsc-form-control:focus {
+  outline: none;
+  border-color: #c85c2c;
+  box-shadow: 0 0 0 4px rgba(200, 92, 44, 0.16);
+  transform: translateY(-1px);
+}
+
+.dsc-card {
+  border: none;
+  border-radius: 28px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.74), transparent 20%),
+    linear-gradient(180deg, rgba(255, 251, 243, 0.96), rgba(222, 236, 233, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 18px 34px rgba(74, 89, 78, 0.12);
+}
+
+.dsc-access-form {
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dsc-access-form h2,
+.dsc-access-grid-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #213139;
+}
+
+.dsc-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 700;
+  color: #213139;
+}
+
+.dsc-access-form-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.dsc-btn {
+  width: 100%;
+  height: auto;
+  min-height: 50px;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.dsc-btn:hover {
+  transform: translateY(-2px);
+}
+
+.dsc-btn-blue {
+  border: none;
+  background: linear-gradient(135deg, #c85c2c, #da8c2f);
+  color: #fffaf2;
+  box-shadow: 0 12px 24px rgba(200, 92, 44, 0.28);
+}
+
+.dsc-btn-white {
+  border: none;
+  background: rgba(8, 24, 34, 0.08);
+  color: #213139;
+}
+
+.dsc-access-grid-card {
+  width: 100%;
+  min-height: 440px;
+}
+
+.dsc-access-grid-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.dsc-access-grid-header span,
+#pagination-info {
+  color: #556761;
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.dsc-access-grid-wrapper {
+  overflow: auto;
+}
+
+.dsc-access-grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dsc-access-grid th,
+.dsc-access-grid td {
+  padding: 12px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(33, 49, 57, 0.12);
+}
+
+.dsc-access-grid th {
+  color: #4e635d;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dsc-grid-actions-column {
+  width: 220px;
+}
+
+.dsc-grid-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.dsc-grid-action-button {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dsc-grid-action-edit {
+  background: rgba(24, 58, 81, 0.12);
+  color: #183a51;
+}
+
+.dsc-grid-action-delete {
+  background: rgba(154, 52, 18, 0.12);
+  color: #9a3412;
+}
+
+.dsc-grid-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.dsc-access-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.dsc-empty-state {
+  margin-top: 18px;
+  color: #556761;
+}
+
+.dsc-form-hint {
+  min-height: 20px;
+  margin: 0;
+  color: #556761;
+  font-size: 14px;
+}
+
+.dsc-hidden {
+  display: none;
+}
+
+.dsc-form-error {
+  min-height: 20px;
+  margin-top: 0;
+  color: #9a3412;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.dsc-feedback {
+  min-height: 24px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: #556761;
+}
+
+.dsc-feedback-success {
+  color: #166534;
+}
+
+.dsc-feedback-error {
+  color: #9a3412;
+}
+
+@media (max-width: 768px) {
+  main {
+    padding: 16px;
+  }
+
+  .dsc-card {
+    border-radius: 24px;
+    padding: 22px;
+  }
+
+  .dsc-access-filter-input,
+  .dsc-form-control {
+    min-width: 100%;
+  }
+
+  .dsc-access-filter-form {
+    flex-wrap: wrap;
+  }
+
+  .dsc-access-filter-form .dsc-btn {
+    width: 100%;
+  }
+
+  .dsc-access-form-buttons,
+  .dsc-grid-actions,
+  .dsc-access-pagination {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

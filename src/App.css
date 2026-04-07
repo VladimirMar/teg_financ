@@ -103,28 +103,41 @@
   margin-top: 8px;
 }
 
-.button-row button {
-  flex: 1;
+.primary-button,
+.secondary-button {
   border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 999px;
-  padding: 14px 18px;
+  min-height: 50px;
+  padding: 12px 18px;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
-.button-row button:hover {
+.button-row button {
+  flex: 1;
+}
+
+.primary-button:hover,
+.secondary-button:hover,
+.row-action-button:hover,
+.logout-button:hover {
   transform: translateY(-2px);
 }
 
-.button-row button:focus-visible,
+.primary-button:focus-visible,
+.secondary-button:focus-visible,
 .logout-button:focus-visible {
   outline: 3px solid rgba(200, 92, 44, 0.3);
   outline-offset: 2px;
 }
 
-.button-row button:disabled {
+.primary-button:disabled,
+.secondary-button:disabled {
   opacity: 0.72;
   cursor: wait;
   transform: none;
@@ -277,9 +290,11 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  flex: 1 1 520px;
 }
 
 .dre-filter-input {
+  flex: 1 1 320px;
   min-width: 280px;
   border: 1px solid rgba(121, 91, 56, 0.24);
   border-radius: 999px;
@@ -290,6 +305,7 @@
 
 .dre-filter-button {
   flex: 0 0 auto;
+  min-width: 120px;
 }
 
 .dre-card {
@@ -420,6 +436,7 @@
 
 .dre-pagination-button {
   flex: 0 0 auto;
+  min-width: 120px;
 }
 
 .dre-pagination-info {
@@ -470,6 +487,24 @@
   filter: drop-shadow(0 24px 30px rgba(59, 77, 81, 0.18));
 }
 
+.access-embed-card {
+  min-height: 620px;
+  border-radius: 36px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.72), transparent 26%),
+    linear-gradient(180deg, rgba(255, 251, 243, 0.96), rgba(222, 236, 233, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 22px 44px rgba(74, 89, 78, 0.14);
+}
+
+.access-embed-frame {
+  display: block;
+  width: 100%;
+  min-height: 620px;
+  border: none;
+  background: #fff;
+}
+
 @media (max-width: 920px) {
   .login-panel,
   .dashboard-page {
@@ -494,7 +529,8 @@
   .login-copy,
   .login-card,
   .sidebar-menu,
-  .bus-stage {
+  .bus-stage,
+  .access-embed-card {
     border-radius: 24px;
   }
 
@@ -509,6 +545,11 @@
     padding: 16px;
   }
 
+  .access-embed-card,
+  .access-embed-frame {
+    min-height: 480px;
+  }
+
   .button-row {
     flex-direction: column;
   }
@@ -519,6 +560,11 @@
 
   .dre-filter-input {
     min-width: 100%;
+  }
+
+  .dre-filter-button,
+  .dre-pagination-button {
+    width: 100%;
   }
 
   .dre-pagination {

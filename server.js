@@ -1,4 +1,5 @@
 import { createServer } from 'node:http'
+import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 import { Pool } from 'pg'
 
 const port = Number(process.env.PORT ?? 3001)
@@ -56,9 +57,86 @@ const createToken = (email) => {
   return Buffer.from(`${email}:${Date.now()}`).toString('base64url')
 }
 
+const createPasswordHash = (password) => {
+  const salt = randomBytes(16).toString('hex')
+  const hash = scryptSync(password, salt, 64).toString('hex')
+  return `scrypt:${salt}:${hash}`
+}
+
+const verifyPassword = (password, storedHash) => {
+  const normalizedHash = normalizeDbValue(storedHash)
+
+  if (!normalizedHash) {
+    return false
+  }
+
+  if (!normalizedHash.startsWith('scrypt:')) {
+    return normalizedHash === password
+  }
+
+  const [, salt, savedHash] = normalizedHash.split(':')
+
+  if (!salt || !savedHash) {
+    return false
+  }
+
+  const derivedKey = scryptSync(password, salt, 64)
+  const savedBuffer = Buffer.from(savedHash, 'hex')
+
+  if (savedBuffer.length !== derivedKey.length) {
+    return false
+  }
+
+  return timingSafeEqual(savedBuffer, derivedKey)
+}
+
 const getDreCodigoFromUrl = (url) => {
   const match = url.match(/^\/api\/dre\/([^/]+)$/)
   return match ? decodeURIComponent(match[1]) : null
+}
+
+const getAccessEmailFromUrl = (url) => {
+  const match = url.match(/^\/api\/access\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+const createAccessHashPayload = (password) => {
+  const passwordHash = createPasswordHash(password)
+
+  return {
+    password: passwordHash,
+    descricao: passwordHash,
+  }
+}
+
+const createAccess = async (email, password) => {
+  const existingUser = await pool.query(
+    'SELECT 1 FROM login WHERE LOWER(TRIM(email)) = LOWER($1) LIMIT 1',
+    [email],
+  )
+
+  if (existingUser.rowCount > 0) {
+    return { status: 409, payload: { message: 'Email ja cadastrado.' } }
+  }
+
+  const passwordPayload = createAccessHashPayload(password)
+  await pool.query(
+    'INSERT INTO login (email, password, descricao) VALUES ($1, $2, $3)',
+    [email, passwordPayload.password, passwordPayload.descricao],
+  )
+
+  return {
+    status: 201,
+    payload: {
+      message: 'Acesso cadastrado com sucesso.',
+      user: { email },
+    },
+  }
+}
+
+const ensureDatabaseSchema = async () => {
+  await pool.query('ALTER TABLE login ADD COLUMN IF NOT EXISTS descricao text')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_email_unique_idx ON login (LOWER(TRIM(email)))')
 }
 
 const server = createServer(async (request, response) => {
@@ -138,6 +216,62 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'GET' && pathname === '/api/access') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
+        ? 'DESC'
+        : 'ASC'
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`LOWER(TRIM(email)) ILIKE LOWER($${values.length})`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM login ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT TRIM(email) AS email
+         FROM login
+         ${whereClause}
+         ORDER BY LOWER(TRIM(email)) ${sortDirection}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: 'email',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar acessos.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'POST' && pathname === '/api/auth/login') {
     try {
       const body = await readJsonBody(request)
@@ -150,7 +284,7 @@ const server = createServer(async (request, response) => {
       }
 
       const result = await pool.query(
-        'SELECT email, password FROM login WHERE TRIM(email) = $1 LIMIT 1',
+        'SELECT email, password, descricao FROM login WHERE LOWER(TRIM(email)) = LOWER($1) LIMIT 1',
         [email],
       )
 
@@ -160,7 +294,10 @@ const server = createServer(async (request, response) => {
       }
 
       const dbUser = result.rows[0]
-      if (normalizeDbValue(dbUser.password) !== password) {
+      const passwordHash = normalizeDbValue(dbUser.descricao)
+      const legacyPassword = normalizeDbValue(dbUser.password)
+
+      if (!verifyPassword(password, passwordHash || legacyPassword)) {
         sendJson(response, 401, { message: 'Usuario ou senha invalidos.' })
         return
       }
@@ -175,6 +312,64 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro interno ao autenticar.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/auth/register') {
+    try {
+      const body = await readJsonBody(request)
+      const email = normalizeRequestValue(body.email)
+      const password = normalizeRequestValue(body.password)
+
+      if (!email) {
+        sendJson(response, 400, { message: 'Email e obrigatorio.' })
+        return
+      }
+
+      if (!password) {
+        sendJson(response, 400, { message: 'Senha e obrigatoria.' })
+        return
+      }
+
+      const result = await createAccess(email, password)
+      sendJson(response, result.status, result.payload)
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao cadastrar acesso.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/access') {
+    try {
+      const body = await readJsonBody(request)
+      const email = normalizeRequestValue(body.email)
+      const password = normalizeRequestValue(body.password)
+
+      if (!email) {
+        sendJson(response, 400, { message: 'Email e obrigatorio.' })
+        return
+      }
+
+      if (!password) {
+        sendJson(response, 400, { message: 'Senha e obrigatoria.' })
+        return
+      }
+
+      const result = await createAccess(email, password)
+      sendJson(response, result.status, result.payload)
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao cadastrar acesso.'
 
       sendJson(response, 500, { message })
     }
@@ -308,6 +503,70 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'PUT' && getAccessEmailFromUrl(pathname)) {
+    try {
+      const originalEmail = getAccessEmailFromUrl(pathname)
+      const body = await readJsonBody(request)
+      const email = normalizeRequestValue(body.email)
+      const password = normalizeRequestValue(body.password)
+
+      if (!originalEmail) {
+        sendJson(response, 400, { message: 'Email original invalido.' })
+        return
+      }
+
+      if (!email) {
+        sendJson(response, 400, { message: 'Email e obrigatorio.' })
+        return
+      }
+
+      const existingResult = await pool.query(
+        'SELECT email, password, descricao FROM login WHERE LOWER(TRIM(email)) = LOWER($1) LIMIT 1',
+        [originalEmail],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Acesso nao encontrado.' })
+        return
+      }
+
+      const duplicateEmailResult = await pool.query(
+        'SELECT 1 FROM login WHERE LOWER(TRIM(email)) = LOWER($1) AND LOWER(TRIM(email)) <> LOWER($2) LIMIT 1',
+        [email, originalEmail],
+      )
+
+      if (duplicateEmailResult.rowCount > 0) {
+        sendJson(response, 409, { message: 'Email ja cadastrado.' })
+        return
+      }
+
+      const currentUser = existingResult.rows[0]
+      const passwordPayload = password
+        ? createAccessHashPayload(password)
+        : {
+            password: currentUser.password,
+            descricao: currentUser.descricao,
+          }
+
+      const updateResult = await pool.query(
+        'UPDATE login SET email = $1, password = $2, descricao = $3 WHERE LOWER(TRIM(email)) = LOWER($4) RETURNING TRIM(email) AS email',
+        [email, passwordPayload.password, passwordPayload.descricao, originalEmail],
+      )
+
+      sendJson(response, 200, {
+        item: updateResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao alterar acesso.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'DELETE' && getDreCodigoFromUrl(pathname)) {
     try {
       const codigo = getDreCodigoFromUrl(pathname)
@@ -341,9 +600,50 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'DELETE' && getAccessEmailFromUrl(pathname)) {
+    try {
+      const email = getAccessEmailFromUrl(pathname)
+
+      if (!email) {
+        sendJson(response, 400, { message: 'Email invalido para exclusao.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        'DELETE FROM login WHERE LOWER(TRIM(email)) = LOWER($1) RETURNING TRIM(email) AS email',
+        [email],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Acesso nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, {
+        deletedEmail: deleteResult.rows[0].email,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao excluir acesso.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   sendJson(response, 404, { message: 'Rota nao encontrada.' })
 })
 
-server.listen(port, () => {
-  console.log(`Auth API escutando na porta ${port}`)
-})
+ensureDatabaseSchema()
+  .then(() => {
+    server.listen(port, () => {
+      console.log(`Auth API escutando na porta ${port}`)
+    })
+  })
+  .catch(async (error) => {
+    console.error('Falha ao preparar esquema do banco:', error)
+    await pool.end()
+    process.exit(1)
+  })

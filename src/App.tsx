@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useState } from 'react'
+import { useCallback, useDeferredValue, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import './App.css'
 import { authenticate } from './services/auth'
@@ -6,7 +6,7 @@ import { createDreItem, deleteDreItem, listDreItemsPaginated, updateDreItem } fr
 import type { DreItem } from './services/dre'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre'
+type ActiveView = 'inicio' | 'dre' | 'acesso'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
 
@@ -137,7 +137,7 @@ function App() {
     setSession(getStoredSession())
   }, [])
 
-  const loadDreItems = async (pageToLoad: number) => {
+  const loadDreItems = useCallback(async (pageToLoad: number) => {
     setIsLoadingDre(true)
     setDreStatusMessage('Carregando registros da DRE...')
     setDreStatusTone('idle')
@@ -168,7 +168,7 @@ function App() {
     } finally {
       setIsLoadingDre(false)
     }
-  }
+  }, [deferredDreSearch, dreSortBy, dreSortDirection])
 
   useEffect(() => {
     if (!session || activeView !== 'dre') {
@@ -176,7 +176,7 @@ function App() {
     }
 
     void loadDreItems(drePage)
-  }, [activeView, deferredDreSearch, drePage, dreSortBy, dreSortDirection, session])
+  }, [activeView, drePage, loadDreItems, session])
 
   useEffect(() => {
     setDrePage(1)
@@ -526,7 +526,7 @@ function App() {
       <aside className="sidebar-menu" aria-label="Menu principal">
         <div>
           <p className="sidebar-brand">TEG Financ</p>
-          <h1 className="sidebar-title">Painel Escolar</h1>
+          <h1 className="sidebar-title">Painel Financeiro</h1>
         </div>
 
         <nav>
@@ -542,6 +542,12 @@ function App() {
               onClick={() => setActiveView('dre')}
             >
               DRE
+            </li>
+            <li
+              className={`menu-item ${activeView === 'acesso' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('acesso')}
+            >
+              Controle de acesso
             </li>
             <li className="menu-item">Rotas</li>
             <li className="menu-item">Alunos</li>
@@ -575,7 +581,7 @@ function App() {
               <SchoolBusArt />
             </div>
           </>
-        ) : (
+        ) : activeView === 'dre' ? (
           <>
             <div className="content-copy">
               <p className="content-kicker">Cadastro administrativo</p>
@@ -733,6 +739,25 @@ function App() {
                   </button>
                 </div>
               </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Seguranca administrativa</p>
+              <h2 id="content-title">Controle de acesso</h2>
+              <p className="content-description">
+                Acesse o grid de cadastro, consulta, alteracao e exclusao de usuarios
+                diretamente pelo menu lateral da tela administrativa.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/cadastroAcesso.html"
+                title="Controle de acesso"
+              />
             </div>
           </>
         )}
