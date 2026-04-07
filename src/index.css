@@ -1,0 +1,58 @@
+:root {
+  --page-bg: #f2e8d8;
+  --page-bg-deep: #d7e6df;
+  --surface: rgba(255, 250, 242, 0.94);
+  --text-strong: #1f2930;
+  --text-soft: #5f6b67;
+  --action: #c85c2c;
+  --action-soft: rgba(200, 92, 44, 0.16);
+  --font-body: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  --font-heading: 'Arial Narrow', 'Trebuchet MS', sans-serif;
+  font-family: var(--font-body);
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text-strong);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.78), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(21, 83, 91, 0.18), transparent 28%),
+    linear-gradient(135deg, var(--page-bg), var(--page-bg-deep));
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+}
+
+body,
+button,
+input {
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+}
+
+button,
+input {
+  font-size: 1rem;
+}
+
+p {
+  margin: 0;
+}
