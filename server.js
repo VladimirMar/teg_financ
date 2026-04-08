@@ -139,6 +139,11 @@ const getCondutorCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+const getMonitorCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/monitor\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 const getCredenciadaCodigoFromUrl = (url) => {
   const match = url.match(/^\/api\/credenciada\/([^/]+)$/)
   return match ? decodeURIComponent(match[1]) : null
@@ -230,6 +235,17 @@ const normalizeCrmc = (value) => {
 
 const isCrmcValid = (value) => {
   return /^\d{3}\.\d{3}-\d{2}$/.test(value)
+}
+
+const normalizeMonitorRg = (value) => {
+  return normalizeRequestValue(value)
+    .toUpperCase()
+    .replace(/[^0-9A-Z.\-/]/g, '')
+    .slice(0, 20)
+}
+
+const isMonitorRgValid = (value) => {
+  return /^[0-9A-Z.\-/]{1,20}$/.test(value)
 }
 
 const normalizeTipoVinculo = (value) => {
@@ -422,6 +438,83 @@ const parseCondutorXml = (xmlContent) => {
   })
 }
 
+
+const parseMonitorXml = (xmlContent) => {
+  const parsed = xmlParser.parse(xmlContent)
+  const rawRecords = parsed?.dataroot?.Monitor
+  const records = (Array.isArray(rawRecords)
+    ? rawRecords
+    : rawRecords
+      ? [rawRecords]
+      : [])
+    .filter((record) => record && typeof record === 'object')
+
+  return records.map((record) => ({
+    codigo: normalizeRequestValue(record?.Código),
+    monitor: normalizeRequestValue(record?.Monitor),
+    rgMonitor: normalizeRequestValue(record?.RG_monitor),
+    cpfMonitor: normalizeRequestValue(record?.CPF_monitor),
+    cursoMonitor: normalizeXmlDateInput(record?.Curso_monitor),
+    validadeCurso: normalizeXmlDateInput(record?.VCurso_monitor),
+    tipoVinculo: normalizeRequestValue(record?.Tipo_de_vinculo),
+    nascimento: normalizeXmlDateInput(record?.Nascimento),
+  }))
+}
+
+const normalizeImportedMonitorRecord = (record, index) => {
+  const codigo = normalizeCondutorCodigo(record.codigo)
+  const monitor = normalizeCondutorName(record.monitor)
+  const rgMonitor = normalizeMonitorRg(record.rgMonitor)
+  const cpfMonitor = normalizeCpf(record.cpfMonitor)
+  const cursoMonitor = normalizeXmlDateInput(record.cursoMonitor)
+  const validadeCurso = normalizeXmlDateInput(record.validadeCurso)
+  const tipoVinculo = normalizeTipoVinculo(record.tipoVinculo)
+  const nascimento = normalizeXmlDateInput(record.nascimento)
+  const itemLabel = `Registro ${index + 1}`
+
+  if (codigo === null || Number.isNaN(codigo)) {
+    throw new Error(`${itemLabel}: codigo invalido no XML.`)
+  }
+
+  if (!monitor || !isCondutorNameValid(monitor)) {
+    throw new Error(`${itemLabel}: nome do monitor invalido no XML.`)
+  }
+
+  if (!isCpfValid(cpfMonitor)) {
+    throw new Error(`${itemLabel}: CPF invalido no XML.`)
+  }
+
+  if (rgMonitor && !isMonitorRgValid(rgMonitor)) {
+    throw new Error(`${itemLabel}: RG invalido no XML.`)
+  }
+
+  if (cursoMonitor && !isDateInputValid(cursoMonitor)) {
+    throw new Error(`${itemLabel}: data do curso invalida no XML.`)
+  }
+
+  if (validadeCurso && !isDateInputValid(validadeCurso)) {
+    throw new Error(`${itemLabel}: validade do curso invalida no XML.`)
+  }
+
+  if (nascimento && !isDateInputValid(nascimento)) {
+    throw new Error(`${itemLabel}: data de nascimento invalida no XML.`)
+  }
+
+  if (tipoVinculo === null) {
+    throw new Error(`${itemLabel}: tipo de vinculo invalido no XML.`)
+  }
+
+  return {
+    codigo,
+    monitor,
+    rgMonitor,
+    cpfMonitor,
+    cursoMonitor,
+    validadeCurso,
+    tipoVinculo,
+    nascimento,
+  }
+}
 const normalizeImportedCondutorRecord = (record, index) => {
   const codigo = normalizeCondutorCodigo(record.codigo)
   const condutor = normalizeCondutorName(record.condutor)
@@ -640,6 +733,30 @@ const condutorImportRecusaSelectClause = `
   BTRIM(motivo_recusa) AS motivo_recusa,
   TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
 
+const monitorSelectClause = `
+  codigo::text AS codigo,
+  BTRIM(monitor) AS monitor,
+  COALESCE(BTRIM(rg_monitor), '') AS rg_monitor,
+  BTRIM(cpf_monitor) AS cpf_monitor,
+  TO_CHAR(curso_monitor::date, 'YYYY-MM-DD') AS curso_monitor,
+  TO_CHAR(validade_curso::date, 'YYYY-MM-DD') AS validade_curso,
+  COALESCE(BTRIM(tipo_vinculo), '') AS tipo_vinculo,
+  TO_CHAR(nascimento::date, 'YYYY-MM-DD') AS nascimento,
+  TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
+  TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
+
+const monitorImportRecusaSelectClause = `
+  id::text AS id,
+  BTRIM(arquivo_xml) AS arquivo_xml,
+  linha_xml::text AS linha_xml,
+  COALESCE(BTRIM(codigo_xml), '') AS codigo_xml,
+  COALESCE(BTRIM(monitor_xml), '') AS monitor_xml,
+  COALESCE(BTRIM(cpf_monitor_xml), '') AS cpf_monitor_xml,
+  COALESCE(BTRIM(rg_monitor_xml), '') AS rg_monitor_xml,
+  COALESCE(BTRIM(tipo_vinculo_xml), '') AS tipo_vinculo_xml,
+  BTRIM(motivo_recusa) AS motivo_recusa,
+  TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
+
 const credenciadaSelectClause = `
   codigo::text AS codigo,
   BTRIM(credenciado) AS credenciado,
@@ -815,6 +932,165 @@ const importCondutorXmlFile = async (fileName) => {
 
     if (normalizedRecords.length) {
       await client.query('SELECT setval(\'condutor_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM condutor), 0), 1), true)')
+    }
+    await client.query('COMMIT')
+
+    return {
+      fileName: sanitizedFileName,
+      filePath: resolvedPath,
+      total: parsedRecords.length,
+      processed: normalizedRecords.length,
+      inserted,
+      updated,
+      skipped: skippedRecords.length,
+      skippedRecords: skippedRecords.slice(0, 20),
+    }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
+const importMonitorXmlFile = async (fileName) => {
+  const sanitizedFileName = path.basename(normalizeRequestValue(fileName))
+
+  if (!sanitizedFileName) {
+    throw new Error('Nome do arquivo XML e obrigatorio.')
+  }
+
+  if (path.extname(sanitizedFileName).toLowerCase() !== '.xml') {
+    throw new Error('Informe um arquivo XML valido.')
+  }
+
+  const resolvedPath = path.resolve(importXmlDirectory, sanitizedFileName)
+
+  if (!resolvedPath.startsWith(importXmlDirectory)) {
+    throw new Error('Arquivo XML invalido.')
+  }
+
+  const xmlContent = await readFile(resolvedPath, 'utf8')
+  const parsedRecords = parseMonitorXml(xmlContent)
+
+  if (!parsedRecords.length) {
+    throw new Error('Nenhum registro de monitor foi encontrado no XML informado.')
+  }
+
+  const normalizedRecords = []
+  const skippedRecords = []
+
+  parsedRecords.forEach((record, index) => {
+    try {
+      normalizedRecords.push(normalizeImportedMonitorRecord(record, index))
+    } catch (error) {
+      skippedRecords.push({
+        index: index + 1,
+        codigoXml: normalizeRequestValue(record.codigo),
+        monitorXml: normalizeRequestValue(record.monitor),
+        cpfMonitorXml: normalizeRequestValue(record.cpfMonitor),
+        rgMonitorXml: normalizeRequestValue(record.rgMonitor),
+        tipoVinculoXml: normalizeRequestValue(record.tipoVinculo),
+        message: error instanceof Error ? error.message : `Registro ${index + 1}: erro ao validar o XML.`,
+      })
+    }
+  })
+
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+    await client.query('TRUNCATE TABLE monitor_import_recusa RESTART IDENTITY')
+    let inserted = 0
+    let updated = 0
+
+    for (const skippedRecord of skippedRecords) {
+      await client.query(
+        `INSERT INTO monitor_import_recusa (
+           arquivo_xml,
+           linha_xml,
+           codigo_xml,
+           monitor_xml,
+           cpf_monitor_xml,
+           rg_monitor_xml,
+           tipo_vinculo_xml,
+           motivo_recusa,
+           data_importacao
+         )
+         VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, ''), NULLIF($7, ''), $8, NOW())`,
+        [
+          sanitizedFileName,
+          skippedRecord.index,
+          skippedRecord.codigoXml,
+          skippedRecord.monitorXml,
+          skippedRecord.cpfMonitorXml,
+          skippedRecord.rgMonitorXml,
+          skippedRecord.tipoVinculoXml,
+          skippedRecord.message,
+        ],
+      )
+    }
+
+    for (const record of normalizedRecords) {
+      const existingResult = await client.query('SELECT 1 FROM monitor WHERE codigo = $1 LIMIT 1', [record.codigo])
+
+      if (existingResult.rowCount > 0) {
+        await client.query(
+          `UPDATE monitor
+           SET monitor = $1,
+               rg_monitor = NULLIF($2, ''),
+               cpf_monitor = $3,
+               curso_monitor = NULLIF($4, '')::date,
+               validade_curso = NULLIF($5, '')::date,
+               tipo_vinculo = NULLIF($6, ''),
+               nascimento = NULLIF($7, '')::date,
+               data_modificacao = NOW()
+           WHERE codigo = $8`,
+          [
+            record.monitor,
+            record.rgMonitor,
+            record.cpfMonitor,
+            record.cursoMonitor,
+            record.validadeCurso,
+            record.tipoVinculo,
+            record.nascimento,
+            record.codigo,
+          ],
+        )
+        updated += 1
+        continue
+      }
+
+      await client.query(
+        `INSERT INTO monitor (
+           codigo,
+           monitor,
+           rg_monitor,
+           cpf_monitor,
+           curso_monitor,
+           validade_curso,
+           tipo_vinculo,
+           nascimento,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, NULLIF($3, ''), $4, NULLIF($5, '')::date, NULLIF($6, '')::date, NULLIF($7, ''), NULLIF($8, '')::date, NOW(), NOW())`,
+        [
+          record.codigo,
+          record.monitor,
+          record.rgMonitor,
+          record.cpfMonitor,
+          record.cursoMonitor,
+          record.validadeCurso,
+          record.tipoVinculo,
+          record.nascimento,
+        ],
+      )
+      inserted += 1
+    }
+
+    if (normalizedRecords.length) {
+      await client.query('SELECT setval(\'monitor_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM monitor), 0), 1), true)')
     }
     await client.query('COMMIT')
 
@@ -1231,6 +1507,98 @@ const validateCondutorPayload = async ({
       validadeCurso: normalizedValidadeCurso,
       tipoVinculo: normalizedTipoVinculo,
       historico: normalizedHistorico,
+    },
+  }
+}
+
+const validateMonitorPayload = async ({
+  codigo,
+  monitor,
+  rgMonitor,
+  cpfMonitor,
+  cursoMonitor,
+  validadeCurso,
+  tipoVinculo,
+  nascimento,
+  originalCodigo = null,
+}) => {
+  const normalizedCodigo = normalizeCondutorCodigo(codigo)
+  const normalizedMonitor = normalizeCondutorName(monitor)
+  const normalizedRgMonitor = normalizeMonitorRg(rgMonitor)
+  const normalizedCpfMonitor = normalizeCpf(cpfMonitor)
+  const normalizedCursoMonitor = normalizeRequestValue(cursoMonitor)
+  const normalizedValidadeCurso = normalizeRequestValue(validadeCurso)
+  const normalizedTipoVinculo = normalizeTipoVinculo(tipoVinculo)
+  const normalizedNascimento = normalizeRequestValue(nascimento)
+
+  if (normalizedCodigo === null) {
+    return { status: 400, payload: { message: 'Codigo e obrigatorio.' } }
+  }
+
+  if (Number.isNaN(normalizedCodigo)) {
+    return { status: 400, payload: { message: 'Codigo deve ser um numero inteiro positivo.' } }
+  }
+
+  if (!normalizedMonitor) {
+    return { status: 400, payload: { message: 'Nome do monitor e obrigatorio.' } }
+  }
+
+  if (!isCondutorNameValid(normalizedMonitor)) {
+    return { status: 400, payload: { message: 'Monitor deve conter apenas letras maiusculas e no maximo 100 caracteres.' } }
+  }
+
+  if (!normalizedCpfMonitor) {
+    return { status: 400, payload: { message: 'CPF do monitor e obrigatorio.' } }
+  }
+
+  if (!isCpfValid(normalizedCpfMonitor)) {
+    return { status: 400, payload: { message: 'CPF do monitor deve conter 11 digitos.' } }
+  }
+
+  if (normalizedRgMonitor && !isMonitorRgValid(normalizedRgMonitor)) {
+    return { status: 400, payload: { message: 'RG do monitor invalido.' } }
+  }
+
+  if (normalizedCursoMonitor && !isDateInputValid(normalizedCursoMonitor)) {
+    return { status: 400, payload: { message: 'Data do curso invalida.' } }
+  }
+
+  if (normalizedValidadeCurso && !isDateInputValid(normalizedValidadeCurso)) {
+    return { status: 400, payload: { message: 'Validade do curso invalida.' } }
+  }
+
+  if (normalizedNascimento && !isDateInputValid(normalizedNascimento)) {
+    return { status: 400, payload: { message: 'Data de nascimento invalida.' } }
+  }
+
+  if (normalizedTipoVinculo === null) {
+    return { status: 400, payload: { message: 'Tipo de vinculo invalido.' } }
+  }
+
+  const duplicateCodeResult = await pool.query(
+    `SELECT 1
+     FROM monitor
+     WHERE codigo = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedCodigo, originalCodigo],
+  )
+
+  if (duplicateCodeResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
+  }
+
+  return {
+    status: 200,
+    payload: {
+      codigo: normalizedCodigo,
+      monitor: normalizedMonitor,
+      rgMonitor: normalizedRgMonitor,
+      cpfMonitor: normalizedCpfMonitor,
+      cursoMonitor: normalizedCursoMonitor,
+      validadeCurso: normalizedValidadeCurso,
+      tipoVinculo: normalizedTipoVinculo,
+      nascimento: normalizedNascimento,
     },
   }
 }
@@ -1667,6 +2035,49 @@ const ensureDatabaseSchema = async () => {
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS condutor_codigo_unique_idx ON condutor (codigo)')
   await pool.query('CREATE INDEX IF NOT EXISTS condutor_import_recusa_data_idx ON condutor_import_recusa (data_importacao DESC)')
   await pool.query('CREATE INDEX IF NOT EXISTS condutor_import_recusa_arquivo_idx ON condutor_import_recusa (arquivo_xml)')
+  await pool.query('CREATE SEQUENCE IF NOT EXISTS monitor_codigo_seq START WITH 1 INCREMENT BY 1')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS monitor (
+      codigo integer PRIMARY KEY DEFAULT nextval('monitor_codigo_seq'),
+      monitor varchar(100) NOT NULL,
+      rg_monitor varchar(20),
+      cpf_monitor varchar(14) NOT NULL,
+      curso_monitor date,
+      validade_curso date,
+      tipo_vinculo varchar(50),
+      nascimento date,
+      data_inclusao timestamp without time zone NOT NULL DEFAULT NOW(),
+      data_modificacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query('ALTER SEQUENCE monitor_codigo_seq OWNED BY monitor.codigo')
+  await pool.query('ALTER TABLE monitor ALTER COLUMN codigo SET DEFAULT nextval(\'monitor_codigo_seq\')')
+  await pool.query('ALTER TABLE monitor ALTER COLUMN data_inclusao SET DEFAULT NOW()')
+  await pool.query('ALTER TABLE monitor ALTER COLUMN data_modificacao SET DEFAULT NOW()')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS monitor_import_recusa (
+      id bigserial PRIMARY KEY,
+      arquivo_xml varchar(255) NOT NULL,
+      linha_xml integer NOT NULL,
+      codigo_xml varchar(50),
+      monitor_xml varchar(150),
+      cpf_monitor_xml varchar(20),
+      rg_monitor_xml varchar(20),
+      tipo_vinculo_xml varchar(50),
+      motivo_recusa text NOT NULL,
+      data_importacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query(`
+    UPDATE monitor
+    SET data_inclusao = COALESCE(data_inclusao, NOW()),
+        data_modificacao = COALESCE(data_modificacao, COALESCE(data_inclusao, NOW()))
+    WHERE data_inclusao IS NULL OR data_modificacao IS NULL
+  `)
+  await pool.query('SELECT setval(\'monitor_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM monitor), 0), 1), true)')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS monitor_codigo_unique_idx ON monitor (codigo)')
+  await pool.query('CREATE INDEX IF NOT EXISTS monitor_import_recusa_data_idx ON monitor_import_recusa (data_importacao DESC)')
+  await pool.query('CREATE INDEX IF NOT EXISTS monitor_import_recusa_arquivo_idx ON monitor_import_recusa (arquivo_xml)')
   await pool.query(`
     DO $$
     BEGIN
@@ -2080,6 +2491,132 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar condutores.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/monitor') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
+      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
+        ? 'DESC'
+        : 'ASC'
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+      const orderByClause = sortBy === 'monitor'
+        ? `UPPER(BTRIM(monitor)) ${sortDirection}, codigo ASC`
+        : `codigo ${sortDirection}`
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR UPPER(BTRIM(monitor)) ILIKE UPPER($${values.length})
+          OR BTRIM(cpf_monitor) ILIKE $${values.length}
+          OR COALESCE(BTRIM(rg_monitor), '') ILIKE UPPER($${values.length})
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM monitor ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           ${monitorSelectClause}
+         FROM monitor
+         ${whereClause}
+         ORDER BY ${orderByClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: sortBy === 'monitor' ? 'monitor' : 'codigo',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar monitores.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/monitor/import-rejections') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 10) || 10, 1), 100)
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          arquivo_xml ILIKE $${values.length}
+          OR COALESCE(codigo_xml, '') ILIKE $${values.length}
+          OR COALESCE(monitor_xml, '') ILIKE $${values.length}
+          OR COALESCE(cpf_monitor_xml, '') ILIKE $${values.length}
+          OR COALESCE(rg_monitor_xml, '') ILIKE $${values.length}
+          OR COALESCE(tipo_vinculo_xml, '') ILIKE $${values.length}
+          OR motivo_recusa ILIKE $${values.length}
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM monitor_import_recusa ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           ${monitorImportRecusaSelectClause}
+         FROM monitor_import_recusa
+         ${whereClause}
+         ORDER BY data_importacao DESC, linha_xml ASC, id DESC
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar recusas de importacao do monitor.'
 
       sendJson(response, 500, { message })
     }
@@ -2745,6 +3282,86 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'POST' && pathname === '/api/monitor') {
+    try {
+      const body = await readJsonBody(request)
+      const validationResult = await validateMonitorPayload({
+        codigo: body.codigo,
+        monitor: body.monitor,
+        rgMonitor: body.rgMonitor,
+        cpfMonitor: body.cpfMonitor,
+        cursoMonitor: body.cursoMonitor,
+        validadeCurso: body.validadeCurso,
+        tipoVinculo: body.tipoVinculo,
+        nascimento: body.nascimento,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const insertResult = await pool.query(
+        `INSERT INTO monitor (
+           codigo,
+           monitor,
+           rg_monitor,
+           cpf_monitor,
+           curso_monitor,
+           validade_curso,
+           tipo_vinculo,
+           nascimento,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, NULLIF($3, ''), $4, NULLIF($5, '')::date, NULLIF($6, '')::date, NULLIF($7, ''), NULLIF($8, '')::date, NOW(), NOW())
+         RETURNING ${monitorSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.monitor,
+          validationResult.payload.rgMonitor,
+          validationResult.payload.cpfMonitor,
+          validationResult.payload.cursoMonitor,
+          validationResult.payload.validadeCurso,
+          validationResult.payload.tipoVinculo,
+          validationResult.payload.nascimento,
+        ],
+      )
+
+      sendJson(response, 201, {
+        item: insertResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao cadastrar monitor.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/monitor/import-xml') {
+    try {
+      const body = await readJsonBody(request)
+      const result = await importMonitorXmlFile(body.fileName)
+
+      sendJson(response, 200, {
+        message: 'Importacao de monitores concluida com sucesso.',
+        ...result,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao importar monitores do XML.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'POST' && pathname === '/api/credenciada') {
     try {
       const body = await readJsonBody(request)
@@ -3128,6 +3745,83 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'PUT' && getMonitorCodigoFromUrl(pathname)) {
+    try {
+      const originalCodigo = Number(getMonitorCodigoFromUrl(pathname))
+      const body = await readJsonBody(request)
+
+      if (!Number.isInteger(originalCodigo) || originalCodigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo original invalido.' })
+        return
+      }
+
+      const existingResult = await pool.query(
+        'SELECT 1 FROM monitor WHERE codigo = $1 LIMIT 1',
+        [originalCodigo],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Monitor nao encontrado.' })
+        return
+      }
+
+      const validationResult = await validateMonitorPayload({
+        codigo: body.codigo,
+        monitor: body.monitor,
+        rgMonitor: body.rgMonitor,
+        cpfMonitor: body.cpfMonitor,
+        cursoMonitor: body.cursoMonitor,
+        validadeCurso: body.validadeCurso,
+        tipoVinculo: body.tipoVinculo,
+        nascimento: body.nascimento,
+        originalCodigo,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE monitor
+         SET codigo = $1,
+             monitor = $2,
+             rg_monitor = NULLIF($3, ''),
+             cpf_monitor = $4,
+             curso_monitor = NULLIF($5, '')::date,
+             validade_curso = NULLIF($6, '')::date,
+             tipo_vinculo = NULLIF($7, ''),
+             nascimento = NULLIF($8, '')::date,
+             data_modificacao = NOW()
+         WHERE codigo = $9
+         RETURNING ${monitorSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.monitor,
+          validationResult.payload.rgMonitor,
+          validationResult.payload.cpfMonitor,
+          validationResult.payload.cursoMonitor,
+          validationResult.payload.validadeCurso,
+          validationResult.payload.tipoVinculo,
+          validationResult.payload.nascimento,
+          originalCodigo,
+        ],
+      )
+
+      sendJson(response, 200, {
+        item: updateResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao alterar monitor.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'PUT' && getCredenciadaCodigoFromUrl(pathname)) {
     try {
       const originalCodigo = Number(getCredenciadaCodigoFromUrl(pathname))
@@ -3418,6 +4112,39 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao excluir condutor.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'DELETE' && getMonitorCodigoFromUrl(pathname)) {
+    try {
+      const codigo = Number(getMonitorCodigoFromUrl(pathname))
+
+      if (!Number.isInteger(codigo) || codigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo invalido para exclusao.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        'DELETE FROM monitor WHERE codigo = $1 RETURNING codigo::text AS codigo',
+        [codigo],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Monitor nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, {
+        deletedCodigo: deleteResult.rows[0].codigo,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao excluir monitor.'
 
       sendJson(response, 500, { message })
     }

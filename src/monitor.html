@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro de monitor</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
+    <main class="dsc-access-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-management-layout">
+            <div class="dsc-access-toolbar">
+              <form class="dsc-access-filter-form" id="monitor-filter-form">
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-monitor-button">Inserir registro</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-monitor-import-button">Importar XML</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-monitor-rejections-button">Recusas XML</button>
+                <input class="dsc-form-control dsc-access-filter-input" id="monitor-search" type="text" placeholder="Filtrar por codigo, monitor, CPF ou RG" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-monitor-filter-button">Limpar</button>
+              </form>
+            </div>
+
+            <section class="dsc-card dsc-hidden" id="monitor-rejection-panel">
+              <div class="dsc-access-grid-header">
+                <h2>Registros nao importados</h2>
+                <span id="monitor-rejection-total"></span>
+              </div>
+
+              <form class="dsc-access-filter-form" id="monitor-rejection-filter-form">
+                <input class="dsc-form-control dsc-access-filter-input" id="monitor-rejection-search" type="text" placeholder="Filtrar por arquivo, codigo, monitor, RG, tipo vinculo ou motivo" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-monitor-rejection-filter-button">Limpar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="close-monitor-rejection-panel-button">Fechar</button>
+              </form>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Data importacao</th>
+                      <th>Arquivo XML</th>
+                      <th>Linha XML</th>
+                      <th>Codigo XML</th>
+                      <th>Monitor XML</th>
+                      <th>CPF XML</th>
+                      <th>RG XML</th>
+                      <th>Tipo vinculo XML</th>
+                      <th>Motivo da recusa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="monitor-rejection-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="monitor-rejection-empty-state">Nenhum registro recusado encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="monitor-rejection-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-monitor-rejection-page-button">Anterior</button>
+                <span id="monitor-rejection-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-monitor-rejection-page-button">Proxima</button>
+              </div>
+            </section>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="monitor-import-form">
+              <h2>Importacao de monitor por XML</h2>
+
+              <label class="dsc-field-group" for="monitor-import-file-name">
+                <span>Nome do arquivo XML</span>
+                <input class="dsc-form-control" id="monitor-import-file-name" type="text" placeholder="Monitor.xml" />
+                <div class="dsc-form-error" id="monitor-import-file-name-error"></div>
+              </label>
+
+              <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-monitor-import-button">Executar importacao</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-monitor-import-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="monitor-import-feedback"></p>
+            </form>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="monitor-form">
+              <h2 id="monitor-form-title">Novo registro</h2>
+
+              <label class="dsc-field-group" for="monitor-codigo">
+                <span>Codigo</span>
+                <input class="dsc-form-control" id="monitor-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
+                <div class="dsc-form-error" id="monitor-codigo-error"></div>
+              </label>
+
+              <div class="dsc-form-row dsc-form-row-condutor-top">
+                <label class="dsc-field-group" for="monitor-nome">
+                  <span>Monitor</span>
+                  <input class="dsc-form-control" id="monitor-nome" type="text" placeholder="NOME DO MONITOR" maxlength="100" />
+                  <div class="dsc-form-error" id="monitor-nome-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="monitor-cpf">
+                  <span>CPF</span>
+                  <input class="dsc-form-control" id="monitor-cpf" type="text" placeholder="000.000.000-00" maxlength="14" />
+                  <div class="dsc-form-error" id="monitor-cpf-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="monitor-rg">
+                  <span>RG</span>
+                  <input class="dsc-form-control" id="monitor-rg" type="text" placeholder="00.000.000-0" maxlength="20" />
+                  <div class="dsc-form-error" id="monitor-rg-error"></div>
+                </label>
+              </div>
+
+              <div class="dsc-form-row">
+                <label class="dsc-field-group" for="monitor-curso">
+                  <span>Data do curso</span>
+                  <input class="dsc-form-control" id="monitor-curso" type="date" />
+                  <div class="dsc-form-error" id="monitor-curso-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="monitor-validade-curso">
+                  <span>Validade do curso</span>
+                  <input class="dsc-form-control" id="monitor-validade-curso" type="date" />
+                  <div class="dsc-form-error" id="monitor-validade-curso-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="monitor-nascimento">
+                  <span>Nascimento</span>
+                  <input class="dsc-form-control" id="monitor-nascimento" type="date" />
+                  <div class="dsc-form-error" id="monitor-nascimento-error"></div>
+                </label>
+              </div>
+
+              <fieldset class="dsc-field-group dsc-radio-field-group">
+                <span>Tipo de vinculo</span>
+                <div class="dsc-radio-group" id="monitor-tipo-vinculo-group">
+                  <label class="dsc-radio-option" for="monitor-tipo-vinculo-branco">
+                    <input id="monitor-tipo-vinculo-branco" type="radio" name="monitor-tipo-vinculo" value="" checked />
+                    <span>Em branco</span>
+                  </label>
+                  <label class="dsc-radio-option" for="monitor-tipo-vinculo-cooperado">
+                    <input id="monitor-tipo-vinculo-cooperado" type="radio" name="monitor-tipo-vinculo" value="Cooperado" />
+                    <span>Cooperado</span>
+                  </label>
+                  <label class="dsc-radio-option" for="monitor-tipo-vinculo-funcionario">
+                    <input id="monitor-tipo-vinculo-funcionario" type="radio" name="monitor-tipo-vinculo" value="Funcionario" />
+                    <span>Funcion&aacute;rio</span>
+                  </label>
+                  <label class="dsc-radio-option" for="monitor-tipo-vinculo-socio">
+                    <input id="monitor-tipo-vinculo-socio" type="radio" name="monitor-tipo-vinculo" value="Socio" />
+                    <span>S&oacute;cio</span>
+                  </label>
+                </div>
+              </fieldset>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-monitor-button">Salvar monitor</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-monitor-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="monitor-form-feedback"></p>
+            </form>
+
+            <div class="dsc-card dsc-access-grid-card">
+              <div class="dsc-access-grid-header">
+                <h2>Registros cadastrados</h2>
+                <span id="monitor-total"></span>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Codigo</th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-monitor-button">
+                          Monitor <span id="sort-monitor-indicator">↑</span>
+                        </button>
+                      </th>
+                      <th>CPF</th>
+                      <th>RG</th>
+                      <th>Curso</th>
+                      <th>Validade curso</th>
+                      <th>Tipo vinculo</th>
+                      <th class="dsc-grid-actions-column">Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="monitor-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="monitor-empty-state">Nenhum monitor encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="monitor-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-monitor-page-button">Anterior</button>
+                <span id="monitor-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-monitor-page-button">Proxima</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('monitor-form');
+      const codigoInput = document.getElementById('monitor-codigo');
+      const codigoError = document.getElementById('monitor-codigo-error');
+      const nomeInput = document.getElementById('monitor-nome');
+      const cpfInput = document.getElementById('monitor-cpf');
+      const rgInput = document.getElementById('monitor-rg');
+      const cursoInput = document.getElementById('monitor-curso');
+      const validadeCursoInput = document.getElementById('monitor-validade-curso');
+      const nascimentoInput = document.getElementById('monitor-nascimento');
+      const nomeError = document.getElementById('monitor-nome-error');
+      const cpfError = document.getElementById('monitor-cpf-error');
+      const rgError = document.getElementById('monitor-rg-error');
+      const cursoError = document.getElementById('monitor-curso-error');
+      const validadeCursoError = document.getElementById('monitor-validade-curso-error');
+      const nascimentoError = document.getElementById('monitor-nascimento-error');
+      const feedback = document.getElementById('monitor-form-feedback');
+      const gridFeedback = document.getElementById('monitor-grid-feedback');
+      const insertButton = document.getElementById('insert-monitor-button');
+      const importButton = document.getElementById('open-monitor-import-button');
+      const rejectionButton = document.getElementById('open-monitor-rejections-button');
+      const cancelButton = document.getElementById('cancel-monitor-button');
+      const importForm = document.getElementById('monitor-import-form');
+      const importFileNameInput = document.getElementById('monitor-import-file-name');
+      const importFileNameError = document.getElementById('monitor-import-file-name-error');
+      const importFeedback = document.getElementById('monitor-import-feedback');
+      const cancelImportButton = document.getElementById('cancel-monitor-import-button');
+      const filterForm = document.getElementById('monitor-filter-form');
+      const clearFilterButton = document.getElementById('clear-monitor-filter-button');
+      const searchInput = document.getElementById('monitor-search');
+      const gridBody = document.getElementById('monitor-grid-body');
+      const emptyState = document.getElementById('monitor-empty-state');
+      const totalLabel = document.getElementById('monitor-total');
+      const previousPageButton = document.getElementById('previous-monitor-page-button');
+      const nextPageButton = document.getElementById('next-monitor-page-button');
+      const paginationInfo = document.getElementById('monitor-pagination-info');
+      const sortMonitorButton = document.getElementById('sort-monitor-button');
+      const sortMonitorIndicator = document.getElementById('sort-monitor-indicator');
+      const formTitle = document.getElementById('monitor-form-title');
+      const saveButton = document.getElementById('save-monitor-button');
+      const statusBanner = document.getElementById('status-banner');
+      const tipoVinculoRadios = Array.from(document.querySelectorAll('input[name="monitor-tipo-vinculo"]'));
+      const rejectionPanel = document.getElementById('monitor-rejection-panel');
+      const rejectionFilterForm = document.getElementById('monitor-rejection-filter-form');
+      const rejectionSearchInput = document.getElementById('monitor-rejection-search');
+      const rejectionGridBody = document.getElementById('monitor-rejection-grid-body');
+      const rejectionEmptyState = document.getElementById('monitor-rejection-empty-state');
+      const rejectionGridFeedback = document.getElementById('monitor-rejection-grid-feedback');
+      const rejectionTotalLabel = document.getElementById('monitor-rejection-total');
+      const previousRejectionPageButton = document.getElementById('previous-monitor-rejection-page-button');
+      const nextRejectionPageButton = document.getElementById('next-monitor-rejection-page-button');
+      const rejectionPaginationInfo = document.getElementById('monitor-rejection-pagination-info');
+      const clearRejectionFilterButton = document.getElementById('clear-monitor-rejection-filter-button');
+      const closeRejectionPanelButton = document.getElementById('close-monitor-rejection-panel-button');
+
+      const pageSize = 5;
+      const rejectionPageSize = 10;
+      const defaultImportFileName = 'Monitor.xml';
+      let currentPage = 1;
+      let totalPages = 1;
+      let currentSearch = '';
+      let currentSortBy = 'codigo';
+      let currentSortDirection = 'asc';
+      let currentRejectionPage = 1;
+      let totalRejectionPages = 1;
+      let currentRejectionSearch = '';
+      let editingCodigo = null;
+      let bannerTimeoutId = null;
+
+      const normalizeTipoVinculoValue = (value) => (value || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+      const getSelectedTipoVinculo = () => {
+        const selectedRadio = tipoVinculoRadios.find((radio) => radio.checked);
+        return selectedRadio ? selectedRadio.value : '';
+      };
+
+      const setSelectedTipoVinculo = (value) => {
+        const selectedRadio = tipoVinculoRadios.find((radio) => normalizeTipoVinculoValue(radio.value) === normalizeTipoVinculoValue(value)) || tipoVinculoRadios[0];
+        tipoVinculoRadios.forEach((radio) => {
+          radio.checked = radio === selectedRadio;
+        });
+      };
+
+      const normalizeName = (value) => value
+        .replace(/\([^)]*\)/g, ' ')
+        .toUpperCase()
+        .replace(/[^A-ZÀ-Ý\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trimStart()
+        .slice(0, 100);
+
+      const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
+
+      const normalizeCpf = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+
+        if (digits.length <= 3) {
+          return digits;
+        }
+
+        if (digits.length <= 6) {
+          return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+        }
+
+        if (digits.length <= 9) {
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+        }
+
+        return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+      };
+
+      const normalizeRg = (value) => value
+        .toUpperCase()
+        .replace(/[^0-9A-Z.\-/]/g, '')
+        .slice(0, 20);
+
+      const formatDateLabel = (value) => value ? value.split('-').reverse().join('/') : '';
+
+      const formatDateTimeLabel = (value) => {
+        if (!value) {
+          return '';
+        }
+
+        const [datePart, timePart = ''] = value.split(' ');
+        const formattedDate = formatDateLabel(datePart);
+        return timePart ? `${formattedDate} ${timePart.slice(0, 5)}` : formattedDate;
+      };
+
+      const resetMessages = () => {
+        codigoError.textContent = '';
+        nomeError.textContent = '';
+        cpfError.textContent = '';
+        rgError.textContent = '';
+        cursoError.textContent = '';
+        validadeCursoError.textContent = '';
+        nascimentoError.textContent = '';
+        feedback.textContent = '';
+        feedback.className = 'dsc-feedback';
+      };
+
+      const resetImportMessages = () => {
+        importFileNameError.textContent = '';
+        importFeedback.textContent = '';
+        importFeedback.className = 'dsc-feedback';
+      };
+
+      const setRejectionGridMessage = (message, tone = '') => {
+        rejectionGridFeedback.textContent = message;
+        rejectionGridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          rejectionGridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const setGridMessage = (message, tone = '') => {
+        gridFeedback.textContent = message;
+        gridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          gridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const showBanner = (message, tone = 'success') => {
+        if (bannerTimeoutId) {
+          window.clearTimeout(bannerTimeoutId);
+        }
+
+        statusBanner.textContent = message;
+        statusBanner.className = `dsc-status-banner dsc-status-banner-${tone}`;
+
+        bannerTimeoutId = window.setTimeout(() => {
+          statusBanner.className = 'dsc-status-banner dsc-hidden';
+          statusBanner.textContent = '';
+        }, 3500);
+      };
+
+      const showForm = (isEditing = false) => {
+        importForm.classList.add('dsc-hidden');
+        rejectionPanel.classList.add('dsc-hidden');
+        form.classList.remove('dsc-hidden');
+        formTitle.textContent = isEditing ? 'Alteracao de monitor' : 'Cadastro de monitor';
+        saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar monitor';
+      };
+
+      const showImportForm = () => {
+        form.classList.add('dsc-hidden');
+        rejectionPanel.classList.add('dsc-hidden');
+        importForm.classList.remove('dsc-hidden');
+        importFileNameInput.value = defaultImportFileName;
+        resetImportMessages();
+      };
+
+      const showRejectionPanel = async (search = currentRejectionSearch) => {
+        form.classList.add('dsc-hidden');
+        importForm.classList.add('dsc-hidden');
+        rejectionPanel.classList.remove('dsc-hidden');
+        currentRejectionSearch = search;
+        rejectionSearchInput.value = search;
+        currentRejectionPage = 1;
+        await loadRejectionItems();
+      };
+
+      const hideForm = () => {
+        form.classList.add('dsc-hidden');
+        form.reset();
+        codigoInput.value = '';
+        setSelectedTipoVinculo('');
+        editingCodigo = null;
+        resetMessages();
+      };
+
+      const hideImportForm = () => {
+        importForm.classList.add('dsc-hidden');
+        importFileNameInput.value = defaultImportFileName;
+        resetImportMessages();
+      };
+
+      const hideRejectionPanel = () => {
+        rejectionPanel.classList.add('dsc-hidden');
+        rejectionGridBody.innerHTML = '';
+        rejectionEmptyState.classList.add('dsc-hidden');
+        setRejectionGridMessage('');
+      };
+
+      const buildUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          pageSize: String(pageSize),
+          sortBy: currentSortBy,
+          sortDirection: currentSortDirection,
+        });
+
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+
+        return `/api/monitor?${params.toString()}`;
+      };
+
+      const buildRejectionUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentRejectionPage),
+          pageSize: String(rejectionPageSize),
+        });
+
+        if (currentRejectionSearch) {
+          params.set('search', currentRejectionSearch);
+        }
+
+        return `/api/monitor/import-rejections?${params.toString()}`;
+      };
+
+      const renderGrid = (items) => {
+        gridBody.innerHTML = '';
+
+        if (!items.length) {
+          emptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        emptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.codigo}</td>
+            <td>${item.monitor}</td>
+            <td>${item.cpf_monitor}</td>
+            <td>${item.rg_monitor || ''}</td>
+            <td>${formatDateLabel(item.curso_monitor)}</td>
+            <td>${formatDateLabel(item.validade_curso)}</td>
+            <td>${item.tipo_vinculo || ''}</td>
+            <td>
+              <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}" data-monitor="${item.monitor}">Excluir</button>
+              </div>
+            </td>
+          `;
+          row.dataset.item = JSON.stringify(item);
+          gridBody.appendChild(row);
+        });
+      };
+
+      const renderRejectionGrid = (items) => {
+        rejectionGridBody.innerHTML = '';
+
+        if (!items.length) {
+          rejectionEmptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        rejectionEmptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${formatDateTimeLabel(item.data_importacao)}</td>
+            <td>${item.arquivo_xml}</td>
+            <td>${item.linha_xml}</td>
+            <td>${item.codigo_xml || ''}</td>
+            <td>${item.monitor_xml || ''}</td>
+            <td>${item.cpf_monitor_xml || ''}</td>
+            <td>${item.rg_monitor_xml || ''}</td>
+            <td>${item.tipo_vinculo_xml || ''}</td>
+            <td>${item.motivo_recusa}</td>
+          `;
+          rejectionGridBody.appendChild(row);
+        });
+      };
+
+      const updatePagination = (totalItems) => {
+        totalLabel.textContent = `${totalItems} item(ns) encontrados`;
+        paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        previousPageButton.disabled = currentPage <= 1;
+        nextPageButton.disabled = currentPage >= totalPages;
+        sortMonitorIndicator.textContent = currentSortBy === 'monitor' && currentSortDirection === 'desc' ? '↓' : '↑';
+      };
+
+      const updateRejectionPagination = (totalItems) => {
+        rejectionTotalLabel.textContent = `${totalItems} recusa(s) encontrada(s)`;
+        rejectionPaginationInfo.textContent = `Pagina ${currentRejectionPage} de ${totalRejectionPages}`;
+        previousRejectionPageButton.disabled = currentRejectionPage <= 1;
+        nextRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
+      };
+
+      const loadItems = async () => {
+        setGridMessage('Carregando monitores...');
+
+        try {
+          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar monitores.');
+          }
+
+          totalPages = payload.totalPages || 1;
+          currentPage = payload.page || 1;
+          renderGrid(payload.items || []);
+          updatePagination(payload.total || 0);
+          setGridMessage(payload.items && payload.items.length ? '' : 'Nenhum monitor encontrado.');
+        } catch (error) {
+          gridBody.innerHTML = '';
+          emptyState.classList.remove('dsc-hidden');
+          setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar monitores.', 'error');
+        }
+      };
+
+      const loadRejectionItems = async () => {
+        setRejectionGridMessage('Carregando recusas de importacao...');
+
+        try {
+          const response = await fetch(buildRejectionUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar recusas de importacao.');
+          }
+
+          totalRejectionPages = payload.totalPages || 1;
+          currentRejectionPage = payload.page || 1;
+          renderRejectionGrid(payload.items || []);
+          updateRejectionPagination(payload.total || 0);
+          setRejectionGridMessage(payload.items && payload.items.length ? '' : 'Nenhum registro recusado encontrado.');
+        } catch (error) {
+          rejectionGridBody.innerHTML = '';
+          rejectionEmptyState.classList.remove('dsc-hidden');
+          setRejectionGridMessage(error instanceof Error ? error.message : 'Falha ao carregar recusas de importacao.', 'error');
+        }
+      };
+
+      const startInsert = () => {
+        editingCodigo = null;
+        form.reset();
+        codigoInput.value = '';
+        setSelectedTipoVinculo('');
+        resetMessages();
+        showForm(false);
+      };
+
+      const startEdit = (item) => {
+        editingCodigo = item.codigo;
+        codigoInput.value = item.codigo;
+        nomeInput.value = item.monitor;
+        cpfInput.value = item.cpf_monitor;
+        rgInput.value = item.rg_monitor || '';
+        cursoInput.value = item.curso_monitor || '';
+        validadeCursoInput.value = item.validade_curso || '';
+        nascimentoInput.value = item.nascimento || '';
+        setSelectedTipoVinculo(item.tipo_vinculo || '');
+        resetMessages();
+        showForm(true);
+      };
+
+      const handleDelete = async (item) => {
+        if (!window.confirm(`Excluir o monitor ${item.codigo} - ${item.monitor}?`)) {
+          return;
+        }
+
+        setGridMessage(`Excluindo monitor ${item.codigo}...`);
+
+        try {
+          const response = await fetch(`/api/monitor/${encodeURIComponent(item.codigo)}`, {
+            method: 'DELETE',
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao excluir monitor.');
+          }
+
+          setGridMessage('Monitor excluido com sucesso.', 'success');
+          showBanner(`Monitor ${item.codigo} excluido com sucesso.`, 'success');
+          if (editingCodigo === item.codigo) {
+            hideForm();
+          }
+          await loadItems();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao excluir monitor.';
+          setGridMessage(message, 'error');
+          showBanner(message, 'error');
+        }
+      };
+
+      gridBody.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (!(target instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const action = target.dataset.action;
+        const row = target.closest('tr');
+        const rawItem = row ? row.dataset.item : '';
+
+        if (!rawItem) {
+          return;
+        }
+
+        const item = JSON.parse(rawItem);
+
+        if (action === 'edit') {
+          startEdit(item);
+          return;
+        }
+
+        if (action === 'delete') {
+          void handleDelete(item);
+        }
+      });
+
+      codigoInput.addEventListener('input', () => {
+        codigoInput.value = normalizeCodigo(codigoInput.value);
+      });
+
+      nomeInput.addEventListener('input', () => {
+        nomeInput.value = normalizeName(nomeInput.value);
+      });
+
+      cpfInput.addEventListener('input', () => {
+        cpfInput.value = normalizeCpf(cpfInput.value);
+      });
+
+      rgInput.addEventListener('input', () => {
+        rgInput.value = normalizeRg(rgInput.value);
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const codigo = normalizeCodigo(codigoInput.value);
+        const monitor = normalizeName(nomeInput.value);
+        const cpfMonitor = normalizeCpf(cpfInput.value);
+        const rgMonitor = normalizeRg(rgInput.value);
+        const cursoMonitor = cursoInput.value;
+        const validadeCurso = validadeCursoInput.value;
+        const nascimento = nascimentoInput.value;
+        const tipoVinculo = getSelectedTipoVinculo();
+        let hasError = false;
+
+        resetMessages();
+        codigoInput.value = codigo;
+        nomeInput.value = monitor;
+        cpfInput.value = cpfMonitor;
+        rgInput.value = rgMonitor;
+
+        if (!codigo) {
+          codigoError.textContent = 'Informe o codigo.';
+          hasError = true;
+        }
+
+        if (!monitor) {
+          nomeError.textContent = 'Informe o monitor.';
+          hasError = true;
+        }
+
+        if (cpfMonitor.replace(/\D/g, '').length !== 11) {
+          cpfError.textContent = 'CPF deve conter 11 digitos.';
+          hasError = true;
+        }
+
+        if (rgMonitor && !/^[0-9A-Z.\-/]{1,20}$/.test(rgMonitor)) {
+          rgError.textContent = 'RG invalido.';
+          hasError = true;
+        }
+
+        if (hasError) {
+          feedback.textContent = 'Corrija os campos para continuar.';
+          feedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        try {
+          const response = await fetch(editingCodigo ? `/api/monitor/${encodeURIComponent(editingCodigo)}` : '/api/monitor', {
+            method: editingCodigo ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({
+              codigo,
+              monitor,
+              rgMonitor,
+              cpfMonitor,
+              cursoMonitor,
+              validadeCurso,
+              nascimento,
+              tipoVinculo,
+            }),
+          });
+
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao gravar monitor.');
+          }
+
+          const savedItem = payload.item;
+          feedback.textContent = editingCodigo
+            ? `Monitor ${savedItem.codigo} alterado com sucesso.`
+            : `Monitor ${savedItem.codigo} gravado com sucesso.`;
+          feedback.classList.add('dsc-feedback-success');
+          showBanner(feedback.textContent, 'success');
+          hideForm();
+          await loadItems();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao gravar monitor.';
+          feedback.textContent = message;
+          feedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
+
+      insertButton.addEventListener('click', startInsert);
+      importButton.addEventListener('click', showImportForm);
+      rejectionButton.addEventListener('click', () => {
+        void showRejectionPanel();
+      });
+      cancelButton.addEventListener('click', hideForm);
+      cancelImportButton.addEventListener('click', hideImportForm);
+      closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
+
+      importForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const fileName = importFileNameInput.value.trim();
+        resetImportMessages();
+        importFileNameInput.value = fileName;
+
+        if (!fileName) {
+          importFileNameError.textContent = 'Informe o nome do arquivo XML.';
+          importFeedback.textContent = 'Corrija os campos para continuar.';
+          importFeedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        const confirmed = window.confirm(`Executar a importacao do arquivo ${fileName}? Os registros existentes serao alterados e novos registros serao incluidos.`);
+
+        if (!confirmed) {
+          return;
+        }
+
+        importFeedback.textContent = 'Importando monitores...';
+
+        try {
+          const response = await fetch('/api/monitor/import-xml', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ fileName }),
+          });
+
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao importar monitores do XML.');
+          }
+
+          const skippedMessage = payload.skipped ? ` ${payload.skipped} registro(s) invalido(s) foram ignorado(s).` : '';
+          const successMessage = `Importacao concluida: ${payload.inserted} incluido(s) e ${payload.updated} alterado(s) a partir de ${payload.fileName}.${skippedMessage}`;
+          importFeedback.textContent = successMessage;
+          importFeedback.classList.add('dsc-feedback-success');
+          setGridMessage(successMessage, 'success');
+          showBanner(successMessage, 'success');
+          hideImportForm();
+          await loadItems();
+          if (payload.skipped) {
+            await showRejectionPanel(payload.fileName);
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao importar monitores do XML.';
+          importFeedback.textContent = message;
+          importFeedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
+
+      filterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentSearch = searchInput.value.trim();
+        currentPage = 1;
+        void loadItems();
+      });
+
+      rejectionFilterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentRejectionSearch = rejectionSearchInput.value.trim();
+        currentRejectionPage = 1;
+        void loadRejectionItems();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      clearRejectionFilterButton.addEventListener('click', () => {
+        rejectionSearchInput.value = '';
+        currentRejectionSearch = '';
+        currentRejectionPage = 1;
+        void loadRejectionItems();
+      });
+
+      previousPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage -= 1;
+        void loadItems();
+      });
+
+      nextPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage += 1;
+        void loadItems();
+      });
+
+      previousRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage <= 1) {
+          return;
+        }
+
+        currentRejectionPage -= 1;
+        void loadRejectionItems();
+      });
+
+      nextRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage >= totalRejectionPages) {
+          return;
+        }
+
+        currentRejectionPage += 1;
+        void loadRejectionItems();
+      });
+
+      sortMonitorButton.addEventListener('click', () => {
+        currentSortDirection = currentSortBy === 'monitor' && currentSortDirection === 'asc' ? 'desc' : 'asc';
+        currentSortBy = 'monitor';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      hideForm();
+      hideImportForm();
+      hideRejectionPanel();
+      void loadItems();
+    </script>
+  </body>
+</html>

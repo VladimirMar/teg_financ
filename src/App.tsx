@@ -6,7 +6,7 @@ import { createDreItem, deleteDreItem, listDreItemsPaginated, updateDreItem } fr
 import type { DreItem } from './services/dre'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'credenciada'
+type ActiveView = 'inicio' | 'dre' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
 
@@ -568,6 +568,12 @@ function App() {
               Condutor
             </li>
             <li
+              className={`menu-item ${activeView === 'monitor' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('monitor')}
+            >
+              Monitor
+            </li>
+            <li
               className={`menu-item ${activeView === 'credenciada' ? 'menu-item-active' : ''}`}
               onClick={() => setActiveView('credenciada')}
             >
@@ -832,6 +838,24 @@ function App() {
                 className="access-embed-frame"
                 src="/src/condutor.html"
                 title="Cadastro de condutor"
+              />
+            </div>
+          </>
+        ) : activeView === 'monitor' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Cadastro operacional</p>
+              <h2 id="content-title">Tabela Monitor</h2>
+              <p className="content-description">
+                Consulte, inclua, altere e importe os registros de monitores no mesmo padrao operacional da tela de condutor.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/monitor.html"
+                title="Cadastro de monitor"
               />
             </div>
           </>
