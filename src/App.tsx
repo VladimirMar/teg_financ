@@ -6,7 +6,7 @@ import { createDreItem, deleteDreItem, listDreItemsPaginated, updateDreItem } fr
 import type { DreItem } from './services/dre'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'acesso' | 'loginDre' | 'condutor'
+type ActiveView = 'inicio' | 'dre' | 'acesso' | 'loginDre' | 'condutor' | 'credenciada'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
 
@@ -555,13 +555,17 @@ function App() {
             >
               Login x DRE
             </li>
-            <li className="menu-item">Rotas</li>
-            <li className="menu-item">Alunos</li>
             <li
               className={`menu-item ${activeView === 'condutor' ? 'menu-item-active' : ''}`}
               onClick={() => setActiveView('condutor')}
             >
               Condutor
+            </li>
+            <li
+              className={`menu-item ${activeView === 'credenciada' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('credenciada')}
+            >
+              Credenciada
             </li>
             <li className="menu-item">Relatorios</li>
           </ul>
@@ -789,7 +793,7 @@ function App() {
               />
             </div>
           </>
-        ) : (
+        ) : activeView === 'condutor' ? (
           <>
             <div className="content-copy">
               <p className="content-kicker">Cadastro operacional</p>
@@ -804,6 +808,24 @@ function App() {
                 className="access-embed-frame"
                 src="/src/condutor.html"
                 title="Cadastro de condutor"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Cadastro operacional</p>
+              <h2 id="content-title">Tabela Credenciada</h2>
+              <p className="content-description">
+                Consulte, inclua, altere e importe os registros de credenciadas a partir do XML no mesmo padrao operacional da tela de condutor.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/credenciada.html"
+                title="Cadastro de credenciada"
               />
             </div>
           </>

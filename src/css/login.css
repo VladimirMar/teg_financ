@@ -142,6 +142,18 @@ body:has(#condutor-rejection-grid-body) .dsc-container {
   padding: 13px 16px;
 }
 
+body:has(#condutor-search) #condutor-search {
+  flex: 0 1 220px;
+  min-width: 220px;
+  max-width: 300px;
+}
+
+body:has(#credenciada-search) #credenciada-search {
+  flex: 0 1 260px;
+  min-width: 260px;
+  max-width: 360px;
+}
+
 .dsc-access-filter-form .dsc-btn {
   width: auto;
   flex: 0 0 auto;
@@ -188,11 +200,63 @@ body:has(#condutor-rejection-grid-body) .dsc-container {
   max-width: 900px;
 }
 
+#credenciada-form {
+  max-width: 980px;
+}
+
+#credenciada-form .dsc-form-section-card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 24px 26px;
+}
+
 .dsc-form-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   align-items: start;
+}
+
+.dsc-form-row-credenciada-top {
+  grid-template-columns: minmax(520px, 1.35fr) minmax(260px, 0.65fr);
+}
+
+.dsc-form-row-condutor-top {
+  grid-template-columns: minmax(0, 1.45fr) minmax(220px, 0.8fr) minmax(180px, 0.65fr);
+}
+
+.dsc-form-column-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.dsc-form-section-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid rgba(121, 91, 56, 0.16);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.dsc-form-section-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4e635d;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dsc-form-row-address {
+  grid-template-columns: minmax(180px, 0.6fr) minmax(0, 1.4fr);
+}
+
+.dsc-form-row-contact {
+  grid-template-columns: minmax(220px, 1.35fr) minmax(130px, 0.7fr) minmax(130px, 0.7fr) minmax(140px, 0.8fr);
 }
 
 .dsc-form-row .dsc-field-group,
@@ -290,7 +354,9 @@ body:has(#condutor-rejection-grid-body) .dsc-container {
 }
 
 body:has(#condutor-grid-body) .dsc-access-grid-card,
-body:has(#condutor-rejection-grid-body) .dsc-access-grid-card {
+body:has(#condutor-rejection-grid-body) .dsc-access-grid-card,
+body:has(#credenciada-grid-body) .dsc-access-grid-card,
+body:has(#credenciada-rejection-grid-body) .dsc-access-grid-card {
   width: min(100%, 1440px);
 }
 
@@ -319,11 +385,49 @@ body:has(#condutor-rejection-grid-body) .dsc-access-grid-card {
 }
 
 body:has(#condutor-grid-body) .dsc-access-grid {
-  min-width: 1580px;
+  min-width: 1360px;
+}
+
+body:has(#condutor-grid-body) .dsc-access-grid th:nth-child(2),
+body:has(#condutor-grid-body) .dsc-access-grid td:nth-child(2) {
+  width: 42ch;
+  max-width: 42ch;
+}
+
+body:has(#credenciada-grid-body) .dsc-access-grid {
+  min-width: 1120px;
+}
+
+body:has(#credenciada-grid-body) .dsc-access-grid th:nth-child(2),
+body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(2) {
+  width: 65ch;
+  max-width: 65ch;
+}
+
+body:has(#credenciada-grid-body) .dsc-access-grid th:nth-child(1),
+body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(1) {
+  width: 10ch;
+  max-width: 10ch;
+}
+
+body:has(#credenciada-grid-body) .dsc-access-grid th:nth-child(3),
+body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(3) {
+  width: 18ch;
+  max-width: 18ch;
+}
+
+body:has(#credenciada-grid-body) .dsc-access-grid th:nth-child(4),
+body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(4) {
+  width: 24ch;
+  max-width: 24ch;
 }
 
 body:has(#condutor-rejection-grid-body) .dsc-access-grid {
   min-width: 1820px;
+}
+
+body:has(#credenciada-rejection-grid-body) .dsc-access-grid {
+  min-width: 1760px;
 }
 
 .dsc-access-grid th,
@@ -336,7 +440,11 @@ body:has(#condutor-rejection-grid-body) .dsc-access-grid {
 body:has(#condutor-grid-body) .dsc-access-grid th,
 body:has(#condutor-grid-body) .dsc-access-grid td,
 body:has(#condutor-rejection-grid-body) .dsc-access-grid th,
-body:has(#condutor-rejection-grid-body) .dsc-access-grid td {
+body:has(#condutor-rejection-grid-body) .dsc-access-grid td,
+body:has(#credenciada-grid-body) .dsc-access-grid th,
+body:has(#credenciada-grid-body) .dsc-access-grid td,
+body:has(#credenciada-rejection-grid-body) .dsc-access-grid th,
+body:has(#credenciada-rejection-grid-body) .dsc-access-grid td {
   white-space: nowrap;
 }
 
@@ -474,6 +582,13 @@ body:has(#condutor-rejection-grid-body) .dsc-access-grid td {
   }
 
   .dsc-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dsc-form-row-credenciada-top,
+  .dsc-form-row-condutor-top,
+  .dsc-form-row-contact,
+  .dsc-form-row-address {
     grid-template-columns: 1fr;
   }
 }

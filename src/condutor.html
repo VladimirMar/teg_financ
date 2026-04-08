@@ -96,13 +96,13 @@
                 <div class="dsc-form-error" id="condutor-codigo-error"></div>
               </label>
 
-              <label class="dsc-field-group" for="condutor-nome">
-                <span>Condutor</span>
-                <input class="dsc-form-control" id="condutor-nome" type="text" placeholder="NOME DO CONDUTOR" maxlength="100" />
-                <div class="dsc-form-error" id="condutor-nome-error"></div>
-              </label>
+              <div class="dsc-form-row dsc-form-row-condutor-top">
+                <label class="dsc-field-group" for="condutor-nome">
+                  <span>Condutor</span>
+                  <input class="dsc-form-control" id="condutor-nome" type="text" placeholder="NOME DO CONDUTOR" maxlength="100" />
+                  <div class="dsc-form-error" id="condutor-nome-error"></div>
+                </label>
 
-              <div class="dsc-form-row">
                 <label class="dsc-field-group" for="condutor-cpf">
                   <span>CPF</span>
                   <input class="dsc-form-control" id="condutor-cpf" type="text" placeholder="000.000.000-00" maxlength="14" />
@@ -185,9 +185,6 @@
                       <th>CRMC</th>
                       <th>Validade CRMC</th>
                       <th>Validade curso</th>
-                      <th>Tipo vinculo</th>
-                      <th>Inclusao</th>
-                      <th>Modificacao</th>
                       <th class="dsc-grid-actions-column">Acoes</th>
                     </tr>
                   </thead>
@@ -487,9 +484,6 @@
             <td>${item.crmc}</td>
             <td>${formatDateLabel(item.validade_crmc)}</td>
             <td>${formatDateLabel(item.validade_curso)}</td>
-            <td>${item.tipo_vinculo || ''}</td>
-            <td>${formatDateTimeLabel(item.data_inclusao)}</td>
-            <td>${formatDateTimeLabel(item.data_modificacao)}</td>
             <td>
               <div class="dsc-grid-actions">
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>

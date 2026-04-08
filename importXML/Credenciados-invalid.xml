@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataroot xmlns:od="urn:schemas-microsoft-com:officedata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="Credenciados.xsd" generated="2026-04-08T09:00:00">
+  <Credenciados>
+    <Código>2277</Código>
+    <Credenciado>TRANS-CHILDREN TRANSPORTE ESCOLAR E TURISMO LTDA - ME</Credenciado>
+    <CNPJ_CPF>00.280.324/0001-20</CNPJ_CPF>
+    <Logradouro>R TIBURCIO DE SOUSA, 1206</Logradouro>
+    <Bairro>ITAIM PAULISTA</Bairro>
+    <CEP>08140-000</CEP>
+    <Municipio>SÃO PAULO</Municipio>
+    <Email>trans-children@hotmail.com</Email>
+    <Telefone_01>2963-1330</Telefone_01>
+    <Telefone_02>98234-6566</Telefone_02>
+    <Representante>ROSALI APARECIDA POLI GOMES</Representante>
+    <CPF_representante>011.433.068-99</CPF_representante>
+    <RG_representante>12.847.964</RG_representante>
+  </Credenciados>
+  <Credenciados>
+    <Código>ABC</Código>
+    <Credenciado>EMPRESA INVALIDA CODIGO</Credenciado>
+    <CNPJ_CPF>12.345.678/0001-99</CNPJ_CPF>
+    <Municipio>SÃO PAULO</Municipio>
+    <Representante>REPRESENTANTE TESTE</Representante>
+    <Status>CREDENCIADO</Status>
+  </Credenciados>
+  <Credenciados>
+    <Código>990099</Código>
+    <Credenciado>EMPRESA INVALIDA EMAIL</Credenciado>
+    <CNPJ_CPF>12.345.678/0001-99</CNPJ_CPF>
+    <Municipio>SÃO PAULO</Municipio>
+    <Email>email-invalido</Email>
+    <Representante>REPRESENTANTE TESTE</Representante>
+    <Status>CREDENCIADO</Status>
+  </Credenciados>
+</dataroot>

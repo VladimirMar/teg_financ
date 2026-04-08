@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro de credenciada</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
+    <main class="dsc-access-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-management-layout">
+            <div class="dsc-access-toolbar">
+              <form class="dsc-access-filter-form" id="credenciada-filter-form">
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-credenciada-button">Inserir registro</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-credenciada-import-button">Importar XML</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-credenciada-rejections-button">Recusas XML</button>
+                <input class="dsc-form-control dsc-access-filter-input" id="credenciada-search" type="text" placeholder="Filtrar por codigo, credenciada, CNPJ/CPF, municipio ou representante" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-credenciada-filter-button">Limpar</button>
+              </form>
+            </div>
+
+            <section class="dsc-card dsc-hidden" id="credenciada-rejection-panel">
+              <div class="dsc-access-grid-header">
+                <h2>Registros nao importados</h2>
+                <span id="credenciada-rejection-total"></span>
+              </div>
+
+              <form class="dsc-access-filter-form" id="credenciada-rejection-filter-form">
+                <input class="dsc-form-control dsc-access-filter-input" id="credenciada-rejection-search" type="text" placeholder="Filtrar por arquivo, codigo, credenciada, representante, status ou motivo" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-credenciada-rejection-filter-button">Limpar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="close-credenciada-rejection-panel-button">Fechar</button>
+              </form>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Data importacao</th>
+                      <th>Arquivo XML</th>
+                      <th>Linha XML</th>
+                      <th>Codigo XML</th>
+                      <th>Credenciada XML</th>
+                      <th>CNPJ/CPF XML</th>
+                      <th>Representante XML</th>
+                      <th>Status XML</th>
+                      <th>Motivo da recusa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="credenciada-rejection-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="credenciada-rejection-empty-state">Nenhum registro recusado encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="credenciada-rejection-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-credenciada-rejection-page-button">Anterior</button>
+                <span id="credenciada-rejection-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-credenciada-rejection-page-button">Proxima</button>
+              </div>
+            </section>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciada-import-form">
+              <h2>Importacao de credenciada por XML</h2>
+
+              <label class="dsc-field-group" for="credenciada-import-file-name">
+                <span>Nome do arquivo XML</span>
+                <input class="dsc-form-control" id="credenciada-import-file-name" type="text" placeholder="Credenciados.xml" />
+                <div class="dsc-form-error" id="credenciada-import-file-name-error"></div>
+              </label>
+
+              <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-credenciada-import-button">Executar importacao</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-credenciada-import-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="credenciada-import-feedback"></p>
+            </form>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciada-form">
+              <h2 id="credenciada-form-title">Novo registro</h2>
+
+              <label class="dsc-field-group" for="credenciada-codigo">
+                <span>Codigo</span>
+                <input class="dsc-form-control" id="credenciada-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
+                <div class="dsc-form-error" id="credenciada-codigo-error"></div>
+              </label>
+
+              <div class="dsc-form-row dsc-form-row-credenciada-top">
+                <label class="dsc-field-group" for="credenciada-nome">
+                  <span>Credenciada</span>
+                  <input class="dsc-form-control" id="credenciada-nome" type="text" placeholder="NOME DA CREDENCIADA" maxlength="255" />
+                  <div class="dsc-form-error" id="credenciada-nome-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="credenciada-cnpj-cpf">
+                  <span>CNPJ/CPF</span>
+                  <input class="dsc-form-control" id="credenciada-cnpj-cpf" type="text" placeholder="00.000.000/0000-00" maxlength="18" />
+                  <div class="dsc-form-error" id="credenciada-cnpj-cpf-error"></div>
+                </label>
+              </div>
+
+              <div class="dsc-form-row dsc-form-row-contact">
+                <label class="dsc-field-group" for="credenciada-email">
+                  <span>Email</span>
+                  <input class="dsc-form-control" id="credenciada-email" type="text" placeholder="email@dominio.com; outro@dominio.com" maxlength="255" />
+                  <div class="dsc-form-error" id="credenciada-email-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="credenciada-telefone-1">
+                  <span>Telefone 1</span>
+                  <input class="dsc-form-control" id="credenciada-telefone-1" type="text" inputmode="numeric" placeholder="99999-9999" maxlength="10" />
+                  <div class="dsc-form-error" id="credenciada-telefone-1-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="credenciada-telefone-2">
+                  <span>Telefone 2</span>
+                  <input class="dsc-form-control" id="credenciada-telefone-2" type="text" inputmode="numeric" placeholder="99999-9999" maxlength="10" />
+                  <div class="dsc-form-error" id="credenciada-telefone-2-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="credenciada-status">
+                  <span>Status</span>
+                  <input class="dsc-form-control" id="credenciada-status" type="text" placeholder="STATUS" maxlength="50" />
+                  <div class="dsc-form-error" id="credenciada-status-error"></div>
+                </label>
+              </div>
+
+              <section class="dsc-form-section-card">
+                <h3 class="dsc-form-section-title">Endereco</h3>
+
+                <div class="dsc-form-row dsc-form-row-address">
+                <label class="dsc-field-group" for="credenciada-cep">
+                  <span>CEP</span>
+                  <input class="dsc-form-control" id="credenciada-cep" type="text" inputmode="numeric" placeholder="00000-000" maxlength="9" />
+                  <div class="dsc-form-error" id="credenciada-cep-error"></div>
+                </label>
+
+                  <label class="dsc-field-group" for="credenciada-logradouro">
+                    <span>Logradouro</span>
+                    <input class="dsc-form-control" id="credenciada-logradouro" type="text" placeholder="RUA, AVENIDA, NUMERO E COMPLEMENTO" maxlength="255" />
+                    <div class="dsc-form-error" id="credenciada-logradouro-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciada-bairro">
+                    <span>Bairro</span>
+                    <input class="dsc-form-control" id="credenciada-bairro" type="text" placeholder="BAIRRO" maxlength="120" />
+                    <div class="dsc-form-error" id="credenciada-bairro-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciada-municipio">
+                    <span>Municipio</span>
+                    <input class="dsc-form-control" id="credenciada-municipio" type="text" placeholder="MUNICIPIO" maxlength="120" />
+                    <div class="dsc-form-error" id="credenciada-municipio-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <section class="dsc-form-section-card">
+                <h3 class="dsc-form-section-title">Dados do representante</h3>
+
+                <label class="dsc-field-group" for="credenciada-representante">
+                  <span>Representante</span>
+                  <input class="dsc-form-control" id="credenciada-representante" type="text" placeholder="NOME DO REPRESENTANTE" maxlength="255" />
+                  <div class="dsc-form-error" id="credenciada-representante-error"></div>
+                </label>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciada-cpf-representante">
+                    <span>CPF representante</span>
+                    <input class="dsc-form-control" id="credenciada-cpf-representante" type="text" placeholder="000.000.000-00" maxlength="14" />
+                    <div class="dsc-form-error" id="credenciada-cpf-representante-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciada-rg-representante">
+                    <span>RG representante</span>
+                    <input class="dsc-form-control" id="credenciada-rg-representante" type="text" placeholder="RG DO REPRESENTANTE" maxlength="30" />
+                    <div class="dsc-form-error" id="credenciada-rg-representante-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-credenciada-button">Salvar credenciada</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-credenciada-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="credenciada-form-feedback"></p>
+            </form>
+
+            <div class="dsc-card dsc-access-grid-card">
+              <div class="dsc-access-grid-header">
+                <h2>Registros cadastrados</h2>
+                <span id="credenciada-total"></span>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Codigo</th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-credenciada-button">
+                          Credenciada <span id="sort-credenciada-indicator">↑</span>
+                        </button>
+                      </th>
+                      <th>CNPJ/CPF</th>
+                      <th>Representante</th>
+                      <th class="dsc-grid-actions-column">Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="credenciada-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="credenciada-empty-state">Nenhuma credenciada encontrada.</p>
+              </div>
+
+              <p class="dsc-feedback" id="credenciada-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-credenciada-page-button">Anterior</button>
+                <span id="credenciada-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-credenciada-page-button">Proxima</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('credenciada-form');
+      const codigoInput = document.getElementById('credenciada-codigo');
+      const nomeInput = document.getElementById('credenciada-nome');
+      const cnpjCpfInput = document.getElementById('credenciada-cnpj-cpf');
+      const logradouroInput = document.getElementById('credenciada-logradouro');
+      const bairroInput = document.getElementById('credenciada-bairro');
+      const cepInput = document.getElementById('credenciada-cep');
+      const municipioInput = document.getElementById('credenciada-municipio');
+      const emailInput = document.getElementById('credenciada-email');
+      const telefone1Input = document.getElementById('credenciada-telefone-1');
+      const telefone2Input = document.getElementById('credenciada-telefone-2');
+      const representanteInput = document.getElementById('credenciada-representante');
+      const cpfRepresentanteInput = document.getElementById('credenciada-cpf-representante');
+      const rgRepresentanteInput = document.getElementById('credenciada-rg-representante');
+      const statusInput = document.getElementById('credenciada-status');
+      const codigoError = document.getElementById('credenciada-codigo-error');
+      const nomeError = document.getElementById('credenciada-nome-error');
+      const cnpjCpfError = document.getElementById('credenciada-cnpj-cpf-error');
+      const logradouroError = document.getElementById('credenciada-logradouro-error');
+      const bairroError = document.getElementById('credenciada-bairro-error');
+      const cepError = document.getElementById('credenciada-cep-error');
+      const municipioError = document.getElementById('credenciada-municipio-error');
+      const emailError = document.getElementById('credenciada-email-error');
+      const telefone1Error = document.getElementById('credenciada-telefone-1-error');
+      const telefone2Error = document.getElementById('credenciada-telefone-2-error');
+      const representanteError = document.getElementById('credenciada-representante-error');
+      const cpfRepresentanteError = document.getElementById('credenciada-cpf-representante-error');
+      const rgRepresentanteError = document.getElementById('credenciada-rg-representante-error');
+      const statusError = document.getElementById('credenciada-status-error');
+      const feedback = document.getElementById('credenciada-form-feedback');
+      const gridFeedback = document.getElementById('credenciada-grid-feedback');
+      const insertButton = document.getElementById('insert-credenciada-button');
+      const importButton = document.getElementById('open-credenciada-import-button');
+      const rejectionButton = document.getElementById('open-credenciada-rejections-button');
+      const cancelButton = document.getElementById('cancel-credenciada-button');
+      const importForm = document.getElementById('credenciada-import-form');
+      const importFileNameInput = document.getElementById('credenciada-import-file-name');
+      const importFileNameError = document.getElementById('credenciada-import-file-name-error');
+      const importFeedback = document.getElementById('credenciada-import-feedback');
+      const cancelImportButton = document.getElementById('cancel-credenciada-import-button');
+      const filterForm = document.getElementById('credenciada-filter-form');
+      const clearFilterButton = document.getElementById('clear-credenciada-filter-button');
+      const searchInput = document.getElementById('credenciada-search');
+      const gridBody = document.getElementById('credenciada-grid-body');
+      const emptyState = document.getElementById('credenciada-empty-state');
+      const totalLabel = document.getElementById('credenciada-total');
+      const previousPageButton = document.getElementById('previous-credenciada-page-button');
+      const nextPageButton = document.getElementById('next-credenciada-page-button');
+      const paginationInfo = document.getElementById('credenciada-pagination-info');
+      const sortButton = document.getElementById('sort-credenciada-button');
+      const sortIndicator = document.getElementById('sort-credenciada-indicator');
+      const formTitle = document.getElementById('credenciada-form-title');
+      const saveButton = document.getElementById('save-credenciada-button');
+      const statusBanner = document.getElementById('status-banner');
+      const rejectionPanel = document.getElementById('credenciada-rejection-panel');
+      const rejectionFilterForm = document.getElementById('credenciada-rejection-filter-form');
+      const rejectionSearchInput = document.getElementById('credenciada-rejection-search');
+      const rejectionGridBody = document.getElementById('credenciada-rejection-grid-body');
+      const rejectionEmptyState = document.getElementById('credenciada-rejection-empty-state');
+      const rejectionGridFeedback = document.getElementById('credenciada-rejection-grid-feedback');
+      const rejectionTotalLabel = document.getElementById('credenciada-rejection-total');
+      const previousRejectionPageButton = document.getElementById('previous-credenciada-rejection-page-button');
+      const nextRejectionPageButton = document.getElementById('next-credenciada-rejection-page-button');
+      const rejectionPaginationInfo = document.getElementById('credenciada-rejection-pagination-info');
+      const clearRejectionFilterButton = document.getElementById('clear-credenciada-rejection-filter-button');
+      const closeRejectionPanelButton = document.getElementById('close-credenciada-rejection-panel-button');
+
+      const pageSize = 5;
+      const rejectionPageSize = 10;
+      const defaultImportFileName = 'Credenciados.xml';
+      let currentPage = 1;
+      let totalPages = 1;
+      let currentSearch = '';
+      let currentSortBy = 'codigo';
+      let currentSortDirection = 'asc';
+      let currentRejectionPage = 1;
+      let totalRejectionPages = 1;
+      let currentRejectionSearch = '';
+      let editingCodigo = null;
+      let bannerTimeoutId = null;
+
+      const normalizeText = (value, maxLength = 255) => value
+        .replace(/\s+/g, ' ')
+        .trimStart()
+        .toUpperCase()
+        .slice(0, maxLength);
+
+      const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
+
+      const normalizeCpf = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+
+        if (digits.length <= 3) {
+          return digits;
+        }
+
+        if (digits.length <= 6) {
+          return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+        }
+
+        if (digits.length <= 9) {
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+        }
+
+        return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+      };
+
+      const normalizeCnpjCpf = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 14);
+
+        if (digits.length <= 3) {
+          return digits;
+        }
+
+        if (digits.length <= 6) {
+          return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+        }
+
+        if (digits.length <= 9) {
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+        }
+
+        if (digits.length <= 11) {
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+        }
+
+        if (digits.length <= 12) {
+          return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+        }
+
+        return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
+      };
+
+      const normalizeCep = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 8);
+
+        if (digits.length <= 5) {
+          return digits;
+        }
+
+        return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+      };
+
+      const normalizePhone = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+
+        if (digits.length <= 4) {
+          return digits;
+        }
+
+        if (digits.length <= 8) {
+          return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+        }
+
+        return `${digits.slice(0, 5)}-${digits.slice(5, 9)}`;
+      };
+
+      const normalizeEmailList = (value) => value
+        .split(';')
+        .map((item) => item.trim().toLowerCase())
+        .filter(Boolean)
+        .join('; ')
+        .slice(0, 255);
+
+      const formatDateTimeLabel = (value) => {
+        if (!value) {
+          return '';
+        }
+
+        const [datePart, timePart = ''] = value.split(' ');
+        const formattedDate = datePart ? datePart.split('-').reverse().join('/') : '';
+        return timePart ? `${formattedDate} ${timePart.slice(0, 5)}` : formattedDate;
+      };
+
+      const resetMessages = () => {
+        codigoError.textContent = '';
+        nomeError.textContent = '';
+        cnpjCpfError.textContent = '';
+        logradouroError.textContent = '';
+        bairroError.textContent = '';
+        cepError.textContent = '';
+        municipioError.textContent = '';
+        emailError.textContent = '';
+        telefone1Error.textContent = '';
+        telefone2Error.textContent = '';
+        representanteError.textContent = '';
+        cpfRepresentanteError.textContent = '';
+        rgRepresentanteError.textContent = '';
+        statusError.textContent = '';
+        feedback.textContent = '';
+        feedback.className = 'dsc-feedback';
+      };
+
+      const resetImportMessages = () => {
+        importFileNameError.textContent = '';
+        importFeedback.textContent = '';
+        importFeedback.className = 'dsc-feedback';
+      };
+
+      const setGridMessage = (message, tone = '') => {
+        gridFeedback.textContent = message;
+        gridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          gridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const setRejectionGridMessage = (message, tone = '') => {
+        rejectionGridFeedback.textContent = message;
+        rejectionGridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          rejectionGridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const showBanner = (message, tone = 'success') => {
+        if (bannerTimeoutId) {
+          window.clearTimeout(bannerTimeoutId);
+        }
+
+        statusBanner.textContent = message;
+        statusBanner.className = `dsc-status-banner dsc-status-banner-${tone}`;
+
+        bannerTimeoutId = window.setTimeout(() => {
+          statusBanner.className = 'dsc-status-banner dsc-hidden';
+          statusBanner.textContent = '';
+        }, 3500);
+      };
+
+      const showForm = (isEditing = false) => {
+        importForm.classList.add('dsc-hidden');
+        rejectionPanel.classList.add('dsc-hidden');
+        form.classList.remove('dsc-hidden');
+        formTitle.textContent = isEditing ? 'Alteracao de credenciada' : 'Cadastro de credenciada';
+        saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar credenciada';
+      };
+
+      const showImportForm = () => {
+        form.classList.add('dsc-hidden');
+        rejectionPanel.classList.add('dsc-hidden');
+        importForm.classList.remove('dsc-hidden');
+        importFileNameInput.value = defaultImportFileName;
+        resetImportMessages();
+      };
+
+      const showRejectionPanel = async (search = currentRejectionSearch) => {
+        form.classList.add('dsc-hidden');
+        importForm.classList.add('dsc-hidden');
+        rejectionPanel.classList.remove('dsc-hidden');
+        currentRejectionSearch = search;
+        rejectionSearchInput.value = search;
+        currentRejectionPage = 1;
+        await loadRejectionItems();
+      };
+
+      const hideForm = () => {
+        form.classList.add('dsc-hidden');
+        form.reset();
+        codigoInput.value = '';
+        editingCodigo = null;
+        resetMessages();
+      };
+
+      const hideImportForm = () => {
+        importForm.classList.add('dsc-hidden');
+        importFileNameInput.value = defaultImportFileName;
+        resetImportMessages();
+      };
+
+      const hideRejectionPanel = () => {
+        rejectionPanel.classList.add('dsc-hidden');
+        rejectionGridBody.innerHTML = '';
+        rejectionEmptyState.classList.add('dsc-hidden');
+        setRejectionGridMessage('');
+      };
+
+      const buildUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          pageSize: String(pageSize),
+          sortBy: currentSortBy,
+          sortDirection: currentSortDirection,
+        });
+
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+
+        return `/api/credenciada?${params.toString()}`;
+      };
+
+      const buildRejectionUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentRejectionPage),
+          pageSize: String(rejectionPageSize),
+        });
+
+        if (currentRejectionSearch) {
+          params.set('search', currentRejectionSearch);
+        }
+
+        return `/api/credenciada/import-rejections?${params.toString()}`;
+      };
+
+      const renderGrid = (items) => {
+        gridBody.innerHTML = '';
+
+        if (!items.length) {
+          emptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        emptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.codigo}</td>
+            <td>${item.credenciado}</td>
+            <td>${item.cnpj_cpf}</td>
+            <td>${item.representante || ''}</td>
+            <td>
+              <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}" data-credenciada="${item.credenciado}">Excluir</button>
+              </div>
+            </td>
+          `;
+          row.dataset.item = JSON.stringify(item);
+          gridBody.appendChild(row);
+        });
+      };
+
+      const renderRejectionGrid = (items) => {
+        rejectionGridBody.innerHTML = '';
+
+        if (!items.length) {
+          rejectionEmptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        rejectionEmptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${formatDateTimeLabel(item.data_importacao)}</td>
+            <td>${item.arquivo_xml}</td>
+            <td>${item.linha_xml}</td>
+            <td>${item.codigo_xml || ''}</td>
+            <td>${item.credenciado_xml || ''}</td>
+            <td>${item.cnpj_cpf_xml || ''}</td>
+            <td>${item.representante_xml || ''}</td>
+            <td>${item.status_xml || ''}</td>
+            <td>${item.motivo_recusa}</td>
+          `;
+          rejectionGridBody.appendChild(row);
+        });
+      };
+
+      const updatePagination = (totalItems) => {
+        totalLabel.textContent = `${totalItems} item(ns) encontrados`;
+        paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        previousPageButton.disabled = currentPage <= 1;
+        nextPageButton.disabled = currentPage >= totalPages;
+        sortIndicator.textContent = currentSortBy === 'credenciado' && currentSortDirection === 'desc' ? '↓' : '↑';
+      };
+
+      const updateRejectionPagination = (totalItems) => {
+        rejectionTotalLabel.textContent = `${totalItems} recusa(s) encontrada(s)`;
+        rejectionPaginationInfo.textContent = `Pagina ${currentRejectionPage} de ${totalRejectionPages}`;
+        previousRejectionPageButton.disabled = currentRejectionPage <= 1;
+        nextRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
+      };
+
+      const loadItems = async () => {
+        setGridMessage('Carregando credenciadas...');
+
+        try {
+          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar credenciadas.');
+          }
+
+          totalPages = payload.totalPages || 1;
+          currentPage = payload.page || 1;
+          renderGrid(payload.items || []);
+          updatePagination(payload.total || 0);
+          setGridMessage(payload.items && payload.items.length ? '' : 'Nenhuma credenciada encontrada.');
+        } catch (error) {
+          gridBody.innerHTML = '';
+          emptyState.classList.remove('dsc-hidden');
+          setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar credenciadas.', 'error');
+        }
+      };
+
+      const loadRejectionItems = async () => {
+        setRejectionGridMessage('Carregando recusas de importacao...');
+
+        try {
+          const response = await fetch(buildRejectionUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar recusas de importacao.');
+          }
+
+          totalRejectionPages = payload.totalPages || 1;
+          currentRejectionPage = payload.page || 1;
+          renderRejectionGrid(payload.items || []);
+          updateRejectionPagination(payload.total || 0);
+          setRejectionGridMessage(payload.items && payload.items.length ? '' : 'Nenhum registro recusado encontrado.');
+        } catch (error) {
+          rejectionGridBody.innerHTML = '';
+          rejectionEmptyState.classList.remove('dsc-hidden');
+          setRejectionGridMessage(error instanceof Error ? error.message : 'Falha ao carregar recusas de importacao.', 'error');
+        }
+      };
+
+      const startInsert = () => {
+        editingCodigo = null;
+        form.reset();
+        codigoInput.value = '';
+        resetMessages();
+        showForm(false);
+      };
+
+      const startEdit = (item) => {
+        editingCodigo = item.codigo;
+        codigoInput.value = item.codigo;
+        nomeInput.value = item.credenciado || '';
+        cnpjCpfInput.value = item.cnpj_cpf || '';
+        logradouroInput.value = item.logradouro || '';
+        bairroInput.value = item.bairro || '';
+        cepInput.value = item.cep || '';
+        municipioInput.value = item.municipio || '';
+        emailInput.value = item.email || '';
+        telefone1Input.value = item.telefone_01 || '';
+        telefone2Input.value = item.telefone_02 || '';
+        representanteInput.value = item.representante || '';
+        cpfRepresentanteInput.value = item.cpf_representante || '';
+        rgRepresentanteInput.value = item.rg_representante || '';
+        statusInput.value = item.status || '';
+        resetMessages();
+        showForm(true);
+      };
+
+      const handleDelete = async (item) => {
+        if (!window.confirm(`Excluir a credenciada ${item.codigo} - ${item.credenciado}?`)) {
+          return;
+        }
+
+        setGridMessage(`Excluindo credenciada ${item.codigo}...`);
+
+        try {
+          const response = await fetch(`/api/credenciada/${encodeURIComponent(item.codigo)}`, {
+            method: 'DELETE',
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao excluir credenciada.');
+          }
+
+          setGridMessage('Credenciada excluida com sucesso.', 'success');
+          showBanner(`Credenciada ${item.codigo} excluida com sucesso.`, 'success');
+          if (editingCodigo === item.codigo) {
+            hideForm();
+          }
+          await loadItems();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao excluir credenciada.';
+          setGridMessage(message, 'error');
+          showBanner(message, 'error');
+        }
+      };
+
+      gridBody.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (!(target instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const action = target.dataset.action;
+        const row = target.closest('tr');
+        const rawItem = row ? row.dataset.item : '';
+
+        if (!rawItem) {
+          return;
+        }
+
+        const item = JSON.parse(rawItem);
+
+        if (action === 'edit') {
+          startEdit(item);
+          return;
+        }
+
+        if (action === 'delete') {
+          void handleDelete(item);
+        }
+      });
+
+      codigoInput.addEventListener('input', () => {
+        codigoInput.value = normalizeCodigo(codigoInput.value);
+      });
+
+      nomeInput.addEventListener('input', () => {
+        nomeInput.value = normalizeText(nomeInput.value, 255);
+      });
+
+      cnpjCpfInput.addEventListener('input', () => {
+        cnpjCpfInput.value = normalizeCnpjCpf(cnpjCpfInput.value);
+      });
+
+      logradouroInput.addEventListener('input', () => {
+        logradouroInput.value = normalizeText(logradouroInput.value, 255);
+      });
+
+      bairroInput.addEventListener('input', () => {
+        bairroInput.value = normalizeText(bairroInput.value, 120);
+      });
+
+      cepInput.addEventListener('input', () => {
+        cepInput.value = normalizeCep(cepInput.value);
+      });
+
+      municipioInput.addEventListener('input', () => {
+        municipioInput.value = normalizeText(municipioInput.value, 120);
+      });
+
+      emailInput.addEventListener('blur', () => {
+        emailInput.value = normalizeEmailList(emailInput.value);
+      });
+
+      telefone1Input.addEventListener('input', () => {
+        telefone1Input.value = normalizePhone(telefone1Input.value);
+      });
+
+      telefone2Input.addEventListener('input', () => {
+        telefone2Input.value = normalizePhone(telefone2Input.value);
+      });
+
+      representanteInput.addEventListener('input', () => {
+        representanteInput.value = normalizeText(representanteInput.value, 255);
+      });
+
+      cpfRepresentanteInput.addEventListener('input', () => {
+        cpfRepresentanteInput.value = normalizeCpf(cpfRepresentanteInput.value);
+      });
+
+      rgRepresentanteInput.addEventListener('input', () => {
+        rgRepresentanteInput.value = normalizeText(rgRepresentanteInput.value, 30);
+      });
+
+      statusInput.addEventListener('input', () => {
+        statusInput.value = normalizeText(statusInput.value, 50);
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const codigo = normalizeCodigo(codigoInput.value);
+        const credenciado = normalizeText(nomeInput.value, 255);
+        const cnpjCpf = normalizeCnpjCpf(cnpjCpfInput.value);
+        const logradouro = normalizeText(logradouroInput.value, 255);
+        const bairro = normalizeText(bairroInput.value, 120);
+        const cep = normalizeCep(cepInput.value);
+        const municipio = normalizeText(municipioInput.value, 120);
+        const email = normalizeEmailList(emailInput.value);
+        const telefone1 = normalizePhone(telefone1Input.value);
+        const telefone2 = normalizePhone(telefone2Input.value);
+        const representante = normalizeText(representanteInput.value, 255);
+        const cpfRepresentante = normalizeCpf(cpfRepresentanteInput.value);
+        const rgRepresentante = normalizeText(rgRepresentanteInput.value, 30);
+        const status = normalizeText(statusInput.value, 50);
+        let hasError = false;
+
+        resetMessages();
+        codigoInput.value = codigo;
+        nomeInput.value = credenciado;
+        cnpjCpfInput.value = cnpjCpf;
+        logradouroInput.value = logradouro;
+        bairroInput.value = bairro;
+        cepInput.value = cep;
+        municipioInput.value = municipio;
+        emailInput.value = email;
+        telefone1Input.value = telefone1;
+        telefone2Input.value = telefone2;
+        representanteInput.value = representante;
+        cpfRepresentanteInput.value = cpfRepresentante;
+        rgRepresentanteInput.value = rgRepresentante;
+        statusInput.value = status;
+
+        if (!codigo) {
+          codigoError.textContent = 'Informe o codigo.';
+          hasError = true;
+        }
+
+        if (!credenciado) {
+          nomeError.textContent = 'Informe a credenciada.';
+          hasError = true;
+        }
+
+        if (![11, 14].includes(cnpjCpf.replace(/\D/g, '').length)) {
+          cnpjCpfError.textContent = 'CNPJ/CPF deve conter 11 ou 14 digitos.';
+          hasError = true;
+        }
+
+        if (cep && cep.replace(/\D/g, '').length !== 8) {
+          cepError.textContent = 'CEP deve seguir o formato 00000-000.';
+          hasError = true;
+        }
+
+        if (email && !email.split(';').map((item) => item.trim()).filter(Boolean).every((item) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item))) {
+          emailError.textContent = 'Informe um email valido.';
+          hasError = true;
+        }
+
+        if (telefone1 && !/^\d{4,5}-\d{4}$/.test(telefone1)) {
+          telefone1Error.textContent = 'Telefone 1 deve seguir o formato 99999-9999.';
+          hasError = true;
+        }
+
+        if (telefone2 && !/^\d{4,5}-\d{4}$/.test(telefone2)) {
+          telefone2Error.textContent = 'Telefone 2 deve seguir o formato 99999-9999.';
+          hasError = true;
+        }
+
+        if (cpfRepresentante && cpfRepresentante.replace(/\D/g, '').length !== 11) {
+          cpfRepresentanteError.textContent = 'CPF do representante deve conter 11 digitos.';
+          hasError = true;
+        }
+
+        if (hasError) {
+          feedback.textContent = 'Corrija os campos para continuar.';
+          feedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        try {
+          const response = await fetch(editingCodigo ? `/api/credenciada/${encodeURIComponent(editingCodigo)}` : '/api/credenciada', {
+            method: editingCodigo ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({
+              codigo,
+              credenciado,
+              cnpjCpf,
+              logradouro,
+              bairro,
+              cep,
+              municipio,
+              email,
+              telefone1,
+              telefone2,
+              representante,
+              cpfRepresentante,
+              rgRepresentante,
+              status,
+            }),
+          });
+
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao gravar credenciada.');
+          }
+
+          const savedItem = payload.item;
+          feedback.textContent = editingCodigo
+            ? `Credenciada ${savedItem.codigo} alterada com sucesso.`
+            : `Credenciada ${savedItem.codigo} gravada com sucesso.`;
+          feedback.classList.add('dsc-feedback-success');
+          showBanner(feedback.textContent, 'success');
+          hideForm();
+          await loadItems();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao gravar credenciada.';
+          feedback.textContent = message;
+          feedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
+
+      insertButton.addEventListener('click', startInsert);
+      importButton.addEventListener('click', showImportForm);
+      rejectionButton.addEventListener('click', () => {
+        void showRejectionPanel();
+      });
+      cancelButton.addEventListener('click', hideForm);
+      cancelImportButton.addEventListener('click', hideImportForm);
+      closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
+
+      importForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const fileName = importFileNameInput.value.trim();
+        resetImportMessages();
+        importFileNameInput.value = fileName;
+
+        if (!fileName) {
+          importFileNameError.textContent = 'Informe o nome do arquivo XML.';
+          importFeedback.textContent = 'Corrija os campos para continuar.';
+          importFeedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        const confirmed = window.confirm(`Executar a importacao do arquivo ${fileName}? Os registros existentes serao alterados e novos registros serao incluidos.`);
+
+        if (!confirmed) {
+          return;
+        }
+
+        importFeedback.textContent = 'Importando credenciadas...';
+
+        try {
+          const response = await fetch('/api/credenciada/import-xml', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ fileName }),
+          });
+
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao importar credenciadas do XML.');
+          }
+
+          const skippedMessage = payload.skipped ? ` ${payload.skipped} registro(s) invalido(s) foram ignorado(s).` : '';
+          const successMessage = `Importacao concluida: ${payload.inserted} incluido(s) e ${payload.updated} alterado(s) a partir de ${payload.fileName}.${skippedMessage}`;
+          importFeedback.textContent = successMessage;
+          importFeedback.classList.add('dsc-feedback-success');
+          setGridMessage(successMessage, 'success');
+          showBanner(successMessage, 'success');
+          hideImportForm();
+          await loadItems();
+          if (payload.skipped) {
+            await showRejectionPanel(payload.fileName);
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao importar credenciadas do XML.';
+          importFeedback.textContent = message;
+          importFeedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
+
+      filterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentSearch = searchInput.value.trim();
+        currentPage = 1;
+        void loadItems();
+      });
+
+      rejectionFilterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentRejectionSearch = rejectionSearchInput.value.trim();
+        currentRejectionPage = 1;
+        void loadRejectionItems();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      clearRejectionFilterButton.addEventListener('click', () => {
+        rejectionSearchInput.value = '';
+        currentRejectionSearch = '';
+        currentRejectionPage = 1;
+        void loadRejectionItems();
+      });
+
+      previousPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage -= 1;
+        void loadItems();
+      });
+
+      nextPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage += 1;
+        void loadItems();
+      });
+
+      previousRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage <= 1) {
+          return;
+        }
+
+        currentRejectionPage -= 1;
+        void loadRejectionItems();
+      });
+
+      nextRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage >= totalRejectionPages) {
+          return;
+        }
+
+        currentRejectionPage += 1;
+        void loadRejectionItems();
+      });
+
+      sortButton.addEventListener('click', () => {
+        currentSortDirection = currentSortBy === 'credenciado' && currentSortDirection === 'asc' ? 'desc' : 'asc';
+        currentSortBy = 'credenciado';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      hideForm();
+      hideImportForm();
+      hideRejectionPanel();
+      void loadItems();
+    </script>
+  </body>
+</html>

@@ -8,7 +8,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "smoke:api": "node scripts/smoke-api.mjs all",
+    "smoke:api:condutor": "node scripts/smoke-api.mjs condutor",
+    "smoke:api:credenciada": "node scripts/smoke-api.mjs credenciada"
   },
   "dependencies": {
     "fast-xml-parser": "^5.5.10",

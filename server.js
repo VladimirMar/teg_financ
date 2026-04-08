@@ -134,6 +134,11 @@ const getCondutorCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+const getCredenciadaCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/credenciada\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 const getLoginDrePairFromUrl = (url) => {
   const match = url.match(/^\/api\/login-dre\/([^/]+)\/([^/]+)$/)
 
@@ -253,6 +258,118 @@ const normalizeHistorico = (value) => {
   return normalizeRequestValue(value).slice(0, 200)
 }
 
+const normalizeCredenciadaText = (value, maxLength = 255) => {
+  return normalizeRequestValue(value)
+    .replace(/\s+/g, ' ')
+    .toUpperCase()
+    .slice(0, maxLength)
+}
+
+const normalizeEmailList = (value) => {
+  const normalizedValue = normalizeRequestValue(value)
+
+  if (!normalizedValue) {
+    return ''
+  }
+
+  return normalizedValue
+    .split(';')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean)
+    .join('; ')
+    .slice(0, 255)
+}
+
+const isEmailListValid = (value) => {
+  if (!value) {
+    return true
+  }
+
+  return value
+    .split(';')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .every((item) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item))
+}
+
+const normalizeCep = (value) => {
+  const digits = normalizeRequestValue(value).replace(/\D/g, '').slice(0, 8)
+
+  if (digits.length <= 5) {
+    return digits
+  }
+
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`
+}
+
+const isCepValid = (value) => {
+  return /^\d{5}-\d{3}$/.test(value)
+}
+
+const normalizePhoneNumber = (value) => {
+  const digits = normalizeRequestValue(value).replace(/\D/g, '').slice(0, 11)
+
+  if (digits.length <= 4) {
+    return digits
+  }
+
+  if (digits.length <= 8) {
+    return `${digits.slice(0, 4)}-${digits.slice(4)}`
+  }
+
+  return `${digits.slice(0, 5)}-${digits.slice(5, 9)}`
+}
+
+const isPhoneNumberValid = (value) => {
+  return /^\d{4,5}-\d{4}$/.test(value)
+}
+
+const normalizeCnpjCpf = (value) => {
+  const digits = normalizeRequestValue(value).replace(/\D/g, '').slice(0, 14)
+
+  if (digits.length <= 3) {
+    return digits
+  }
+
+  if (digits.length <= 6) {
+    return `${digits.slice(0, 3)}.${digits.slice(3)}`
+  }
+
+  if (digits.length <= 9) {
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
+  }
+
+  if (digits.length <= 11) {
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`
+  }
+
+  if (digits.length <= 12) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`
+  }
+
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`
+}
+
+const isCnpjCpfValid = (value) => {
+  const digits = value.replace(/\D/g, '')
+  return digits.length === 11 || digits.length === 14
+}
+
+const buildCredenciadaLegacyFields = ({ codigo, credenciado, representante, cnpjCpf }) => {
+  const digits = normalizeRequestValue(cnpjCpf).replace(/\D/g, '')
+  const empresa = (normalizeCredenciadaText(credenciado, 100) || `CRED ${codigo}`).slice(0, 100)
+  const condutor = (normalizeCredenciadaText(representante, 100) || empresa).slice(0, 100)
+  const tipoPessoa = digits.length === 14 ? 'PJ' : 'PF'
+  const placa = `CR${codigo}`.slice(0, 8)
+
+  return {
+    placa,
+    empresa,
+    condutor,
+    tipoPessoa,
+  }
+}
+
 const normalizeXmlDateInput = (value) => {
   const normalizedValue = normalizeRequestValue(value)
 
@@ -344,6 +461,107 @@ const normalizeImportedCondutorRecord = (record, index) => {
   }
 }
 
+const parseCredenciadaXml = (xmlContent) => {
+  const parsed = xmlParser.parse(xmlContent)
+  const rawRecords = parsed?.dataroot?.Credenciados
+  const records = (Array.isArray(rawRecords)
+    ? rawRecords
+    : rawRecords
+      ? [rawRecords]
+      : [])
+    .filter((record) => record && typeof record === 'object')
+
+  return records.map((record) => ({
+    codigo: normalizeRequestValue(record?.Código),
+    credenciado: normalizeRequestValue(record?.Credenciado),
+    cnpjCpf: normalizeRequestValue(record?.CNPJ_CPF),
+    logradouro: normalizeRequestValue(record?.Logradouro),
+    bairro: normalizeRequestValue(record?.Bairro),
+    cep: normalizeRequestValue(record?.CEP),
+    municipio: normalizeRequestValue(record?.Municipio),
+    email: normalizeRequestValue(record?.Email),
+    telefone1: normalizeRequestValue(record?.Telefone_01),
+    telefone2: normalizeRequestValue(record?.Telefone_02),
+    representante: normalizeRequestValue(record?.Representante),
+    cpfRepresentante: normalizeRequestValue(record?.CPF_representante),
+    rgRepresentante: normalizeRequestValue(record?.RG_representante),
+    status: normalizeRequestValue(record?.Status),
+  }))
+}
+
+const normalizeImportedCredenciadaRecord = (record, index) => {
+  const codigo = normalizeCondutorCodigo(record.codigo)
+  const credenciado = normalizeCredenciadaText(record.credenciado, 255)
+  const cnpjCpf = normalizeCnpjCpf(record.cnpjCpf)
+  const logradouro = normalizeCredenciadaText(record.logradouro, 255)
+  const bairro = normalizeCredenciadaText(record.bairro, 120)
+  const cep = normalizeCep(record.cep)
+  const municipio = normalizeCredenciadaText(record.municipio, 120)
+  const email = normalizeEmailList(record.email)
+  const telefone1 = normalizePhoneNumber(record.telefone1)
+  const telefone2 = normalizePhoneNumber(record.telefone2)
+  const representante = normalizeCredenciadaText(record.representante, 255)
+  const cpfRepresentante = normalizeCpf(record.cpfRepresentante)
+  const rgRepresentante = normalizeCredenciadaText(record.rgRepresentante, 30)
+  const status = normalizeCredenciadaText(record.status, 50)
+  const itemLabel = `Registro ${index + 1}`
+
+  if (codigo === null || Number.isNaN(codigo)) {
+    throw new Error(`${itemLabel}: codigo invalido no XML.`)
+  }
+
+  if (!credenciado) {
+    throw new Error(`${itemLabel}: nome da credenciada invalido no XML.`)
+  }
+
+  if (!isCnpjCpfValid(cnpjCpf)) {
+    throw new Error(`${itemLabel}: CNPJ/CPF invalido no XML.`)
+  }
+
+  if (cep && !isCepValid(cep)) {
+    throw new Error(`${itemLabel}: CEP invalido no XML.`)
+  }
+
+  if (email && !isEmailListValid(email)) {
+    throw new Error(`${itemLabel}: email invalido no XML.`)
+  }
+
+  if (telefone1 && !isPhoneNumberValid(telefone1)) {
+    throw new Error(`${itemLabel}: telefone 1 invalido no XML.`)
+  }
+
+  if (telefone2 && !isPhoneNumberValid(telefone2)) {
+    throw new Error(`${itemLabel}: telefone 2 invalido no XML.`)
+  }
+
+  if (cpfRepresentante && !isCpfValid(cpfRepresentante)) {
+    throw new Error(`${itemLabel}: CPF do representante invalido no XML.`)
+  }
+
+  return {
+    codigo,
+    credenciado,
+    cnpjCpf,
+    logradouro,
+    bairro,
+    cep,
+    municipio,
+    email,
+    telefone1,
+    telefone2,
+    representante,
+    cpfRepresentante,
+    rgRepresentante,
+    status,
+    ...buildCredenciadaLegacyFields({
+      codigo,
+      credenciado,
+      representante,
+      cnpjCpf,
+    }),
+  }
+}
+
 const condutorSelectClause = `
   codigo::text AS codigo,
   BTRIM(condutor) AS condutor,
@@ -365,6 +583,36 @@ const condutorImportRecusaSelectClause = `
   COALESCE(BTRIM(cpf_condutor_xml), '') AS cpf_condutor_xml,
   COALESCE(BTRIM(crmc_xml), '') AS crmc_xml,
   COALESCE(BTRIM(tipo_vinculo_xml), '') AS tipo_vinculo_xml,
+  BTRIM(motivo_recusa) AS motivo_recusa,
+  TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
+
+const credenciadaSelectClause = `
+  codigo::text AS codigo,
+  BTRIM(credenciado) AS credenciado,
+  BTRIM(cnpj_cpf) AS cnpj_cpf,
+  COALESCE(BTRIM(logradouro), '') AS logradouro,
+  COALESCE(BTRIM(bairro), '') AS bairro,
+  COALESCE(BTRIM(cep), '') AS cep,
+  COALESCE(BTRIM(municipio), '') AS municipio,
+  COALESCE(BTRIM(email), '') AS email,
+  COALESCE(BTRIM(telefone_01), '') AS telefone_01,
+  COALESCE(BTRIM(telefone_02), '') AS telefone_02,
+  COALESCE(BTRIM(representante), '') AS representante,
+  COALESCE(BTRIM(cpf_representante), '') AS cpf_representante,
+  COALESCE(BTRIM(rg_representante), '') AS rg_representante,
+  COALESCE(BTRIM(status), '') AS status,
+  TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
+  TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
+
+const credenciadaImportRecusaSelectClause = `
+  id::text AS id,
+  BTRIM(arquivo_xml) AS arquivo_xml,
+  linha_xml::text AS linha_xml,
+  COALESCE(BTRIM(codigo_xml), '') AS codigo_xml,
+  COALESCE(BTRIM(credenciado_xml), '') AS credenciado_xml,
+  COALESCE(BTRIM(cnpj_cpf_xml), '') AS cnpj_cpf_xml,
+  COALESCE(BTRIM(representante_xml), '') AS representante_xml,
+  COALESCE(BTRIM(status_xml), '') AS status_xml,
   BTRIM(motivo_recusa) AS motivo_recusa,
   TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
 
@@ -527,6 +775,205 @@ const importCondutorXmlFile = async (fileName) => {
   }
 }
 
+const importCredenciadaXmlFile = async (fileName) => {
+  const sanitizedFileName = path.basename(normalizeRequestValue(fileName))
+
+  if (!sanitizedFileName) {
+    throw new Error('Nome do arquivo XML e obrigatorio.')
+  }
+
+  if (path.extname(sanitizedFileName).toLowerCase() !== '.xml') {
+    throw new Error('Informe um arquivo XML valido.')
+  }
+
+  const resolvedPath = path.resolve(importXmlDirectory, sanitizedFileName)
+
+  if (!resolvedPath.startsWith(importXmlDirectory)) {
+    throw new Error('Arquivo XML invalido.')
+  }
+
+  const xmlContent = await readFile(resolvedPath, 'utf8')
+  const parsedRecords = parseCredenciadaXml(xmlContent)
+
+  if (!parsedRecords.length) {
+    throw new Error('Nenhum registro de credenciada foi encontrado no XML informado.')
+  }
+
+  const normalizedRecords = []
+  const skippedRecords = []
+
+  parsedRecords.forEach((record, index) => {
+    try {
+      normalizedRecords.push(normalizeImportedCredenciadaRecord(record, index))
+    } catch (error) {
+      skippedRecords.push({
+        index: index + 1,
+        codigoXml: normalizeRequestValue(record.codigo),
+        credenciadoXml: normalizeRequestValue(record.credenciado),
+        cnpjCpfXml: normalizeRequestValue(record.cnpjCpf),
+        representanteXml: normalizeRequestValue(record.representante),
+        statusXml: normalizeRequestValue(record.status),
+        message: error instanceof Error ? error.message : `Registro ${index + 1}: erro ao validar o XML.`,
+      })
+    }
+  })
+
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+    await client.query('TRUNCATE TABLE credenciada_import_recusa RESTART IDENTITY')
+    let inserted = 0
+    let updated = 0
+
+    for (const skippedRecord of skippedRecords) {
+      await client.query(
+        `INSERT INTO credenciada_import_recusa (
+           arquivo_xml,
+           linha_xml,
+           codigo_xml,
+           credenciado_xml,
+           cnpj_cpf_xml,
+           representante_xml,
+           status_xml,
+           motivo_recusa,
+           data_importacao
+         )
+         VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, ''), NULLIF($7, ''), $8, NOW())`,
+        [
+          sanitizedFileName,
+          skippedRecord.index,
+          skippedRecord.codigoXml,
+          skippedRecord.credenciadoXml,
+          skippedRecord.cnpjCpfXml,
+          skippedRecord.representanteXml,
+          skippedRecord.statusXml,
+          skippedRecord.message,
+        ],
+      )
+    }
+
+    for (const record of normalizedRecords) {
+      const existingResult = await client.query('SELECT 1 FROM credenciada WHERE codigo = $1 LIMIT 1', [record.codigo])
+
+      if (existingResult.rowCount > 0) {
+        await client.query(
+          `UPDATE credenciada
+           SET placa = $1,
+               empresa = $2,
+               condutor = $3,
+               tipo_pessoa = $4,
+               credenciado = $5,
+               cnpj_cpf = $6,
+               logradouro = NULLIF($7, ''),
+               bairro = NULLIF($8, ''),
+               cep = NULLIF($9, ''),
+               municipio = NULLIF($10, ''),
+               email = NULLIF($11, ''),
+               telefone_01 = NULLIF($12, ''),
+               telefone_02 = NULLIF($13, ''),
+               representante = NULLIF($14, ''),
+               cpf_representante = NULLIF($15, ''),
+               rg_representante = NULLIF($16, ''),
+               status = NULLIF($17, ''),
+               data_modificacao = NOW()
+           WHERE codigo = $18`,
+          [
+            record.placa,
+            record.empresa,
+            record.condutor,
+            record.tipoPessoa,
+            record.credenciado,
+            record.cnpjCpf,
+            record.logradouro,
+            record.bairro,
+            record.cep,
+            record.municipio,
+            record.email,
+            record.telefone1,
+            record.telefone2,
+            record.representante,
+            record.cpfRepresentante,
+            record.rgRepresentante,
+            record.status,
+            record.codigo,
+          ],
+        )
+        updated += 1
+        continue
+      }
+
+      await client.query(
+        `INSERT INTO credenciada (
+           codigo,
+           placa,
+           empresa,
+           condutor,
+           tipo_pessoa,
+           credenciado,
+           cnpj_cpf,
+           logradouro,
+           bairro,
+           cep,
+           municipio,
+           email,
+           telefone_01,
+           telefone_02,
+           representante,
+           cpf_representante,
+           rg_representante,
+           status,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NULLIF($8, ''), NULLIF($9, ''), NULLIF($10, ''), NULLIF($11, ''), NULLIF($12, ''), NULLIF($13, ''), NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''), NULLIF($18, ''), NOW(), NOW())`,
+        [
+          record.codigo,
+          record.placa,
+          record.empresa,
+          record.condutor,
+          record.tipoPessoa,
+          record.credenciado,
+          record.cnpjCpf,
+          record.logradouro,
+          record.bairro,
+          record.cep,
+          record.municipio,
+          record.email,
+          record.telefone1,
+          record.telefone2,
+          record.representante,
+          record.cpfRepresentante,
+          record.rgRepresentante,
+          record.status,
+        ],
+      )
+      inserted += 1
+    }
+
+    if (normalizedRecords.length) {
+      await client.query('SELECT setval(\'credenciada_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM credenciada), 0), 1), true)')
+    }
+    await client.query('COMMIT')
+
+    return {
+      fileName: sanitizedFileName,
+      filePath: resolvedPath,
+      total: parsedRecords.length,
+      processed: normalizedRecords.length,
+      inserted,
+      updated,
+      skipped: skippedRecords.length,
+      skippedRecords: skippedRecords.slice(0, 20),
+    }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
 const isDateInputValid = (value) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return false
@@ -632,6 +1079,118 @@ const validateCondutorPayload = async ({
       validadeCurso: normalizedValidadeCurso,
       tipoVinculo: normalizedTipoVinculo,
       historico: normalizedHistorico,
+    },
+  }
+}
+
+const validateCredenciadaPayload = async ({
+  codigo,
+  credenciado,
+  cnpjCpf,
+  logradouro,
+  bairro,
+  cep,
+  municipio,
+  email,
+  telefone1,
+  telefone2,
+  representante,
+  cpfRepresentante,
+  rgRepresentante,
+  status,
+  originalCodigo = null,
+}) => {
+  const normalizedCodigo = normalizeCondutorCodigo(codigo)
+  const normalizedCredenciado = normalizeCredenciadaText(credenciado, 255)
+  const normalizedCnpjCpf = normalizeCnpjCpf(cnpjCpf)
+  const normalizedLogradouro = normalizeCredenciadaText(logradouro, 255)
+  const normalizedBairro = normalizeCredenciadaText(bairro, 120)
+  const normalizedCep = normalizeCep(cep)
+  const normalizedMunicipio = normalizeCredenciadaText(municipio, 120)
+  const normalizedEmail = normalizeEmailList(email)
+  const normalizedTelefone1 = normalizePhoneNumber(telefone1)
+  const normalizedTelefone2 = normalizePhoneNumber(telefone2)
+  const normalizedRepresentante = normalizeCredenciadaText(representante, 255)
+  const normalizedCpfRepresentante = normalizeCpf(cpfRepresentante)
+  const normalizedRgRepresentante = normalizeCredenciadaText(rgRepresentante, 30)
+  const normalizedStatus = normalizeCredenciadaText(status, 50)
+
+  if (normalizedCodigo === null) {
+    return { status: 400, payload: { message: 'Codigo e obrigatorio.' } }
+  }
+
+  if (Number.isNaN(normalizedCodigo)) {
+    return { status: 400, payload: { message: 'Codigo deve ser um numero inteiro positivo.' } }
+  }
+
+  if (!normalizedCredenciado) {
+    return { status: 400, payload: { message: 'Credenciada e obrigatoria.' } }
+  }
+
+  if (!normalizedCnpjCpf) {
+    return { status: 400, payload: { message: 'CNPJ/CPF e obrigatorio.' } }
+  }
+
+  if (!isCnpjCpfValid(normalizedCnpjCpf)) {
+    return { status: 400, payload: { message: 'CNPJ/CPF deve conter 11 ou 14 digitos.' } }
+  }
+
+  if (normalizedCep && !isCepValid(normalizedCep)) {
+    return { status: 400, payload: { message: 'CEP invalido.' } }
+  }
+
+  if (normalizedEmail && !isEmailListValid(normalizedEmail)) {
+    return { status: 400, payload: { message: 'Email invalido.' } }
+  }
+
+  if (normalizedTelefone1 && !isPhoneNumberValid(normalizedTelefone1)) {
+    return { status: 400, payload: { message: 'Telefone 1 invalido.' } }
+  }
+
+  if (normalizedTelefone2 && !isPhoneNumberValid(normalizedTelefone2)) {
+    return { status: 400, payload: { message: 'Telefone 2 invalido.' } }
+  }
+
+  if (normalizedCpfRepresentante && !isCpfValid(normalizedCpfRepresentante)) {
+    return { status: 400, payload: { message: 'CPF do representante invalido.' } }
+  }
+
+  const duplicateCodeResult = await pool.query(
+    `SELECT 1
+     FROM credenciada
+     WHERE codigo = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedCodigo, originalCodigo],
+  )
+
+  if (duplicateCodeResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
+  }
+
+  return {
+    status: 200,
+    payload: {
+      codigo: normalizedCodigo,
+      credenciado: normalizedCredenciado,
+      cnpjCpf: normalizedCnpjCpf,
+      logradouro: normalizedLogradouro,
+      bairro: normalizedBairro,
+      cep: normalizedCep,
+      municipio: normalizedMunicipio,
+      email: normalizedEmail,
+      telefone1: normalizedTelefone1,
+      telefone2: normalizedTelefone2,
+      representante: normalizedRepresentante,
+      cpfRepresentante: normalizedCpfRepresentante,
+      rgRepresentante: normalizedRgRepresentante,
+      status: normalizedStatus,
+      ...buildCredenciadaLegacyFields({
+        codigo: normalizedCodigo,
+        credenciado: normalizedCredenciado,
+        representante: normalizedRepresentante,
+        cnpjCpf: normalizedCnpjCpf,
+      }),
     },
   }
 }
@@ -882,6 +1441,99 @@ const ensureDatabaseSchema = async () => {
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS condutor_codigo_unique_idx ON condutor (codigo)')
   await pool.query('CREATE INDEX IF NOT EXISTS condutor_import_recusa_data_idx ON condutor_import_recusa (data_importacao DESC)')
   await pool.query('CREATE INDEX IF NOT EXISTS condutor_import_recusa_arquivo_idx ON condutor_import_recusa (arquivo_xml)')
+  await pool.query('CREATE SEQUENCE IF NOT EXISTS credenciada_codigo_seq START WITH 1 INCREMENT BY 1')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS credenciada (
+      codigo integer PRIMARY KEY DEFAULT nextval('credenciada_codigo_seq'),
+      placa varchar(20) NOT NULL,
+      empresa varchar(255) NOT NULL,
+      condutor varchar(255) NOT NULL,
+      tipo_pessoa varchar(20) NOT NULL,
+      credenciado varchar(255) NOT NULL,
+      cnpj_cpf varchar(20) NOT NULL,
+      logradouro varchar(255),
+      bairro varchar(120),
+      cep varchar(10),
+      municipio varchar(120),
+      email varchar(255),
+      telefone_01 varchar(20),
+      telefone_02 varchar(20),
+      representante varchar(255),
+      cpf_representante varchar(20),
+      rg_representante varchar(30),
+      status varchar(50),
+      data_inclusao timestamp without time zone NOT NULL DEFAULT NOW(),
+      data_modificacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS placa varchar(20)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS empresa varchar(255)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS condutor varchar(255)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS tipo_pessoa varchar(20)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS credenciado varchar(255)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS cnpj_cpf varchar(20)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS logradouro varchar(255)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS bairro varchar(120)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS cep varchar(10)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS municipio varchar(120)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS email varchar(255)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS telefone_01 varchar(20)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS telefone_02 varchar(20)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS representante varchar(255)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS cpf_representante varchar(20)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS rg_representante varchar(30)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS status varchar(50)')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone')
+  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone')
+  await pool.query('ALTER TABLE credenciada ALTER COLUMN codigo SET DEFAULT nextval(\'credenciada_codigo_seq\')')
+  await pool.query('ALTER TABLE credenciada ALTER COLUMN data_inclusao SET DEFAULT NOW()')
+  await pool.query('ALTER TABLE credenciada ALTER COLUMN data_modificacao SET DEFAULT NOW()')
+  await pool.query('ALTER SEQUENCE credenciada_codigo_seq OWNED BY credenciada.codigo')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS credenciada_import_recusa (
+      id bigserial PRIMARY KEY,
+      arquivo_xml varchar(255) NOT NULL,
+      linha_xml integer NOT NULL,
+      codigo_xml varchar(50),
+      credenciado_xml varchar(255),
+      cnpj_cpf_xml varchar(20),
+      representante_xml varchar(255),
+      status_xml varchar(50),
+      motivo_recusa text NOT NULL,
+      data_importacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query(`
+    UPDATE credenciada
+    SET placa = COALESCE(NULLIF(BTRIM(placa), ''), LEFT(CONCAT('CRED-', codigo::text), 20)),
+        empresa = COALESCE(NULLIF(BTRIM(empresa), ''), COALESCE(NULLIF(BTRIM(credenciado), ''), CONCAT('CREDENCIADA ', codigo::text))),
+        condutor = COALESCE(NULLIF(BTRIM(condutor), ''), COALESCE(NULLIF(BTRIM(representante), ''), NULLIF(BTRIM(empresa), ''), CONCAT('CREDENCIADA ', codigo::text))),
+        tipo_pessoa = COALESCE(NULLIF(BTRIM(tipo_pessoa), ''), CASE WHEN LENGTH(REGEXP_REPLACE(COALESCE(cnpj_cpf, ''), '\\D', '', 'g')) = 14 THEN 'JURIDICA' ELSE 'FISICA' END),
+        credenciado = COALESCE(NULLIF(BTRIM(credenciado), ''), NULLIF(BTRIM(empresa), '')),
+        cnpj_cpf = COALESCE(NULLIF(BTRIM(cnpj_cpf), ''), NULL),
+        data_inclusao = COALESCE(data_inclusao, NOW()),
+        data_modificacao = COALESCE(data_modificacao, COALESCE(data_inclusao, NOW()))
+    WHERE placa IS NULL
+       OR empresa IS NULL
+       OR condutor IS NULL
+       OR tipo_pessoa IS NULL
+       OR data_inclusao IS NULL
+       OR data_modificacao IS NULL
+  `)
+  await pool.query('ALTER TABLE credenciada ALTER COLUMN placa SET NOT NULL')
+  await pool.query('ALTER TABLE credenciada ALTER COLUMN empresa SET NOT NULL')
+  await pool.query('ALTER TABLE credenciada ALTER COLUMN condutor SET NOT NULL')
+  await pool.query('ALTER TABLE credenciada ALTER COLUMN tipo_pessoa SET NOT NULL')
+  await pool.query(`
+    UPDATE credenciada
+    SET data_inclusao = COALESCE(data_inclusao, NOW()),
+        data_modificacao = COALESCE(data_modificacao, COALESCE(data_inclusao, NOW()))
+    WHERE data_inclusao IS NULL OR data_modificacao IS NULL
+  `)
+  await pool.query('SELECT setval(\'credenciada_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM credenciada), 0), 1), true)')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS credenciada_codigo_unique_idx ON credenciada (codigo)')
+  await pool.query('CREATE INDEX IF NOT EXISTS credenciada_import_recusa_data_idx ON credenciada_import_recusa (data_importacao DESC)')
+  await pool.query('CREATE INDEX IF NOT EXISTS credenciada_import_recusa_arquivo_idx ON credenciada_import_recusa (arquivo_xml)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_nome_unique_idx ON login (UPPER(BTRIM(nome)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_email_unique_idx ON login (LOWER(TRIM(email)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_dre_unique_idx ON login_dre (login_codigo, dre_codigo)')
@@ -1149,6 +1801,133 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar recusas de importacao do condutor.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/credenciada') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
+      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
+        ? 'DESC'
+        : 'ASC'
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+      const orderByClause = sortBy === 'credenciado'
+        ? `UPPER(BTRIM(credenciado)) ${sortDirection}, codigo ASC`
+        : `codigo ${sortDirection}`
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR UPPER(BTRIM(credenciado)) ILIKE UPPER($${values.length})
+          OR BTRIM(cnpj_cpf) ILIKE $${values.length}
+          OR UPPER(COALESCE(BTRIM(representante), '')) ILIKE UPPER($${values.length})
+          OR UPPER(COALESCE(BTRIM(municipio), '')) ILIKE UPPER($${values.length})
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM credenciada ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           ${credenciadaSelectClause}
+         FROM credenciada
+         ${whereClause}
+         ORDER BY ${orderByClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: sortBy === 'credenciado' ? 'credenciado' : 'codigo',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar credenciadas.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/credenciada/import-rejections') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 10) || 10, 1), 100)
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          arquivo_xml ILIKE $${values.length}
+          OR COALESCE(codigo_xml, '') ILIKE $${values.length}
+          OR COALESCE(credenciado_xml, '') ILIKE $${values.length}
+          OR COALESCE(cnpj_cpf_xml, '') ILIKE $${values.length}
+          OR COALESCE(representante_xml, '') ILIKE $${values.length}
+          OR COALESCE(status_xml, '') ILIKE $${values.length}
+          OR motivo_recusa ILIKE $${values.length}
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM credenciada_import_recusa ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           ${credenciadaImportRecusaSelectClause}
+         FROM credenciada_import_recusa
+         ${whereClause}
+         ORDER BY data_importacao DESC, linha_xml ASC, id DESC
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar recusas de importacao da credenciada.'
 
       sendJson(response, 500, { message })
     }
@@ -1582,6 +2361,112 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'POST' && pathname === '/api/credenciada') {
+    try {
+      const body = await readJsonBody(request)
+      const validationResult = await validateCredenciadaPayload({
+        codigo: body.codigo,
+        credenciado: body.credenciado,
+        cnpjCpf: body.cnpjCpf,
+        logradouro: body.logradouro,
+        bairro: body.bairro,
+        cep: body.cep,
+        municipio: body.municipio,
+        email: body.email,
+        telefone1: body.telefone1,
+        telefone2: body.telefone2,
+        representante: body.representante,
+        cpfRepresentante: body.cpfRepresentante,
+        rgRepresentante: body.rgRepresentante,
+        status: body.status,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const insertResult = await pool.query(
+        `INSERT INTO credenciada (
+           codigo,
+           placa,
+           empresa,
+           condutor,
+           tipo_pessoa,
+           credenciado,
+           cnpj_cpf,
+           logradouro,
+           bairro,
+           cep,
+           municipio,
+           email,
+           telefone_01,
+           telefone_02,
+           representante,
+           cpf_representante,
+           rg_representante,
+           status,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NULLIF($8, ''), NULLIF($9, ''), NULLIF($10, ''), NULLIF($11, ''), NULLIF($12, ''), NULLIF($13, ''), NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''), NULLIF($18, ''), NOW(), NOW())
+         RETURNING ${credenciadaSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.placa,
+          validationResult.payload.empresa,
+          validationResult.payload.condutor,
+          validationResult.payload.tipoPessoa,
+          validationResult.payload.credenciado,
+          validationResult.payload.cnpjCpf,
+          validationResult.payload.logradouro,
+          validationResult.payload.bairro,
+          validationResult.payload.cep,
+          validationResult.payload.municipio,
+          validationResult.payload.email,
+          validationResult.payload.telefone1,
+          validationResult.payload.telefone2,
+          validationResult.payload.representante,
+          validationResult.payload.cpfRepresentante,
+          validationResult.payload.rgRepresentante,
+          validationResult.payload.status,
+        ],
+      )
+
+      sendJson(response, 201, {
+        item: insertResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao cadastrar credenciada.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/credenciada/import-xml') {
+    try {
+      const body = await readJsonBody(request)
+      const result = await importCredenciadaXmlFile(body.fileName)
+
+      sendJson(response, 200, {
+        message: 'Importacao de credenciadas concluida com sucesso.',
+        ...result,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao importar credenciadas do XML.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'PUT' && getDreCodigoFromUrl(pathname)) {
     try {
       const originalCodigo = getDreCodigoFromUrl(pathname)
@@ -1797,6 +2682,109 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'PUT' && getCredenciadaCodigoFromUrl(pathname)) {
+    try {
+      const originalCodigo = Number(getCredenciadaCodigoFromUrl(pathname))
+      const body = await readJsonBody(request)
+
+      if (!Number.isInteger(originalCodigo) || originalCodigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo original invalido.' })
+        return
+      }
+
+      const existingResult = await pool.query(
+        'SELECT 1 FROM credenciada WHERE codigo = $1 LIMIT 1',
+        [originalCodigo],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Credenciada nao encontrada.' })
+        return
+      }
+
+      const validationResult = await validateCredenciadaPayload({
+        codigo: body.codigo,
+        credenciado: body.credenciado,
+        cnpjCpf: body.cnpjCpf,
+        logradouro: body.logradouro,
+        bairro: body.bairro,
+        cep: body.cep,
+        municipio: body.municipio,
+        email: body.email,
+        telefone1: body.telefone1,
+        telefone2: body.telefone2,
+        representante: body.representante,
+        cpfRepresentante: body.cpfRepresentante,
+        rgRepresentante: body.rgRepresentante,
+        status: body.status,
+        originalCodigo,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE credenciada
+         SET codigo = $1,
+           placa = $2,
+           empresa = $3,
+           condutor = $4,
+           tipo_pessoa = $5,
+           credenciado = $6,
+           cnpj_cpf = $7,
+           logradouro = NULLIF($8, ''),
+           bairro = NULLIF($9, ''),
+           cep = NULLIF($10, ''),
+           municipio = NULLIF($11, ''),
+           email = NULLIF($12, ''),
+           telefone_01 = NULLIF($13, ''),
+           telefone_02 = NULLIF($14, ''),
+           representante = NULLIF($15, ''),
+           cpf_representante = NULLIF($16, ''),
+           rg_representante = NULLIF($17, ''),
+           status = NULLIF($18, ''),
+             data_modificacao = NOW()
+         WHERE codigo = $19
+         RETURNING ${credenciadaSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.placa,
+          validationResult.payload.empresa,
+          validationResult.payload.condutor,
+          validationResult.payload.tipoPessoa,
+          validationResult.payload.credenciado,
+          validationResult.payload.cnpjCpf,
+          validationResult.payload.logradouro,
+          validationResult.payload.bairro,
+          validationResult.payload.cep,
+          validationResult.payload.municipio,
+          validationResult.payload.email,
+          validationResult.payload.telefone1,
+          validationResult.payload.telefone2,
+          validationResult.payload.representante,
+          validationResult.payload.cpfRepresentante,
+          validationResult.payload.rgRepresentante,
+          validationResult.payload.status,
+          originalCodigo,
+        ],
+      )
+
+      sendJson(response, 200, {
+        item: updateResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao alterar credenciada.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'PUT' && getLoginDrePairFromUrl(pathname)) {
     try {
       const pair = getLoginDrePairFromUrl(pathname)
@@ -1951,6 +2939,39 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao excluir condutor.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'DELETE' && getCredenciadaCodigoFromUrl(pathname)) {
+    try {
+      const codigo = Number(getCredenciadaCodigoFromUrl(pathname))
+
+      if (!Number.isInteger(codigo) || codigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo invalido para exclusao.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        'DELETE FROM credenciada WHERE codigo = $1 RETURNING codigo::text AS codigo',
+        [codigo],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Credenciada nao encontrada.' })
+        return
+      }
+
+      sendJson(response, 200, {
+        deletedCodigo: deleteResult.rows[0].codigo,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao excluir credenciada.'
 
       sendJson(response, 500, { message })
     }
