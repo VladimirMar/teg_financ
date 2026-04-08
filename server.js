@@ -124,6 +124,11 @@ const getDreCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+const getSeguradoraCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/seguradora\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 const getTrocaCodigoFromUrl = (url) => {
   const match = url.match(/^\/api\/troca\/([^/]+)$/)
   return match ? decodeURIComponent(match[1]) : null
@@ -146,6 +151,11 @@ const getMonitorCodigoFromUrl = (url) => {
 
 const getCredenciadaCodigoFromUrl = (url) => {
   const match = url.match(/^\/api\/credenciada\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+const getVeiculoCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/veiculo\/([^/]+)$/)
   return match ? decodeURIComponent(match[1]) : null
 }
 
@@ -194,6 +204,10 @@ const normalizeCondutorCodigo = (value) => {
 
 const isCondutorNameValid = (value) => {
   return /^[A-ZÀ-Ý ]{1,100}$/.test(value)
+}
+
+const isMonitorNameValid = (value) => {
+  return /^[A-ZÀ-Ý ]{1,255}$/.test(value)
 }
 
 const normalizeCpf = (value) => {
@@ -398,6 +412,129 @@ const buildCredenciadaLegacyFields = ({ codigo, credenciado, representante, cnpj
   }
 }
 
+const normalizeVehicleCrm = (value) => {
+  return normalizeRequestValue(value)
+    .toUpperCase()
+    .replace(/[^0-9A-Z.\-/]/g, '')
+    .slice(0, 20)
+}
+
+const isVehicleCrmValid = (value) => {
+  return /^[0-9A-Z.\-/]{1,20}$/.test(value)
+}
+
+const normalizeVehiclePlaca = (value) => {
+  return normalizeRequestValue(value)
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 7)
+}
+
+const isVehiclePlacaValid = (value) => {
+  return /^[A-Z0-9]{7}$/.test(value)
+}
+
+const normalizeVehicleInteger = (value, maxDigits = 5) => {
+  const digits = normalizeRequestValue(value).replace(/\D/g, '').slice(0, maxDigits)
+
+  if (!digits) {
+    return null
+  }
+
+  const parsed = Number(digits)
+  return Number.isInteger(parsed) ? parsed : Number.NaN
+}
+
+const normalizeVehicleMoney = (value) => {
+  const normalizedValue = normalizeRequestValue(value)
+    .replace(/\s+/g, '')
+    .replace(/\.(?=\d{3}(?:\D|$))/g, '')
+    .replace(',', '.')
+
+  if (!normalizedValue) {
+    return null
+  }
+
+  const parsed = Number(normalizedValue)
+  return Number.isFinite(parsed) ? Number(parsed.toFixed(2)) : Number.NaN
+}
+
+const normalizeTipoDeVeiculo = (value) => {
+  const normalizedValue = normalizeRequestValue(value)
+
+  if (!normalizedValue) {
+    return ''
+  }
+
+  const normalizedKey = normalizedValue
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z]/g, '')
+
+  if (normalizedKey === 'onibus') {
+    return 'Ônibus'
+  }
+
+  if (normalizedKey === 'microonibus') {
+    return 'Micro-Ônibus'
+  }
+
+  return null
+}
+
+const normalizeTipoDeBancada = (value) => {
+  const normalizedValue = normalizeRequestValue(value)
+
+  if (!normalizedValue) {
+    return ''
+  }
+
+  const normalizedKey = normalizedValue
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z]/g, '')
+
+  if (normalizedKey === 'convencional') {
+    return 'Convencional'
+  }
+
+  if (normalizedKey === 'creche') {
+    return 'Creche'
+  }
+
+  if (normalizedKey === 'acessivel') {
+    return 'Acessível'
+  }
+
+  return null
+}
+
+const normalizeOsEspecial = (value) => {
+  const normalizedValue = normalizeRequestValue(value)
+
+  if (!normalizedValue) {
+    return ''
+  }
+
+  const normalizedKey = normalizedValue
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z]/g, '')
+
+  if (normalizedKey === 'sim') {
+    return 'Sim'
+  }
+
+  if (normalizedKey === 'nao') {
+    return 'Não'
+  }
+
+  return null
+}
+
 const normalizeXmlDateInput = (value) => {
   const normalizedValue = normalizeRequestValue(value)
 
@@ -461,6 +598,39 @@ const parseMonitorXml = (xmlContent) => {
   }))
 }
 
+const parseVeiculoXml = (xmlContent) => {
+  const parsed = xmlParser.parse(xmlContent)
+  const rawRecords = parsed?.dataroot?.Veiculo
+  const records = (Array.isArray(rawRecords)
+    ? rawRecords
+    : rawRecords
+      ? [rawRecords]
+      : [])
+    .filter((record) => record && typeof record === 'object')
+
+  return records.map((record) => ({
+    codigo: normalizeRequestValue(record?.Código),
+    crm: normalizeRequestValue(record?.CRM),
+    placas: normalizeRequestValue(record?.Placas),
+    ano: normalizeRequestValue(record?.Ano),
+    capDetran: normalizeRequestValue(record?.Cap_DETRAN),
+    capTeg: normalizeRequestValue(record?.Cap_TEG),
+    capTegCreche: normalizeRequestValue(record?.Cap_TEG_CRECHE),
+    capAcessivel: normalizeRequestValue(record?.Cap_ACESSIVEL),
+    valCrm: normalizeXmlDateInput(record?.VAL_CRM),
+    seguradora: normalizeRequestValue(record?.Seguradora),
+    seguroInicio: normalizeXmlDateInput(record?.Seguro_inicio),
+    seguroTermino: normalizeXmlDateInput(record?.Seguro_termino),
+    tipoDeBancada: normalizeRequestValue(record?.Tipo_de_bancada),
+    tipoDeVeiculo: normalizeRequestValue(record?.Tipo_de_veiculo),
+    marcaModelo: normalizeRequestValue(record?.Marca_modelo),
+    titular: normalizeRequestValue(record?.Titular),
+    cnpjCpf: normalizeRequestValue(record?.CNPJ_CPF),
+    valorVeiculo: normalizeRequestValue(record?.Valor_veiculo),
+    osEspecial: normalizeRequestValue(record?.OS_especial),
+  }))
+}
+
 const normalizeImportedMonitorRecord = (record, index) => {
   const codigo = normalizeCondutorCodigo(record.codigo)
   const monitor = normalizeCondutorName(record.monitor)
@@ -476,7 +646,7 @@ const normalizeImportedMonitorRecord = (record, index) => {
     throw new Error(`${itemLabel}: codigo invalido no XML.`)
   }
 
-  if (!monitor || !isCondutorNameValid(monitor)) {
+  if (!monitor || !isMonitorNameValid(monitor)) {
     throw new Error(`${itemLabel}: nome do monitor invalido no XML.`)
   }
 
@@ -488,16 +658,40 @@ const normalizeImportedMonitorRecord = (record, index) => {
     throw new Error(`${itemLabel}: RG invalido no XML.`)
   }
 
+  if (!nascimento) {
+    throw new Error(`${itemLabel}: data de nascimento obrigatoria no XML.`)
+  }
+
+  if (!cursoMonitor) {
+    throw new Error(`${itemLabel}: data do curso obrigatoria no XML.`)
+  }
+
+  if (!validadeCurso) {
+    throw new Error(`${itemLabel}: validade do curso obrigatoria no XML.`)
+  }
+
   if (cursoMonitor && !isDateInputValid(cursoMonitor)) {
     throw new Error(`${itemLabel}: data do curso invalida no XML.`)
+  }
+
+  if (cursoMonitor && !isDateBeforeToday(cursoMonitor)) {
+    throw new Error(`${itemLabel}: data do curso deve ser anterior ao dia da inclusao no XML.`)
   }
 
   if (validadeCurso && !isDateInputValid(validadeCurso)) {
     throw new Error(`${itemLabel}: validade do curso invalida no XML.`)
   }
 
+  if (cursoMonitor && validadeCurso && validadeCurso < cursoMonitor) {
+    throw new Error(`${itemLabel}: validade do curso deve ser maior ou igual a data do curso.`)
+  }
+
   if (nascimento && !isDateInputValid(nascimento)) {
     throw new Error(`${itemLabel}: data de nascimento invalida no XML.`)
+  }
+
+  if (nascimento && !isDateBeforeToday(nascimento)) {
+    throw new Error(`${itemLabel}: data de nascimento deve ser anterior ao dia da inclusao.`)
   }
 
   if (tipoVinculo === null) {
@@ -513,6 +707,119 @@ const normalizeImportedMonitorRecord = (record, index) => {
     validadeCurso,
     tipoVinculo,
     nascimento,
+  }
+}
+
+const normalizeImportedVeiculoRecord = (record, index) => {
+  const codigo = normalizeCondutorCodigo(record.codigo)
+  const crm = normalizeVehicleCrm(record.crm)
+  const placas = normalizeVehiclePlaca(record.placas)
+  const ano = normalizeVehicleInteger(record.ano, 4)
+  const capDetran = normalizeVehicleInteger(record.capDetran, 3)
+  const capTeg = normalizeVehicleInteger(record.capTeg, 3)
+  const capTegCreche = normalizeVehicleInteger(record.capTegCreche, 3)
+  const capAcessivel = normalizeVehicleInteger(record.capAcessivel, 3)
+  const valCrm = normalizeXmlDateInput(record.valCrm)
+  const seguradora = normalizeCredenciadaText(record.seguradora, 255)
+  const seguroInicio = normalizeXmlDateInput(record.seguroInicio)
+  const seguroTermino = normalizeXmlDateInput(record.seguroTermino)
+  const tipoDeBancada = normalizeTipoDeBancada(record.tipoDeBancada)
+  const tipoDeVeiculo = normalizeTipoDeVeiculo(record.tipoDeVeiculo)
+  const marcaModelo = normalizeCredenciadaText(record.marcaModelo, 255)
+  const titular = normalizeCredenciadaText(record.titular, 255)
+  const cnpjCpf = normalizeCnpjCpf(record.cnpjCpf)
+  const valorVeiculo = normalizeVehicleMoney(record.valorVeiculo)
+  const osEspecial = normalizeOsEspecial(record.osEspecial)
+  const itemLabel = `Registro ${index + 1}`
+
+  if (codigo === null || Number.isNaN(codigo)) {
+    throw new Error(`${itemLabel}: codigo invalido no XML.`)
+  }
+
+  if (crm && !isVehicleCrmValid(crm)) {
+    throw new Error(`${itemLabel}: CRM invalido no XML.`)
+  }
+
+  if (placas && !isVehiclePlacaValid(placas)) {
+    throw new Error(`${itemLabel}: placa invalida no XML.`)
+  }
+
+  if (ano !== null && Number.isNaN(ano)) {
+    throw new Error(`${itemLabel}: ano invalido no XML.`)
+  }
+
+  if (capDetran !== null && Number.isNaN(capDetran)) {
+    throw new Error(`${itemLabel}: capacidade DETRAN invalida no XML.`)
+  }
+
+  if (capTeg !== null && Number.isNaN(capTeg)) {
+    throw new Error(`${itemLabel}: capacidade TEG invalida no XML.`)
+  }
+
+  if (capTegCreche !== null && Number.isNaN(capTegCreche)) {
+    throw new Error(`${itemLabel}: capacidade TEG creche invalida no XML.`)
+  }
+
+  if (capAcessivel !== null && Number.isNaN(capAcessivel)) {
+    throw new Error(`${itemLabel}: capacidade acessivel invalida no XML.`)
+  }
+
+  if (valCrm && !isDateInputValid(valCrm)) {
+    throw new Error(`${itemLabel}: validade do CRM invalida no XML.`)
+  }
+
+  if (seguroInicio && !isDateInputValid(seguroInicio)) {
+    throw new Error(`${itemLabel}: inicio do seguro invalido no XML.`)
+  }
+
+  if (seguroTermino && !isDateInputValid(seguroTermino)) {
+    throw new Error(`${itemLabel}: termino do seguro invalido no XML.`)
+  }
+
+  if (seguroInicio && seguroTermino && seguroTermino < seguroInicio) {
+    throw new Error(`${itemLabel}: termino do seguro deve ser maior ou igual ao inicio no XML.`)
+  }
+
+  if (tipoDeBancada === null) {
+    throw new Error(`${itemLabel}: tipo de bancada invalido no XML.`)
+  }
+
+  if (tipoDeVeiculo === null) {
+    throw new Error(`${itemLabel}: tipo de veiculo invalido no XML.`)
+  }
+
+  if (cnpjCpf && !isCnpjCpfValid(cnpjCpf)) {
+    throw new Error(`${itemLabel}: CNPJ/CPF invalido no XML.`)
+  }
+
+  if (valorVeiculo !== null && Number.isNaN(valorVeiculo)) {
+    throw new Error(`${itemLabel}: valor do veiculo invalido no XML.`)
+  }
+
+  if (osEspecial === null) {
+    throw new Error(`${itemLabel}: OS especial invalido no XML.`)
+  }
+
+  return {
+    codigo,
+    crm,
+    placas,
+    ano,
+    capDetran,
+    capTeg,
+    capTegCreche,
+    capAcessivel,
+    valCrm,
+    seguradora,
+    seguroInicio,
+    seguroTermino,
+    tipoDeBancada,
+    tipoDeVeiculo,
+    marcaModelo,
+    titular,
+    cnpjCpf,
+    valorVeiculo,
+    osEspecial,
   }
 }
 const normalizeImportedCondutorRecord = (record, index) => {
@@ -546,8 +853,16 @@ const normalizeImportedCondutorRecord = (record, index) => {
     throw new Error(`${itemLabel}: validade do CRMC invalida no XML.`)
   }
 
+  if (!isDateAfterToday(validadeCrmc)) {
+    throw new Error(`${itemLabel}: validade do CRMC deve ser futura.`)
+  }
+
   if (validadeCurso && !isDateInputValid(validadeCurso)) {
     throw new Error(`${itemLabel}: validade do curso invalida no XML.`)
+  }
+
+  if (validadeCurso && !isDateAfterToday(validadeCurso)) {
+    throw new Error(`${itemLabel}: validade do curso deve ser futura.`)
   }
 
   if (tipoVinculo === null) {
@@ -597,6 +912,23 @@ const parseCredenciadaXml = (xmlContent) => {
 const parseTrocaXml = (xmlContent) => {
   const parsed = xmlParser.parse(xmlContent)
   const rawRecords = parsed?.dataroot?.Listagem_x0020_de_x0020_Trocas
+  const records = (Array.isArray(rawRecords)
+    ? rawRecords
+    : rawRecords
+      ? [rawRecords]
+      : [])
+    .filter((record) => record && typeof record === 'object')
+
+  return records.map((record) => ({
+    codigo: normalizeRequestValue(record?.Código),
+    controle: normalizeRequestValue(record?.Controle),
+    lista: normalizeRequestValue(record?.Lista),
+  }))
+}
+
+const parseSeguradoraXml = (xmlContent) => {
+  const parsed = xmlParser.parse(xmlContent)
+  const rawRecords = parsed?.dataroot?.Seguradoras
   const records = (Array.isArray(rawRecords)
     ? rawRecords
     : rawRecords
@@ -709,6 +1041,31 @@ const normalizeImportedTrocaRecord = (record, index) => {
   }
 }
 
+const normalizeImportedSeguradoraRecord = (record, index) => {
+  const codigo = normalizeCondutorCodigo(record.codigo)
+  const controle = normalizeCondutorCodigo(record.controle)
+  const lista = normalizeTrocaText(record.lista, 255)
+  const itemLabel = `Registro ${index + 1}`
+
+  if (codigo === null || Number.isNaN(codigo)) {
+    throw new Error(`${itemLabel}: codigo invalido no XML.`)
+  }
+
+  if (controle === null || Number.isNaN(controle)) {
+    throw new Error(`${itemLabel}: controle invalido no XML.`)
+  }
+
+  if (!lista) {
+    throw new Error(`${itemLabel}: lista da seguradora invalida no XML.`)
+  }
+
+  return {
+    codigo,
+    controle,
+    lista,
+  }
+}
+
 const condutorSelectClause = `
   codigo::text AS codigo,
   BTRIM(condutor) AS condutor,
@@ -757,6 +1114,40 @@ const monitorImportRecusaSelectClause = `
   BTRIM(motivo_recusa) AS motivo_recusa,
   TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
 
+const veiculoSelectClause = `
+  codigo::text AS codigo,
+  COALESCE(BTRIM(crm), '') AS crm,
+  COALESCE(BTRIM(placas), '') AS placas,
+  COALESCE(ano::text, '') AS ano,
+  COALESCE(cap_detran::text, '') AS cap_detran,
+  COALESCE(cap_teg::text, '') AS cap_teg,
+  COALESCE(cap_teg_creche::text, '') AS cap_teg_creche,
+  COALESCE(cap_acessivel::text, '') AS cap_acessivel,
+  TO_CHAR(val_crm::date, 'YYYY-MM-DD') AS val_crm,
+  COALESCE(BTRIM(seguradora), '') AS seguradora,
+  TO_CHAR(seguro_inicio::date, 'YYYY-MM-DD') AS seguro_inicio,
+  TO_CHAR(seguro_termino::date, 'YYYY-MM-DD') AS seguro_termino,
+  COALESCE(BTRIM(tipo_de_bancada), '') AS tipo_de_bancada,
+  COALESCE(BTRIM(tipo_de_veiculo), '') AS tipo_de_veiculo,
+  COALESCE(BTRIM(marca_modelo), '') AS marca_modelo,
+  COALESCE(BTRIM(titular), '') AS titular,
+  COALESCE(BTRIM(cnpj_cpf), '') AS cnpj_cpf,
+  COALESCE(TO_CHAR(valor_veiculo, 'FM999999999990.00'), '') AS valor_veiculo,
+  COALESCE(BTRIM(os_especial), '') AS os_especial,
+  TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
+  TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
+
+const veiculoImportRecusaSelectClause = `
+  id::text AS id,
+  BTRIM(arquivo_xml) AS arquivo_xml,
+  linha_xml::text AS linha_xml,
+  COALESCE(BTRIM(codigo_xml), '') AS codigo_xml,
+  COALESCE(BTRIM(crm_xml), '') AS crm_xml,
+  COALESCE(BTRIM(placas_xml), '') AS placas_xml,
+  COALESCE(BTRIM(tipo_de_veiculo_xml), '') AS tipo_de_veiculo_xml,
+  BTRIM(motivo_recusa) AS motivo_recusa,
+  TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
+
 const credenciadaSelectClause = `
   codigo::text AS codigo,
   BTRIM(credenciado) AS credenciado,
@@ -791,6 +1182,13 @@ const trocaSelectClause = `
   codigo::text AS codigo,
   controle::text AS controle,
   BTRIM(lista) AS lista,
+  TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
+  TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
+
+const seguradoraSelectClause = `
+  codigo::text AS codigo,
+  controle::text AS controle,
+  BTRIM(lista) AS descricao,
   TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
   TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
 
@@ -1112,6 +1510,206 @@ const importMonitorXmlFile = async (fileName) => {
   }
 }
 
+const importVeiculoXmlFile = async (fileName) => {
+  const sanitizedFileName = path.basename(normalizeRequestValue(fileName))
+
+  if (!sanitizedFileName) {
+    throw new Error('Nome do arquivo XML e obrigatorio.')
+  }
+
+  if (path.extname(sanitizedFileName).toLowerCase() !== '.xml') {
+    throw new Error('Informe um arquivo XML valido.')
+  }
+
+  const resolvedPath = path.resolve(importXmlDirectory, sanitizedFileName)
+
+  if (!resolvedPath.startsWith(importXmlDirectory)) {
+    throw new Error('Arquivo XML invalido.')
+  }
+
+  const xmlContent = await readFile(resolvedPath, 'utf8')
+  const parsedRecords = parseVeiculoXml(xmlContent)
+
+  if (!parsedRecords.length) {
+    throw new Error('Nenhum registro de veiculo foi encontrado no XML informado.')
+  }
+
+  const normalizedRecords = []
+  const skippedRecords = []
+
+  parsedRecords.forEach((record, index) => {
+    try {
+      normalizedRecords.push(normalizeImportedVeiculoRecord(record, index))
+    } catch (error) {
+      skippedRecords.push({
+        index: index + 1,
+        codigoXml: normalizeRequestValue(record.codigo),
+        crmXml: normalizeRequestValue(record.crm),
+        placasXml: normalizeRequestValue(record.placas),
+        tipoDeVeiculoXml: normalizeRequestValue(record.tipoDeVeiculo),
+        message: error instanceof Error ? error.message : `Registro ${index + 1}: erro ao validar o XML.`,
+      })
+    }
+  })
+
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+    await client.query('TRUNCATE TABLE veiculo_import_recusa RESTART IDENTITY')
+    let inserted = 0
+    let updated = 0
+
+    for (const skippedRecord of skippedRecords) {
+      await client.query(
+        `INSERT INTO veiculo_import_recusa (
+           arquivo_xml,
+           linha_xml,
+           codigo_xml,
+           crm_xml,
+           placas_xml,
+           tipo_de_veiculo_xml,
+           motivo_recusa,
+           data_importacao
+         )
+         VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, ''), $7, NOW())`,
+        [
+          sanitizedFileName,
+          skippedRecord.index,
+          skippedRecord.codigoXml,
+          skippedRecord.crmXml,
+          skippedRecord.placasXml,
+          skippedRecord.tipoDeVeiculoXml,
+          skippedRecord.message,
+        ],
+      )
+    }
+
+    for (const record of normalizedRecords) {
+      const existingResult = await client.query('SELECT 1 FROM veiculo WHERE codigo = $1 LIMIT 1', [record.codigo])
+
+      if (existingResult.rowCount > 0) {
+        await client.query(
+          `UPDATE veiculo
+           SET crm = NULLIF($1, ''),
+               placas = NULLIF($2, ''),
+               ano = $3,
+               cap_detran = $4,
+               cap_teg = $5,
+               cap_teg_creche = $6,
+               cap_acessivel = $7,
+               val_crm = NULLIF($8, '')::date,
+               seguradora = NULLIF($9, ''),
+               seguro_inicio = NULLIF($10, '')::date,
+               seguro_termino = NULLIF($11, '')::date,
+               tipo_de_bancada = NULLIF($12, ''),
+               tipo_de_veiculo = NULLIF($13, ''),
+               marca_modelo = NULLIF($14, ''),
+               titular = NULLIF($15, ''),
+               cnpj_cpf = NULLIF($16, ''),
+               valor_veiculo = $17,
+               os_especial = NULLIF($18, ''),
+               data_modificacao = NOW()
+           WHERE codigo = $19`,
+          [
+            record.crm,
+            record.placas,
+            record.ano,
+            record.capDetran,
+            record.capTeg,
+            record.capTegCreche,
+            record.capAcessivel,
+            record.valCrm,
+            record.seguradora,
+            record.seguroInicio,
+            record.seguroTermino,
+            record.tipoDeBancada,
+            record.tipoDeVeiculo,
+            record.marcaModelo,
+            record.titular,
+            record.cnpjCpf,
+            record.valorVeiculo,
+            record.osEspecial,
+            record.codigo,
+          ],
+        )
+        updated += 1
+        continue
+      }
+
+      await client.query(
+        `INSERT INTO veiculo (
+           codigo,
+           crm,
+           placas,
+           ano,
+           cap_detran,
+           cap_teg,
+           cap_teg_creche,
+           cap_acessivel,
+           val_crm,
+           seguradora,
+           seguro_inicio,
+           seguro_termino,
+           tipo_de_bancada,
+           tipo_de_veiculo,
+           marca_modelo,
+           titular,
+           cnpj_cpf,
+           valor_veiculo,
+           os_especial,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, NULLIF($2, ''), NULLIF($3, ''), $4, $5, $6, $7, $8, NULLIF($9, '')::date, NULLIF($10, ''), NULLIF($11, '')::date, NULLIF($12, '')::date, NULLIF($13, ''), NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''), $18, NULLIF($19, ''), NOW(), NOW())`,
+        [
+          record.codigo,
+          record.crm,
+          record.placas,
+          record.ano,
+          record.capDetran,
+          record.capTeg,
+          record.capTegCreche,
+          record.capAcessivel,
+          record.valCrm,
+          record.seguradora,
+          record.seguroInicio,
+          record.seguroTermino,
+          record.tipoDeBancada,
+          record.tipoDeVeiculo,
+          record.marcaModelo,
+          record.titular,
+          record.cnpjCpf,
+          record.valorVeiculo,
+          record.osEspecial,
+        ],
+      )
+      inserted += 1
+    }
+
+    if (normalizedRecords.length) {
+      await client.query('SELECT setval(\'veiculo_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM veiculo), 0), 1), true)')
+    }
+    await client.query('COMMIT')
+
+    return {
+      fileName: sanitizedFileName,
+      filePath: resolvedPath,
+      total: parsedRecords.length,
+      processed: normalizedRecords.length,
+      inserted,
+      updated,
+      skipped: skippedRecords.length,
+      skippedRecords: skippedRecords.slice(0, 20),
+    }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
 const importCredenciadaXmlFile = async (fileName) => {
   const sanitizedFileName = path.basename(normalizeRequestValue(fileName))
 
@@ -1391,6 +1989,86 @@ const importTrocaXmlFile = async (fileName) => {
   }
 }
 
+const importSeguradoraXmlFile = async (fileName) => {
+  const sanitizedFileName = path.basename(normalizeRequestValue(fileName))
+
+  if (!sanitizedFileName) {
+    throw new Error('Nome do arquivo XML e obrigatorio.')
+  }
+
+  if (path.extname(sanitizedFileName).toLowerCase() !== '.xml') {
+    throw new Error('Arquivo XML invalido.')
+  }
+
+  const resolvedPath = path.resolve(importXmlDirectory, sanitizedFileName)
+
+  if (!resolvedPath.startsWith(importXmlDirectory)) {
+    throw new Error('Arquivo XML invalido.')
+  }
+
+  const xmlContent = await readFile(resolvedPath, 'utf8')
+  const parsedRecords = parseSeguradoraXml(xmlContent)
+
+  if (!parsedRecords.length) {
+    throw new Error('Nenhum registro de seguradora foi encontrado no XML informado.')
+  }
+
+  const normalizedRecords = parsedRecords.map((record, index) => normalizeImportedSeguradoraRecord(record, index))
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+    let inserted = 0
+    let updated = 0
+
+    for (const record of normalizedRecords) {
+      const existingResult = await client.query('SELECT 1 FROM seguradora WHERE codigo = $1 LIMIT 1', [record.codigo])
+
+      if (existingResult.rowCount > 0) {
+        await client.query(
+          `UPDATE seguradora
+           SET controle = $1,
+               lista = $2,
+               data_modificacao = NOW()
+           WHERE codigo = $3`,
+          [record.controle, record.lista, record.codigo],
+        )
+        updated += 1
+        continue
+      }
+
+      await client.query(
+        `INSERT INTO seguradora (
+           codigo,
+           controle,
+           lista,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, $3, NOW(), NOW())`,
+        [record.codigo, record.controle, record.lista],
+      )
+      inserted += 1
+    }
+
+    await client.query('COMMIT')
+
+    return {
+      fileName: sanitizedFileName,
+      filePath: resolvedPath,
+      total: parsedRecords.length,
+      processed: normalizedRecords.length,
+      inserted,
+      updated,
+    }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
 const seedTrocaTableFromXmlIfEmpty = async () => {
   const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM tipo_troca')
   const total = countResult.rows[0]?.total ?? 0
@@ -1402,6 +2080,17 @@ const seedTrocaTableFromXmlIfEmpty = async () => {
   return importTrocaXmlFile('Listagem de Trocas.xml')
 }
 
+const seedSeguradoraTableFromXmlIfEmpty = async () => {
+  const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM seguradora')
+  const total = countResult.rows[0]?.total ?? 0
+
+  if (total > 0) {
+    return null
+  }
+
+  return importSeguradoraXmlFile('seguradoras.xml')
+}
+
 const isDateInputValid = (value) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return false
@@ -1410,6 +2099,17 @@ const isDateInputValid = (value) => {
   const parsed = new Date(`${value}T00:00:00`)
   return !Number.isNaN(parsed.getTime())
 }
+
+const getCurrentDateInputValue = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const isDateBeforeToday = (value) => isDateInputValid(value) && value < getCurrentDateInputValue()
+const isDateAfterToday = (value) => isDateInputValid(value) && value > getCurrentDateInputValue()
 
 const validateCondutorPayload = async ({
   codigo,
@@ -1471,12 +2171,20 @@ const validateCondutorPayload = async ({
     return { status: 400, payload: { message: 'Validade do CRMC invalida.' } }
   }
 
+  if (!isDateAfterToday(normalizedValidadeCrmc)) {
+    return { status: 400, payload: { message: 'Validade do CRMC deve ser futura.' } }
+  }
+
   if (!normalizedValidadeCurso) {
     return { status: 400, payload: { message: 'Validade do curso e obrigatoria.' } }
   }
 
   if (!isDateInputValid(normalizedValidadeCurso)) {
     return { status: 400, payload: { message: 'Validade do curso invalida.' } }
+  }
+
+  if (!isDateAfterToday(normalizedValidadeCurso)) {
+    return { status: 400, payload: { message: 'Validade do curso deve ser futura.' } }
   }
 
   if (normalizedTipoVinculo === null) {
@@ -1543,8 +2251,8 @@ const validateMonitorPayload = async ({
     return { status: 400, payload: { message: 'Nome do monitor e obrigatorio.' } }
   }
 
-  if (!isCondutorNameValid(normalizedMonitor)) {
-    return { status: 400, payload: { message: 'Monitor deve conter apenas letras maiusculas e no maximo 100 caracteres.' } }
+  if (!isMonitorNameValid(normalizedMonitor)) {
+    return { status: 400, payload: { message: 'Monitor deve conter apenas letras maiusculas e no maximo 255 caracteres.' } }
   }
 
   if (!normalizedCpfMonitor) {
@@ -1559,16 +2267,44 @@ const validateMonitorPayload = async ({
     return { status: 400, payload: { message: 'RG do monitor invalido.' } }
   }
 
+  if (!normalizedNascimento) {
+    return { status: 400, payload: { message: 'Data de nascimento e obrigatoria.' } }
+  }
+
+  if (!normalizedCursoMonitor) {
+    return { status: 400, payload: { message: 'Data do curso e obrigatoria.' } }
+  }
+
+  if (!normalizedValidadeCurso) {
+    return { status: 400, payload: { message: 'Validade do curso e obrigatoria.' } }
+  }
+
   if (normalizedCursoMonitor && !isDateInputValid(normalizedCursoMonitor)) {
     return { status: 400, payload: { message: 'Data do curso invalida.' } }
+  }
+
+  if (normalizedCursoMonitor && !isDateBeforeToday(normalizedCursoMonitor)) {
+    return { status: 400, payload: { message: 'Data do curso deve ser anterior ao dia da inclusao.' } }
   }
 
   if (normalizedValidadeCurso && !isDateInputValid(normalizedValidadeCurso)) {
     return { status: 400, payload: { message: 'Validade do curso invalida.' } }
   }
 
+  if (normalizedValidadeCurso && !isDateAfterToday(normalizedValidadeCurso)) {
+    return { status: 400, payload: { message: 'Validade do curso deve ser futura.' } }
+  }
+
+  if (normalizedCursoMonitor && normalizedValidadeCurso && normalizedValidadeCurso < normalizedCursoMonitor) {
+    return { status: 400, payload: { message: 'Validade do curso deve ser maior ou igual a data do curso.' } }
+  }
+
   if (normalizedNascimento && !isDateInputValid(normalizedNascimento)) {
     return { status: 400, payload: { message: 'Data de nascimento invalida.' } }
+  }
+
+  if (normalizedNascimento && !isDateBeforeToday(normalizedNascimento)) {
+    return { status: 400, payload: { message: 'Data de nascimento deve ser anterior ao dia da inclusao.' } }
   }
 
   if (normalizedTipoVinculo === null) {
@@ -1599,6 +2335,159 @@ const validateMonitorPayload = async ({
       validadeCurso: normalizedValidadeCurso,
       tipoVinculo: normalizedTipoVinculo,
       nascimento: normalizedNascimento,
+    },
+  }
+}
+
+const validateVeiculoPayload = async ({
+  codigo,
+  crm,
+  placas,
+  ano,
+  capDetran,
+  capTeg,
+  capTegCreche,
+  capAcessivel,
+  valCrm,
+  seguradora,
+  seguroInicio,
+  seguroTermino,
+  tipoDeBancada,
+  tipoDeVeiculo,
+  marcaModelo,
+  titular,
+  cnpjCpf,
+  valorVeiculo,
+  osEspecial,
+  originalCodigo = null,
+}) => {
+  const normalizedCodigo = normalizeCondutorCodigo(codigo)
+  const normalizedCrm = normalizeVehicleCrm(crm)
+  const normalizedPlacas = normalizeVehiclePlaca(placas)
+  const normalizedAno = normalizeVehicleInteger(ano, 4)
+  const normalizedCapDetran = normalizeVehicleInteger(capDetran, 3)
+  const normalizedCapTeg = normalizeVehicleInteger(capTeg, 3)
+  const normalizedCapTegCreche = normalizeVehicleInteger(capTegCreche, 3)
+  const normalizedCapAcessivel = normalizeVehicleInteger(capAcessivel, 3)
+  const normalizedValCrm = normalizeRequestValue(valCrm)
+  const normalizedSeguradora = normalizeCredenciadaText(seguradora, 255)
+  const normalizedSeguroInicio = normalizeRequestValue(seguroInicio)
+  const normalizedSeguroTermino = normalizeRequestValue(seguroTermino)
+  const normalizedTipoDeBancada = normalizeTipoDeBancada(tipoDeBancada)
+  const normalizedTipoDeVeiculo = normalizeTipoDeVeiculo(tipoDeVeiculo)
+  const normalizedMarcaModelo = normalizeCredenciadaText(marcaModelo, 255)
+  const normalizedTitular = normalizeCredenciadaText(titular, 255)
+  const normalizedCnpjCpf = normalizeCnpjCpf(cnpjCpf)
+  const normalizedValorVeiculo = normalizeVehicleMoney(valorVeiculo)
+  const normalizedOsEspecial = normalizeOsEspecial(osEspecial)
+
+  if (normalizedCodigo === null) {
+    return { status: 400, payload: { message: 'Codigo e obrigatorio.' } }
+  }
+
+  if (Number.isNaN(normalizedCodigo)) {
+    return { status: 400, payload: { message: 'Codigo deve ser um numero inteiro positivo.' } }
+  }
+
+  if (normalizedCrm && !isVehicleCrmValid(normalizedCrm)) {
+    return { status: 400, payload: { message: 'CRM invalido.' } }
+  }
+
+  if (normalizedPlacas && !isVehiclePlacaValid(normalizedPlacas)) {
+    return { status: 400, payload: { message: 'Placa deve conter 7 caracteres alfanumericos.' } }
+  }
+
+  if (normalizedAno !== null && Number.isNaN(normalizedAno)) {
+    return { status: 400, payload: { message: 'Ano invalido.' } }
+  }
+
+  if (normalizedCapDetran !== null && Number.isNaN(normalizedCapDetran)) {
+    return { status: 400, payload: { message: 'Capacidade DETRAN invalida.' } }
+  }
+
+  if (normalizedCapTeg !== null && Number.isNaN(normalizedCapTeg)) {
+    return { status: 400, payload: { message: 'Capacidade TEG invalida.' } }
+  }
+
+  if (normalizedCapTegCreche !== null && Number.isNaN(normalizedCapTegCreche)) {
+    return { status: 400, payload: { message: 'Capacidade TEG creche invalida.' } }
+  }
+
+  if (normalizedCapAcessivel !== null && Number.isNaN(normalizedCapAcessivel)) {
+    return { status: 400, payload: { message: 'Capacidade acessivel invalida.' } }
+  }
+
+  if (normalizedValCrm && !isDateInputValid(normalizedValCrm)) {
+    return { status: 400, payload: { message: 'Validade do CRM invalida.' } }
+  }
+
+  if (normalizedSeguroInicio && !isDateInputValid(normalizedSeguroInicio)) {
+    return { status: 400, payload: { message: 'Data inicial do seguro invalida.' } }
+  }
+
+  if (normalizedSeguroTermino && !isDateInputValid(normalizedSeguroTermino)) {
+    return { status: 400, payload: { message: 'Data final do seguro invalida.' } }
+  }
+
+  if (normalizedSeguroInicio && normalizedSeguroTermino && normalizedSeguroTermino < normalizedSeguroInicio) {
+    return { status: 400, payload: { message: 'Data final do seguro deve ser maior ou igual a data inicial.' } }
+  }
+
+  if (normalizedTipoDeBancada === null) {
+    return { status: 400, payload: { message: 'Tipo de bancada invalido.' } }
+  }
+
+  if (normalizedTipoDeVeiculo === null) {
+    return { status: 400, payload: { message: 'Tipo de veiculo invalido.' } }
+  }
+
+  if (normalizedCnpjCpf && !isCnpjCpfValid(normalizedCnpjCpf)) {
+    return { status: 400, payload: { message: 'CNPJ/CPF deve conter 11 ou 14 digitos.' } }
+  }
+
+  if (normalizedValorVeiculo !== null && Number.isNaN(normalizedValorVeiculo)) {
+    return { status: 400, payload: { message: 'Valor do veiculo invalido.' } }
+  }
+
+  if (normalizedOsEspecial === null) {
+    return { status: 400, payload: { message: 'OS especial invalido.' } }
+  }
+
+  const duplicateCodeResult = await pool.query(
+    `SELECT 1
+     FROM veiculo
+     WHERE codigo = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedCodigo, originalCodigo],
+  )
+
+  if (duplicateCodeResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
+  }
+
+  return {
+    status: 200,
+    payload: {
+      codigo: normalizedCodigo,
+      crm: normalizedCrm,
+      placas: normalizedPlacas,
+      ano: normalizedAno,
+      capDetran: normalizedCapDetran,
+      capTeg: normalizedCapTeg,
+      capTegCreche: normalizedCapTegCreche,
+      capAcessivel: normalizedCapAcessivel,
+      valCrm: normalizedValCrm,
+      seguradora: normalizedSeguradora,
+      seguroInicio: normalizedSeguroInicio,
+      seguroTermino: normalizedSeguroTermino,
+      tipoDeBancada: normalizedTipoDeBancada,
+      tipoDeVeiculo: normalizedTipoDeVeiculo,
+      marcaModelo: normalizedMarcaModelo,
+      titular: normalizedTitular,
+      cnpjCpf: normalizedCnpjCpf,
+      valorVeiculo: normalizedValorVeiculo,
+      osEspecial: normalizedOsEspecial,
     },
   }
 }
@@ -1785,6 +2674,54 @@ const validateTrocaPayload = async ({ codigo, controle, lista, originalCodigo = 
       codigo: normalizedCodigo,
       controle: normalizedControle,
       lista: normalizedLista,
+    },
+  }
+}
+
+const validateSeguradoraPayload = async ({ codigo, controle, descricao, originalCodigo = null }) => {
+  const normalizedCodigo = normalizeCondutorCodigo(codigo)
+  const normalizedControle = normalizeCondutorCodigo(controle)
+  const normalizedDescricao = normalizeTrocaText(descricao, 255)
+
+  if (normalizedCodigo === null) {
+    return { status: 400, payload: { message: 'Codigo e obrigatorio.' } }
+  }
+
+  if (Number.isNaN(normalizedCodigo)) {
+    return { status: 400, payload: { message: 'Codigo deve ser um numero inteiro positivo.' } }
+  }
+
+  if (normalizedControle === null) {
+    return { status: 400, payload: { message: 'Controle e obrigatorio.' } }
+  }
+
+  if (Number.isNaN(normalizedControle)) {
+    return { status: 400, payload: { message: 'Controle deve ser um numero inteiro positivo.' } }
+  }
+
+  if (!normalizedDescricao) {
+    return { status: 400, payload: { message: 'Descricao e obrigatoria.' } }
+  }
+
+  const duplicateCodeResult = await pool.query(
+    `SELECT 1
+     FROM seguradora
+     WHERE codigo = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedCodigo, originalCodigo],
+  )
+
+  if (duplicateCodeResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
+  }
+
+  return {
+    status: 200,
+    payload: {
+      codigo: normalizedCodigo,
+      controle: normalizedControle,
+      descricao: normalizedDescricao,
     },
   }
 }
@@ -2039,7 +2976,7 @@ const ensureDatabaseSchema = async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS monitor (
       codigo integer PRIMARY KEY DEFAULT nextval('monitor_codigo_seq'),
-      monitor varchar(100) NOT NULL,
+      monitor varchar(255) NOT NULL,
       rg_monitor varchar(20),
       cpf_monitor varchar(14) NOT NULL,
       curso_monitor date,
@@ -2052,6 +2989,7 @@ const ensureDatabaseSchema = async () => {
   `)
   await pool.query('ALTER SEQUENCE monitor_codigo_seq OWNED BY monitor.codigo')
   await pool.query('ALTER TABLE monitor ALTER COLUMN codigo SET DEFAULT nextval(\'monitor_codigo_seq\')')
+  await pool.query('ALTER TABLE monitor ALTER COLUMN monitor TYPE varchar(255)')
   await pool.query('ALTER TABLE monitor ALTER COLUMN data_inclusao SET DEFAULT NOW()')
   await pool.query('ALTER TABLE monitor ALTER COLUMN data_modificacao SET DEFAULT NOW()')
   await pool.query(`
@@ -2078,6 +3016,61 @@ const ensureDatabaseSchema = async () => {
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS monitor_codigo_unique_idx ON monitor (codigo)')
   await pool.query('CREATE INDEX IF NOT EXISTS monitor_import_recusa_data_idx ON monitor_import_recusa (data_importacao DESC)')
   await pool.query('CREATE INDEX IF NOT EXISTS monitor_import_recusa_arquivo_idx ON monitor_import_recusa (arquivo_xml)')
+  await pool.query('CREATE SEQUENCE IF NOT EXISTS veiculo_codigo_seq START WITH 1 INCREMENT BY 1')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS veiculo (
+      codigo integer PRIMARY KEY DEFAULT nextval('veiculo_codigo_seq'),
+      crm varchar(20),
+      placas varchar(7),
+      ano integer,
+      cap_detran integer,
+      cap_teg integer,
+      cap_teg_creche integer,
+      cap_acessivel integer,
+      val_crm date,
+      seguradora varchar(255),
+      seguro_inicio date,
+      seguro_termino date,
+      tipo_de_bancada varchar(20),
+      tipo_de_veiculo varchar(20),
+      marca_modelo varchar(255),
+      titular varchar(255),
+      cnpj_cpf varchar(18),
+      valor_veiculo numeric(14, 2),
+      os_especial varchar(3),
+      data_inclusao timestamp without time zone NOT NULL DEFAULT NOW(),
+      data_modificacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query('ALTER SEQUENCE veiculo_codigo_seq OWNED BY veiculo.codigo')
+  await pool.query('ALTER TABLE veiculo ALTER COLUMN codigo SET DEFAULT nextval(\'veiculo_codigo_seq\')')
+  await pool.query('ALTER TABLE veiculo ALTER COLUMN data_inclusao SET DEFAULT NOW()')
+  await pool.query('ALTER TABLE veiculo ALTER COLUMN data_modificacao SET DEFAULT NOW()')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS veiculo_import_recusa (
+      id bigserial PRIMARY KEY,
+      arquivo_xml varchar(255) NOT NULL,
+      linha_xml integer NOT NULL,
+      codigo_xml varchar(50),
+      crm_xml varchar(20),
+      placas_xml varchar(20),
+      tipo_de_veiculo_xml varchar(50),
+      motivo_recusa text NOT NULL,
+      data_importacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query(`
+    UPDATE veiculo
+    SET data_inclusao = COALESCE(data_inclusao, NOW()),
+        data_modificacao = COALESCE(data_modificacao, COALESCE(data_inclusao, NOW()))
+    WHERE data_inclusao IS NULL OR data_modificacao IS NULL
+  `)
+  await pool.query('SELECT setval(\'veiculo_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM veiculo), 0), 1), true)')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS veiculo_codigo_unique_idx ON veiculo (codigo)')
+  await pool.query('CREATE INDEX IF NOT EXISTS veiculo_placas_idx ON veiculo (placas)')
+  await pool.query('CREATE INDEX IF NOT EXISTS veiculo_crm_idx ON veiculo (crm)')
+  await pool.query('CREATE INDEX IF NOT EXISTS veiculo_import_recusa_data_idx ON veiculo_import_recusa (data_importacao DESC)')
+  await pool.query('CREATE INDEX IF NOT EXISTS veiculo_import_recusa_arquivo_idx ON veiculo_import_recusa (arquivo_xml)')
   await pool.query(`
     DO $$
     BEGIN
@@ -2122,6 +3115,31 @@ const ensureDatabaseSchema = async () => {
   await pool.query('ALTER TABLE tipo_troca ALTER COLUMN data_modificacao SET DEFAULT NOW()')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS tipo_troca_controle_unique_idx ON tipo_troca (controle)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS tipo_troca_lista_unique_idx ON tipo_troca (lista)')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS seguradora (
+      codigo integer PRIMARY KEY,
+      controle integer NOT NULL,
+      lista varchar(255) NOT NULL,
+      data_inclusao timestamp without time zone NOT NULL DEFAULT NOW(),
+      data_modificacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query('ALTER TABLE seguradora ADD COLUMN IF NOT EXISTS controle integer')
+  await pool.query('ALTER TABLE seguradora ADD COLUMN IF NOT EXISTS lista varchar(255)')
+  await pool.query('ALTER TABLE seguradora ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone')
+  await pool.query('ALTER TABLE seguradora ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone')
+  await pool.query(`
+    UPDATE seguradora
+    SET data_inclusao = COALESCE(data_inclusao, NOW()),
+        data_modificacao = COALESCE(data_modificacao, COALESCE(data_inclusao, NOW()))
+    WHERE data_inclusao IS NULL OR data_modificacao IS NULL
+  `)
+  await pool.query('ALTER TABLE seguradora ALTER COLUMN controle SET NOT NULL')
+  await pool.query('ALTER TABLE seguradora ALTER COLUMN lista SET NOT NULL')
+  await pool.query('ALTER TABLE seguradora ALTER COLUMN data_inclusao SET DEFAULT NOW()')
+  await pool.query('ALTER TABLE seguradora ALTER COLUMN data_modificacao SET DEFAULT NOW()')
+  await pool.query('DROP INDEX IF EXISTS seguradora_controle_unique_idx')
+  await pool.query('DROP INDEX IF EXISTS seguradora_lista_unique_idx')
   await pool.query('CREATE SEQUENCE IF NOT EXISTS credenciada_codigo_seq START WITH 1 INCREMENT BY 1')
   await pool.query(`
     CREATE TABLE IF NOT EXISTS credenciada (
@@ -2306,15 +3324,16 @@ const server = createServer(async (request, response) => {
       const requestedSortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
         ? 'DESC'
         : 'ASC'
-      const sortDirection = sortBy === 'lista' ? requestedSortDirection : 'ASC'
+      const normalizedSortBy = sortBy === 'lista' ? 'descricao' : sortBy
+      const sortDirection = normalizedSortBy === 'descricao' ? requestedSortDirection : 'ASC'
       const offset = (page - 1) * pageSize
       const filters = []
       const values = []
       let orderByClause = `CAST(codigo AS integer) ${sortDirection}, CAST(controle AS integer) ASC`
 
-      if (sortBy === 'controle') {
+      if (normalizedSortBy === 'controle') {
         orderByClause = `CAST(controle AS integer) ${sortDirection}, CAST(codigo AS integer) ASC`
-      } else if (sortBy === 'lista') {
+      } else if (normalizedSortBy === 'descricao') {
         orderByClause = `BTRIM(lista) ${sortDirection}, CAST(codigo AS integer) ASC, CAST(controle AS integer) ASC`
       }
 
@@ -2352,13 +3371,82 @@ const server = createServer(async (request, response) => {
         page,
         pageSize,
         totalPages: Math.max(Math.ceil(total / pageSize), 1),
-        sortBy: sortBy === 'controle' || sortBy === 'lista' ? sortBy : 'codigo',
+        sortBy: normalizedSortBy === 'controle' || normalizedSortBy === 'descricao' ? normalizedSortBy : 'codigo',
         sortDirection: sortDirection.toLowerCase(),
       })
     } catch (error) {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar a tabela troca.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/seguradora') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
+      const requestedSortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
+        ? 'DESC'
+        : 'ASC'
+      const sortDirection = sortBy === 'lista' ? requestedSortDirection : 'ASC'
+      const offset = (page - 1) * pageSize
+      const filters = []
+      const values = []
+      let orderByClause = `CAST(codigo AS integer) ${sortDirection}, CAST(controle AS integer) ASC`
+
+      if (sortBy === 'controle') {
+        orderByClause = `CAST(controle AS integer) ${sortDirection}, CAST(codigo AS integer) ASC`
+      } else if (sortBy === 'lista') {
+        orderByClause = `BTRIM(lista) ${sortDirection}, CAST(codigo AS integer) ASC, CAST(controle AS integer) ASC`
+      }
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR CAST(controle AS text) ILIKE $${values.length}
+          OR BTRIM(lista) ILIKE $${values.length}
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM seguradora ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT ${seguradoraSelectClause}
+         FROM seguradora
+         ${whereClause}
+         ORDER BY ${orderByClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: sortBy === 'controle' || sortBy === 'lista' ? sortBy : 'codigo',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar a tabela seguradora.'
 
       sendJson(response, 500, { message })
     }
@@ -2617,6 +3705,132 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar recusas de importacao do monitor.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/veiculo') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
+      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
+        ? 'DESC'
+        : 'ASC'
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+      const orderByClause = sortBy === 'placas'
+        ? `UPPER(BTRIM(placas)) ${sortDirection}, codigo ASC`
+        : `codigo ${sortDirection}`
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR COALESCE(BTRIM(placas), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(crm), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(marca_modelo), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(titular), '') ILIKE UPPER($${values.length})
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM veiculo ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           ${veiculoSelectClause}
+         FROM veiculo
+         ${whereClause}
+         ORDER BY ${orderByClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: sortBy === 'placas' ? 'placas' : 'codigo',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar veiculos.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/veiculo/import-rejections') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 10) || 10, 1), 100)
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          arquivo_xml ILIKE $${values.length}
+          OR COALESCE(codigo_xml, '') ILIKE $${values.length}
+          OR COALESCE(crm_xml, '') ILIKE $${values.length}
+          OR COALESCE(placas_xml, '') ILIKE $${values.length}
+          OR COALESCE(tipo_de_veiculo_xml, '') ILIKE $${values.length}
+          OR motivo_recusa ILIKE $${values.length}
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM veiculo_import_recusa ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           ${veiculoImportRecusaSelectClause}
+         FROM veiculo_import_recusa
+         ${whereClause}
+         ORDER BY data_importacao DESC, linha_xml ASC, id DESC
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar recusas de importacao do veiculo.'
 
       sendJson(response, 500, { message })
     }
@@ -3103,6 +4317,51 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'POST' && pathname === '/api/seguradora') {
+    try {
+      const body = await readJsonBody(request)
+      const validationResult = await validateSeguradoraPayload({
+        codigo: body.codigo,
+        controle: body.controle,
+        descricao: body.descricao ?? body.lista,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const insertResult = await pool.query(
+        `INSERT INTO seguradora (
+           codigo,
+           controle,
+           lista,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, $3, NOW(), NOW())
+         RETURNING ${seguradoraSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.controle,
+          validationResult.payload.descricao,
+        ],
+      )
+
+      sendJson(response, 201, {
+        item: insertResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao cadastrar seguradora.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'POST' && pathname === '/api/login-dre') {
     try {
       const body = await readJsonBody(request)
@@ -3355,6 +4614,119 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao importar monitores do XML.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/veiculo') {
+    try {
+      const body = await readJsonBody(request)
+      const validationResult = await validateVeiculoPayload({
+        codigo: body.codigo,
+        crm: body.crm,
+        placas: body.placas,
+        ano: body.ano,
+        capDetran: body.capDetran,
+        capTeg: body.capTeg,
+        capTegCreche: body.capTegCreche,
+        capAcessivel: body.capAcessivel,
+        valCrm: body.valCrm,
+        seguradora: body.seguradora,
+        seguroInicio: body.seguroInicio,
+        seguroTermino: body.seguroTermino,
+        tipoDeBancada: body.tipoDeBancada,
+        tipoDeVeiculo: body.tipoDeVeiculo,
+        marcaModelo: body.marcaModelo,
+        titular: body.titular,
+        cnpjCpf: body.cnpjCpf,
+        valorVeiculo: body.valorVeiculo,
+        osEspecial: body.osEspecial,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const insertResult = await pool.query(
+        `INSERT INTO veiculo (
+           codigo,
+           crm,
+           placas,
+           ano,
+           cap_detran,
+           cap_teg,
+           cap_teg_creche,
+           cap_acessivel,
+           val_crm,
+           seguradora,
+           seguro_inicio,
+           seguro_termino,
+           tipo_de_bancada,
+           tipo_de_veiculo,
+           marca_modelo,
+           titular,
+           cnpj_cpf,
+           valor_veiculo,
+           os_especial,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, NULLIF($2, ''), NULLIF($3, ''), $4, $5, $6, $7, $8, NULLIF($9, '')::date, NULLIF($10, ''), NULLIF($11, '')::date, NULLIF($12, '')::date, NULLIF($13, ''), NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''), $18, NULLIF($19, ''), NOW(), NOW())
+         RETURNING ${veiculoSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.crm,
+          validationResult.payload.placas,
+          validationResult.payload.ano,
+          validationResult.payload.capDetran,
+          validationResult.payload.capTeg,
+          validationResult.payload.capTegCreche,
+          validationResult.payload.capAcessivel,
+          validationResult.payload.valCrm,
+          validationResult.payload.seguradora,
+          validationResult.payload.seguroInicio,
+          validationResult.payload.seguroTermino,
+          validationResult.payload.tipoDeBancada,
+          validationResult.payload.tipoDeVeiculo,
+          validationResult.payload.marcaModelo,
+          validationResult.payload.titular,
+          validationResult.payload.cnpjCpf,
+          validationResult.payload.valorVeiculo,
+          validationResult.payload.osEspecial,
+        ],
+      )
+
+      sendJson(response, 201, {
+        item: insertResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao cadastrar veiculo.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/veiculo/import-xml') {
+    try {
+      const body = await readJsonBody(request)
+      const result = await importVeiculoXmlFile(body.fileName)
+
+      sendJson(response, 200, {
+        message: 'Importacao de veiculos concluida com sucesso.',
+        ...result,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao importar veiculos do XML.'
 
       sendJson(response, 500, { message })
     }
@@ -3668,6 +5040,66 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'PUT' && getSeguradoraCodigoFromUrl(pathname)) {
+    try {
+      const originalCodigo = Number(getSeguradoraCodigoFromUrl(pathname))
+      const body = await readJsonBody(request)
+
+      if (!Number.isInteger(originalCodigo) || originalCodigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo original invalido.' })
+        return
+      }
+
+      const existingResult = await pool.query(
+        'SELECT 1 FROM seguradora WHERE codigo = $1 LIMIT 1',
+        [originalCodigo],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Seguradora nao encontrada.' })
+        return
+      }
+
+      const validationResult = await validateSeguradoraPayload({
+        codigo: originalCodigo,
+        controle: body.controle,
+        descricao: body.descricao ?? body.lista,
+        originalCodigo,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE seguradora
+         SET controle = $1,
+             lista = $2,
+             data_modificacao = NOW()
+         WHERE codigo = $3
+         RETURNING ${seguradoraSelectClause}`,
+        [
+          validationResult.payload.controle,
+          validationResult.payload.descricao,
+          originalCodigo,
+        ],
+      )
+
+      sendJson(response, 200, {
+        item: updateResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao alterar seguradora.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'PUT' && getCondutorCodigoFromUrl(pathname)) {
     try {
       const originalCodigo = Number(getCondutorCodigoFromUrl(pathname))
@@ -3815,6 +5247,116 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao alterar monitor.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'PUT' && getVeiculoCodigoFromUrl(pathname)) {
+    try {
+      const originalCodigo = Number(getVeiculoCodigoFromUrl(pathname))
+      const body = await readJsonBody(request)
+
+      if (!Number.isInteger(originalCodigo) || originalCodigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo original invalido.' })
+        return
+      }
+
+      const existingResult = await pool.query(
+        'SELECT 1 FROM veiculo WHERE codigo = $1 LIMIT 1',
+        [originalCodigo],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Veiculo nao encontrado.' })
+        return
+      }
+
+      const validationResult = await validateVeiculoPayload({
+        codigo: body.codigo,
+        crm: body.crm,
+        placas: body.placas,
+        ano: body.ano,
+        capDetran: body.capDetran,
+        capTeg: body.capTeg,
+        capTegCreche: body.capTegCreche,
+        capAcessivel: body.capAcessivel,
+        valCrm: body.valCrm,
+        seguradora: body.seguradora,
+        seguroInicio: body.seguroInicio,
+        seguroTermino: body.seguroTermino,
+        tipoDeBancada: body.tipoDeBancada,
+        tipoDeVeiculo: body.tipoDeVeiculo,
+        marcaModelo: body.marcaModelo,
+        titular: body.titular,
+        cnpjCpf: body.cnpjCpf,
+        valorVeiculo: body.valorVeiculo,
+        osEspecial: body.osEspecial,
+        originalCodigo,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE veiculo
+         SET codigo = $1,
+             crm = NULLIF($2, ''),
+             placas = NULLIF($3, ''),
+             ano = $4,
+             cap_detran = $5,
+             cap_teg = $6,
+             cap_teg_creche = $7,
+             cap_acessivel = $8,
+             val_crm = NULLIF($9, '')::date,
+             seguradora = NULLIF($10, ''),
+             seguro_inicio = NULLIF($11, '')::date,
+             seguro_termino = NULLIF($12, '')::date,
+             tipo_de_bancada = NULLIF($13, ''),
+             tipo_de_veiculo = NULLIF($14, ''),
+             marca_modelo = NULLIF($15, ''),
+             titular = NULLIF($16, ''),
+             cnpj_cpf = NULLIF($17, ''),
+             valor_veiculo = $18,
+             os_especial = NULLIF($19, ''),
+             data_modificacao = NOW()
+         WHERE codigo = $20
+         RETURNING ${veiculoSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.crm,
+          validationResult.payload.placas,
+          validationResult.payload.ano,
+          validationResult.payload.capDetran,
+          validationResult.payload.capTeg,
+          validationResult.payload.capTegCreche,
+          validationResult.payload.capAcessivel,
+          validationResult.payload.valCrm,
+          validationResult.payload.seguradora,
+          validationResult.payload.seguroInicio,
+          validationResult.payload.seguroTermino,
+          validationResult.payload.tipoDeBancada,
+          validationResult.payload.tipoDeVeiculo,
+          validationResult.payload.marcaModelo,
+          validationResult.payload.titular,
+          validationResult.payload.cnpjCpf,
+          validationResult.payload.valorVeiculo,
+          validationResult.payload.osEspecial,
+          originalCodigo,
+        ],
+      )
+
+      sendJson(response, 200, {
+        item: updateResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao alterar veiculo.'
 
       sendJson(response, 500, { message })
     }
@@ -4152,6 +5694,39 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'DELETE' && getVeiculoCodigoFromUrl(pathname)) {
+    try {
+      const codigo = Number(getVeiculoCodigoFromUrl(pathname))
+
+      if (!Number.isInteger(codigo) || codigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo invalido para exclusao.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        'DELETE FROM veiculo WHERE codigo = $1 RETURNING codigo::text AS codigo',
+        [codigo],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Veiculo nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, {
+        deletedCodigo: deleteResult.rows[0].codigo,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao excluir veiculo.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'DELETE' && getCredenciadaCodigoFromUrl(pathname)) {
     try {
       const codigo = Number(getCredenciadaCodigoFromUrl(pathname))
@@ -4223,12 +5798,59 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'DELETE' && getSeguradoraCodigoFromUrl(pathname)) {
+    try {
+      const codigo = getSeguradoraCodigoFromUrl(pathname)
+
+      if (!codigo) {
+        sendJson(response, 400, { message: 'Codigo invalido para exclusao.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        'DELETE FROM seguradora WHERE codigo = $1 RETURNING codigo::text AS codigo',
+        [codigo],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Seguradora nao encontrada.' })
+        return
+      }
+
+      sendJson(response, 200, {
+        deletedCodigo: deleteResult.rows[0].codigo,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao excluir a seguradora.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   sendJson(response, 404, { message: 'Rota nao encontrada.' })
+})
+
+server.on('error', async (error) => {
+  if (error && typeof error === 'object' && 'code' in error && error.code === 'EADDRINUSE') {
+    console.error(`Falha ao iniciar a API: a porta ${port} ja esta em uso.`)
+  } else {
+    console.error('Falha ao iniciar a API:', error)
+  }
+
+  await pool.end()
+  process.exit(1)
 })
 
 ensureDatabaseSchema()
   .then(() => {
     return seedTrocaTableFromXmlIfEmpty()
+  })
+  .then(() => {
+    return seedSeguradoraTableFromXmlIfEmpty()
   })
   .then(() => {
     server.listen(port, () => {

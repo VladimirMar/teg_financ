@@ -167,6 +167,32 @@
         }, 3500);
       };
 
+      const readJsonResponse = async (response) => {
+        const rawBody = await response.text();
+
+        if (!rawBody) {
+          throw new Error('Resposta vazia do servidor.');
+        }
+
+        try {
+          return JSON.parse(rawBody);
+        } catch {
+          throw new Error('Resposta invalida do servidor.');
+        }
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof TypeError) {
+          return 'API indisponivel. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        if (error instanceof Error && ['Resposta vazia do servidor.', 'Resposta invalida do servidor.'].includes(error.message)) {
+          return 'API indisponivel ou respondeu de forma incompleta. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        return error instanceof Error ? error.message : fallbackMessage;
+      };
+
       const showForm = (isEditing = false) => {
         form.classList.remove('dsc-hidden');
         formTitle.textContent = isEditing ? 'Alteracao de acesso' : 'Cadastro de acesso';
@@ -252,7 +278,7 @@
               Accept: 'application/json',
             },
           });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao carregar acessos.');
@@ -266,7 +292,7 @@
         } catch (error) {
           accessGridBody.innerHTML = '';
           accessEmptyState.classList.remove('dsc-hidden');
-          setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar acessos.', 'error');
+          setGridMessage(getRequestErrorMessage(error, 'Falha ao carregar acessos.'), 'error');
         }
       };
 
@@ -301,7 +327,7 @@
             method: 'DELETE',
             headers: { Accept: 'application/json' },
           });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao excluir acesso.');
@@ -314,7 +340,7 @@
           }
           await loadAccesses();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao excluir acesso.';
+          const message = getRequestErrorMessage(error, 'Falha ao excluir acesso.');
           setGridMessage(message, 'error');
           showBanner(message, 'error');
         }
@@ -398,7 +424,7 @@
             body: JSON.stringify({ nome, email, password }),
           });
 
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao gravar acesso.');
@@ -418,7 +444,7 @@
           hideForm();
           await loadAccesses();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao gravar acesso.';
+          const message = getRequestErrorMessage(error, 'Falha ao gravar acesso.');
           feedback.textContent = message;
           feedback.classList.add('dsc-feedback-error');
           showBanner(message, 'error');

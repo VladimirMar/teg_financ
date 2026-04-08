@@ -96,10 +96,10 @@
                 <div class="dsc-form-error" id="monitor-codigo-error"></div>
               </label>
 
-              <div class="dsc-form-row dsc-form-row-condutor-top">
+              <div class="dsc-form-row dsc-form-row-monitor-top">
                 <label class="dsc-field-group" for="monitor-nome">
                   <span>Monitor</span>
-                  <input class="dsc-form-control" id="monitor-nome" type="text" placeholder="NOME DO MONITOR" maxlength="100" />
+                  <input class="dsc-form-control" id="monitor-nome" type="text" placeholder="NOME DO MONITOR" maxlength="255" />
                   <div class="dsc-form-error" id="monitor-nome-error"></div>
                 </label>
 
@@ -116,23 +116,23 @@
                 </label>
               </div>
 
-              <div class="dsc-form-row">
+              <div class="dsc-form-row dsc-form-row-monitor-dates">
+                <label class="dsc-field-group" for="monitor-nascimento">
+                  <span>Data de nascimento</span>
+                  <input class="dsc-form-control" id="monitor-nascimento" type="date" required />
+                  <div class="dsc-form-error" id="monitor-nascimento-error"></div>
+                </label>
+
                 <label class="dsc-field-group" for="monitor-curso">
                   <span>Data do curso</span>
-                  <input class="dsc-form-control" id="monitor-curso" type="date" />
+                  <input class="dsc-form-control" id="monitor-curso" type="date" required />
                   <div class="dsc-form-error" id="monitor-curso-error"></div>
                 </label>
 
                 <label class="dsc-field-group" for="monitor-validade-curso">
                   <span>Validade do curso</span>
-                  <input class="dsc-form-control" id="monitor-validade-curso" type="date" />
+                  <input class="dsc-form-control" id="monitor-validade-curso" type="date" required />
                   <div class="dsc-form-error" id="monitor-validade-curso-error"></div>
-                </label>
-
-                <label class="dsc-field-group" for="monitor-nascimento">
-                  <span>Nascimento</span>
-                  <input class="dsc-form-control" id="monitor-nascimento" type="date" />
-                  <div class="dsc-form-error" id="monitor-nascimento-error"></div>
                 </label>
               </div>
 
@@ -302,7 +302,7 @@
         .replace(/[^A-ZÀ-Ý\s]/g, ' ')
         .replace(/\s+/g, ' ')
         .trimStart()
-        .slice(0, 100);
+        .slice(0, 255);
 
       const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
 
@@ -330,6 +330,38 @@
         .slice(0, 20);
 
       const formatDateLabel = (value) => value ? value.split('-').reverse().join('/') : '';
+      const getCurrentDateInputValue = () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const getPreviousDateInputValue = () => {
+        const previousDay = new Date();
+        previousDay.setDate(previousDay.getDate() - 1);
+        const year = previousDay.getFullYear();
+        const month = String(previousDay.getMonth() + 1).padStart(2, '0');
+        const day = String(previousDay.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const isBirthDateBeforeToday = (value) => Boolean(value) && value < getCurrentDateInputValue();
+      const getNextDateInputValue = () => {
+        const nextDay = new Date();
+        nextDay.setDate(nextDay.getDate() + 1);
+        const year = nextDay.getFullYear();
+        const month = String(nextDay.getMonth() + 1).padStart(2, '0');
+        const day = String(nextDay.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      const isFutureDate = (value) => Boolean(value) && value > getCurrentDateInputValue();
+      const isCourseValidityOnOrAfterCourseDate = (cursoMonitor, validadeCurso) => Boolean(cursoMonitor) && Boolean(validadeCurso) && validadeCurso >= cursoMonitor;
+      const syncValidadeCursoMin = () => {
+        const nextDate = getNextDateInputValue();
+        validadeCursoInput.min = cursoInput.value && cursoInput.value > nextDate ? cursoInput.value : nextDate;
+      };
 
       const formatDateTimeLabel = (value) => {
         if (!value) {
@@ -339,6 +371,32 @@
         const [datePart, timePart = ''] = value.split(' ');
         const formattedDate = formatDateLabel(datePart);
         return timePart ? `${formattedDate} ${timePart.slice(0, 5)}` : formattedDate;
+      };
+
+      const readJsonResponse = async (response) => {
+        const rawBody = await response.text();
+
+        if (!rawBody) {
+          throw new Error('Resposta vazia do servidor.');
+        }
+
+        try {
+          return JSON.parse(rawBody);
+        } catch {
+          throw new Error('Resposta invalida do servidor.');
+        }
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof TypeError) {
+          return 'API indisponivel. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        if (error instanceof Error && ['Resposta vazia do servidor.', 'Resposta invalida do servidor.'].includes(error.message)) {
+          return 'API indisponivel ou respondeu de forma incompleta. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        return error instanceof Error ? error.message : fallbackMessage;
       };
 
       const resetMessages = () => {
@@ -544,7 +602,7 @@
 
         try {
           const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao carregar monitores.');
@@ -558,7 +616,7 @@
         } catch (error) {
           gridBody.innerHTML = '';
           emptyState.classList.remove('dsc-hidden');
-          setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar monitores.', 'error');
+          setGridMessage(getRequestErrorMessage(error, 'Falha ao carregar monitores.'), 'error');
         }
       };
 
@@ -567,7 +625,7 @@
 
         try {
           const response = await fetch(buildRejectionUrl(), { headers: { Accept: 'application/json' } });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao carregar recusas de importacao.');
@@ -581,7 +639,7 @@
         } catch (error) {
           rejectionGridBody.innerHTML = '';
           rejectionEmptyState.classList.remove('dsc-hidden');
-          setRejectionGridMessage(error instanceof Error ? error.message : 'Falha ao carregar recusas de importacao.', 'error');
+          setRejectionGridMessage(getRequestErrorMessage(error, 'Falha ao carregar recusas de importacao.'), 'error');
         }
       };
 
@@ -620,7 +678,7 @@
             method: 'DELETE',
             headers: { Accept: 'application/json' },
           });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao excluir monitor.');
@@ -633,7 +691,7 @@
           }
           await loadItems();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao excluir monitor.';
+          const message = getRequestErrorMessage(error, 'Falha ao excluir monitor.');
           setGridMessage(message, 'error');
           showBanner(message, 'error');
         }
@@ -682,6 +740,14 @@
         rgInput.value = normalizeRg(rgInput.value);
       });
 
+      cursoInput.addEventListener('input', () => {
+        syncValidadeCursoMin();
+      });
+
+      cursoInput.max = getPreviousDateInputValue();
+      nascimentoInput.max = getPreviousDateInputValue();
+      syncValidadeCursoMin();
+
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
@@ -721,6 +787,33 @@
           hasError = true;
         }
 
+        if (!nascimento) {
+          nascimentoError.textContent = 'Informe a data de nascimento.';
+          hasError = true;
+        } else if (!isBirthDateBeforeToday(nascimento)) {
+          nascimentoError.textContent = 'Data de nascimento deve ser anterior ao dia da inclusao.';
+          hasError = true;
+        }
+
+        if (!cursoMonitor) {
+          cursoError.textContent = 'Informe a data do curso.';
+          hasError = true;
+        } else if (!isBirthDateBeforeToday(cursoMonitor)) {
+          cursoError.textContent = 'Data do curso deve ser anterior ao dia da inclusao.';
+          hasError = true;
+        }
+
+        if (!validadeCurso) {
+          validadeCursoError.textContent = 'Informe a validade do curso.';
+          hasError = true;
+        } else if (!isFutureDate(validadeCurso)) {
+          validadeCursoError.textContent = 'Validade do curso deve ser futura.';
+          hasError = true;
+        } else if (cursoMonitor && !isCourseValidityOnOrAfterCourseDate(cursoMonitor, validadeCurso)) {
+          validadeCursoError.textContent = 'Validade do curso deve ser maior ou igual a data do curso.';
+          hasError = true;
+        }
+
         if (hasError) {
           feedback.textContent = 'Corrija os campos para continuar.';
           feedback.classList.add('dsc-feedback-error');
@@ -746,7 +839,7 @@
             }),
           });
 
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao gravar monitor.');
@@ -761,7 +854,7 @@
           hideForm();
           await loadItems();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao gravar monitor.';
+          const message = getRequestErrorMessage(error, 'Falha ao gravar monitor.');
           feedback.textContent = message;
           feedback.classList.add('dsc-feedback-error');
           showBanner(message, 'error');
@@ -809,7 +902,7 @@
             body: JSON.stringify({ fileName }),
           });
 
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao importar monitores do XML.');
@@ -827,7 +920,7 @@
             await showRejectionPanel(payload.fileName);
           }
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao importar monitores do XML.';
+          const message = getRequestErrorMessage(error, 'Falha ao importar monitores do XML.');
           importFeedback.textContent = message;
           importFeedback.classList.add('dsc-feedback-error');
           showBanner(message, 'error');

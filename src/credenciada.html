@@ -415,6 +415,32 @@
         return timePart ? `${formattedDate} ${timePart.slice(0, 5)}` : formattedDate;
       };
 
+      const readJsonResponse = async (response) => {
+        const rawBody = await response.text();
+
+        if (!rawBody) {
+          throw new Error('Resposta vazia do servidor.');
+        }
+
+        try {
+          return JSON.parse(rawBody);
+        } catch {
+          throw new Error('Resposta invalida do servidor.');
+        }
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof TypeError) {
+          return 'API indisponivel. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        if (error instanceof Error && ['Resposta vazia do servidor.', 'Resposta invalida do servidor.'].includes(error.message)) {
+          return 'API indisponivel ou respondeu de forma incompleta. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        return error instanceof Error ? error.message : fallbackMessage;
+      };
+
       const resetMessages = () => {
         codigoError.textContent = '';
         nomeError.textContent = '';
@@ -621,7 +647,7 @@
 
         try {
           const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao carregar credenciadas.');
@@ -635,7 +661,7 @@
         } catch (error) {
           gridBody.innerHTML = '';
           emptyState.classList.remove('dsc-hidden');
-          setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar credenciadas.', 'error');
+          setGridMessage(getRequestErrorMessage(error, 'Falha ao carregar credenciadas.'), 'error');
         }
       };
 
@@ -644,7 +670,7 @@
 
         try {
           const response = await fetch(buildRejectionUrl(), { headers: { Accept: 'application/json' } });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao carregar recusas de importacao.');
@@ -658,7 +684,7 @@
         } catch (error) {
           rejectionGridBody.innerHTML = '';
           rejectionEmptyState.classList.remove('dsc-hidden');
-          setRejectionGridMessage(error instanceof Error ? error.message : 'Falha ao carregar recusas de importacao.', 'error');
+          setRejectionGridMessage(getRequestErrorMessage(error, 'Falha ao carregar recusas de importacao.'), 'error');
         }
       };
 
@@ -702,7 +728,7 @@
             method: 'DELETE',
             headers: { Accept: 'application/json' },
           });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao excluir credenciada.');
@@ -715,7 +741,7 @@
           }
           await loadItems();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao excluir credenciada.';
+          const message = getRequestErrorMessage(error, 'Falha ao excluir credenciada.');
           setGridMessage(message, 'error');
           showBanner(message, 'error');
         }
@@ -910,7 +936,7 @@
             }),
           });
 
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao gravar credenciada.');
@@ -925,7 +951,7 @@
           hideForm();
           await loadItems();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao gravar credenciada.';
+          const message = getRequestErrorMessage(error, 'Falha ao gravar credenciada.');
           feedback.textContent = message;
           feedback.classList.add('dsc-feedback-error');
           showBanner(message, 'error');
@@ -973,7 +999,7 @@
             body: JSON.stringify({ fileName }),
           });
 
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao importar credenciadas do XML.');
@@ -991,7 +1017,7 @@
             await showRejectionPanel(payload.fileName);
           }
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao importar credenciadas do XML.';
+          const message = getRequestErrorMessage(error, 'Falha ao importar credenciadas do XML.');
           importFeedback.textContent = message;
           importFeedback.classList.add('dsc-feedback-error');
           showBanner(message, 'error');

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataroot xmlns:od="urn:schemas-microsoft-com:officedata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:noNamespaceSchemaLocation="Seguradoras.xsd" generated="2026-04-08T12:58:40">
+<Seguradoras>
+<Código>2</Código>
+<Controle>1</Controle>
+<Lista>PORTO SEGURO</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>3</Código>
+<Controle>2</Controle>
+<Lista>INVESTPREV</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>4</Código>
+<Controle>3</Controle>
+<Lista>AZUL SEGUROS</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>5</Código>
+<Controle>4</Controle>
+<Lista>BB SEGUROS</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>6</Código>
+<Controle>5</Controle>
+<Lista>LIBERTY SEGUROS</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>7</Código>
+<Controle>6</Controle>
+<Lista>MAPFRE</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>8</Código>
+<Controle>7</Controle>
+<Lista>ZURICH</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>9</Código>
+<Controle>8</Controle>
+<Lista>ITAÚ</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>10</Código>
+<Controle>9</Controle>
+<Lista>HDI SEGUROS</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>11</Código>
+<Controle>10</Controle>
+<Lista>NOBRE SEGUROS</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>12</Código>
+<Controle>11</Controle>
+<Lista>TOKIO MARINE</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>13</Código>
+<Controle>12</Controle>
+<Lista>ESSOR SEGUROS</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>14</Código>
+<Controle>13</Controle>
+<Lista>SOMPO SEGUROS</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>15</Código>
+<Controle>14</Controle>
+<Lista>SULAMERICA</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>16</Código>
+<Controle>15</Controle>
+<Lista>PREFERENCIAL CIA DE SEGUROS</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>17</Código>
+<Controle>16</Controle>
+<Lista>ALLSEG SEGURADORA</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>18</Código>
+<Controle>17</Controle>
+<Lista>KOVR SEGURADORA</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>19</Código>
+<Controle>18</Controle>
+<Lista>EZZE SEGUROS</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>20</Código>
+<Controle>19</Controle>
+<Lista>SUHAI</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>21</Código>
+<Controle>20</Controle>
+<Lista>SOMBRERO</Lista>
+</Seguradoras>
+<Seguradoras>
+<Código>22</Código>
+<Controle>21</Controle>
+<Lista>ALLIANZ</Lista>
+</Seguradoras>
+</dataroot>

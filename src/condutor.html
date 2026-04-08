@@ -332,6 +332,24 @@
         return `${digits.slice(0, 3)}.${digits.slice(3, 6)}-${digits.slice(6, 8)}`;
       };
       const formatDateLabel = (value) => value ? value.split('-').reverse().join('/') : '';
+      const getCurrentDateInputValue = () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const getNextDateInputValue = () => {
+        const nextDay = new Date();
+        nextDay.setDate(nextDay.getDate() + 1);
+        const year = nextDay.getFullYear();
+        const month = String(nextDay.getMonth() + 1).padStart(2, '0');
+        const day = String(nextDay.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const isFutureDate = (value) => Boolean(value) && value > getCurrentDateInputValue();
       const formatDateTimeLabel = (value) => {
         if (!value) {
           return '';
@@ -340,6 +358,32 @@
         const [datePart, timePart = ''] = value.split(' ');
         const formattedDate = formatDateLabel(datePart);
         return timePart ? `${formattedDate} ${timePart.slice(0, 5)}` : formattedDate;
+      };
+
+      const readJsonResponse = async (response) => {
+        const rawBody = await response.text();
+
+        if (!rawBody) {
+          throw new Error('Resposta vazia do servidor.');
+        }
+
+        try {
+          return JSON.parse(rawBody);
+        } catch {
+          throw new Error('Resposta invalida do servidor.');
+        }
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof TypeError) {
+          return 'API indisponivel. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        if (error instanceof Error && ['Resposta vazia do servidor.', 'Resposta invalida do servidor.'].includes(error.message)) {
+          return 'API indisponivel ou respondeu de forma incompleta. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        return error instanceof Error ? error.message : fallbackMessage;
       };
 
       const resetMessages = () => {
@@ -543,7 +587,7 @@
 
         try {
           const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao carregar condutores.');
@@ -557,7 +601,7 @@
         } catch (error) {
           gridBody.innerHTML = '';
           emptyState.classList.remove('dsc-hidden');
-          setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar condutores.', 'error');
+          setGridMessage(getRequestErrorMessage(error, 'Falha ao carregar condutores.'), 'error');
         }
       };
 
@@ -566,7 +610,7 @@
 
         try {
           const response = await fetch(buildRejectionUrl(), { headers: { Accept: 'application/json' } });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao carregar recusas de importacao.');
@@ -580,7 +624,7 @@
         } catch (error) {
           rejectionGridBody.innerHTML = '';
           rejectionEmptyState.classList.remove('dsc-hidden');
-          setRejectionGridMessage(error instanceof Error ? error.message : 'Falha ao carregar recusas de importacao.', 'error');
+          setRejectionGridMessage(getRequestErrorMessage(error, 'Falha ao carregar recusas de importacao.'), 'error');
         }
       };
 
@@ -619,7 +663,7 @@
             method: 'DELETE',
             headers: { Accept: 'application/json' },
           });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao excluir condutor.');
@@ -632,7 +676,7 @@
           }
           await loadItems();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao excluir condutor.';
+          const message = getRequestErrorMessage(error, 'Falha ao excluir condutor.');
           setGridMessage(message, 'error');
           showBanner(message, 'error');
         }
@@ -681,6 +725,9 @@
         crmcInput.value = normalizeCrmc(crmcInput.value);
       });
 
+      validadeCrmcInput.min = getNextDateInputValue();
+      validadeCursoInput.min = getNextDateInputValue();
+
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
@@ -723,10 +770,16 @@
         if (!validadeCrmc) {
           validadeCrmcError.textContent = 'Informe a validade do CRMC.';
           hasError = true;
+        } else if (!isFutureDate(validadeCrmc)) {
+          validadeCrmcError.textContent = 'Validade do CRMC deve ser futura.';
+          hasError = true;
         }
 
         if (!validadeCurso) {
           validadeCursoError.textContent = 'Informe a validade do curso.';
+          hasError = true;
+        } else if (!isFutureDate(validadeCurso)) {
+          validadeCursoError.textContent = 'Validade do curso deve ser futura.';
           hasError = true;
         }
 
@@ -755,7 +808,7 @@
             }),
           });
 
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao gravar condutor.');
@@ -770,7 +823,7 @@
           hideForm();
           await loadItems();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao gravar condutor.';
+          const message = getRequestErrorMessage(error, 'Falha ao gravar condutor.');
           feedback.textContent = message;
           feedback.classList.add('dsc-feedback-error');
           showBanner(message, 'error');
@@ -818,7 +871,7 @@
             body: JSON.stringify({ fileName }),
           });
 
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao importar condutores do XML.');
@@ -836,7 +889,7 @@
             await showRejectionPanel(payload.fileName);
           }
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao importar condutores do XML.';
+          const message = getRequestErrorMessage(error, 'Falha ao importar condutores do XML.');
           importFeedback.textContent = message;
           importFeedback.classList.add('dsc-feedback-error');
           showBanner(message, 'error');

@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro de veiculo</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
+    <main class="dsc-access-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-management-layout">
+            <div class="dsc-access-toolbar">
+              <form class="dsc-access-filter-form" id="veiculo-filter-form">
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-veiculo-button">Inserir registro</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-veiculo-import-button">Importar XML</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-veiculo-rejections-button">Recusas XML</button>
+                <input class="dsc-form-control dsc-access-filter-input" id="veiculo-search" type="text" placeholder="Filtrar por codigo, placas, CRM, marca/modelo ou titular" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-veiculo-filter-button">Limpar</button>
+              </form>
+            </div>
+
+            <section class="dsc-card dsc-hidden" id="veiculo-rejection-panel">
+              <div class="dsc-access-grid-header">
+                <h2>Registros nao importados</h2>
+                <span id="veiculo-rejection-total"></span>
+              </div>
+
+              <form class="dsc-access-filter-form" id="veiculo-rejection-filter-form">
+                <input class="dsc-form-control dsc-access-filter-input" id="veiculo-rejection-search" type="text" placeholder="Filtrar por arquivo, codigo, CRM, placas, tipo de veiculo ou motivo" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-veiculo-rejection-filter-button">Limpar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="close-veiculo-rejection-panel-button">Fechar</button>
+              </form>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Data importacao</th>
+                      <th>Arquivo XML</th>
+                      <th>Linha XML</th>
+                      <th>Codigo XML</th>
+                      <th>CRM XML</th>
+                      <th>Placas XML</th>
+                      <th>Tipo veiculo XML</th>
+                      <th>Motivo da recusa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="veiculo-rejection-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="veiculo-rejection-empty-state">Nenhum registro recusado encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="veiculo-rejection-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-veiculo-rejection-page-button">Anterior</button>
+                <span id="veiculo-rejection-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-veiculo-rejection-page-button">Proxima</button>
+              </div>
+            </section>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="veiculo-import-form">
+              <h2>Importacao de veiculo por XML</h2>
+
+              <label class="dsc-field-group" for="veiculo-import-file-name">
+                <span>Nome do arquivo XML</span>
+                <input class="dsc-form-control" id="veiculo-import-file-name" type="text" placeholder="Veiculo.xml" />
+                <div class="dsc-form-error" id="veiculo-import-file-name-error"></div>
+              </label>
+
+              <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-veiculo-import-button">Executar importacao</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-veiculo-import-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="veiculo-import-feedback"></p>
+            </form>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="veiculo-form">
+              <h2 id="veiculo-form-title">Novo registro</h2>
+
+              <label class="dsc-field-group" for="veiculo-codigo">
+                <span>Codigo</span>
+                <input class="dsc-form-control" id="veiculo-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
+                <div class="dsc-form-error" id="veiculo-codigo-error"></div>
+              </label>
+
+              <div class="dsc-form-row">
+                <label class="dsc-field-group" for="veiculo-crm">
+                  <span>CRM</span>
+                  <input class="dsc-form-control" id="veiculo-crm" type="text" placeholder="000.000-00" maxlength="20" />
+                  <div class="dsc-form-error" id="veiculo-crm-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="veiculo-placas">
+                  <span>Placas</span>
+                  <input class="dsc-form-control" id="veiculo-placas" type="text" placeholder="ABC1D23" maxlength="7" />
+                  <div class="dsc-form-error" id="veiculo-placas-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="veiculo-ano">
+                  <span>Ano</span>
+                  <input class="dsc-form-control" id="veiculo-ano" type="text" inputmode="numeric" placeholder="2025" maxlength="4" />
+                  <div class="dsc-form-error" id="veiculo-ano-error"></div>
+                </label>
+              </div>
+
+              <section class="dsc-form-section-card">
+                <h3 class="dsc-form-section-title">Capacidades</h3>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="veiculo-cap-detran">
+                    <span>Capacidade DETRAN</span>
+                    <input class="dsc-form-control" id="veiculo-cap-detran" type="text" inputmode="numeric" placeholder="0" maxlength="3" />
+                    <div class="dsc-form-error" id="veiculo-cap-detran-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="veiculo-cap-teg">
+                    <span>Capacidade TEG</span>
+                    <input class="dsc-form-control" id="veiculo-cap-teg" type="text" inputmode="numeric" placeholder="0" maxlength="3" />
+                    <div class="dsc-form-error" id="veiculo-cap-teg-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="veiculo-cap-teg-creche">
+                    <span>Capacidade TEG creche</span>
+                    <input class="dsc-form-control" id="veiculo-cap-teg-creche" type="text" inputmode="numeric" placeholder="0" maxlength="3" />
+                    <div class="dsc-form-error" id="veiculo-cap-teg-creche-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="veiculo-cap-acessivel">
+                    <span>Capacidade acessivel</span>
+                    <input class="dsc-form-control" id="veiculo-cap-acessivel" type="text" inputmode="numeric" placeholder="0" maxlength="3" />
+                    <div class="dsc-form-error" id="veiculo-cap-acessivel-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <div class="dsc-form-row">
+                <label class="dsc-field-group" for="veiculo-val-crm">
+                  <span>Validade CRM</span>
+                  <input class="dsc-form-control" id="veiculo-val-crm" type="date" />
+                  <div class="dsc-form-error" id="veiculo-val-crm-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="veiculo-seguro-inicio">
+                  <span>Seguro inicio</span>
+                  <input class="dsc-form-control" id="veiculo-seguro-inicio" type="date" />
+                  <div class="dsc-form-error" id="veiculo-seguro-inicio-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="veiculo-seguro-termino">
+                  <span>Seguro termino</span>
+                  <input class="dsc-form-control" id="veiculo-seguro-termino" type="date" />
+                  <div class="dsc-form-error" id="veiculo-seguro-termino-error"></div>
+                </label>
+              </div>
+
+              <div class="dsc-form-row">
+                <label class="dsc-field-group" for="veiculo-seguradora">
+                  <span>Seguradora</span>
+                  <input class="dsc-form-control" id="veiculo-seguradora" type="text" placeholder="SEGURADORA" maxlength="255" />
+                  <div class="dsc-form-error" id="veiculo-seguradora-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="veiculo-marca-modelo">
+                  <span>Marca/modelo</span>
+                  <input class="dsc-form-control" id="veiculo-marca-modelo" type="text" placeholder="MARCA E MODELO" maxlength="255" />
+                  <div class="dsc-form-error" id="veiculo-marca-modelo-error"></div>
+                </label>
+              </div>
+
+              <div class="dsc-form-row">
+                <label class="dsc-field-group" for="veiculo-titular">
+                  <span>Titular</span>
+                  <input class="dsc-form-control" id="veiculo-titular" type="text" placeholder="NOME DO TITULAR" maxlength="255" />
+                  <div class="dsc-form-error" id="veiculo-titular-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="veiculo-cnpj-cpf">
+                  <span>CNPJ/CPF</span>
+                  <input class="dsc-form-control" id="veiculo-cnpj-cpf" type="text" placeholder="00.000.000/0000-00" maxlength="18" />
+                  <div class="dsc-form-error" id="veiculo-cnpj-cpf-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="veiculo-valor">
+                  <span>Valor do veiculo</span>
+                  <input class="dsc-form-control" id="veiculo-valor" type="text" inputmode="decimal" placeholder="0.00" maxlength="16" />
+                  <div class="dsc-form-error" id="veiculo-valor-error"></div>
+                </label>
+              </div>
+
+              <section class="dsc-form-section-card">
+                <h3 class="dsc-form-section-title">Classificacao</h3>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="veiculo-tipo-de-veiculo">
+                    <span>Tipo de veiculo</span>
+                    <select class="dsc-form-control" id="veiculo-tipo-de-veiculo">
+                      <option value="">Em branco</option>
+                      <option value="Ônibus">Ônibus</option>
+                      <option value="Micro-Ônibus">Micro-Ônibus</option>
+                    </select>
+                    <div class="dsc-form-error" id="veiculo-tipo-de-veiculo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="veiculo-tipo-de-bancada">
+                    <span>Tipo de bancada</span>
+                    <select class="dsc-form-control" id="veiculo-tipo-de-bancada">
+                      <option value="">Em branco</option>
+                      <option value="Convencional">Convencional</option>
+                      <option value="Creche">Creche</option>
+                      <option value="Acessível">Acessível</option>
+                    </select>
+                    <div class="dsc-form-error" id="veiculo-tipo-de-bancada-error"></div>
+                  </label>
+                </div>
+
+                <fieldset class="dsc-field-group dsc-radio-field-group">
+                  <span>OS especial</span>
+                  <div class="dsc-radio-group" id="veiculo-os-especial-group">
+                    <label class="dsc-radio-option" for="veiculo-os-especial-branco">
+                      <input id="veiculo-os-especial-branco" type="radio" name="veiculo-os-especial" value="" checked />
+                      <span>Em branco</span>
+                    </label>
+                    <label class="dsc-radio-option" for="veiculo-os-especial-sim">
+                      <input id="veiculo-os-especial-sim" type="radio" name="veiculo-os-especial" value="Sim" />
+                      <span>Sim</span>
+                    </label>
+                    <label class="dsc-radio-option" for="veiculo-os-especial-nao">
+                      <input id="veiculo-os-especial-nao" type="radio" name="veiculo-os-especial" value="Não" />
+                      <span>N&atilde;o</span>
+                    </label>
+                  </div>
+                </fieldset>
+              </section>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-veiculo-button">Salvar veiculo</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-veiculo-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="veiculo-form-feedback"></p>
+            </form>
+
+            <div class="dsc-card dsc-access-grid-card">
+              <div class="dsc-access-grid-header">
+                <h2>Registros cadastrados</h2>
+                <span id="veiculo-total"></span>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Codigo</th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-veiculo-button">
+                          Placas <span id="sort-veiculo-indicator">↑</span>
+                        </button>
+                      </th>
+                      <th>CRM</th>
+                      <th>Marca/modelo</th>
+                      <th>Tipo veiculo</th>
+                      <th>Tipo bancada</th>
+                      <th>OS especial</th>
+                      <th class="dsc-grid-actions-column">Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="veiculo-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="veiculo-empty-state">Nenhum veiculo encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="veiculo-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-veiculo-page-button">Anterior</button>
+                <span id="veiculo-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-veiculo-page-button">Proxima</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('veiculo-form');
+      const codigoInput = document.getElementById('veiculo-codigo');
+      const crmInput = document.getElementById('veiculo-crm');
+      const placasInput = document.getElementById('veiculo-placas');
+      const anoInput = document.getElementById('veiculo-ano');
+      const capDetranInput = document.getElementById('veiculo-cap-detran');
+      const capTegInput = document.getElementById('veiculo-cap-teg');
+      const capTegCrecheInput = document.getElementById('veiculo-cap-teg-creche');
+      const capAcessivelInput = document.getElementById('veiculo-cap-acessivel');
+      const valCrmInput = document.getElementById('veiculo-val-crm');
+      const seguradoraInput = document.getElementById('veiculo-seguradora');
+      const seguroInicioInput = document.getElementById('veiculo-seguro-inicio');
+      const seguroTerminoInput = document.getElementById('veiculo-seguro-termino');
+      const tipoDeBancadaInput = document.getElementById('veiculo-tipo-de-bancada');
+      const tipoDeVeiculoInput = document.getElementById('veiculo-tipo-de-veiculo');
+      const marcaModeloInput = document.getElementById('veiculo-marca-modelo');
+      const titularInput = document.getElementById('veiculo-titular');
+      const cnpjCpfInput = document.getElementById('veiculo-cnpj-cpf');
+      const valorInput = document.getElementById('veiculo-valor');
+      const osEspecialRadios = Array.from(document.querySelectorAll('input[name="veiculo-os-especial"]'));
+      const codigoError = document.getElementById('veiculo-codigo-error');
+      const crmError = document.getElementById('veiculo-crm-error');
+      const placasError = document.getElementById('veiculo-placas-error');
+      const anoError = document.getElementById('veiculo-ano-error');
+      const capDetranError = document.getElementById('veiculo-cap-detran-error');
+      const capTegError = document.getElementById('veiculo-cap-teg-error');
+      const capTegCrecheError = document.getElementById('veiculo-cap-teg-creche-error');
+      const capAcessivelError = document.getElementById('veiculo-cap-acessivel-error');
+      const valCrmError = document.getElementById('veiculo-val-crm-error');
+      const seguradoraError = document.getElementById('veiculo-seguradora-error');
+      const seguroInicioError = document.getElementById('veiculo-seguro-inicio-error');
+      const seguroTerminoError = document.getElementById('veiculo-seguro-termino-error');
+      const tipoDeBancadaError = document.getElementById('veiculo-tipo-de-bancada-error');
+      const tipoDeVeiculoError = document.getElementById('veiculo-tipo-de-veiculo-error');
+      const marcaModeloError = document.getElementById('veiculo-marca-modelo-error');
+      const titularError = document.getElementById('veiculo-titular-error');
+      const cnpjCpfError = document.getElementById('veiculo-cnpj-cpf-error');
+      const valorError = document.getElementById('veiculo-valor-error');
+      const feedback = document.getElementById('veiculo-form-feedback');
+      const gridFeedback = document.getElementById('veiculo-grid-feedback');
+      const insertButton = document.getElementById('insert-veiculo-button');
+      const importButton = document.getElementById('open-veiculo-import-button');
+      const rejectionButton = document.getElementById('open-veiculo-rejections-button');
+      const cancelButton = document.getElementById('cancel-veiculo-button');
+      const importForm = document.getElementById('veiculo-import-form');
+      const importFileNameInput = document.getElementById('veiculo-import-file-name');
+      const importFileNameError = document.getElementById('veiculo-import-file-name-error');
+      const importFeedback = document.getElementById('veiculo-import-feedback');
+      const cancelImportButton = document.getElementById('cancel-veiculo-import-button');
+      const filterForm = document.getElementById('veiculo-filter-form');
+      const clearFilterButton = document.getElementById('clear-veiculo-filter-button');
+      const searchInput = document.getElementById('veiculo-search');
+      const gridBody = document.getElementById('veiculo-grid-body');
+      const emptyState = document.getElementById('veiculo-empty-state');
+      const totalLabel = document.getElementById('veiculo-total');
+      const previousPageButton = document.getElementById('previous-veiculo-page-button');
+      const nextPageButton = document.getElementById('next-veiculo-page-button');
+      const paginationInfo = document.getElementById('veiculo-pagination-info');
+      const sortButton = document.getElementById('sort-veiculo-button');
+      const sortIndicator = document.getElementById('sort-veiculo-indicator');
+      const formTitle = document.getElementById('veiculo-form-title');
+      const saveButton = document.getElementById('save-veiculo-button');
+      const statusBanner = document.getElementById('status-banner');
+      const rejectionPanel = document.getElementById('veiculo-rejection-panel');
+      const rejectionFilterForm = document.getElementById('veiculo-rejection-filter-form');
+      const rejectionSearchInput = document.getElementById('veiculo-rejection-search');
+      const rejectionGridBody = document.getElementById('veiculo-rejection-grid-body');
+      const rejectionEmptyState = document.getElementById('veiculo-rejection-empty-state');
+      const rejectionGridFeedback = document.getElementById('veiculo-rejection-grid-feedback');
+      const rejectionTotalLabel = document.getElementById('veiculo-rejection-total');
+      const previousRejectionPageButton = document.getElementById('previous-veiculo-rejection-page-button');
+      const nextRejectionPageButton = document.getElementById('next-veiculo-rejection-page-button');
+      const rejectionPaginationInfo = document.getElementById('veiculo-rejection-pagination-info');
+      const clearRejectionFilterButton = document.getElementById('clear-veiculo-rejection-filter-button');
+      const closeRejectionPanelButton = document.getElementById('close-veiculo-rejection-panel-button');
+
+      const pageSize = 5;
+      const rejectionPageSize = 10;
+      const defaultImportFileName = 'Veiculo.xml';
+      let currentPage = 1;
+      let totalPages = 1;
+      let currentSearch = '';
+      let currentSortBy = 'codigo';
+      let currentSortDirection = 'asc';
+      let currentRejectionPage = 1;
+      let totalRejectionPages = 1;
+      let currentRejectionSearch = '';
+      let editingCodigo = null;
+      let bannerTimeoutId = null;
+
+      const normalizeText = (value, maxLength = 255) => value
+        .replace(/\s+/g, ' ')
+        .trimStart()
+        .toUpperCase()
+        .slice(0, maxLength);
+
+      const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
+      const normalizeCrm = (value) => value.toUpperCase().replace(/[^0-9A-Z.\-/]/g, '').slice(0, 20);
+      const normalizePlaca = (value) => value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+      const normalizeIntegerInput = (value, maxDigits = 3) => value.replace(/\D/g, '').slice(0, maxDigits);
+      const normalizeMoney = (value) => {
+        const normalizedValue = value
+          .replace(/\s+/g, '')
+          .replace(/\.(?=\d{3}(?:\D|$))/g, '')
+          .replace(',', '.')
+          .replace(/[^0-9.]/g, '');
+
+        if (!normalizedValue) {
+          return '';
+        }
+
+        const parsed = Number(normalizedValue);
+        return Number.isFinite(parsed) ? parsed.toFixed(2) : value;
+      };
+
+      const normalizeCnpjCpf = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 14);
+
+        if (digits.length <= 3) {
+          return digits;
+        }
+
+        if (digits.length <= 6) {
+          return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+        }
+
+        if (digits.length <= 9) {
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+        }
+
+        if (digits.length <= 11) {
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+        }
+
+        if (digits.length <= 12) {
+          return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+        }
+
+        return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
+      };
+
+      const normalizeKey = (value) => (value || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z]/g, '');
+
+      const getSelectedOsEspecial = () => {
+        const selectedRadio = osEspecialRadios.find((radio) => radio.checked);
+        return selectedRadio ? selectedRadio.value : '';
+      };
+
+      const setSelectedOsEspecial = (value) => {
+        const selectedRadio = osEspecialRadios.find((radio) => normalizeKey(radio.value) === normalizeKey(value)) || osEspecialRadios[0];
+        osEspecialRadios.forEach((radio) => {
+          radio.checked = radio === selectedRadio;
+        });
+      };
+
+      const formatDateLabel = (value) => value ? value.split('-').reverse().join('/') : '';
+
+      const formatDateTimeLabel = (value) => {
+        if (!value) {
+          return '';
+        }
+
+        const [datePart, timePart = ''] = value.split(' ');
+        const formattedDate = formatDateLabel(datePart);
+        return timePart ? `${formattedDate} ${timePart.slice(0, 5)}` : formattedDate;
+      };
+
+      const readJsonResponse = async (response) => {
+        const rawBody = await response.text();
+
+        if (!rawBody) {
+          throw new Error('Resposta vazia do servidor.');
+        }
+
+        try {
+          return JSON.parse(rawBody);
+        } catch {
+          throw new Error('Resposta invalida do servidor.');
+        }
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof TypeError) {
+          return 'API indisponivel. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        if (error instanceof Error && ['Resposta vazia do servidor.', 'Resposta invalida do servidor.'].includes(error.message)) {
+          return 'API indisponivel ou respondeu de forma incompleta. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        return error instanceof Error ? error.message : fallbackMessage;
+      };
+
+      const resetMessages = () => {
+        codigoError.textContent = '';
+        crmError.textContent = '';
+        placasError.textContent = '';
+        anoError.textContent = '';
+        capDetranError.textContent = '';
+        capTegError.textContent = '';
+        capTegCrecheError.textContent = '';
+        capAcessivelError.textContent = '';
+        valCrmError.textContent = '';
+        seguradoraError.textContent = '';
+        seguroInicioError.textContent = '';
+        seguroTerminoError.textContent = '';
+        tipoDeBancadaError.textContent = '';
+        tipoDeVeiculoError.textContent = '';
+        marcaModeloError.textContent = '';
+        titularError.textContent = '';
+        cnpjCpfError.textContent = '';
+        valorError.textContent = '';
+        feedback.textContent = '';
+        feedback.className = 'dsc-feedback';
+      };
+
+      const resetImportMessages = () => {
+        importFileNameError.textContent = '';
+        importFeedback.textContent = '';
+        importFeedback.className = 'dsc-feedback';
+      };
+
+      const setGridMessage = (message, tone = '') => {
+        gridFeedback.textContent = message;
+        gridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          gridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const setRejectionGridMessage = (message, tone = '') => {
+        rejectionGridFeedback.textContent = message;
+        rejectionGridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          rejectionGridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const showBanner = (message, tone = 'success') => {
+        if (bannerTimeoutId) {
+          window.clearTimeout(bannerTimeoutId);
+        }
+
+        statusBanner.textContent = message;
+        statusBanner.className = `dsc-status-banner dsc-status-banner-${tone}`;
+
+        bannerTimeoutId = window.setTimeout(() => {
+          statusBanner.className = 'dsc-status-banner dsc-hidden';
+          statusBanner.textContent = '';
+        }, 3500);
+      };
+
+      const showForm = (isEditing = false) => {
+        importForm.classList.add('dsc-hidden');
+        rejectionPanel.classList.add('dsc-hidden');
+        form.classList.remove('dsc-hidden');
+        formTitle.textContent = isEditing ? 'Alteracao de veiculo' : 'Cadastro de veiculo';
+        saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar veiculo';
+      };
+
+      const showImportForm = () => {
+        form.classList.add('dsc-hidden');
+        rejectionPanel.classList.add('dsc-hidden');
+        importForm.classList.remove('dsc-hidden');
+        importFileNameInput.value = defaultImportFileName;
+        resetImportMessages();
+      };
+
+      const showRejectionPanel = async (search = currentRejectionSearch) => {
+        form.classList.add('dsc-hidden');
+        importForm.classList.add('dsc-hidden');
+        rejectionPanel.classList.remove('dsc-hidden');
+        currentRejectionSearch = search;
+        rejectionSearchInput.value = search;
+        currentRejectionPage = 1;
+        await loadRejectionItems();
+      };
+
+      const hideForm = () => {
+        form.classList.add('dsc-hidden');
+        form.reset();
+        codigoInput.value = '';
+        tipoDeVeiculoInput.value = '';
+        tipoDeBancadaInput.value = '';
+        setSelectedOsEspecial('');
+        editingCodigo = null;
+        resetMessages();
+      };
+
+      const hideImportForm = () => {
+        importForm.classList.add('dsc-hidden');
+        importFileNameInput.value = defaultImportFileName;
+        resetImportMessages();
+      };
+
+      const hideRejectionPanel = () => {
+        rejectionPanel.classList.add('dsc-hidden');
+        rejectionGridBody.innerHTML = '';
+        rejectionEmptyState.classList.add('dsc-hidden');
+        setRejectionGridMessage('');
+      };
+
+      const buildUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          pageSize: String(pageSize),
+          sortBy: currentSortBy,
+          sortDirection: currentSortDirection,
+        });
+
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+
+        return `/api/veiculo?${params.toString()}`;
+      };
+
+      const buildRejectionUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentRejectionPage),
+          pageSize: String(rejectionPageSize),
+        });
+
+        if (currentRejectionSearch) {
+          params.set('search', currentRejectionSearch);
+        }
+
+        return `/api/veiculo/import-rejections?${params.toString()}`;
+      };
+
+      const renderGrid = (items) => {
+        gridBody.innerHTML = '';
+
+        if (!items.length) {
+          emptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        emptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.codigo}</td>
+            <td>${item.placas || ''}</td>
+            <td>${item.crm || ''}</td>
+            <td>${item.marca_modelo || ''}</td>
+            <td>${item.tipo_de_veiculo || ''}</td>
+            <td>${item.tipo_de_bancada || ''}</td>
+            <td>${item.os_especial || ''}</td>
+            <td>
+              <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}" data-placas="${item.placas || ''}">Excluir</button>
+              </div>
+            </td>
+          `;
+          row.dataset.item = JSON.stringify(item);
+          gridBody.appendChild(row);
+        });
+      };
+
+      const renderRejectionGrid = (items) => {
+        rejectionGridBody.innerHTML = '';
+
+        if (!items.length) {
+          rejectionEmptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        rejectionEmptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${formatDateTimeLabel(item.data_importacao)}</td>
+            <td>${item.arquivo_xml}</td>
+            <td>${item.linha_xml}</td>
+            <td>${item.codigo_xml || ''}</td>
+            <td>${item.crm_xml || ''}</td>
+            <td>${item.placas_xml || ''}</td>
+            <td>${item.tipo_de_veiculo_xml || ''}</td>
+            <td>${item.motivo_recusa}</td>
+          `;
+          rejectionGridBody.appendChild(row);
+        });
+      };
+
+      const updatePagination = (totalItems) => {
+        totalLabel.textContent = `${totalItems} item(ns) encontrados`;
+        paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        previousPageButton.disabled = currentPage <= 1;
+        nextPageButton.disabled = currentPage >= totalPages;
+        sortIndicator.textContent = currentSortBy === 'placas' && currentSortDirection === 'desc' ? '↓' : '↑';
+      };
+
+      const updateRejectionPagination = (totalItems) => {
+        rejectionTotalLabel.textContent = `${totalItems} recusa(s) encontrada(s)`;
+        rejectionPaginationInfo.textContent = `Pagina ${currentRejectionPage} de ${totalRejectionPages}`;
+        previousRejectionPageButton.disabled = currentRejectionPage <= 1;
+        nextRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
+      };
+
+      const loadItems = async () => {
+        setGridMessage('Carregando veiculos...');
+
+        try {
+          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar veiculos.');
+          }
+
+          totalPages = payload.totalPages || 1;
+          currentPage = payload.page || 1;
+          renderGrid(payload.items || []);
+          updatePagination(payload.total || 0);
+          setGridMessage(payload.items && payload.items.length ? '' : 'Nenhum veiculo encontrado.');
+        } catch (error) {
+          gridBody.innerHTML = '';
+          emptyState.classList.remove('dsc-hidden');
+          setGridMessage(getRequestErrorMessage(error, 'Falha ao carregar veiculos.'), 'error');
+        }
+      };
+
+      const loadRejectionItems = async () => {
+        setRejectionGridMessage('Carregando recusas de importacao...');
+
+        try {
+          const response = await fetch(buildRejectionUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar recusas de importacao.');
+          }
+
+          totalRejectionPages = payload.totalPages || 1;
+          currentRejectionPage = payload.page || 1;
+          renderRejectionGrid(payload.items || []);
+          updateRejectionPagination(payload.total || 0);
+          setRejectionGridMessage(payload.items && payload.items.length ? '' : 'Nenhum registro recusado encontrado.');
+        } catch (error) {
+          rejectionGridBody.innerHTML = '';
+          rejectionEmptyState.classList.remove('dsc-hidden');
+          setRejectionGridMessage(getRequestErrorMessage(error, 'Falha ao carregar recusas de importacao.'), 'error');
+        }
+      };
+
+      const startInsert = () => {
+        editingCodigo = null;
+        form.reset();
+        codigoInput.value = '';
+        tipoDeVeiculoInput.value = '';
+        tipoDeBancadaInput.value = '';
+        setSelectedOsEspecial('');
+        resetMessages();
+        showForm(false);
+      };
+
+      const startEdit = (item) => {
+        editingCodigo = item.codigo;
+        codigoInput.value = item.codigo;
+        crmInput.value = item.crm || '';
+        placasInput.value = item.placas || '';
+        anoInput.value = item.ano || '';
+        capDetranInput.value = item.cap_detran || '';
+        capTegInput.value = item.cap_teg || '';
+        capTegCrecheInput.value = item.cap_teg_creche || '';
+        capAcessivelInput.value = item.cap_acessivel || '';
+        valCrmInput.value = item.val_crm || '';
+        seguradoraInput.value = item.seguradora || '';
+        seguroInicioInput.value = item.seguro_inicio || '';
+        seguroTerminoInput.value = item.seguro_termino || '';
+        tipoDeBancadaInput.value = item.tipo_de_bancada || '';
+        tipoDeVeiculoInput.value = item.tipo_de_veiculo || '';
+        marcaModeloInput.value = item.marca_modelo || '';
+        titularInput.value = item.titular || '';
+        cnpjCpfInput.value = item.cnpj_cpf || '';
+        valorInput.value = item.valor_veiculo || '';
+        setSelectedOsEspecial(item.os_especial || '');
+        resetMessages();
+        showForm(true);
+      };
+
+      const handleDelete = async (item) => {
+        if (!window.confirm(`Excluir o veiculo ${item.codigo} - ${item.placas || 'SEM PLACA'}?`)) {
+          return;
+        }
+
+        setGridMessage(`Excluindo veiculo ${item.codigo}...`);
+
+        try {
+          const response = await fetch(`/api/veiculo/${encodeURIComponent(item.codigo)}`, {
+            method: 'DELETE',
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao excluir veiculo.');
+          }
+
+          setGridMessage('Veiculo excluido com sucesso.', 'success');
+          showBanner(`Veiculo ${item.codigo} excluido com sucesso.`, 'success');
+          if (editingCodigo === item.codigo) {
+            hideForm();
+          }
+          await loadItems();
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao excluir veiculo.');
+          setGridMessage(message, 'error');
+          showBanner(message, 'error');
+        }
+      };
+
+      gridBody.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (!(target instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const action = target.dataset.action;
+        const row = target.closest('tr');
+        const rawItem = row ? row.dataset.item : '';
+
+        if (!rawItem) {
+          return;
+        }
+
+        const item = JSON.parse(rawItem);
+
+        if (action === 'edit') {
+          startEdit(item);
+          return;
+        }
+
+        if (action === 'delete') {
+          void handleDelete(item);
+        }
+      });
+
+      codigoInput.addEventListener('input', () => {
+        codigoInput.value = normalizeCodigo(codigoInput.value);
+      });
+
+      crmInput.addEventListener('input', () => {
+        crmInput.value = normalizeCrm(crmInput.value);
+      });
+
+      placasInput.addEventListener('input', () => {
+        placasInput.value = normalizePlaca(placasInput.value);
+      });
+
+      anoInput.addEventListener('input', () => {
+        anoInput.value = normalizeIntegerInput(anoInput.value, 4);
+      });
+
+      capDetranInput.addEventListener('input', () => {
+        capDetranInput.value = normalizeIntegerInput(capDetranInput.value);
+      });
+
+      capTegInput.addEventListener('input', () => {
+        capTegInput.value = normalizeIntegerInput(capTegInput.value);
+      });
+
+      capTegCrecheInput.addEventListener('input', () => {
+        capTegCrecheInput.value = normalizeIntegerInput(capTegCrecheInput.value);
+      });
+
+      capAcessivelInput.addEventListener('input', () => {
+        capAcessivelInput.value = normalizeIntegerInput(capAcessivelInput.value);
+      });
+
+      seguradoraInput.addEventListener('input', () => {
+        seguradoraInput.value = normalizeText(seguradoraInput.value, 255);
+      });
+
+      marcaModeloInput.addEventListener('input', () => {
+        marcaModeloInput.value = normalizeText(marcaModeloInput.value, 255);
+      });
+
+      titularInput.addEventListener('input', () => {
+        titularInput.value = normalizeText(titularInput.value, 255);
+      });
+
+      cnpjCpfInput.addEventListener('input', () => {
+        cnpjCpfInput.value = normalizeCnpjCpf(cnpjCpfInput.value);
+      });
+
+      valorInput.addEventListener('blur', () => {
+        valorInput.value = normalizeMoney(valorInput.value);
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const codigo = normalizeCodigo(codigoInput.value);
+        const crm = normalizeCrm(crmInput.value);
+        const placas = normalizePlaca(placasInput.value);
+        const ano = normalizeIntegerInput(anoInput.value, 4);
+        const capDetran = normalizeIntegerInput(capDetranInput.value);
+        const capTeg = normalizeIntegerInput(capTegInput.value);
+        const capTegCreche = normalizeIntegerInput(capTegCrecheInput.value);
+        const capAcessivel = normalizeIntegerInput(capAcessivelInput.value);
+        const valCrm = valCrmInput.value;
+        const seguradora = normalizeText(seguradoraInput.value, 255);
+        const seguroInicio = seguroInicioInput.value;
+        const seguroTermino = seguroTerminoInput.value;
+        const tipoDeBancada = tipoDeBancadaInput.value;
+        const tipoDeVeiculo = tipoDeVeiculoInput.value;
+        const marcaModelo = normalizeText(marcaModeloInput.value, 255);
+        const titular = normalizeText(titularInput.value, 255);
+        const cnpjCpf = normalizeCnpjCpf(cnpjCpfInput.value);
+        const valorVeiculo = normalizeMoney(valorInput.value);
+        const osEspecial = getSelectedOsEspecial();
+        let hasError = false;
+
+        resetMessages();
+        codigoInput.value = codigo;
+        crmInput.value = crm;
+        placasInput.value = placas;
+        anoInput.value = ano;
+        capDetranInput.value = capDetran;
+        capTegInput.value = capTeg;
+        capTegCrecheInput.value = capTegCreche;
+        capAcessivelInput.value = capAcessivel;
+        seguradoraInput.value = seguradora;
+        marcaModeloInput.value = marcaModelo;
+        titularInput.value = titular;
+        cnpjCpfInput.value = cnpjCpf;
+        valorInput.value = valorVeiculo;
+
+        if (!codigo) {
+          codigoError.textContent = 'Informe o codigo.';
+          hasError = true;
+        }
+
+        if (crm && !/^[0-9A-Z.\-/]{1,20}$/.test(crm)) {
+          crmError.textContent = 'CRM invalido.';
+          hasError = true;
+        }
+
+        if (placas && !/^[A-Z0-9]{7}$/.test(placas)) {
+          placasError.textContent = 'Placa deve conter 7 caracteres alfanumericos.';
+          hasError = true;
+        }
+
+        if (ano && ano.length !== 4) {
+          anoError.textContent = 'Ano deve conter 4 digitos.';
+          hasError = true;
+        }
+
+        if (valCrm && Number.isNaN(new Date(`${valCrm}T00:00:00`).getTime())) {
+          valCrmError.textContent = 'Validade do CRM invalida.';
+          hasError = true;
+        }
+
+        if (seguroInicio && Number.isNaN(new Date(`${seguroInicio}T00:00:00`).getTime())) {
+          seguroInicioError.textContent = 'Data inicial do seguro invalida.';
+          hasError = true;
+        }
+
+        if (seguroTermino && Number.isNaN(new Date(`${seguroTermino}T00:00:00`).getTime())) {
+          seguroTerminoError.textContent = 'Data final do seguro invalida.';
+          hasError = true;
+        }
+
+        if (seguroInicio && seguroTermino && seguroTermino < seguroInicio) {
+          seguroTerminoError.textContent = 'Data final do seguro deve ser maior ou igual a data inicial.';
+          hasError = true;
+        }
+
+        if (cnpjCpf && ![11, 14].includes(cnpjCpf.replace(/\D/g, '').length)) {
+          cnpjCpfError.textContent = 'CNPJ/CPF deve conter 11 ou 14 digitos.';
+          hasError = true;
+        }
+
+        if (valorVeiculo && !/^\d+(\.\d{2})$/.test(valorVeiculo)) {
+          valorError.textContent = 'Valor do veiculo deve seguir o formato 0.00.';
+          hasError = true;
+        }
+
+        if (hasError) {
+          feedback.textContent = 'Corrija os campos para continuar.';
+          feedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        try {
+          const response = await fetch(editingCodigo ? `/api/veiculo/${encodeURIComponent(editingCodigo)}` : '/api/veiculo', {
+            method: editingCodigo ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({
+              codigo,
+              crm,
+              placas,
+              ano,
+              capDetran,
+              capTeg,
+              capTegCreche,
+              capAcessivel,
+              valCrm,
+              seguradora,
+              seguroInicio,
+              seguroTermino,
+              tipoDeBancada,
+              tipoDeVeiculo,
+              marcaModelo,
+              titular,
+              cnpjCpf,
+              valorVeiculo,
+              osEspecial,
+            }),
+          });
+
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao gravar veiculo.');
+          }
+
+          const savedItem = payload.item;
+          feedback.textContent = editingCodigo
+            ? `Veiculo ${savedItem.codigo} alterado com sucesso.`
+            : `Veiculo ${savedItem.codigo} gravado com sucesso.`;
+          feedback.classList.add('dsc-feedback-success');
+          showBanner(feedback.textContent, 'success');
+          hideForm();
+          await loadItems();
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao gravar veiculo.');
+          feedback.textContent = message;
+          feedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
+
+      insertButton.addEventListener('click', startInsert);
+      importButton.addEventListener('click', showImportForm);
+      rejectionButton.addEventListener('click', () => {
+        void showRejectionPanel();
+      });
+      cancelButton.addEventListener('click', hideForm);
+      cancelImportButton.addEventListener('click', hideImportForm);
+      closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
+
+      importForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const fileName = importFileNameInput.value.trim();
+        resetImportMessages();
+        importFileNameInput.value = fileName;
+
+        if (!fileName) {
+          importFileNameError.textContent = 'Informe o nome do arquivo XML.';
+          importFeedback.textContent = 'Corrija os campos para continuar.';
+          importFeedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        const confirmed = window.confirm(`Executar a importacao do arquivo ${fileName}? Os registros existentes serao alterados e novos registros serao incluidos.`);
+
+        if (!confirmed) {
+          return;
+        }
+
+        importFeedback.textContent = 'Importando veiculos...';
+
+        try {
+          const response = await fetch('/api/veiculo/import-xml', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ fileName }),
+          });
+
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao importar veiculos do XML.');
+          }
+
+          const skippedMessage = payload.skipped ? ` ${payload.skipped} registro(s) invalido(s) foram ignorado(s).` : '';
+          const successMessage = `Importacao concluida: ${payload.inserted} incluido(s) e ${payload.updated} alterado(s) a partir de ${payload.fileName}.${skippedMessage}`;
+          importFeedback.textContent = successMessage;
+          importFeedback.classList.add('dsc-feedback-success');
+          setGridMessage(successMessage, 'success');
+          showBanner(successMessage, 'success');
+          hideImportForm();
+          await loadItems();
+          if (payload.skipped) {
+            await showRejectionPanel(payload.fileName);
+          }
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao importar veiculos do XML.');
+          importFeedback.textContent = message;
+          importFeedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
+
+      filterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentSearch = searchInput.value.trim();
+        currentPage = 1;
+        void loadItems();
+      });
+
+      rejectionFilterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentRejectionSearch = rejectionSearchInput.value.trim();
+        currentRejectionPage = 1;
+        void loadRejectionItems();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      clearRejectionFilterButton.addEventListener('click', () => {
+        rejectionSearchInput.value = '';
+        currentRejectionSearch = '';
+        currentRejectionPage = 1;
+        void loadRejectionItems();
+      });
+
+      previousPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage -= 1;
+        void loadItems();
+      });
+
+      nextPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage += 1;
+        void loadItems();
+      });
+
+      previousRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage <= 1) {
+          return;
+        }
+
+        currentRejectionPage -= 1;
+        void loadRejectionItems();
+      });
+
+      nextRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage >= totalRejectionPages) {
+          return;
+        }
+
+        currentRejectionPage += 1;
+        void loadRejectionItems();
+      });
+
+      sortButton.addEventListener('click', () => {
+        currentSortDirection = currentSortBy === 'placas' && currentSortDirection === 'asc' ? 'desc' : 'asc';
+        currentSortBy = 'placas';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      hideForm();
+      hideImportForm();
+      hideRejectionPanel();
+      void loadItems();
+    </script>
+  </body>
+</html>

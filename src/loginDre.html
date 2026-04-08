@@ -216,6 +216,32 @@
         }, 3500);
       };
 
+      const readJsonResponse = async (response) => {
+        const rawBody = await response.text();
+
+        if (!rawBody) {
+          throw new Error('Resposta vazia do servidor.');
+        }
+
+        try {
+          return JSON.parse(rawBody);
+        } catch {
+          throw new Error('Resposta invalida do servidor.');
+        }
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof TypeError) {
+          return 'API indisponivel. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        if (error instanceof Error && ['Resposta vazia do servidor.', 'Resposta invalida do servidor.'].includes(error.message)) {
+          return 'API indisponivel ou respondeu de forma incompleta. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        return error instanceof Error ? error.message : fallbackMessage;
+      };
+
       const fillSelect = (select, items, placeholder, labelField, selectedValue) => {
         select.innerHTML = '';
         const firstOption = document.createElement('option');
@@ -265,7 +291,7 @@
 
       const loadOptions = async () => {
         const response = await fetch('/api/login-dre/options', { headers: { Accept: 'application/json' } });
-        const payload = await response.json();
+        const payload = await readJsonResponse(response);
 
         if (!response.ok) {
           throw new Error(payload.message || 'Falha ao carregar opcoes.');
@@ -372,7 +398,7 @@
 
         try {
           const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao carregar relacionamentos.');
@@ -386,7 +412,7 @@
         } catch (error) {
           gridBody.innerHTML = '';
           emptyState.classList.remove('dsc-hidden');
-          setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar relacionamentos.', 'error');
+          setGridMessage(getRequestErrorMessage(error, 'Falha ao carregar relacionamentos.'), 'error');
         }
       };
 
@@ -438,7 +464,7 @@
             method: 'DELETE',
             headers: { Accept: 'application/json' },
           });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao excluir relacionamento.');
@@ -451,7 +477,7 @@
           }
           await loadItems();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao excluir relacionamento.';
+          const message = getRequestErrorMessage(error, 'Falha ao excluir relacionamento.');
           setGridMessage(message, 'error');
           showBanner(message, 'error');
         }
@@ -536,7 +562,7 @@
             body: JSON.stringify({ loginCodigo, dreCodigo }),
           });
 
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao gravar relacionamento.');
@@ -551,7 +577,7 @@
           hideForm();
           await loadItems();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao gravar relacionamento.';
+          const message = getRequestErrorMessage(error, 'Falha ao gravar relacionamento.');
           formFeedback.textContent = message;
           formFeedback.classList.add('dsc-feedback-error');
           showBanner(message, 'error');
@@ -588,7 +614,7 @@
             },
             body: JSON.stringify({ loginCodigo }),
           });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao vincular DREs ao usuario.');
@@ -605,7 +631,7 @@
           hideBulkForm();
           await loadItems();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao vincular DREs ao usuario.';
+          const message = getRequestErrorMessage(error, 'Falha ao vincular DREs ao usuario.');
           bulkFeedback.textContent = message;
           bulkFeedback.classList.add('dsc-feedback-error');
           showBanner(message, 'error');

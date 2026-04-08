@@ -200,6 +200,10 @@ body:has(#credenciada-search) #credenciada-search {
   max-width: 900px;
 }
 
+#monitor-form {
+  max-width: 1120px;
+}
+
 #credenciada-form {
   max-width: 980px;
 }
@@ -223,6 +227,14 @@ body:has(#credenciada-search) #credenciada-search {
 
 .dsc-form-row-condutor-top {
   grid-template-columns: minmax(0, 1.45fr) minmax(220px, 0.8fr) minmax(180px, 0.65fr);
+}
+
+.dsc-form-row-monitor-top {
+  grid-template-columns: minmax(0, 2.35fr) minmax(220px, 0.65fr) minmax(180px, 0.45fr);
+}
+
+.dsc-form-row-monitor-dates {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .dsc-form-column-stack {
@@ -587,6 +599,8 @@ body:has(#credenciada-rejection-grid-body) .dsc-access-grid td {
 
   .dsc-form-row-credenciada-top,
   .dsc-form-row-condutor-top,
+  .dsc-form-row-monitor-top,
+  .dsc-form-row-monitor-dates,
   .dsc-form-row-contact,
   .dsc-form-row-address {
     grid-template-columns: 1fr;

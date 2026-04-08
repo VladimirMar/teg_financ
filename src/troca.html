@@ -179,6 +179,32 @@
         }, 3500);
       };
 
+      const readJsonResponse = async (response) => {
+        const rawBody = await response.text();
+
+        if (!rawBody) {
+          throw new Error('Resposta vazia do servidor.');
+        }
+
+        try {
+          return JSON.parse(rawBody);
+        } catch {
+          throw new Error('Resposta invalida do servidor.');
+        }
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof TypeError) {
+          return 'API indisponivel. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        if (error instanceof Error && ['Resposta vazia do servidor.', 'Resposta invalida do servidor.'].includes(error.message)) {
+          return 'API indisponivel ou respondeu de forma incompleta. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        return error instanceof Error ? error.message : fallbackMessage;
+      };
+
       const showForm = (isEditing = false) => {
         form.classList.remove('dsc-hidden');
         formTitle.textContent = isEditing ? 'Alteracao de tipo de troca' : 'Cadastro de tipo de troca';
@@ -254,7 +280,7 @@
 
         try {
           const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao carregar tipos de troca.');
@@ -268,7 +294,7 @@
         } catch (error) {
           gridBody.innerHTML = '';
           emptyState.classList.remove('dsc-hidden');
-          setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar tipos de troca.', 'error');
+          setGridMessage(getRequestErrorMessage(error, 'Falha ao carregar tipos de troca.'), 'error');
         }
       };
 
@@ -300,7 +326,7 @@
             method: 'DELETE',
             headers: { Accept: 'application/json' },
           });
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao excluir tipo de troca.');
@@ -313,7 +339,7 @@
           }
           await loadItems();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao excluir tipo de troca.';
+          const message = getRequestErrorMessage(error, 'Falha ao excluir tipo de troca.');
           setGridMessage(message, 'error');
           showBanner(message, 'error');
         }
@@ -402,7 +428,7 @@
             body: JSON.stringify({ codigo, controle, lista }),
           });
 
-          const payload = await response.json();
+          const payload = await readJsonResponse(response);
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao gravar tipo de troca.');
@@ -417,7 +443,7 @@
           hideForm();
           await loadItems();
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Falha ao gravar tipo de troca.';
+          const message = getRequestErrorMessage(error, 'Falha ao gravar tipo de troca.');
           feedback.textContent = message;
           feedback.classList.add('dsc-feedback-error');
           showBanner(message, 'error');

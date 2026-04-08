@@ -3,7 +3,7 @@ import { dirname } from 'node:path'
 
 const baseUrl = process.env.API_BASE_URL ?? 'http://localhost:3001'
 const reportPath = process.env.SMOKE_REPORT_PATH ?? ''
-const availableSuites = new Set(['all', 'condutor', 'credenciada'])
+const availableSuites = new Set(['all', 'condutor', 'credenciada', 'veiculo'])
 const suite = (process.argv[2] ?? process.env.SMOKE_SUITE ?? 'all').trim().toLowerCase()
 
 const report = {
@@ -317,6 +317,124 @@ const runCredenciadaSmoke = async () => {
   }
 }
 
+const runVeiculoSmoke = async () => {
+  console.log('Smoke test da API Veiculo')
+  const suiteReport = recordSuite('veiculo')
+
+  try {
+    let listResponse = await requestJson('/api/veiculo?page=1&pageSize=5')
+
+    if (listResponse.total === 0) {
+      const bootstrapImport = await requestJson('/api/veiculo/import-xml', {
+        method: 'POST',
+        body: JSON.stringify({ fileName: 'Veiculo.xml' }),
+      })
+      recordImport(suiteReport, 'bootstrap-import', bootstrapImport)
+      listResponse = await requestJson('/api/veiculo?page=1&pageSize=5')
+    }
+
+    assert(Array.isArray(listResponse.items), 'Listagem de veiculo nao retornou items.')
+    assert(listResponse.total > 0, 'Listagem de veiculo retornou total zerado.')
+    logStep(`listagem inicial ok com ${listResponse.total} registro(s)`)
+
+    const ascResponse = await requestJson('/api/veiculo?page=1&pageSize=5&sortBy=placas&sortDirection=asc')
+    const descResponse = await requestJson('/api/veiculo?page=1&pageSize=5&sortBy=placas&sortDirection=desc')
+    expectSortedBy(ascResponse.items, 'placas', 'asc')
+    expectSortedBy(descResponse.items, 'placas', 'desc')
+    assert(
+      String(ascResponse.items[0]?.placas ?? '') !== String(descResponse.items[0]?.placas ?? ''),
+      'Ordenacao asc/desc de veiculo retornou o mesmo primeiro registro.',
+    )
+    logStep('ordenacao asc/desc por placas ok')
+
+    const targetResponse = await requestJson('/api/veiculo?page=1&pageSize=1&search=4143')
+    assert(targetResponse.total === 1, 'Registro 4143 do veiculo nao foi encontrado para o teste.')
+    const originalItem = targetResponse.items[0]
+    const updatedTipoDeBancada = 'Creche'
+    const updatedOsEspecial = 'Sim'
+    const updatedMarcaModelo = 'I/M.BENZ311 RIBEIRO MO18 TESTE API'
+
+    await requestJson('/api/veiculo/4143', {
+      method: 'PUT',
+      body: JSON.stringify({
+        codigo: originalItem.codigo,
+        crm: originalItem.crm,
+        placas: originalItem.placas,
+        ano: originalItem.ano,
+        capDetran: originalItem.cap_detran,
+        capTeg: originalItem.cap_teg,
+        capTegCreche: originalItem.cap_teg_creche,
+        capAcessivel: originalItem.cap_acessivel,
+        valCrm: originalItem.val_crm,
+        seguradora: originalItem.seguradora,
+        seguroInicio: originalItem.seguro_inicio,
+        seguroTermino: originalItem.seguro_termino,
+        tipoDeBancada: updatedTipoDeBancada,
+        tipoDeVeiculo: originalItem.tipo_de_veiculo,
+        marcaModelo: updatedMarcaModelo,
+        titular: originalItem.titular,
+        cnpjCpf: originalItem.cnpj_cpf,
+        valorVeiculo: originalItem.valor_veiculo,
+        osEspecial: updatedOsEspecial,
+      }),
+    })
+
+    const updatedResponse = await requestJson('/api/veiculo?page=1&pageSize=1&search=4143')
+    const updatedItem = updatedResponse.items[0]
+    assert(updatedItem.tipo_de_bancada === updatedTipoDeBancada, 'Alteracao do veiculo nao persistiu tipo de bancada.')
+    assert(updatedItem.os_especial === updatedOsEspecial, 'Alteracao do veiculo nao persistiu OS especial.')
+    assert(updatedItem.marca_modelo === updatedMarcaModelo, 'Alteracao do veiculo nao persistiu marca/modelo.')
+    logStep('edicao do registro importado 4143 ok')
+
+    const deleteResponse = await requestJson('/api/veiculo/4143', { method: 'DELETE' })
+    assert(deleteResponse.deletedCodigo === '4143', 'Exclusao do veiculo nao retornou o codigo esperado.')
+    const deletedLookup = await requestJson('/api/veiculo?page=1&pageSize=1&search=4143')
+    assert(deletedLookup.total === 0, 'Registro 4143 ainda foi encontrado apos exclusao.')
+    logStep('exclusao do registro importado 4143 ok')
+
+    const validImport = await requestJson('/api/veiculo/import-xml', {
+      method: 'POST',
+      body: JSON.stringify({ fileName: 'Veiculo.xml' }),
+    })
+    recordImport(suiteReport, 'valid-import', validImport)
+    assert(validImport.total >= validImport.processed, 'Importacao valida de veiculo retornou total inconsistente.')
+    assert((validImport.processed + validImport.skipped) === validImport.total, 'Importacao valida de veiculo nao fechou a contagem total.')
+    assert((validImport.inserted + validImport.updated) === validImport.processed, 'Importacao valida de veiculo retornou contagem inconsistente.')
+    logStep(`importacao valida do veiculo: ${validImport.processed} processado(s), ${validImport.updated} alterado(s), ${validImport.inserted} incluido(s), ${validImport.skipped} recusado(s)`) 
+
+    const restoredResponse = await requestJson('/api/veiculo?page=1&pageSize=1&search=4143')
+    assert(restoredResponse.total === 1, 'Registro 4143 nao foi restaurado apos reimportacao valida.')
+    const restoredItem = restoredResponse.items[0]
+    assert(restoredItem.tipo_de_bancada === originalItem.tipo_de_bancada, 'Tipo de bancada original nao foi restaurado apos reimportacao valida.')
+    assert(restoredItem.os_especial === originalItem.os_especial, 'OS especial original nao foi restaurado apos reimportacao valida.')
+    assert(restoredItem.marca_modelo === originalItem.marca_modelo, 'Marca/modelo original nao foi restaurado apos reimportacao valida.')
+    logStep('reimportacao valida e restauracao do registro 4143 ok')
+
+    const invalidImport = await requestJson('/api/veiculo/import-xml', {
+      method: 'POST',
+      body: JSON.stringify({ fileName: 'Veiculo-invalid.xml' }),
+    })
+    recordImport(suiteReport, 'invalid-import', invalidImport)
+    assert(invalidImport.skipped === 2, 'Importacao invalida de veiculo nao retornou 2 recusas.')
+    assert(invalidImport.processed === 1, 'Importacao invalida de veiculo nao retornou 1 registro processado.')
+    logStep(`importacao invalida do veiculo: ${invalidImport.processed} processado(s), ${invalidImport.skipped} recusado(s)`) 
+
+    const rejectionResponse = await requestJson('/api/veiculo/import-rejections?page=1&pageSize=20&search=Veiculo-invalid.xml')
+    const rejectionReasons = rejectionResponse.items
+      .filter((item) => item.arquivo_xml === 'Veiculo-invalid.xml')
+      .map((item) => item.motivo_recusa)
+
+    assert(rejectionReasons.some((reason) => reason.includes('codigo invalido no XML')), 'Recusa por codigo invalido nao encontrada para veiculo.')
+    assert(rejectionReasons.some((reason) => reason.includes('tipo de bancada invalido no XML') || reason.includes('tipo de veiculo invalido no XML')), 'Recusa por tipo invalido nao encontrada para veiculo.')
+    logStep('importacao invalida e painel de recusas do veiculo ok')
+
+    finalizeSuite(suiteReport, 'passed')
+  } catch (error) {
+    finalizeSuite(suiteReport, 'failed')
+    throw error
+  }
+}
+
 try {
   if (suite === 'all' || suite === 'condutor') {
     await runCondutorSmoke()
@@ -328,6 +446,14 @@ try {
 
   if (suite === 'all' || suite === 'credenciada') {
     await runCredenciadaSmoke()
+  }
+
+  if (suite === 'all') {
+    console.log('')
+  }
+
+  if (suite === 'all' || suite === 'veiculo') {
+    await runVeiculoSmoke()
   }
 
   report.status = 'passed'

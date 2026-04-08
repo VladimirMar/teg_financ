@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataroot xmlns:od="urn:schemas-microsoft-com:officedata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="Veiculo.xsd" generated="2026-04-08T15:14:50">
+  <Veiculo>
+    <Código>4139</Código>
+    <CRM>000.717-00</CRM>
+    <Placas>DPC1F19</Placas>
+    <Ano>2008</Ano>
+    <Cap_DETRAN>38</Cap_DETRAN>
+    <Cap_TEG>36</Cap_TEG>
+    <VAL_CRM>2026-04-28T00:00:00</VAL_CRM>
+    <Seguradora>ALLSEG SEGURADORA</Seguradora>
+    <Seguro_inicio>2025-07-01T00:00:00</Seguro_inicio>
+    <Seguro_termino>2026-07-01T00:00:00</Seguro_termino>
+    <Tipo_de_bancada>CONVENCIONAL</Tipo_de_bancada>
+    <Tipo_de_veiculo>ÔNIBUS</Tipo_de_veiculo>
+    <Marca_modelo>MARCOPOLO/VOLARE V8 ON</Marca_modelo>
+    <Titular>JAIR GENESIO COMIN</Titular>
+    <CNPJ_CPF>813.289.668-87</CNPJ_CPF>
+    <Valor_veiculo>515204.16</Valor_veiculo>
+    <OS_especial>NÃO</OS_especial>
+  </Veiculo>
+  <Veiculo>
+    <Código>ABC</Código>
+    <CRM>001.002-03</CRM>
+    <Placas>ELR3499</Placas>
+    <Ano>2009</Ano>
+    <Cap_DETRAN>15</Cap_DETRAN>
+    <Cap_TEG>13</Cap_TEG>
+    <VAL_CRM>2024-04-28T00:00:00</VAL_CRM>
+    <Seguradora>INVESTPREV</Seguradora>
+    <Seguro_inicio>2019-03-18T00:00:00</Seguro_inicio>
+    <Seguro_termino>2020-03-17T00:00:00</Seguro_termino>
+    <Tipo_de_bancada>CONVENCIONAL</Tipo_de_bancada>
+    <Tipo_de_veiculo>MICRO-ÔNIBUS</Tipo_de_veiculo>
+    <Marca_modelo>FIAT/DUCATO COMBINATO</Marca_modelo>
+    <Titular>TRANSLUCY TRANSPORTES LTDA - ME</Titular>
+    <CNPJ_CPF>21.020.760/0001-30</CNPJ_CPF>
+    <OS_especial>SIM</OS_especial>
+  </Veiculo>
+  <Veiculo>
+    <Código>9593</Código>
+    <CRM>005.696-00</CRM>
+    <Placas>FCB0F67</Placas>
+    <Ano>2012</Ano>
+    <Cap_DETRAN>15</Cap_DETRAN>
+    <Cap_TEG>14</Cap_TEG>
+    <VAL_CRM>2026-04-24T00:00:00</VAL_CRM>
+    <Seguradora>PORTO SEGURO</Seguradora>
+    <Seguro_inicio>2025-10-24T00:00:00</Seguro_inicio>
+    <Seguro_termino>2026-10-24T00:00:00</Seguro_termino>
+    <Tipo_de_bancada>LUXO</Tipo_de_bancada>
+    <Tipo_de_veiculo>CAMINHAO</Tipo_de_veiculo>
+    <Marca_modelo>PEUGEOT/BOXER M330M 23S</Marca_modelo>
+    <Titular>WELINGTON DOS SANTOS CANOVA</Titular>
+    <CNPJ_CPF>40.286.200/0001-77</CNPJ_CPF>
+    <Valor_veiculo>328428</Valor_veiculo>
+    <OS_especial>NÃO</OS_especial>
+  </Veiculo>
+</dataroot>

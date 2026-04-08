@@ -6,12 +6,14 @@
   "scripts": {
     "api": "node server.js",
     "dev": "vite",
+    "dev:full": "concurrently \"npm run api\" \"npm run dev -- --host 0.0.0.0\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "smoke:api": "node scripts/smoke-api.mjs all",
     "smoke:api:condutor": "node scripts/smoke-api.mjs condutor",
-    "smoke:api:credenciada": "node scripts/smoke-api.mjs credenciada"
+    "smoke:api:credenciada": "node scripts/smoke-api.mjs credenciada",
+    "smoke:api:veiculo": "node scripts/smoke-api.mjs veiculo"
   },
   "dependencies": {
     "fast-xml-parser": "^5.5.10",
@@ -25,6 +27,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",

@@ -4,11 +4,14 @@ import './App.css'
 import { authenticate } from './services/auth'
 import { createDreItem, deleteDreItem, listDreItemsPaginated, updateDreItem } from './services/dre'
 import type { DreItem } from './services/dre'
+import { createSeguradoraItem, deleteSeguradoraItem, listSeguradoraItemsPaginated, updateSeguradoraItem } from './services/seguradora'
+import type { SeguradoraItem } from './services/seguradora'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada'
+type ActiveView = 'inicio' | 'dre' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
+type SeguradoraSortField = 'codigo' | 'controle' | 'descricao'
 
 type StoredSession = {
   email: string
@@ -132,6 +135,27 @@ function App() {
   const [dreSortBy, setDreSortBy] = useState<DreSortField>('codigo')
   const [dreSortDirection, setDreSortDirection] = useState<DreSortDirection>('asc')
   const deferredDreSearch = useDeferredValue(dreSearch)
+  const [seguradoraItems, setSeguradoraItems] = useState<SeguradoraItem[]>([])
+  const [seguradoraCodigo, setSeguradoraCodigo] = useState('')
+  const [seguradoraControle, setSeguradoraControle] = useState('')
+  const [seguradoraLista, setSeguradoraLista] = useState('')
+  const [seguradoraCodigoError, setSeguradoraCodigoError] = useState('')
+  const [seguradoraControleError, setSeguradoraControleError] = useState('')
+  const [seguradoraListaError, setSeguradoraListaError] = useState('')
+  const [seguradoraStatusMessage, setSeguradoraStatusMessage] = useState('')
+  const [seguradoraStatusTone, setSeguradoraStatusTone] = useState<StatusTone>('idle')
+  const [isLoadingSeguradora, setIsLoadingSeguradora] = useState(false)
+  const [isSavingSeguradora, setIsSavingSeguradora] = useState(false)
+  const [isDeletingSeguradora, setIsDeletingSeguradora] = useState(false)
+  const [isSeguradoraFormVisible, setIsSeguradoraFormVisible] = useState(false)
+  const [editingSeguradoraCodigo, setEditingSeguradoraCodigo] = useState<string | null>(null)
+  const [seguradoraSearch, setSeguradoraSearch] = useState('')
+  const [seguradoraPage, setSeguradoraPage] = useState(1)
+  const [seguradoraTotalItems, setSeguradoraTotalItems] = useState(0)
+  const [seguradoraTotalPages, setSeguradoraTotalPages] = useState(1)
+  const [seguradoraSortBy, setSeguradoraSortBy] = useState<SeguradoraSortField>('codigo')
+  const [seguradoraSortDirection, setSeguradoraSortDirection] = useState<DreSortDirection>('asc')
+  const deferredSeguradoraSearch = useDeferredValue(seguradoraSearch)
 
   useEffect(() => {
     setSession(getStoredSession())
@@ -170,6 +194,39 @@ function App() {
     }
   }, [deferredDreSearch, dreSortBy, dreSortDirection])
 
+  const loadSeguradoraItems = useCallback(async (pageToLoad: number) => {
+    setIsLoadingSeguradora(true)
+    setSeguradoraStatusMessage('Carregando registros de seguradoras...')
+    setSeguradoraStatusTone('idle')
+
+    try {
+      const result = await listSeguradoraItemsPaginated({
+        search: deferredSeguradoraSearch,
+        page: pageToLoad,
+        pageSize: DRE_PAGE_SIZE,
+        sortBy: seguradoraSortBy,
+        sortDirection: seguradoraSortDirection,
+      })
+
+      setSeguradoraItems(result.items)
+      setSeguradoraTotalItems(result.total)
+      setSeguradoraTotalPages(result.totalPages)
+      setSeguradoraPage(result.page)
+      setSeguradoraSortBy(result.sortBy)
+      setSeguradoraSortDirection(result.sortDirection)
+      setSeguradoraStatusMessage(result.items.length ? '' : 'Nenhum registro encontrado na tabela seguradora.')
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Falha ao carregar os registros de seguradoras.'
+
+      setSeguradoraStatusTone('error')
+      setSeguradoraStatusMessage(message)
+    } finally {
+      setIsLoadingSeguradora(false)
+    }
+  }, [deferredSeguradoraSearch, seguradoraSortBy, seguradoraSortDirection])
+
   useEffect(() => {
     if (!session || activeView !== 'dre') {
       return
@@ -179,8 +236,20 @@ function App() {
   }, [activeView, drePage, loadDreItems, session])
 
   useEffect(() => {
+    if (!session || activeView !== 'seguradora') {
+      return
+    }
+
+    void loadSeguradoraItems(seguradoraPage)
+  }, [activeView, loadSeguradoraItems, seguradoraPage, session])
+
+  useEffect(() => {
     setDrePage(1)
   }, [deferredDreSearch])
+
+  useEffect(() => {
+    setSeguradoraPage(1)
+  }, [deferredSeguradoraSearch])
 
   const validateEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
@@ -437,6 +506,181 @@ function App() {
     }
   }
 
+  const resetSeguradoraForm = () => {
+    setSeguradoraCodigo('')
+    setSeguradoraControle('')
+    setSeguradoraLista('')
+    setSeguradoraCodigoError('')
+    setSeguradoraControleError('')
+    setSeguradoraListaError('')
+    setEditingSeguradoraCodigo(null)
+  }
+
+  const handleStartInsertSeguradora = () => {
+    resetSeguradoraForm()
+    setSeguradoraStatusTone('idle')
+    setSeguradoraStatusMessage('')
+    setIsSeguradoraFormVisible(true)
+  }
+
+  const handleFilterSeguradoraSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setSeguradoraPage(1)
+    setSeguradoraStatusMessage('Aplicando filtro de seguradoras...')
+    setSeguradoraStatusTone('idle')
+  }
+
+  const handleClearSeguradoraFilter = () => {
+    setSeguradoraSearch('')
+    setSeguradoraPage(1)
+  }
+
+  const handleSortSeguradora = (field: SeguradoraSortField) => {
+    setSeguradoraPage(1)
+    setSeguradoraSortBy((currentField) => {
+      if (currentField === field) {
+        setSeguradoraSortDirection((currentDirection) => currentDirection === 'asc' ? 'desc' : 'asc')
+        return currentField
+      }
+
+      setSeguradoraSortDirection('asc')
+      return field
+    })
+  }
+
+  const getSeguradoraSortIndicator = (field: SeguradoraSortField) => {
+    if (seguradoraSortBy !== field) {
+      return '↕'
+    }
+
+    return seguradoraSortDirection === 'asc' ? '↑' : '↓'
+  }
+
+  const handleStartEditSeguradora = (item: SeguradoraItem) => {
+    setEditingSeguradoraCodigo(item.codigo)
+    setSeguradoraCodigo(item.codigo)
+    setSeguradoraControle(item.controle)
+    setSeguradoraLista(item.descricao)
+    setSeguradoraCodigoError('')
+    setSeguradoraControleError('')
+    setSeguradoraListaError('')
+    setSeguradoraStatusTone('idle')
+    setSeguradoraStatusMessage(`Alterando registro ${item.codigo}.`)
+    setIsSeguradoraFormVisible(true)
+  }
+
+  const handleCancelSeguradoraForm = () => {
+    resetSeguradoraForm()
+    setIsSeguradoraFormVisible(false)
+    setSeguradoraStatusTone('idle')
+    setSeguradoraStatusMessage('')
+  }
+
+  const handleCreateSeguradora = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const editingCodigo = editingSeguradoraCodigo
+    const normalizedCodigo = editingCodigo ?? seguradoraCodigo.trim()
+    const normalizedControle = seguradoraControle.trim()
+    const normalizedLista = seguradoraLista.trim()
+    let hasError = false
+
+    setSeguradoraCodigoError('')
+    setSeguradoraControleError('')
+    setSeguradoraListaError('')
+
+    if (!normalizedCodigo) {
+      setSeguradoraCodigoError('Codigo e obrigatorio.')
+      hasError = true
+    }
+
+    if (!normalizedControle) {
+      setSeguradoraControleError('Controle e obrigatorio.')
+      hasError = true
+    }
+
+    if (!normalizedLista) {
+      setSeguradoraListaError('Descricao e obrigatoria.')
+      hasError = true
+    }
+
+    if (hasError) {
+      setSeguradoraStatusTone('error')
+      setSeguradoraStatusMessage('Corrija os campos de seguradora para continuar.')
+      return
+    }
+
+    setIsSavingSeguradora(true)
+    setSeguradoraStatusTone('idle')
+    setSeguradoraStatusMessage(editingCodigo ? 'Alterando registro de seguradora...' : 'Gravando registro de seguradora...')
+
+    try {
+      const savedItem = editingCodigo
+        ? await updateSeguradoraItem(editingCodigo, {
+            codigo: normalizedCodigo,
+            controle: normalizedControle,
+            descricao: normalizedLista,
+          })
+        : await createSeguradoraItem({
+            codigo: normalizedCodigo,
+            controle: normalizedControle,
+            descricao: normalizedLista,
+          })
+
+      void savedItem
+      resetSeguradoraForm()
+      setIsSeguradoraFormVisible(false)
+      setSeguradoraStatusTone('success')
+      setSeguradoraStatusMessage(editingCodigo ? 'Registro de seguradora alterado com sucesso.' : 'Registro de seguradora cadastrado com sucesso.')
+      await loadSeguradoraItems(editingCodigo ? seguradoraPage : 1)
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Falha ao cadastrar registro de seguradora.'
+
+      setSeguradoraStatusTone('error')
+      setSeguradoraStatusMessage(message)
+    } finally {
+      setIsSavingSeguradora(false)
+    }
+  }
+
+  const handleDeleteSeguradora = async (item: SeguradoraItem) => {
+    const confirmed = window.confirm(`Excluir o registro ${item.codigo} - ${item.descricao}?`)
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsDeletingSeguradora(true)
+    setSeguradoraStatusTone('idle')
+    setSeguradoraStatusMessage(`Excluindo registro ${item.codigo}...`)
+
+    try {
+      const deletedCodigo = await deleteSeguradoraItem(item.codigo)
+      setSeguradoraItems((currentItems) => currentItems.filter((currentItem) => currentItem.codigo !== deletedCodigo))
+
+      if (editingSeguradoraCodigo === item.codigo) {
+        resetSeguradoraForm()
+        setIsSeguradoraFormVisible(false)
+      }
+
+      setSeguradoraStatusTone('success')
+      setSeguradoraStatusMessage('Registro de seguradora excluido com sucesso.')
+      const nextPage = seguradoraItems.length === 1 && seguradoraPage > 1 ? seguradoraPage - 1 : seguradoraPage
+      await loadSeguradoraItems(nextPage)
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Falha ao excluir registro de seguradora.'
+
+      setSeguradoraStatusTone('error')
+      setSeguradoraStatusMessage(message)
+    } finally {
+      setIsDeletingSeguradora(false)
+    }
+  }
+
   if (!session) {
     return (
       <main className="login-page">
@@ -520,6 +764,8 @@ function App() {
 
   const canGoToPreviousDrePage = drePage > 1
   const canGoToNextDrePage = drePage < dreTotalPages
+  const canGoToPreviousSeguradoraPage = seguradoraPage > 1
+  const canGoToNextSeguradoraPage = seguradoraPage < seguradoraTotalPages
 
   return (
     <main className="dashboard-page">
@@ -542,6 +788,12 @@ function App() {
               onClick={() => setActiveView('dre')}
             >
               DRE
+            </li>
+            <li
+              className={`menu-item ${activeView === 'seguradora' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('seguradora')}
+            >
+              Seguradoras
             </li>
             <li
               className={`menu-item ${activeView === 'troca' ? 'menu-item-active' : ''}`}
@@ -578,6 +830,12 @@ function App() {
               onClick={() => setActiveView('credenciada')}
             >
               Credenciada
+            </li>
+            <li
+              className={`menu-item ${activeView === 'veiculo' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('veiculo')}
+            >
+              Veiculo
             </li>
             <li className="menu-item">Relatorios</li>
           </ul>
@@ -768,6 +1026,186 @@ function App() {
               </div>
             </div>
           </>
+        ) : activeView === 'seguradora' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Cadastro administrativo</p>
+              <h2 id="content-title">Tabela Seguradoras</h2>
+              <p className="content-description">
+                Cadastre e consulte os registros da tabela de seguradoras carregada inicialmente a partir do XML. Os campos codigo, controle e descricao sao obrigatorios, e apenas o codigo e tratado como chave unica.
+              </p>
+            </div>
+
+            <div className="management-layout">
+              <div className="management-toolbar">
+                <button
+                  type="button"
+                  className="primary-button dre-insert-button"
+                  onClick={handleStartInsertSeguradora}
+                  disabled={isSavingSeguradora || isDeletingSeguradora}
+                >
+                  Inserir registro
+                </button>
+
+                <form className="management-filter-form" onSubmit={handleFilterSeguradoraSubmit}>
+                  <input
+                    className="management-filter-input"
+                    type="text"
+                    placeholder="Filtrar por codigo, controle ou descricao"
+                    value={seguradoraSearch}
+                    onChange={(event) => setSeguradoraSearch(event.target.value)}
+                  />
+                  <button type="submit" className="secondary-button management-filter-button">
+                    Filtrar
+                  </button>
+                  <button type="button" className="secondary-button management-filter-button" onClick={handleClearSeguradoraFilter}>
+                    Limpar
+                  </button>
+                </form>
+              </div>
+
+              {isSeguradoraFormVisible ? (
+                <form className="management-card management-form dre-form" onSubmit={handleCreateSeguradora} noValidate>
+                  <h2>{editingSeguradoraCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+
+                  <label className="field-group" htmlFor="seguradora-codigo">
+                    <span>Codigo</span>
+                    <input
+                      id="seguradora-codigo"
+                      name="codigo"
+                      type="text"
+                      value={seguradoraCodigo}
+                      onChange={(event) => setSeguradoraCodigo(event.target.value)}
+                      disabled={isSavingSeguradora || Boolean(editingSeguradoraCodigo)}
+                      readOnly={Boolean(editingSeguradoraCodigo)}
+                      aria-invalid={Boolean(seguradoraCodigoError)}
+                    />
+                    {seguradoraCodigoError ? <strong className="field-error">{seguradoraCodigoError}</strong> : null}
+                  </label>
+
+                  <label className="field-group" htmlFor="seguradora-controle">
+                    <span>Controle</span>
+                    <input
+                      id="seguradora-controle"
+                      name="controle"
+                      type="text"
+                      value={seguradoraControle}
+                      onChange={(event) => setSeguradoraControle(event.target.value)}
+                      disabled={isSavingSeguradora}
+                      aria-invalid={Boolean(seguradoraControleError)}
+                    />
+                    {seguradoraControleError ? <strong className="field-error">{seguradoraControleError}</strong> : null}
+                  </label>
+
+                  <label className="field-group" htmlFor="seguradora-lista">
+                    <span>Descricao</span>
+                    <input
+                      id="seguradora-lista"
+                      name="lista"
+                      type="text"
+                      value={seguradoraLista}
+                      onChange={(event) => setSeguradoraLista(event.target.value)}
+                      disabled={isSavingSeguradora}
+                      aria-invalid={Boolean(seguradoraListaError)}
+                    />
+                    {seguradoraListaError ? <strong className="field-error">{seguradoraListaError}</strong> : null}
+                  </label>
+
+                  <div className="button-row dre-button-row">
+                    <button type="submit" className="primary-button" disabled={isSavingSeguradora}>
+                      {isSavingSeguradora ? 'Salvando...' : editingSeguradoraCodigo ? 'Salvar alteracao' : 'Salvar seguradora'}
+                    </button>
+                    <button type="button" className="secondary-button" onClick={handleCancelSeguradoraForm} disabled={isSavingSeguradora}>
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+
+              <div className="management-card management-grid-card dre-list-card">
+                <div className="management-grid-header">
+                  <h2>Registros cadastrados</h2>
+                  <span>
+                    {isLoadingSeguradora ? 'Atualizando...' : `${seguradoraTotalItems} item(ns) encontrados`}
+                  </span>
+                </div>
+
+                <div className="management-grid-wrapper">
+                  <table className="dre-table">
+                    <thead>
+                      <tr>
+                        <th>
+                          <button type="button" className="dre-sort-button" onClick={() => handleSortSeguradora('codigo')}>
+                            Codigo <span>{getSeguradoraSortIndicator('codigo')}</span>
+                          </button>
+                        </th>
+                        <th>
+                          <button type="button" className="dre-sort-button" onClick={() => handleSortSeguradora('controle')}>
+                            Controle <span>{getSeguradoraSortIndicator('controle')}</span>
+                          </button>
+                        </th>
+                        <th>
+                          <button type="button" className="dre-sort-button" onClick={() => handleSortSeguradora('descricao')}>
+                            Descricao <span>{getSeguradoraSortIndicator('descricao')}</span>
+                          </button>
+                        </th>
+                        <th className="dre-actions-column">Acoes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {seguradoraItems.map((item) => (
+                        <tr key={item.codigo}>
+                          <td>{item.codigo}</td>
+                          <td>{item.controle}</td>
+                          <td>{item.descricao}</td>
+                          <td>
+                            <div className="dre-row-actions">
+                              <button type="button" className="row-action-button row-action-edit" onClick={() => handleStartEditSeguradora(item)}>
+                                Alterar
+                              </button>
+                              <button type="button" className="row-action-button row-action-delete" onClick={() => handleDeleteSeguradora(item)}>
+                                Excluir
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {!isLoadingSeguradora && seguradoraItems.length === 0 ? (
+                    <p className="management-empty-state">Nenhum registro de seguradora encontrado.</p>
+                  ) : null}
+                </div>
+
+                <p className={`status-message status-${seguradoraStatusTone}`} aria-live="polite">
+                  {seguradoraStatusMessage}
+                </p>
+
+                <div className="management-pagination">
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button"
+                    onClick={() => setSeguradoraPage((currentPage) => currentPage - 1)}
+                    disabled={!canGoToPreviousSeguradoraPage || isLoadingSeguradora}
+                  >
+                    Anterior
+                  </button>
+                  <span className="management-pagination-info">
+                    Pagina {seguradoraPage} de {seguradoraTotalPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button"
+                    onClick={() => setSeguradoraPage((currentPage) => currentPage + 1)}
+                    disabled={!canGoToNextSeguradoraPage || isLoadingSeguradora}
+                  >
+                    Proxima
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
         ) : activeView === 'troca' ? (
           <>
             <div className="content-copy">
@@ -856,6 +1294,24 @@ function App() {
                 className="access-embed-frame"
                 src="/src/monitor.html"
                 title="Cadastro de monitor"
+              />
+            </div>
+          </>
+        ) : activeView === 'veiculo' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Cadastro operacional</p>
+              <h2 id="content-title">Tabela Veiculo</h2>
+              <p className="content-description">
+                Consulte, inclua, altere e importe os registros de veiculos a partir do XML no mesmo padrao operacional da tela de monitor.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/veiculo.html"
+                title="Cadastro de veiculo"
               />
             </div>
           </>
