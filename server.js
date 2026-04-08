@@ -124,6 +124,11 @@ const getDreCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+const getTrocaCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/troca\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 const getAccessCodigoFromUrl = (url) => {
   const match = url.match(/^\/api\/access\/([^/]+)$/)
   return match ? decodeURIComponent(match[1]) : null
@@ -259,6 +264,13 @@ const normalizeHistorico = (value) => {
 }
 
 const normalizeCredenciadaText = (value, maxLength = 255) => {
+  return normalizeRequestValue(value)
+    .replace(/\s+/g, ' ')
+    .toUpperCase()
+    .slice(0, maxLength)
+}
+
+const normalizeTrocaText = (value, maxLength = 255) => {
   return normalizeRequestValue(value)
     .replace(/\s+/g, ' ')
     .toUpperCase()
@@ -489,6 +501,23 @@ const parseCredenciadaXml = (xmlContent) => {
   }))
 }
 
+const parseTrocaXml = (xmlContent) => {
+  const parsed = xmlParser.parse(xmlContent)
+  const rawRecords = parsed?.dataroot?.Listagem_x0020_de_x0020_Trocas
+  const records = (Array.isArray(rawRecords)
+    ? rawRecords
+    : rawRecords
+      ? [rawRecords]
+      : [])
+    .filter((record) => record && typeof record === 'object')
+
+  return records.map((record) => ({
+    codigo: normalizeRequestValue(record?.Código),
+    controle: normalizeRequestValue(record?.Controle),
+    lista: normalizeRequestValue(record?.Lista),
+  }))
+}
+
 const normalizeImportedCredenciadaRecord = (record, index) => {
   const codigo = normalizeCondutorCodigo(record.codigo)
   const credenciado = normalizeCredenciadaText(record.credenciado, 255)
@@ -562,6 +591,31 @@ const normalizeImportedCredenciadaRecord = (record, index) => {
   }
 }
 
+const normalizeImportedTrocaRecord = (record, index) => {
+  const codigo = normalizeCondutorCodigo(record.codigo)
+  const controle = normalizeCondutorCodigo(record.controle)
+  const lista = normalizeTrocaText(record.lista, 255)
+  const itemLabel = `Registro ${index + 1}`
+
+  if (codigo === null || Number.isNaN(codigo)) {
+    throw new Error(`${itemLabel}: codigo invalido no XML.`)
+  }
+
+  if (controle === null || Number.isNaN(controle)) {
+    throw new Error(`${itemLabel}: controle invalido no XML.`)
+  }
+
+  if (!lista) {
+    throw new Error(`${itemLabel}: descricao da troca invalida no XML.`)
+  }
+
+  return {
+    codigo,
+    controle,
+    lista,
+  }
+}
+
 const condutorSelectClause = `
   codigo::text AS codigo,
   BTRIM(condutor) AS condutor,
@@ -615,6 +669,13 @@ const credenciadaImportRecusaSelectClause = `
   COALESCE(BTRIM(status_xml), '') AS status_xml,
   BTRIM(motivo_recusa) AS motivo_recusa,
   TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
+
+const trocaSelectClause = `
+  codigo::text AS codigo,
+  controle::text AS controle,
+  BTRIM(lista) AS lista,
+  TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
+  TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
 
 const importCondutorXmlFile = async (fileName) => {
   const sanitizedFileName = path.basename(normalizeRequestValue(fileName))
@@ -974,6 +1035,97 @@ const importCredenciadaXmlFile = async (fileName) => {
   }
 }
 
+const importTrocaXmlFile = async (fileName) => {
+  const sanitizedFileName = path.basename(normalizeRequestValue(fileName))
+
+  if (!sanitizedFileName) {
+    throw new Error('Nome do arquivo XML e obrigatorio.')
+  }
+
+  if (path.extname(sanitizedFileName).toLowerCase() !== '.xml') {
+    throw new Error('Informe um arquivo XML valido.')
+  }
+
+  const resolvedPath = path.resolve(importXmlDirectory, sanitizedFileName)
+
+  if (!resolvedPath.startsWith(importXmlDirectory)) {
+    throw new Error('Arquivo XML invalido.')
+  }
+
+  const xmlContent = await readFile(resolvedPath, 'utf8')
+  const parsedRecords = parseTrocaXml(xmlContent)
+
+  if (!parsedRecords.length) {
+    throw new Error('Nenhum registro de troca foi encontrado no XML informado.')
+  }
+
+  const normalizedRecords = parsedRecords.map((record, index) => normalizeImportedTrocaRecord(record, index))
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+    let inserted = 0
+    let updated = 0
+
+    for (const record of normalizedRecords) {
+      const existingResult = await client.query('SELECT 1 FROM tipo_troca WHERE codigo = $1 LIMIT 1', [record.codigo])
+
+      if (existingResult.rowCount > 0) {
+        await client.query(
+          `UPDATE tipo_troca
+           SET controle = $1,
+               lista = $2,
+               data_modificacao = NOW()
+           WHERE codigo = $3`,
+          [record.controle, record.lista, record.codigo],
+        )
+        updated += 1
+        continue
+      }
+
+      await client.query(
+        `INSERT INTO tipo_troca (
+           codigo,
+           controle,
+           lista,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, $3, NOW(), NOW())`,
+        [record.codigo, record.controle, record.lista],
+      )
+      inserted += 1
+    }
+
+    await client.query('COMMIT')
+
+    return {
+      fileName: sanitizedFileName,
+      filePath: resolvedPath,
+      total: parsedRecords.length,
+      processed: normalizedRecords.length,
+      inserted,
+      updated,
+    }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
+const seedTrocaTableFromXmlIfEmpty = async () => {
+  const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM tipo_troca')
+  const total = countResult.rows[0]?.total ?? 0
+
+  if (total > 0) {
+    return null
+  }
+
+  return importTrocaXmlFile('Listagem de Trocas.xml')
+}
+
 const isDateInputValid = (value) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return false
@@ -1191,6 +1343,80 @@ const validateCredenciadaPayload = async ({
         representante: normalizedRepresentante,
         cnpjCpf: normalizedCnpjCpf,
       }),
+    },
+  }
+}
+
+const validateTrocaPayload = async ({ codigo, controle, lista, originalCodigo = null }) => {
+  const normalizedCodigo = normalizeCondutorCodigo(codigo)
+  const normalizedControle = normalizeCondutorCodigo(controle)
+  const normalizedLista = normalizeTrocaText(lista, 255)
+
+  if (normalizedCodigo === null) {
+    return { status: 400, payload: { message: 'Codigo e obrigatorio.' } }
+  }
+
+  if (Number.isNaN(normalizedCodigo)) {
+    return { status: 400, payload: { message: 'Codigo deve ser um numero inteiro positivo.' } }
+  }
+
+  if (normalizedControle === null) {
+    return { status: 400, payload: { message: 'Controle e obrigatorio.' } }
+  }
+
+  if (Number.isNaN(normalizedControle)) {
+    return { status: 400, payload: { message: 'Controle deve ser um numero inteiro positivo.' } }
+  }
+
+  if (!normalizedLista) {
+    return { status: 400, payload: { message: 'Lista e obrigatoria.' } }
+  }
+
+  const duplicateCodeResult = await pool.query(
+    `SELECT 1
+     FROM tipo_troca
+     WHERE codigo = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedCodigo, originalCodigo],
+  )
+
+  if (duplicateCodeResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
+  }
+
+  const duplicateControleResult = await pool.query(
+    `SELECT 1
+     FROM tipo_troca
+     WHERE controle = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedControle, originalCodigo],
+  )
+
+  if (duplicateControleResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Controle ja cadastrado.' } }
+  }
+
+  const duplicateListaResult = await pool.query(
+    `SELECT 1
+     FROM tipo_troca
+     WHERE BTRIM(lista) = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedLista, originalCodigo],
+  )
+
+  if (duplicateListaResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Lista ja cadastrada.' } }
+  }
+
+  return {
+    status: 200,
+    payload: {
+      codigo: normalizedCodigo,
+      controle: normalizedControle,
+      lista: normalizedLista,
     },
   }
 }
@@ -1441,6 +1667,50 @@ const ensureDatabaseSchema = async () => {
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS condutor_codigo_unique_idx ON condutor (codigo)')
   await pool.query('CREATE INDEX IF NOT EXISTS condutor_import_recusa_data_idx ON condutor_import_recusa (data_importacao DESC)')
   await pool.query('CREATE INDEX IF NOT EXISTS condutor_import_recusa_arquivo_idx ON condutor_import_recusa (arquivo_xml)')
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name = 'troca'
+      )
+      AND NOT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name = 'tipo_troca'
+      ) THEN
+        ALTER TABLE troca RENAME TO tipo_troca;
+      END IF;
+    END $$;
+  `)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tipo_troca (
+      codigo integer PRIMARY KEY,
+      controle integer NOT NULL,
+      lista varchar(255) NOT NULL,
+      data_inclusao timestamp without time zone NOT NULL DEFAULT NOW(),
+      data_modificacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query('ALTER TABLE tipo_troca ADD COLUMN IF NOT EXISTS controle integer')
+  await pool.query('ALTER TABLE tipo_troca ADD COLUMN IF NOT EXISTS lista varchar(255)')
+  await pool.query('ALTER TABLE tipo_troca ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone')
+  await pool.query('ALTER TABLE tipo_troca ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone')
+  await pool.query(`
+    UPDATE tipo_troca
+    SET data_inclusao = COALESCE(data_inclusao, NOW()),
+        data_modificacao = COALESCE(data_modificacao, COALESCE(data_inclusao, NOW()))
+    WHERE data_inclusao IS NULL OR data_modificacao IS NULL
+  `)
+  await pool.query('ALTER TABLE tipo_troca ALTER COLUMN controle SET NOT NULL')
+  await pool.query('ALTER TABLE tipo_troca ALTER COLUMN lista SET NOT NULL')
+  await pool.query('ALTER TABLE tipo_troca ALTER COLUMN data_inclusao SET DEFAULT NOW()')
+  await pool.query('ALTER TABLE tipo_troca ALTER COLUMN data_modificacao SET DEFAULT NOW()')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS tipo_troca_controle_unique_idx ON tipo_troca (controle)')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS tipo_troca_lista_unique_idx ON tipo_troca (lista)')
   await pool.query('CREATE SEQUENCE IF NOT EXISTS credenciada_codigo_seq START WITH 1 INCREMENT BY 1')
   await pool.query(`
     CREATE TABLE IF NOT EXISTS credenciada (
@@ -1609,6 +1879,75 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar a tabela dre.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/troca') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
+      const requestedSortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
+        ? 'DESC'
+        : 'ASC'
+      const sortDirection = sortBy === 'lista' ? requestedSortDirection : 'ASC'
+      const offset = (page - 1) * pageSize
+      const filters = []
+      const values = []
+      let orderByClause = `CAST(codigo AS integer) ${sortDirection}, CAST(controle AS integer) ASC`
+
+      if (sortBy === 'controle') {
+        orderByClause = `CAST(controle AS integer) ${sortDirection}, CAST(codigo AS integer) ASC`
+      } else if (sortBy === 'lista') {
+        orderByClause = `BTRIM(lista) ${sortDirection}, CAST(codigo AS integer) ASC, CAST(controle AS integer) ASC`
+      }
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR CAST(controle AS text) ILIKE $${values.length}
+          OR BTRIM(lista) ILIKE $${values.length}
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM tipo_troca ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT ${trocaSelectClause}
+         FROM tipo_troca
+         ${whereClause}
+         ORDER BY ${orderByClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: sortBy === 'controle' || sortBy === 'lista' ? sortBy : 'codigo',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar a tabela troca.'
 
       sendJson(response, 500, { message })
     }
@@ -2182,6 +2521,51 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'POST' && pathname === '/api/troca') {
+    try {
+      const body = await readJsonBody(request)
+      const validationResult = await validateTrocaPayload({
+        codigo: body.codigo,
+        controle: body.controle,
+        lista: body.lista,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const insertResult = await pool.query(
+        `INSERT INTO tipo_troca (
+           codigo,
+           controle,
+           lista,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, $3, NOW(), NOW())
+         RETURNING ${trocaSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.controle,
+          validationResult.payload.lista,
+        ],
+      )
+
+      sendJson(response, 201, {
+        item: insertResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao cadastrar troca.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'POST' && pathname === '/api/login-dre') {
     try {
       const body = await readJsonBody(request)
@@ -2605,6 +2989,68 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'PUT' && getTrocaCodigoFromUrl(pathname)) {
+    try {
+      const originalCodigo = Number(getTrocaCodigoFromUrl(pathname))
+      const body = await readJsonBody(request)
+
+      if (!Number.isInteger(originalCodigo) || originalCodigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo original invalido.' })
+        return
+      }
+
+      const existingResult = await pool.query(
+        'SELECT 1 FROM tipo_troca WHERE codigo = $1 LIMIT 1',
+        [originalCodigo],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Troca nao encontrada.' })
+        return
+      }
+
+      const validationResult = await validateTrocaPayload({
+        codigo: body.codigo,
+        controle: body.controle,
+        lista: body.lista,
+        originalCodigo,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE tipo_troca
+         SET codigo = $1,
+             controle = $2,
+             lista = $3,
+             data_modificacao = NOW()
+         WHERE codigo = $4
+         RETURNING ${trocaSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.controle,
+          validationResult.payload.lista,
+          originalCodigo,
+        ],
+      )
+
+      sendJson(response, 200, {
+        item: updateResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao alterar troca.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'PUT' && getCondutorCodigoFromUrl(pathname)) {
     try {
       const originalCodigo = Number(getCondutorCodigoFromUrl(pathname))
@@ -2879,6 +3325,39 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'DELETE' && getTrocaCodigoFromUrl(pathname)) {
+    try {
+      const codigo = getTrocaCodigoFromUrl(pathname)
+
+      if (!codigo) {
+        sendJson(response, 400, { message: 'Codigo invalido para exclusao.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        'DELETE FROM tipo_troca WHERE codigo = $1 RETURNING codigo::text AS codigo',
+        [codigo],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Troca nao encontrada.' })
+        return
+      }
+
+      sendJson(response, 200, {
+        deletedCodigo: deleteResult.rows[0].codigo,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao excluir troca.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'DELETE' && getAccessCodigoFromUrl(pathname)) {
     try {
       const codigo = Number(getAccessCodigoFromUrl(pathname))
@@ -3021,6 +3500,9 @@ const server = createServer(async (request, response) => {
 })
 
 ensureDatabaseSchema()
+  .then(() => {
+    return seedTrocaTableFromXmlIfEmpty()
+  })
   .then(() => {
     server.listen(port, () => {
       console.log(`Auth API escutando na porta ${port}`)

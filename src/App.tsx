@@ -6,7 +6,7 @@ import { createDreItem, deleteDreItem, listDreItemsPaginated, updateDreItem } fr
 import type { DreItem } from './services/dre'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'acesso' | 'loginDre' | 'condutor' | 'credenciada'
+type ActiveView = 'inicio' | 'dre' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'credenciada'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
 
@@ -544,6 +544,12 @@ function App() {
               DRE
             </li>
             <li
+              className={`menu-item ${activeView === 'troca' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('troca')}
+            >
+              Tipo de Troca
+            </li>
+            <li
               className={`menu-item ${activeView === 'acesso' ? 'menu-item-active' : ''}`}
               onClick={() => setActiveView('acesso')}
             >
@@ -754,6 +760,24 @@ function App() {
                   </button>
                 </div>
               </div>
+            </div>
+          </>
+        ) : activeView === 'troca' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Cadastro operacional</p>
+              <h2 id="content-title">Tabela Tipo de Troca</h2>
+              <p className="content-description">
+                Consulte, inclua, altere e exclua os tipos de troca carregados inicialmente a partir do XML operacional.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/troca.html"
+                title="Cadastro de tipo de troca"
+              />
             </div>
           </>
         ) : activeView === 'acesso' ? (

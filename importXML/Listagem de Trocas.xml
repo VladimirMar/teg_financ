@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataroot xmlns:od="urn:schemas-microsoft-com:officedata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:noNamespaceSchemaLocation="Listagem%20de%20Trocas.xsd" generated="2026-04-08T11:22:01">
+<Listagem_x0020_de_x0020_Trocas>
+<Código>1</Código>
+<Controle>1</Controle>
+<Lista>SUBSTITUIÇÃO DE MONITOR</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>2</Código>
+<Controle>2</Controle>
+<Lista>SUBSTITUIÇÃO DE CONDUTOR</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>3</Código>
+<Controle>3</Controle>
+<Lista>SUBSTITUIÇÃO DE VEÍCULO</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>4</Código>
+<Controle>4</Controle>
+<Lista>SUBSTITUIÇÃO DE CONDUTOR E DE MONITOR</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>5</Código>
+<Controle>5</Controle>
+<Lista>SUBSTITUIÇÃO DE CONDUTOR E DE VEÍCULO</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>6</Código>
+<Controle>6</Controle>
+<Lista>SUBSTITUIÇÃO DE MONITOR E DE VEÍCULO</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>7</Código>
+<Controle>7</Controle>
+<Lista>SUBSTITUIÇÃO DE CONDUTOR, DE MONITOR E DE VEÍCULO</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>8</Código>
+<Controle>8</Controle>
+<Lista>ALTERAÇÃO DE DRE</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>9</Código>
+<Controle>9</Controle>
+<Lista>CORREÇÃO</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>10</Código>
+<Controle>10</Controle>
+<Lista>INCLUSÃO DE VEÍCULO</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>11</Código>
+<Controle>11</Controle>
+<Lista>REVISÃO DE BANCADA</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>12</Código>
+<Controle>12</Controle>
+<Lista>ALTERAÇÃO DE BANCADA</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>13</Código>
+<Controle>13</Controle>
+<Lista>TROCA DE MODALIDADE</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>14</Código>
+<Controle>14</Controle>
+<Lista>ATUALIZAÇÃO ACESSIBILIDADE</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+<Listagem_x0020_de_x0020_Trocas>
+<Código>15</Código>
+<Controle>15</Controle>
+<Lista>INCLUSÃO DE VEÍCULO A PARTIR DE 01/12/2025</Lista>
+</Listagem_x0020_de_x0020_Trocas>
+</dataroot>

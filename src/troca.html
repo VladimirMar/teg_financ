@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro de tipo de troca</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
+    <main class="dsc-access-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-management-layout">
+            <div class="dsc-access-toolbar">
+              <form class="dsc-access-filter-form" id="troca-filter-form">
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-troca-button">Inserir registro</button>
+                <input class="dsc-form-control dsc-access-filter-input" id="troca-search" type="text" placeholder="Filtrar por codigo, controle ou descricao" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-troca-filter-button">Limpar</button>
+              </form>
+            </div>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="troca-form">
+              <h2 id="troca-form-title">Novo registro</h2>
+
+              <div class="dsc-form-row">
+                <label class="dsc-field-group" for="troca-codigo">
+                  <span>Codigo</span>
+                  <input class="dsc-form-control" id="troca-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
+                  <div class="dsc-form-error" id="troca-codigo-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="troca-controle">
+                  <span>Controle</span>
+                  <input class="dsc-form-control" id="troca-controle" type="text" inputmode="numeric" placeholder="Digite o controle" />
+                  <div class="dsc-form-error" id="troca-controle-error"></div>
+                </label>
+              </div>
+
+              <label class="dsc-field-group" for="troca-lista">
+                <span>Descricao</span>
+                <input class="dsc-form-control" id="troca-lista" type="text" placeholder="DESCRICAO DO TIPO DE TROCA" maxlength="255" />
+                <div class="dsc-form-error" id="troca-lista-error"></div>
+              </label>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-troca-button">Salvar tipo de troca</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-troca-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="troca-form-feedback"></p>
+            </form>
+
+            <div class="dsc-card dsc-access-grid-card">
+              <div class="dsc-access-grid-header">
+                <h2>Registros cadastrados</h2>
+                <span id="troca-total"></span>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-troca-codigo-button">
+                          Codigo <span id="sort-troca-codigo-indicator">↑</span>
+                        </button>
+                      </th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-troca-controle-button">
+                          Controle <span id="sort-troca-controle-indicator">↕</span>
+                        </button>
+                      </th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-troca-lista-button">
+                          Descricao <span id="sort-troca-lista-indicator">↕</span>
+                        </button>
+                      </th>
+                      <th class="dsc-grid-actions-column">Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="troca-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="troca-empty-state">Nenhum tipo de troca encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="troca-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-troca-page-button">Anterior</button>
+                <span id="troca-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-troca-page-button">Proxima</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('troca-form');
+      const codigoInput = document.getElementById('troca-codigo');
+      const controleInput = document.getElementById('troca-controle');
+      const listaInput = document.getElementById('troca-lista');
+      const codigoError = document.getElementById('troca-codigo-error');
+      const controleError = document.getElementById('troca-controle-error');
+      const listaError = document.getElementById('troca-lista-error');
+      const feedback = document.getElementById('troca-form-feedback');
+      const gridFeedback = document.getElementById('troca-grid-feedback');
+      const insertButton = document.getElementById('insert-troca-button');
+      const cancelButton = document.getElementById('cancel-troca-button');
+      const filterForm = document.getElementById('troca-filter-form');
+      const clearFilterButton = document.getElementById('clear-troca-filter-button');
+      const searchInput = document.getElementById('troca-search');
+      const gridBody = document.getElementById('troca-grid-body');
+      const emptyState = document.getElementById('troca-empty-state');
+      const totalLabel = document.getElementById('troca-total');
+      const previousPageButton = document.getElementById('previous-troca-page-button');
+      const nextPageButton = document.getElementById('next-troca-page-button');
+      const paginationInfo = document.getElementById('troca-pagination-info');
+      const sortCodigoButton = document.getElementById('sort-troca-codigo-button');
+      const sortControleButton = document.getElementById('sort-troca-controle-button');
+      const sortListaButton = document.getElementById('sort-troca-lista-button');
+      const sortCodigoIndicator = document.getElementById('sort-troca-codigo-indicator');
+      const sortControleIndicator = document.getElementById('sort-troca-controle-indicator');
+      const sortListaIndicator = document.getElementById('sort-troca-lista-indicator');
+      const formTitle = document.getElementById('troca-form-title');
+      const saveButton = document.getElementById('save-troca-button');
+      const statusBanner = document.getElementById('status-banner');
+
+      const pageSize = 5;
+      let currentPage = 1;
+      let totalPages = 1;
+      let currentSearch = '';
+      let currentSortBy = 'codigo';
+      let currentSortDirection = 'asc';
+      let editingCodigo = null;
+      let bannerTimeoutId = null;
+
+      const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
+
+      const normalizeLista = (value) => value
+        .replace(/\s+/g, ' ')
+        .trimStart()
+        .toUpperCase()
+        .slice(0, 255);
+
+      const resetMessages = () => {
+        codigoError.textContent = '';
+        controleError.textContent = '';
+        listaError.textContent = '';
+        feedback.textContent = '';
+        feedback.className = 'dsc-feedback';
+      };
+
+      const setGridMessage = (message, tone = '') => {
+        gridFeedback.textContent = message;
+        gridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          gridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const showBanner = (message, tone = 'success') => {
+        if (bannerTimeoutId) {
+          window.clearTimeout(bannerTimeoutId);
+        }
+
+        statusBanner.textContent = message;
+        statusBanner.className = `dsc-status-banner dsc-status-banner-${tone}`;
+
+        bannerTimeoutId = window.setTimeout(() => {
+          statusBanner.className = 'dsc-status-banner dsc-hidden';
+          statusBanner.textContent = '';
+        }, 3500);
+      };
+
+      const showForm = (isEditing = false) => {
+        form.classList.remove('dsc-hidden');
+        formTitle.textContent = isEditing ? 'Alteracao de tipo de troca' : 'Cadastro de tipo de troca';
+        saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar tipo de troca';
+      };
+
+      const hideForm = () => {
+        form.classList.add('dsc-hidden');
+        form.reset();
+        editingCodigo = null;
+        resetMessages();
+      };
+
+      const buildUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          pageSize: String(pageSize),
+          sortBy: currentSortBy,
+          sortDirection: currentSortDirection,
+        });
+
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+
+        return `/api/troca?${params.toString()}`;
+      };
+
+      const renderGrid = (items) => {
+        gridBody.innerHTML = '';
+
+        if (!items.length) {
+          emptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        emptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.codigo}</td>
+            <td>${item.controle}</td>
+            <td>${item.lista}</td>
+            <td>
+              <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}">Excluir</button>
+              </div>
+            </td>
+          `;
+          row.dataset.item = JSON.stringify(item);
+          gridBody.appendChild(row);
+        });
+      };
+
+      const updateSortIndicators = () => {
+        sortCodigoIndicator.textContent = currentSortBy === 'codigo' ? '↑' : '↕';
+        sortControleIndicator.textContent = currentSortBy === 'controle' ? '↑' : '↕';
+        sortListaIndicator.textContent = currentSortBy === 'lista' ? (currentSortDirection === 'asc' ? '↑' : '↓') : '↕';
+      };
+
+      const updatePagination = (totalItems) => {
+        totalLabel.textContent = `${totalItems} item(ns) encontrados`;
+        paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        previousPageButton.disabled = currentPage <= 1;
+        nextPageButton.disabled = currentPage >= totalPages;
+        updateSortIndicators();
+      };
+
+      const loadItems = async () => {
+        setGridMessage('Carregando tipos de troca...');
+
+        try {
+          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar tipos de troca.');
+          }
+
+          totalPages = payload.totalPages || 1;
+          currentPage = payload.page || 1;
+          renderGrid(payload.items || []);
+          updatePagination(payload.total || 0);
+          setGridMessage(payload.items && payload.items.length ? '' : 'Nenhum tipo de troca encontrado.');
+        } catch (error) {
+          gridBody.innerHTML = '';
+          emptyState.classList.remove('dsc-hidden');
+          setGridMessage(error instanceof Error ? error.message : 'Falha ao carregar tipos de troca.', 'error');
+        }
+      };
+
+      const startInsert = () => {
+        editingCodigo = null;
+        form.reset();
+        resetMessages();
+        showForm(false);
+      };
+
+      const startEdit = (item) => {
+        editingCodigo = item.codigo;
+        codigoInput.value = item.codigo || '';
+        controleInput.value = item.controle || '';
+        listaInput.value = item.lista || '';
+        resetMessages();
+        showForm(true);
+      };
+
+      const handleDelete = async (item) => {
+        if (!window.confirm(`Excluir o tipo de troca ${item.codigo} - ${item.lista}?`)) {
+          return;
+        }
+
+        setGridMessage(`Excluindo tipo de troca ${item.codigo}...`);
+
+        try {
+          const response = await fetch(`/api/troca/${encodeURIComponent(item.codigo)}`, {
+            method: 'DELETE',
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao excluir tipo de troca.');
+          }
+
+          setGridMessage('Tipo de troca excluido com sucesso.', 'success');
+          showBanner(`Tipo de troca ${item.codigo} excluido com sucesso.`, 'success');
+          if (editingCodigo === item.codigo) {
+            hideForm();
+          }
+          await loadItems();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao excluir tipo de troca.';
+          setGridMessage(message, 'error');
+          showBanner(message, 'error');
+        }
+      };
+
+      gridBody.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (!(target instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const action = target.dataset.action;
+        const row = target.closest('tr');
+        const rawItem = row ? row.dataset.item : '';
+
+        if (!rawItem) {
+          return;
+        }
+
+        const item = JSON.parse(rawItem);
+
+        if (action === 'edit') {
+          startEdit(item);
+          return;
+        }
+
+        if (action === 'delete') {
+          void handleDelete(item);
+        }
+      });
+
+      codigoInput.addEventListener('input', () => {
+        codigoInput.value = normalizeCodigo(codigoInput.value);
+      });
+
+      controleInput.addEventListener('input', () => {
+        controleInput.value = normalizeCodigo(controleInput.value);
+      });
+
+      listaInput.addEventListener('input', () => {
+        listaInput.value = normalizeLista(listaInput.value);
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const codigo = normalizeCodigo(codigoInput.value);
+        const controle = normalizeCodigo(controleInput.value);
+        const lista = normalizeLista(listaInput.value);
+        let hasError = false;
+
+        resetMessages();
+        codigoInput.value = codigo;
+        controleInput.value = controle;
+        listaInput.value = lista;
+
+        if (!codigo) {
+          codigoError.textContent = 'Informe o codigo.';
+          hasError = true;
+        }
+
+        if (!controle) {
+          controleError.textContent = 'Informe o controle.';
+          hasError = true;
+        }
+
+        if (!lista) {
+          listaError.textContent = 'Informe a lista.';
+          hasError = true;
+        }
+
+        if (hasError) {
+          feedback.textContent = 'Corrija os campos para continuar.';
+          feedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        try {
+          const response = await fetch(editingCodigo ? `/api/troca/${encodeURIComponent(editingCodigo)}` : '/api/troca', {
+            method: editingCodigo ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ codigo, controle, lista }),
+          });
+
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao gravar tipo de troca.');
+          }
+
+          const savedItem = payload.item;
+          feedback.textContent = editingCodigo
+            ? `Tipo de troca ${savedItem.codigo} alterado com sucesso.`
+            : `Tipo de troca ${savedItem.codigo} gravado com sucesso.`;
+          feedback.classList.add('dsc-feedback-success');
+          showBanner(feedback.textContent, 'success');
+          hideForm();
+          await loadItems();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Falha ao gravar tipo de troca.';
+          feedback.textContent = message;
+          feedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
+
+      insertButton.addEventListener('click', startInsert);
+      cancelButton.addEventListener('click', hideForm);
+
+      filterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentSearch = searchInput.value.trim();
+        currentPage = 1;
+        void loadItems();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      previousPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage -= 1;
+        void loadItems();
+      });
+
+      nextPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage += 1;
+        void loadItems();
+      });
+
+      const handleSort = (field) => {
+        currentSortDirection = field === 'lista'
+          ? (currentSortBy === field && currentSortDirection === 'asc' ? 'desc' : 'asc')
+          : 'asc';
+        currentSortBy = field;
+        currentPage = 1;
+        void loadItems();
+      };
+
+      sortCodigoButton.addEventListener('click', () => handleSort('codigo'));
+      sortControleButton.addEventListener('click', () => handleSort('controle'));
+      sortListaButton.addEventListener('click', () => handleSort('lista'));
+
+      hideForm();
+      updateSortIndicators();
+      void loadItems();
+    </script>
+  </body>
+</html>
