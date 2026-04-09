@@ -1,0 +1,796 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataroot xmlns:od="urn:schemas-microsoft-com:officedata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:noNamespaceSchemaLocation="marca-modelo.xsd" generated="2026-04-09T08:14:14">
+<marca-modelo/>
+<marca-modelo>
+<marca_modelo>AGRALE/8.5NEOBUS THUNDER</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>AGRALE/BUSSCAR MICRUSS O</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>AGRALE/MASCA  GRANMICRO O</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>AGRALE/MASCA GRMICRO E O</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>AGRALE/MAXIBUS ASTOR</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>AGRALE/MPOLO SEN MIDI ON</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>AGRALE/NEOBUS THUNDER</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMP GREENCAR ES</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER CLASSYVAN</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER EUROLAF P</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER GREENCAR ES</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER JAEDI MIC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER M33M 2.3</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER M33M 23S</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER M33M HDI</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER M35L HDI</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER M35LH 2.3</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER MBS 33M16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER REVES ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>CITROEN/JUMPER TRA 35ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/ DUCA ESCOLAR FFBM25</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUC M APLIKART M20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUC TRANSFORMERS TE</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCA ESCOLAR FFBM2</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCA ESCOLAR FFBM25</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCA ESCOLAR FFBM26</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCA15 FFORMA MIC20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCACOMFFORMA MIC21</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCAMA FFORMA MIC23</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO 15REFAMMIC13</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO C REFAMMIC12</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO COMBINATO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO ESCOLAR FFBM25</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO FABUSFORMA</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO GCASA MIC1</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO GREENCAR MO1</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO GUERRA MC 16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO GUERRA MC 20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO M BUS RONTAN</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO M EMBRAFI 16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO M JAEDI OESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO M REFAMMIC11</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MARTICAR 16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MARTICAR 17</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MAXI JAEDI T</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MC TCA MIC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MINIBUS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MINIBUS T</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MINIBUSQ</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MODIFICAR TP</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MU CIRILO A3</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MUL ATENA MI</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MUL REVESCAP</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MULT JAEDI T</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MULT TAKO MI</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MULTI</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO MULTI REVESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO NIKS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO NIKS 16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO NIKS MIC 20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO NIKS MULT 16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO REVESCAP</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO TRANSFORM P</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCATO VIPK</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/DUCTAO MINIBUS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>FIAT/FIAT</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FIAT DUCATO ENGESIGEXE</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FIAT DUCATO ENGESIGMIC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FIAT DUCATO FFORMA ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FIAT DUCATO FFORMA M09</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FIAT DUCATO GREENCACES</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FIAT DUCATO M NIKS PAS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FIAT DUCATO TRANSF MP</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FORD TRANSIT 350L BUS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FORD TRANSIT 410 B</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FORD TRANSIT 460 B</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FORD TRANSIT 460 B AT</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FORD TRANSIT FFORMA ES</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FORD TRANSIT GUERRA E</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FORD TRANSIT NIKS MO17</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FORD TRANSIT REVES 16L</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FORD TRANSIT VIPK PAS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/FORD TRST MODIFICAR TP</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/HYUNDAI H100 GLS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/JINBEI FABUSFORMA M35</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/JINBEI TOPIC L</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/JINBEI TOPIC SL</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/KIA BESTA GS GRAND2</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M BENZ 415 NIKS PAS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M. BENZ SPRINTER FFB ES</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M. BENZ311CDI  SPRINTERM</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M. BENZ313CDI SPRINTERM</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 311 CDI FFBM 27</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 311 NIKS PAS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 313 CDI FFBM 28</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 415 GUERRA MC20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 415 TRANSF PAS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 415CDI VIPK ACE</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 415CDISPRINTERM</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 415DISPRINTERM</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 415SPRINTE VIPK</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 416 FFORMA P</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 416 GUERRA ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 416 NIKS ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 416 VIPK ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 416CDI VIPK M20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 416CDISPRINTERM</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 417 GUERRA 16P</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 417 GUERRA ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 417 SPRINTER M</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 417 TAKO PAS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 515CDISPRINTERM</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ 517 GUERRA ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ CDI SPR TCA MIC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ COMIL BELLA O</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ GUERRA MIC 16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ GUERRA MIC 20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ NIKS MIC 20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ SPRI RIBEIRO M2</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ SPRI RIBEIRO MI</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ SPRINGUERRAMB20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ SPRINTER CLASSY</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ SPRINTER FFB</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ SPRINTER FFB ES</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ SPRINTER FFORMA</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ SPRINTER MARTM4</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ SPRINTER MARTM5</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ SPRINTER NIKS16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ TAKO SPRINM 16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ311 RIBEIRO MO18</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ313C EMBRAFI 16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ313CDI REVESCAP</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ313CDI SPRINTERM</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ313CDI TRANS ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ413C EMBRAFI 19</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ413CDI REVESCAPM</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ413CDI SPRINTERM</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZ413SPRI TRANS MO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/M.BENZSPRINT GCASAMIC1</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/MB S312 FFORMA ESCOLAR</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>I/MBENZ MPOLO VICINO ON</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IMP/FIAT DUCATO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IMP/FIAT DUCATO MINIBUS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IMP/MBENZ 312D SPRINTER M</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/5912 NEOBUS TBOY</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/CITYCLASS 6013</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/CITYCLASS 6013 IF</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/CITYCLASS 70C16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/CITYCLASS 70C17</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/CITYCLASS 70C17HD</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/DAILY 45S17MINIBUS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/DAILY GCASA MIC1</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/DAILY GREENCAR MO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/DAILY NIKS MIC 20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/DAILY45S16 MINIBUS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/DAILY50 GUERRA ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/MASCA GRANMINI M</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/MPOLO FRATELLO MO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECO/WAYCLASS 70C17HDE</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>IVECOFIAT/D4012 MAXIVAN1</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>M.BENZ/CAIO APACHES 21 U</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>M.BENZ/COMIL PIA O</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO VOLARE A8 MO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE A5 ESON</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE A5 MO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE A6 ON</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE A8 ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE A8 ON</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE ESCOLAR</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE LOTACAO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE MV8L EO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V5HD ON</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V6 ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V6 MO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V6 ON</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V8 ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V8 MO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V8 ON</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V8L EM</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V8L EO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V8L EOQ</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V8L ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V8L ON</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE V9L EO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE W7 EO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE W8 ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE W8 MO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE W8 ON</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE W9 ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE W9 ON</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MARCOPOLO/VOLARE W9C ON</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MERCEDES BENZ SPRINTER NIK516</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MPOLO/VOLARE ACCESS EO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MPOLO/VOLARE CINCO ESM</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>MPOLO/VOLARE CINCO FRM</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/ BOXER M3302 23S</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOX GREENCAR MO2</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOX GUERRA MIC20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOX MARIMAR PASS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOX MODIFICAR TP</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER 16 LUG</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER CIRILO M</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER EMBRAFI 16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER FFBM 32</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER HDI TCA MC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER JAEDI TUR</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER M3303 HDI</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER M330M 2.3</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER M330M 23S</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER M33OM HDI</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER M350L HDI</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER M350LH 2.3</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER M350LH 23S</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER MARTICAR16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER NIKS 16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER NIKS CAP P</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER NIKS MO20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER REVESCAP17</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER TECFORM TP</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER TRANS ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>PEUGEOT/BOXER V350LH HDI</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/M REVESCAP L3H2</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MAST MARTICAR 19</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER BUS16 DCI</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER CAVENA400</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER CLASSYVAN</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER EUR ESCL2</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER EUR STDL2</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER EUR VIPL3</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER EUROLAF P</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER FFORMA ES</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER FFORMA.ES</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER GCASAMIC1</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER GUERRA16P</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER INOVA BUS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER MART L3</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER MBUS L3H2</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER MINIBUS16</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER NIKS 16 P</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER NIKS MO20</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER PL2 VIPKP</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER PL3 VIPKP</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER RONTANESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER TRANS ESC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER V A6 PAS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>RENAULT/MASTER V NIKS P</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VOLKS/BUSSCAR MICRUSS O</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/8150 NEOBUS TBOY MIC</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/8150 NEOBUS TH WAY E</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/8150NEOBUS THUNDERBOY</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/9.150 IBRAVA APOLLO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/9.150 MCO MAXIBUS</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/9150 FFORMA ONIX UB01</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/9150 NEOBUS TH WAY E</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/9150 NEOBUS THUNDER</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/INDUSCAR PICOLLO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/MASCA GRANMICRO O</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/MDO 300 URBANO M</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/MPOLO FRATELLO LOT</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/MPOLO SENIOR GVO</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/NEOBUS THUNDER</marca_modelo>
+</marca-modelo>
+<marca-modelo>
+<marca_modelo>VW/NEOBUS THUNDER WAY</marca_modelo>
+</marca-modelo>
+</dataroot>

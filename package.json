@@ -13,7 +13,8 @@
     "smoke:api": "node scripts/smoke-api.mjs all",
     "smoke:api:condutor": "node scripts/smoke-api.mjs condutor",
     "smoke:api:credenciada": "node scripts/smoke-api.mjs credenciada",
-    "smoke:api:veiculo": "node scripts/smoke-api.mjs veiculo"
+    "smoke:api:veiculo": "node scripts/smoke-api.mjs veiculo",
+    "smoke:api:marca-modelo": "node scripts/smoke-api.mjs marca-modelo"
   },
   "dependencies": {
     "fast-xml-parser": "^5.5.10",

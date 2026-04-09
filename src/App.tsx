@@ -4,13 +4,16 @@ import './App.css'
 import { authenticate } from './services/auth'
 import { createDreItem, deleteDreItem, listDreItemsPaginated, updateDreItem } from './services/dre'
 import type { DreItem } from './services/dre'
+import { createMarcaModeloItem, deleteMarcaModeloItem, listMarcaModeloItemsPaginated, updateMarcaModeloItem } from './services/marcaModelo'
+import type { MarcaModeloItem } from './services/marcaModelo'
 import { createSeguradoraItem, deleteSeguradoraItem, listSeguradoraItemsPaginated, updateSeguradoraItem } from './services/seguradora'
 import type { SeguradoraItem } from './services/seguradora'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo'
+type ActiveView = 'inicio' | 'dre' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
+type MarcaModeloSortField = 'codigo' | 'descricao'
 type SeguradoraSortField = 'codigo' | 'controle' | 'descricao'
 
 type StoredSession = {
@@ -135,6 +138,25 @@ function App() {
   const [dreSortBy, setDreSortBy] = useState<DreSortField>('codigo')
   const [dreSortDirection, setDreSortDirection] = useState<DreSortDirection>('asc')
   const deferredDreSearch = useDeferredValue(dreSearch)
+  const [marcaModeloItems, setMarcaModeloItems] = useState<MarcaModeloItem[]>([])
+  const [marcaModeloCodigo, setMarcaModeloCodigo] = useState('')
+  const [marcaModeloDescricao, setMarcaModeloDescricao] = useState('')
+  const [marcaModeloCodigoError, setMarcaModeloCodigoError] = useState('')
+  const [marcaModeloDescricaoError, setMarcaModeloDescricaoError] = useState('')
+  const [marcaModeloStatusMessage, setMarcaModeloStatusMessage] = useState('')
+  const [marcaModeloStatusTone, setMarcaModeloStatusTone] = useState<StatusTone>('idle')
+  const [isLoadingMarcaModelo, setIsLoadingMarcaModelo] = useState(false)
+  const [isSavingMarcaModelo, setIsSavingMarcaModelo] = useState(false)
+  const [isDeletingMarcaModelo, setIsDeletingMarcaModelo] = useState(false)
+  const [isMarcaModeloFormVisible, setIsMarcaModeloFormVisible] = useState(false)
+  const [editingMarcaModeloCodigo, setEditingMarcaModeloCodigo] = useState<string | null>(null)
+  const [marcaModeloSearch, setMarcaModeloSearch] = useState('')
+  const [marcaModeloPage, setMarcaModeloPage] = useState(1)
+  const [marcaModeloTotalItems, setMarcaModeloTotalItems] = useState(0)
+  const [marcaModeloTotalPages, setMarcaModeloTotalPages] = useState(1)
+  const [marcaModeloSortBy, setMarcaModeloSortBy] = useState<MarcaModeloSortField>('codigo')
+  const [marcaModeloSortDirection, setMarcaModeloSortDirection] = useState<DreSortDirection>('asc')
+  const deferredMarcaModeloSearch = useDeferredValue(marcaModeloSearch)
   const [seguradoraItems, setSeguradoraItems] = useState<SeguradoraItem[]>([])
   const [seguradoraCodigo, setSeguradoraCodigo] = useState('')
   const [seguradoraControle, setSeguradoraControle] = useState('')
@@ -227,6 +249,39 @@ function App() {
     }
   }, [deferredSeguradoraSearch, seguradoraSortBy, seguradoraSortDirection])
 
+  const loadMarcaModeloItems = useCallback(async (pageToLoad: number) => {
+    setIsLoadingMarcaModelo(true)
+    setMarcaModeloStatusMessage('Carregando registros de marca/modelo...')
+    setMarcaModeloStatusTone('idle')
+
+    try {
+      const result = await listMarcaModeloItemsPaginated({
+        search: deferredMarcaModeloSearch,
+        page: pageToLoad,
+        pageSize: DRE_PAGE_SIZE,
+        sortBy: marcaModeloSortBy,
+        sortDirection: marcaModeloSortDirection,
+      })
+
+      setMarcaModeloItems(result.items)
+      setMarcaModeloTotalItems(result.total)
+      setMarcaModeloTotalPages(result.totalPages)
+      setMarcaModeloPage(result.page)
+      setMarcaModeloSortBy(result.sortBy)
+      setMarcaModeloSortDirection(result.sortDirection)
+      setMarcaModeloStatusMessage(result.items.length ? '' : 'Nenhum registro encontrado na tabela marca/modelo.')
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Falha ao carregar os registros de marca/modelo.'
+
+      setMarcaModeloStatusTone('error')
+      setMarcaModeloStatusMessage(message)
+    } finally {
+      setIsLoadingMarcaModelo(false)
+    }
+  }, [deferredMarcaModeloSearch, marcaModeloSortBy, marcaModeloSortDirection])
+
   useEffect(() => {
     if (!session || activeView !== 'dre') {
       return
@@ -244,12 +299,24 @@ function App() {
   }, [activeView, loadSeguradoraItems, seguradoraPage, session])
 
   useEffect(() => {
+    if (!session || activeView !== 'marcaModelo') {
+      return
+    }
+
+    void loadMarcaModeloItems(marcaModeloPage)
+  }, [activeView, loadMarcaModeloItems, marcaModeloPage, session])
+
+  useEffect(() => {
     setDrePage(1)
   }, [deferredDreSearch])
 
   useEffect(() => {
     setSeguradoraPage(1)
   }, [deferredSeguradoraSearch])
+
+  useEffect(() => {
+    setMarcaModeloPage(1)
+  }, [deferredMarcaModeloSearch])
 
   const validateEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
@@ -503,6 +570,168 @@ function App() {
       setDreStatusMessage(message)
     } finally {
       setIsDeletingDre(false)
+    }
+  }
+
+  const resetMarcaModeloForm = () => {
+    setMarcaModeloCodigo('')
+    setMarcaModeloDescricao('')
+    setMarcaModeloCodigoError('')
+    setMarcaModeloDescricaoError('')
+    setEditingMarcaModeloCodigo(null)
+  }
+
+  const handleStartInsertMarcaModelo = () => {
+    resetMarcaModeloForm()
+    setMarcaModeloStatusTone('idle')
+    setMarcaModeloStatusMessage('')
+    setIsMarcaModeloFormVisible(true)
+  }
+
+  const handleFilterMarcaModeloSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setMarcaModeloPage(1)
+    setMarcaModeloStatusMessage('Aplicando filtro de marca/modelo...')
+    setMarcaModeloStatusTone('idle')
+  }
+
+  const handleClearMarcaModeloFilter = () => {
+    setMarcaModeloSearch('')
+    setMarcaModeloPage(1)
+  }
+
+  const handleSortMarcaModelo = (field: MarcaModeloSortField) => {
+    setMarcaModeloPage(1)
+    setMarcaModeloSortBy((currentField) => {
+      if (currentField === field) {
+        setMarcaModeloSortDirection((currentDirection) => currentDirection === 'asc' ? 'desc' : 'asc')
+        return currentField
+      }
+
+      setMarcaModeloSortDirection('asc')
+      return field
+    })
+  }
+
+  const getMarcaModeloSortIndicator = (field: MarcaModeloSortField) => {
+    if (marcaModeloSortBy !== field) {
+      return '↕'
+    }
+
+    return marcaModeloSortDirection === 'asc' ? '↑' : '↓'
+  }
+
+  const handleStartEditMarcaModelo = (item: MarcaModeloItem) => {
+    setEditingMarcaModeloCodigo(item.codigo)
+    setMarcaModeloCodigo(item.codigo)
+    setMarcaModeloDescricao(item.descricao)
+    setMarcaModeloCodigoError('')
+    setMarcaModeloDescricaoError('')
+    setMarcaModeloStatusTone('idle')
+    setMarcaModeloStatusMessage(`Alterando registro ${item.codigo}.`)
+    setIsMarcaModeloFormVisible(true)
+  }
+
+  const handleCancelMarcaModeloForm = () => {
+    resetMarcaModeloForm()
+    setIsMarcaModeloFormVisible(false)
+    setMarcaModeloStatusTone('idle')
+    setMarcaModeloStatusMessage('')
+  }
+
+  const handleCreateMarcaModelo = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const normalizedCodigo = marcaModeloCodigo.trim()
+    const normalizedDescricao = marcaModeloDescricao.trim()
+    const editingCodigo = editingMarcaModeloCodigo
+    let hasError = false
+
+    setMarcaModeloCodigoError('')
+    setMarcaModeloDescricaoError('')
+
+    if (!normalizedCodigo) {
+      setMarcaModeloCodigoError('Codigo e obrigatorio.')
+      hasError = true
+    }
+
+    if (!normalizedDescricao) {
+      setMarcaModeloDescricaoError('Descricao e obrigatoria.')
+      hasError = true
+    }
+
+    if (hasError) {
+      setMarcaModeloStatusTone('error')
+      setMarcaModeloStatusMessage('Corrija os campos de marca/modelo para continuar.')
+      return
+    }
+
+    setIsSavingMarcaModelo(true)
+    setMarcaModeloStatusTone('idle')
+    setMarcaModeloStatusMessage(editingCodigo ? 'Alterando registro de marca/modelo...' : 'Gravando registro de marca/modelo...')
+
+    try {
+      const savedItem = editingCodigo
+        ? await updateMarcaModeloItem(editingCodigo, {
+            codigo: normalizedCodigo,
+            descricao: normalizedDescricao,
+          })
+        : await createMarcaModeloItem({
+            codigo: normalizedCodigo,
+            descricao: normalizedDescricao,
+          })
+
+      void savedItem
+      resetMarcaModeloForm()
+      setIsMarcaModeloFormVisible(false)
+      setMarcaModeloStatusTone('success')
+      setMarcaModeloStatusMessage(editingCodigo ? 'Registro de marca/modelo alterado com sucesso.' : 'Registro de marca/modelo cadastrado com sucesso.')
+      await loadMarcaModeloItems(editingCodigo ? marcaModeloPage : 1)
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Falha ao cadastrar registro de marca/modelo.'
+
+      setMarcaModeloStatusTone('error')
+      setMarcaModeloStatusMessage(message)
+    } finally {
+      setIsSavingMarcaModelo(false)
+    }
+  }
+
+  const handleDeleteMarcaModelo = async (item: MarcaModeloItem) => {
+    const confirmed = window.confirm(`Excluir o registro ${item.codigo} - ${item.descricao}?`)
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsDeletingMarcaModelo(true)
+    setMarcaModeloStatusTone('idle')
+    setMarcaModeloStatusMessage(`Excluindo registro ${item.codigo}...`)
+
+    try {
+      const deletedCodigo = await deleteMarcaModeloItem(item.codigo)
+      setMarcaModeloItems((currentItems) => currentItems.filter((currentItem) => currentItem.codigo !== deletedCodigo))
+
+      if (editingMarcaModeloCodigo === item.codigo) {
+        resetMarcaModeloForm()
+        setIsMarcaModeloFormVisible(false)
+      }
+
+      setMarcaModeloStatusTone('success')
+      setMarcaModeloStatusMessage('Registro de marca/modelo excluido com sucesso.')
+      const nextPage = marcaModeloItems.length === 1 && marcaModeloPage > 1 ? marcaModeloPage - 1 : marcaModeloPage
+      await loadMarcaModeloItems(nextPage)
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Falha ao excluir registro de marca/modelo.'
+
+      setMarcaModeloStatusTone('error')
+      setMarcaModeloStatusMessage(message)
+    } finally {
+      setIsDeletingMarcaModelo(false)
     }
   }
 
@@ -764,6 +993,8 @@ function App() {
 
   const canGoToPreviousDrePage = drePage > 1
   const canGoToNextDrePage = drePage < dreTotalPages
+  const canGoToPreviousMarcaModeloPage = marcaModeloPage > 1
+  const canGoToNextMarcaModeloPage = marcaModeloPage < marcaModeloTotalPages
   const canGoToPreviousSeguradoraPage = seguradoraPage > 1
   const canGoToNextSeguradoraPage = seguradoraPage < seguradoraTotalPages
 
@@ -788,6 +1019,12 @@ function App() {
               onClick={() => setActiveView('dre')}
             >
               DRE
+            </li>
+            <li
+              className={`menu-item ${activeView === 'marcaModelo' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('marcaModelo')}
+            >
+              Marca/Modelo
             </li>
             <li
               className={`menu-item ${activeView === 'seguradora' ? 'menu-item-active' : ''}`}
@@ -1019,6 +1256,165 @@ function App() {
                     className="secondary-button management-pagination-button"
                     onClick={() => setDrePage((currentPage) => currentPage + 1)}
                     disabled={!canGoToNextDrePage || isLoadingDre}
+                  >
+                    Proxima
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : activeView === 'marcaModelo' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Cadastro administrativo</p>
+              <h2 id="content-title">Tabela Marca/Modelo</h2>
+              <p className="content-description">
+                Cadastre e consulte os registros da tabela de marca/modelo importada do XML. Os campos codigo e descricao sao obrigatorios e nao podem se repetir.
+              </p>
+            </div>
+
+            <div className="management-layout">
+              <div className="management-toolbar">
+                <button
+                  type="button"
+                  className="primary-button dre-insert-button"
+                  onClick={handleStartInsertMarcaModelo}
+                  disabled={isSavingMarcaModelo || isDeletingMarcaModelo}
+                >
+                  Inserir registro
+                </button>
+
+                <form className="management-filter-form" onSubmit={handleFilterMarcaModeloSubmit}>
+                  <input
+                    className="management-filter-input"
+                    type="text"
+                    placeholder="Filtrar por codigo ou descricao"
+                    value={marcaModeloSearch}
+                    onChange={(event) => setMarcaModeloSearch(event.target.value)}
+                  />
+                  <button type="submit" className="secondary-button management-filter-button">
+                    Filtrar
+                  </button>
+                  <button type="button" className="secondary-button management-filter-button" onClick={handleClearMarcaModeloFilter}>
+                    Limpar
+                  </button>
+                </form>
+              </div>
+
+              {isMarcaModeloFormVisible ? (
+                <form className="management-card management-form dre-form" onSubmit={handleCreateMarcaModelo} noValidate>
+                  <h2>{editingMarcaModeloCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+
+                  <label className="field-group" htmlFor="marca-modelo-codigo">
+                    <span>Codigo</span>
+                    <input
+                      id="marca-modelo-codigo"
+                      name="codigo"
+                      type="text"
+                      value={marcaModeloCodigo}
+                      onChange={(event) => setMarcaModeloCodigo(event.target.value)}
+                      disabled={isSavingMarcaModelo}
+                      aria-invalid={Boolean(marcaModeloCodigoError)}
+                    />
+                    {marcaModeloCodigoError ? <strong className="field-error">{marcaModeloCodigoError}</strong> : null}
+                  </label>
+
+                  <label className="field-group" htmlFor="marca-modelo-descricao">
+                    <span>Descricao</span>
+                    <input
+                      id="marca-modelo-descricao"
+                      name="descricao"
+                      type="text"
+                      value={marcaModeloDescricao}
+                      onChange={(event) => setMarcaModeloDescricao(event.target.value)}
+                      disabled={isSavingMarcaModelo}
+                      aria-invalid={Boolean(marcaModeloDescricaoError)}
+                    />
+                    {marcaModeloDescricaoError ? <strong className="field-error">{marcaModeloDescricaoError}</strong> : null}
+                  </label>
+
+                  <div className="button-row dre-button-row">
+                    <button type="submit" className="primary-button" disabled={isSavingMarcaModelo}>
+                      {isSavingMarcaModelo ? 'Salvando...' : editingMarcaModeloCodigo ? 'Salvar alteracao' : 'Salvar marca/modelo'}
+                    </button>
+                    <button type="button" className="secondary-button" onClick={handleCancelMarcaModeloForm} disabled={isSavingMarcaModelo}>
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+
+              <div className="management-card management-grid-card dre-list-card">
+                <div className="management-grid-header">
+                  <h2>Registros cadastrados</h2>
+                  <span>
+                    {isLoadingMarcaModelo ? 'Atualizando...' : `${marcaModeloTotalItems} item(ns) encontrados`}
+                  </span>
+                </div>
+
+                <div className="management-grid-wrapper">
+                  <table className="dre-table">
+                    <thead>
+                      <tr>
+                        <th>
+                          <button type="button" className="dre-sort-button" onClick={() => handleSortMarcaModelo('codigo')}>
+                            Codigo <span>{getMarcaModeloSortIndicator('codigo')}</span>
+                          </button>
+                        </th>
+                        <th>
+                          <button type="button" className="dre-sort-button" onClick={() => handleSortMarcaModelo('descricao')}>
+                            Descricao <span>{getMarcaModeloSortIndicator('descricao')}</span>
+                          </button>
+                        </th>
+                        <th className="dre-actions-column">Acoes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {marcaModeloItems.map((item) => (
+                        <tr key={item.codigo}>
+                          <td>{item.codigo}</td>
+                          <td>{item.descricao}</td>
+                          <td>
+                            <div className="dre-row-actions">
+                              <button type="button" className="row-action-button row-action-edit" onClick={() => handleStartEditMarcaModelo(item)}>
+                                Alterar
+                              </button>
+                              <button type="button" className="row-action-button row-action-delete" onClick={() => handleDeleteMarcaModelo(item)}>
+                                Excluir
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {!isLoadingMarcaModelo && marcaModeloItems.length === 0 ? (
+                    <p className="management-empty-state">Nenhum registro de marca/modelo encontrado.</p>
+                  ) : null}
+                </div>
+
+                <p className={`status-message status-${marcaModeloStatusTone}`} aria-live="polite">
+                  {marcaModeloStatusMessage}
+                </p>
+
+                <div className="management-pagination">
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button"
+                    onClick={() => setMarcaModeloPage((currentPage) => currentPage - 1)}
+                    disabled={!canGoToPreviousMarcaModeloPage || isLoadingMarcaModelo}
+                  >
+                    Anterior
+                  </button>
+                  <span className="management-pagination-info">
+                    Pagina {marcaModeloPage} de {marcaModeloTotalPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button"
+                    onClick={() => setMarcaModeloPage((currentPage) => currentPage + 1)}
+                    disabled={!canGoToNextMarcaModeloPage || isLoadingMarcaModelo}
                   >
                     Proxima
                   </button>

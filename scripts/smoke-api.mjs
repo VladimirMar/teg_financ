@@ -3,7 +3,7 @@ import { dirname } from 'node:path'
 
 const baseUrl = process.env.API_BASE_URL ?? 'http://localhost:3001'
 const reportPath = process.env.SMOKE_REPORT_PATH ?? ''
-const availableSuites = new Set(['all', 'condutor', 'credenciada', 'veiculo'])
+const availableSuites = new Set(['all', 'condutor', 'credenciada', 'veiculo', 'marca-modelo'])
 const suite = (process.argv[2] ?? process.env.SMOKE_SUITE ?? 'all').trim().toLowerCase()
 
 const report = {
@@ -46,6 +46,27 @@ const assert = (condition, message) => {
 
 const compareStrings = (left, right) => left.localeCompare(right, 'pt-BR', { sensitivity: 'base' })
 
+const compareNumericStrings = (left, right) => {
+  const normalizedLeft = String(left ?? '').trim()
+  const normalizedRight = String(right ?? '').trim()
+  const leftIsNumeric = /^\d+$/.test(normalizedLeft)
+  const rightIsNumeric = /^\d+$/.test(normalizedRight)
+
+  if (leftIsNumeric && rightIsNumeric) {
+    return Number(normalizedLeft) - Number(normalizedRight)
+  }
+
+  if (leftIsNumeric && !rightIsNumeric) {
+    return -1
+  }
+
+  if (!leftIsNumeric && rightIsNumeric) {
+    return 1
+  }
+
+  return compareStrings(normalizedLeft, normalizedRight)
+}
+
 const expectSortedBy = (items, fieldName, direction) => {
   for (let index = 1; index < items.length; index += 1) {
     const previousValue = String(items[index - 1]?.[fieldName] ?? '').trim()
@@ -58,6 +79,21 @@ const expectSortedBy = (items, fieldName, direction) => {
     }
 
     assert(comparison >= 0, `${fieldName} fora de ordem decrescente na posicao ${index + 1}.`)
+  }
+}
+
+const expectSortedByNumericString = (items, fieldName, direction) => {
+  for (let index = 1; index < items.length; index += 1) {
+    const previousValue = String(items[index - 1]?.[fieldName] ?? '').trim()
+    const currentValue = String(items[index]?.[fieldName] ?? '').trim()
+    const comparison = compareNumericStrings(previousValue, currentValue)
+
+    if (direction === 'asc') {
+      assert(comparison <= 0, `${fieldName} fora de ordem numerica crescente na posicao ${index + 1}.`)
+      continue
+    }
+
+    assert(comparison >= 0, `${fieldName} fora de ordem numerica decrescente na posicao ${index + 1}.`)
   }
 }
 
@@ -435,6 +471,81 @@ const runVeiculoSmoke = async () => {
   }
 }
 
+const runMarcaModeloSmoke = async () => {
+  console.log('Smoke test da API Marca/Modelo')
+  const suiteReport = recordSuite('marca-modelo')
+
+  try {
+    const baselineImport = await requestJson('/api/marca-modelo/import-xml', {
+      method: 'POST',
+      body: JSON.stringify({ fileName: 'marca-modelo.xml' }),
+    })
+    recordImport(suiteReport, 'baseline-import', baselineImport)
+
+    let listResponse = await requestJson('/api/marca-modelo?page=1&pageSize=5&sortBy=codigo&sortDirection=asc')
+
+    assert(Array.isArray(listResponse.items), 'Listagem de marca/modelo nao retornou items.')
+    assert(listResponse.total > 0, 'Listagem de marca/modelo retornou total zerado.')
+    logStep(`listagem inicial ok com ${listResponse.total} registro(s)`)
+
+    const ascResponse = await requestJson('/api/marca-modelo?page=1&pageSize=5&sortBy=codigo&sortDirection=asc')
+    const descResponse = await requestJson('/api/marca-modelo?page=1&pageSize=5&sortBy=codigo&sortDirection=desc')
+    expectSortedByNumericString(ascResponse.items, 'codigo', 'asc')
+    expectSortedByNumericString(descResponse.items, 'codigo', 'desc')
+    assert(
+      String(ascResponse.items[0]?.codigo ?? '') !== String(descResponse.items[0]?.codigo ?? ''),
+      'Ordenacao asc/desc de marca/modelo retornou o mesmo primeiro registro.',
+    )
+    logStep('ordenacao numerica asc/desc por codigo ok')
+
+    const targetResponse = await requestJson('/api/marca-modelo?page=1&pageSize=1&search=1')
+    assert(targetResponse.total >= 1, 'Registro 1 de marca/modelo nao foi encontrado para o teste.')
+    const originalItem = targetResponse.items.find((item) => item.codigo === '1') ?? targetResponse.items[0]
+    assert(originalItem.codigo === '1', 'O smoke de marca/modelo exige o registro codigo 1.')
+    const updatedDescricao = 'AGRALE/8.5NEOBUS THUNDER TESTE API'
+
+    await requestJson('/api/marca-modelo/1', {
+      method: 'PUT',
+      body: JSON.stringify({
+        codigo: originalItem.codigo,
+        descricao: updatedDescricao,
+      }),
+    })
+
+    const updatedResponse = await requestJson('/api/marca-modelo?page=1&pageSize=1&search=THUNDER TESTE API')
+    assert(updatedResponse.total === 1, 'Alteracao de marca/modelo nao foi localizada apos edicao.')
+    assert(updatedResponse.items[0]?.descricao === updatedDescricao, 'Alteracao de marca/modelo nao persistiu descricao.')
+    logStep('edicao do registro importado 1 ok')
+
+    const deleteResponse = await requestJson('/api/marca-modelo/1', { method: 'DELETE' })
+    assert(deleteResponse.deletedCodigo === '1', 'Exclusao de marca/modelo nao retornou o codigo esperado.')
+    const deletedLookup = await requestJson('/api/marca-modelo?page=1&pageSize=5&search=AGRALE/8.5NEOBUS THUNDER TESTE API')
+    assert(deletedLookup.total === 0, 'Registro 1 ainda foi encontrado apos exclusao.')
+    logStep('exclusao do registro importado 1 ok')
+
+    const validImport = await requestJson('/api/marca-modelo/import-xml', {
+      method: 'POST',
+      body: JSON.stringify({ fileName: 'marca-modelo.xml' }),
+    })
+    recordImport(suiteReport, 'valid-import', validImport)
+    assert(validImport.total >= validImport.processed, 'Importacao valida de marca/modelo retornou total inconsistente.')
+    assert(validImport.processed > 0, 'Importacao valida de marca/modelo nao processou registros.')
+    assert((validImport.inserted + validImport.updated) === validImport.processed, 'Importacao valida de marca/modelo retornou contagem inconsistente.')
+    logStep(`importacao valida de marca/modelo: ${validImport.processed} processado(s), ${validImport.updated} alterado(s), ${validImport.inserted} incluido(s)`) 
+
+    const restoredResponse = await requestJson('/api/marca-modelo?page=1&pageSize=5&search=AGRALE/8.5NEOBUS THUNDER')
+    const restoredItem = restoredResponse.items.find((item) => item.codigo === '1')
+    assert(Boolean(restoredItem), 'Registro 1 nao foi restaurado apos reimportacao valida.')
+    assert(restoredItem?.descricao === originalItem.descricao, 'Descricao original nao foi restaurada apos reimportacao valida.')
+    logStep('reimportacao valida e restauracao do registro 1 ok')
+
+    finalizeSuite(suiteReport, 'passed')
+  } catch (error) {
+    finalizeSuite(suiteReport, 'failed')
+    throw error
+  }
+}
+
 try {
   if (suite === 'all' || suite === 'condutor') {
     await runCondutorSmoke()
@@ -454,6 +565,14 @@ try {
 
   if (suite === 'all' || suite === 'veiculo') {
     await runVeiculoSmoke()
+  }
+
+  if (suite === 'all') {
+    console.log('')
+  }
+
+  if (suite === 'all' || suite === 'marca-modelo') {
+    await runMarcaModeloSmoke()
   }
 
   report.status = 'passed'

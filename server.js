@@ -124,6 +124,11 @@ const getDreCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+const getMarcaModeloCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/marca-modelo\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 const getSeguradoraCodigoFromUrl = (url) => {
   const match = url.match(/^\/api\/seguradora\/([^/]+)$/)
   return match ? decodeURIComponent(match[1]) : null
@@ -943,6 +948,23 @@ const parseSeguradoraXml = (xmlContent) => {
   }))
 }
 
+const parseMarcaModeloXml = (xmlContent) => {
+  const parsed = xmlParser.parse(xmlContent)
+  const rawRecords = parsed?.dataroot?.['marca-modelo']
+  const records = (Array.isArray(rawRecords)
+    ? rawRecords
+    : rawRecords
+      ? [rawRecords]
+      : [])
+    .filter((record) => record && typeof record === 'object')
+
+  return records
+    .map((record) => ({
+      descricao: normalizeRequestValue(record?.marca_modelo),
+    }))
+    .filter((record) => record.descricao)
+}
+
 const normalizeImportedCredenciadaRecord = (record, index) => {
   const codigo = normalizeCondutorCodigo(record.codigo)
   const credenciado = normalizeCredenciadaText(record.credenciado, 255)
@@ -1063,6 +1085,19 @@ const normalizeImportedSeguradoraRecord = (record, index) => {
     codigo,
     controle,
     lista,
+  }
+}
+
+const normalizeImportedMarcaModeloRecord = (record, index) => {
+  const descricao = normalizeTrocaText(record.descricao, 255)
+  const itemLabel = `Registro ${index + 1}`
+
+  if (!descricao) {
+    throw new Error(`${itemLabel}: descricao de marca/modelo invalida no XML.`)
+  }
+
+  return {
+    descricao,
   }
 }
 
@@ -2069,6 +2104,81 @@ const importSeguradoraXmlFile = async (fileName) => {
   }
 }
 
+const importMarcaModeloXmlFile = async (fileName) => {
+  const sanitizedFileName = path.basename(normalizeRequestValue(fileName))
+
+  if (!sanitizedFileName) {
+    throw new Error('Nome do arquivo XML e obrigatorio.')
+  }
+
+  if (path.extname(sanitizedFileName).toLowerCase() !== '.xml') {
+    throw new Error('Arquivo XML invalido.')
+  }
+
+  const resolvedPath = path.resolve(importXmlDirectory, sanitizedFileName)
+
+  if (!resolvedPath.startsWith(importXmlDirectory)) {
+    throw new Error('Arquivo XML invalido.')
+  }
+
+  const xmlContent = await readFile(resolvedPath, 'utf8')
+  const parsedRecords = parseMarcaModeloXml(xmlContent)
+
+  if (!parsedRecords.length) {
+    throw new Error('Nenhum registro de marca/modelo foi encontrado no XML informado.')
+  }
+
+  const normalizedRecords = parsedRecords.map((record, index) => normalizeImportedMarcaModeloRecord(record, index))
+  const uniqueRecords = Array.from(new Set(normalizedRecords.map((record) => record.descricao)))
+    .map((descricao) => ({ descricao }))
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+    let inserted = 0
+    let updated = 0
+
+    for (const [index, record] of uniqueRecords.entries()) {
+      const upsertResult = await client.query(
+        `INSERT INTO marca_modelo (
+           codigo,
+           descricao,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, NOW(), NOW())
+         ON CONFLICT (codigo) DO UPDATE
+         SET descricao = EXCLUDED.descricao,
+             data_modificacao = NOW()
+         RETURNING (xmax = 0) AS inserted_record`,
+        [String(index + 1), record.descricao],
+      )
+
+      if (upsertResult.rows[0]?.inserted_record) {
+        inserted += 1
+      } else {
+        updated += 1
+      }
+    }
+
+    await client.query('COMMIT')
+
+    return {
+      fileName: sanitizedFileName,
+      filePath: resolvedPath,
+      total: parsedRecords.length,
+      processed: uniqueRecords.length,
+      inserted,
+      updated,
+    }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
 const seedTrocaTableFromXmlIfEmpty = async () => {
   const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM tipo_troca')
   const total = countResult.rows[0]?.total ?? 0
@@ -2089,6 +2199,17 @@ const seedSeguradoraTableFromXmlIfEmpty = async () => {
   }
 
   return importSeguradoraXmlFile('seguradoras.xml')
+}
+
+const seedMarcaModeloTableFromXmlIfEmpty = async () => {
+  const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM marca_modelo')
+  const total = countResult.rows[0]?.total ?? 0
+
+  if (total > 0) {
+    return null
+  }
+
+  return importMarcaModeloXmlFile('marca-modelo.xml')
 }
 
 const isDateInputValid = (value) => {
@@ -2421,12 +2542,20 @@ const validateVeiculoPayload = async ({
     return { status: 400, payload: { message: 'Validade do CRM invalida.' } }
   }
 
+  if (normalizedValCrm && normalizedValCrm < getCurrentDateInputValue()) {
+    return { status: 400, payload: { message: 'Validade do CRM nao pode ser passada.' } }
+  }
+
   if (normalizedSeguroInicio && !isDateInputValid(normalizedSeguroInicio)) {
     return { status: 400, payload: { message: 'Data inicial do seguro invalida.' } }
   }
 
   if (normalizedSeguroTermino && !isDateInputValid(normalizedSeguroTermino)) {
     return { status: 400, payload: { message: 'Data final do seguro invalida.' } }
+  }
+
+  if (normalizedSeguroTermino && normalizedSeguroTermino < getCurrentDateInputValue()) {
+    return { status: 400, payload: { message: 'Data final do seguro nao pode ser passada.' } }
   }
 
   if (normalizedSeguroInicio && normalizedSeguroTermino && normalizedSeguroTermino < normalizedSeguroInicio) {
@@ -3140,6 +3269,27 @@ const ensureDatabaseSchema = async () => {
   await pool.query('ALTER TABLE seguradora ALTER COLUMN data_modificacao SET DEFAULT NOW()')
   await pool.query('DROP INDEX IF EXISTS seguradora_controle_unique_idx')
   await pool.query('DROP INDEX IF EXISTS seguradora_lista_unique_idx')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS marca_modelo (
+      codigo varchar(50) PRIMARY KEY,
+      descricao varchar(255) NOT NULL,
+      data_inclusao timestamp without time zone NOT NULL DEFAULT NOW(),
+      data_modificacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query('ALTER TABLE marca_modelo ADD COLUMN IF NOT EXISTS descricao varchar(255)')
+  await pool.query('ALTER TABLE marca_modelo ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone')
+  await pool.query('ALTER TABLE marca_modelo ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone')
+  await pool.query(`
+    UPDATE marca_modelo
+    SET data_inclusao = COALESCE(data_inclusao, NOW()),
+        data_modificacao = COALESCE(data_modificacao, COALESCE(data_inclusao, NOW()))
+    WHERE data_inclusao IS NULL OR data_modificacao IS NULL
+  `)
+  await pool.query('ALTER TABLE marca_modelo ALTER COLUMN descricao SET NOT NULL')
+  await pool.query('ALTER TABLE marca_modelo ALTER COLUMN data_inclusao SET DEFAULT NOW()')
+  await pool.query('ALTER TABLE marca_modelo ALTER COLUMN data_modificacao SET DEFAULT NOW()')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS marca_modelo_descricao_unique_idx ON marca_modelo (descricao)')
   await pool.query('CREATE SEQUENCE IF NOT EXISTS credenciada_codigo_seq START WITH 1 INCREMENT BY 1')
   await pool.query(`
     CREATE TABLE IF NOT EXISTS credenciada (
@@ -3308,6 +3458,74 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar a tabela dre.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/marca-modelo') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
+      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
+        ? 'DESC'
+        : 'ASC'
+      const offset = (page - 1) * pageSize
+      const filters = []
+      const values = []
+      const numericCodigoOrderClause = `
+        CASE WHEN BTRIM(codigo) ~ '^[0-9]+$' THEN 0 ELSE 1 END ASC,
+        CASE WHEN BTRIM(codigo) ~ '^[0-9]+$' THEN CAST(BTRIM(codigo) AS bigint) END ${sortDirection},
+        BTRIM(codigo) ${sortDirection}
+      `
+      const orderByClause = sortBy === 'descricao'
+        ? `BTRIM(descricao) ${sortDirection}, ${numericCodigoOrderClause}`
+        : numericCodigoOrderClause
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR BTRIM(descricao) ILIKE $${values.length}
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM marca_modelo ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT CAST(codigo AS text) AS codigo, BTRIM(descricao) AS descricao
+         FROM marca_modelo
+         ${whereClause}
+         ORDER BY ${orderByClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: sortBy === 'descricao' ? 'descricao' : 'codigo',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar a tabela marca/modelo.'
 
       sendJson(response, 500, { message })
     }
@@ -4317,6 +4535,78 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'POST' && pathname === '/api/marca-modelo') {
+    try {
+      const body = await readJsonBody(request)
+      const codigo = normalizeRequestValue(body.codigo)
+      const descricao = normalizeTrocaText(body.descricao, 255)
+
+      if (!codigo) {
+        sendJson(response, 400, { message: 'Codigo e obrigatorio.' })
+        return
+      }
+
+      if (!descricao) {
+        sendJson(response, 400, { message: 'Descricao e obrigatoria.' })
+        return
+      }
+
+      const duplicateCodeResult = await pool.query(
+        'SELECT 1 FROM marca_modelo WHERE CAST(codigo AS text) = $1 LIMIT 1',
+        [codigo],
+      )
+
+      if (duplicateCodeResult.rowCount > 0) {
+        sendJson(response, 409, { message: 'Codigo ja cadastrado.' })
+        return
+      }
+
+      const duplicateDescriptionResult = await pool.query(
+        'SELECT 1 FROM marca_modelo WHERE BTRIM(descricao) = $1 LIMIT 1',
+        [descricao],
+      )
+
+      if (duplicateDescriptionResult.rowCount > 0) {
+        sendJson(response, 409, { message: 'Descricao ja cadastrada.' })
+        return
+      }
+
+      const insertResult = await pool.query(
+        'INSERT INTO marca_modelo (codigo, descricao, data_inclusao, data_modificacao) VALUES ($1, $2, NOW(), NOW()) RETURNING CAST(codigo AS text) AS codigo, BTRIM(descricao) AS descricao',
+        [codigo, descricao],
+      )
+
+      sendJson(response, 201, {
+        item: insertResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao gravar o registro marca/modelo.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/marca-modelo/import-xml') {
+    try {
+      const body = await readJsonBody(request)
+      const importResult = await importMarcaModeloXmlFile(body.fileName)
+
+      sendJson(response, 200, importResult)
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao importar XML de marca/modelo.'
+
+      sendJson(response, 400, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'POST' && pathname === '/api/seguradora') {
     try {
       const body = await readJsonBody(request)
@@ -5040,6 +5330,77 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'PUT' && getMarcaModeloCodigoFromUrl(pathname)) {
+    try {
+      const originalCodigo = getMarcaModeloCodigoFromUrl(pathname)
+      const body = await readJsonBody(request)
+      const codigo = normalizeRequestValue(body.codigo)
+      const descricao = normalizeTrocaText(body.descricao, 255)
+
+      if (!originalCodigo) {
+        sendJson(response, 400, { message: 'Codigo original invalido.' })
+        return
+      }
+
+      if (!codigo) {
+        sendJson(response, 400, { message: 'Codigo e obrigatorio.' })
+        return
+      }
+
+      if (!descricao) {
+        sendJson(response, 400, { message: 'Descricao e obrigatoria.' })
+        return
+      }
+
+      const existingResult = await pool.query(
+        'SELECT 1 FROM marca_modelo WHERE CAST(codigo AS text) = $1 LIMIT 1',
+        [originalCodigo],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Registro de marca/modelo nao encontrado.' })
+        return
+      }
+
+      const duplicateCodeResult = await pool.query(
+        'SELECT 1 FROM marca_modelo WHERE CAST(codigo AS text) = $1 AND CAST(codigo AS text) <> $2 LIMIT 1',
+        [codigo, originalCodigo],
+      )
+
+      if (duplicateCodeResult.rowCount > 0) {
+        sendJson(response, 409, { message: 'Codigo ja cadastrado.' })
+        return
+      }
+
+      const duplicateDescriptionResult = await pool.query(
+        'SELECT 1 FROM marca_modelo WHERE BTRIM(descricao) = $1 AND CAST(codigo AS text) <> $2 LIMIT 1',
+        [descricao, originalCodigo],
+      )
+
+      if (duplicateDescriptionResult.rowCount > 0) {
+        sendJson(response, 409, { message: 'Descricao ja cadastrada.' })
+        return
+      }
+
+      const updateResult = await pool.query(
+        'UPDATE marca_modelo SET codigo = $1, descricao = $2, data_modificacao = NOW() WHERE CAST(codigo AS text) = $3 RETURNING CAST(codigo AS text) AS codigo, BTRIM(descricao) AS descricao',
+        [codigo, descricao, originalCodigo],
+      )
+
+      sendJson(response, 200, {
+        item: updateResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao alterar o registro marca/modelo.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'PUT' && getSeguradoraCodigoFromUrl(pathname)) {
     try {
       const originalCodigo = Number(getSeguradoraCodigoFromUrl(pathname))
@@ -5694,6 +6055,39 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'DELETE' && getMarcaModeloCodigoFromUrl(pathname)) {
+    try {
+      const codigo = getMarcaModeloCodigoFromUrl(pathname)
+
+      if (!codigo) {
+        sendJson(response, 400, { message: 'Codigo invalido para exclusao.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        'DELETE FROM marca_modelo WHERE CAST(codigo AS text) = $1 RETURNING CAST(codigo AS text) AS codigo',
+        [codigo],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Registro de marca/modelo nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, {
+        deletedCodigo: deleteResult.rows[0].codigo,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao excluir o registro marca/modelo.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'DELETE' && getVeiculoCodigoFromUrl(pathname)) {
     try {
       const codigo = Number(getVeiculoCodigoFromUrl(pathname))
@@ -5851,6 +6245,9 @@ ensureDatabaseSchema()
   })
   .then(() => {
     return seedSeguradoraTableFromXmlIfEmpty()
+  })
+  .then(() => {
+    return seedMarcaModeloTableFromXmlIfEmpty()
   })
   .then(() => {
     server.listen(port, () => {
