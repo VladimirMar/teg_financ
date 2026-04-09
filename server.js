@@ -2713,7 +2713,7 @@ const importCredenciadaXmlFile = async (fileName) => {
                cep = NULLIF($9, ''),
                municipio = NULLIF($10, ''),
                email = NULLIF($11, ''),
-               telefone_01 = NULLIF($12, ''),
+               telefone_01 = $12,
                telefone_02 = NULLIF($13, ''),
                representante = NULLIF($14, ''),
                cpf_representante = NULLIF($15, ''),
@@ -2769,7 +2769,7 @@ const importCredenciadaXmlFile = async (fileName) => {
            data_inclusao,
            data_modificacao
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NULLIF($8, ''), NULLIF($9, ''), NULLIF($10, ''), NULLIF($11, ''), NULLIF($12, ''), NULLIF($13, ''), NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''), NULLIF($18, ''), NOW(), NOW())`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NULLIF($8, ''), NULLIF($9, ''), NULLIF($10, ''), NULLIF($11, ''), $12, NULLIF($13, ''), NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''), NULLIF($18, ''), NOW(), NOW())`,
         [
           record.codigo,
           record.placa,

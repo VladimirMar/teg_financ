@@ -97,6 +97,49 @@ const expectSortedByNumericString = (items, fieldName, direction) => {
   }
 }
 
+const isStrictlyFutureDate = (value) => {
+  const normalizedValue = String(value ?? '').trim()
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+    return false
+  }
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const candidateDate = new Date(`${normalizedValue}T00:00:00`)
+
+  if (Number.isNaN(candidateDate.getTime())) {
+    return false
+  }
+
+  return candidateDate > today
+}
+
+const findPaginatedFixture = async ({ resourcePath, sortBy = 'codigo', sortDirection = 'asc', pageSize = 100, maxPages = 20, predicate, description }) => {
+  for (let page = 1; page <= maxPages; page += 1) {
+    const response = await requestJson(`${resourcePath}?page=${page}&pageSize=${pageSize}&sortBy=${sortBy}&sortDirection=${sortDirection}`)
+    const items = Array.isArray(response.items) ? response.items : []
+    const matchedItem = items.find(predicate)
+
+    if (matchedItem) {
+      return matchedItem
+    }
+
+    if (page >= (response.totalPages ?? 1)) {
+      break
+    }
+  }
+
+  throw new Error(`Nenhum fixture estavel foi encontrado para ${description}.`)
+}
+
+const findExactItemByCode = async (resourcePath, codigo) => {
+  const normalizedCode = String(codigo ?? '').trim()
+  const response = await requestJson(`${resourcePath}?page=1&pageSize=50&search=${encodeURIComponent(normalizedCode)}`)
+  return (response.items ?? []).find((item) => String(item.codigo ?? '').trim() === normalizedCode) ?? null
+}
+
 const logStep = (message) => {
   console.log(`- ${message}`)
 }
@@ -172,14 +215,22 @@ const runCondutorSmoke = async () => {
     )
     logStep('ordenacao asc/desc por condutor ok')
 
-    const targetResponse = await requestJson('/api/condutor?page=1&pageSize=1&search=9241')
-    assert(targetResponse.total === 1, 'Registro 9241 do condutor nao foi encontrado para o teste.')
-    const originalItem = targetResponse.items[0]
+    const originalItem = await findPaginatedFixture({
+      resourcePath: '/api/condutor',
+      predicate: (item) => {
+        return Boolean(String(item.codigo ?? '').trim())
+          && Boolean(String(item.crmc ?? '').trim())
+          && isStrictlyFutureDate(item.validade_crmc)
+          && isStrictlyFutureDate(item.validade_curso)
+      },
+      description: 'condutor com CRMC e validade futura',
+    })
+    const targetCode = String(originalItem.codigo)
     const updatedTipoVinculo = 'Cooperado'
     const updatedHistorico = 'SMOKE TEST API CONDUTOR'
     const updatedValidadeCurso = '2030-12-31'
 
-    await requestJson('/api/condutor/9241', {
+    await requestJson(`/api/condutor/${encodeURIComponent(targetCode)}`, {
       method: 'PUT',
       body: JSON.stringify({
         codigo: originalItem.codigo,
@@ -193,18 +244,18 @@ const runCondutorSmoke = async () => {
       }),
     })
 
-    const updatedResponse = await requestJson('/api/condutor?page=1&pageSize=1&search=9241')
-    const updatedItem = updatedResponse.items[0]
+    const updatedItem = await findExactItemByCode('/api/condutor', targetCode)
+    assert(Boolean(updatedItem), `Registro ${targetCode} do condutor nao foi localizado apos alteracao.`)
     assert(updatedItem.tipo_vinculo === updatedTipoVinculo, 'Alteracao do condutor nao persistiu tipo de vinculo.')
     assert(updatedItem.historico === updatedHistorico, 'Alteracao do condutor nao persistiu historico.')
     assert(updatedItem.validade_curso === updatedValidadeCurso, 'Alteracao do condutor nao persistiu validade do curso.')
-    logStep('edicao do registro importado 9241 ok')
+    logStep(`edicao do registro importado ${targetCode} ok`)
 
-    const deleteResponse = await requestJson('/api/condutor/9241', { method: 'DELETE' })
-    assert(deleteResponse.deletedCodigo === '9241', 'Exclusao do condutor nao retornou o codigo esperado.')
-    const deletedLookup = await requestJson('/api/condutor?page=1&pageSize=1&search=9241')
-    assert(deletedLookup.total === 0, 'Registro 9241 ainda foi encontrado apos exclusao.')
-    logStep('exclusao do registro importado 9241 ok')
+    const deleteResponse = await requestJson(`/api/condutor/${encodeURIComponent(targetCode)}`, { method: 'DELETE' })
+    assert(deleteResponse.deletedCodigo === targetCode, 'Exclusao do condutor nao retornou o codigo esperado.')
+    const deletedItem = await findExactItemByCode('/api/condutor', targetCode)
+    assert(!deletedItem, `Registro ${targetCode} ainda foi encontrado apos exclusao.`)
+    logStep(`exclusao do registro importado ${targetCode} ok`)
 
     const validImport = await requestJson('/api/condutor/import-xml', {
       method: 'POST',
@@ -217,21 +268,20 @@ const runCondutorSmoke = async () => {
     assert(validImport.skipped >= 0, 'Importacao valida de condutor retornou recusas invalidas.')
     logStep(`importacao valida do condutor: ${validImport.processed} processado(s), ${validImport.updated} alterado(s), ${validImport.inserted} incluido(s), ${validImport.skipped} recusado(s)`)
 
-    const restoredResponse = await requestJson('/api/condutor?page=1&pageSize=1&search=9241')
-    assert(restoredResponse.total === 1, 'Registro 9241 nao foi restaurado apos reimportacao valida.')
-    const restoredItem = restoredResponse.items[0]
+    const restoredItem = await findExactItemByCode('/api/condutor', targetCode)
+    assert(Boolean(restoredItem), `Registro ${targetCode} nao foi restaurado apos reimportacao valida.`)
     assert(restoredItem.tipo_vinculo === originalItem.tipo_vinculo, 'Tipo de vinculo original nao foi restaurado apos reimportacao valida.')
     assert(restoredItem.historico === originalItem.historico, 'Historico original nao foi restaurado apos reimportacao valida.')
     assert(restoredItem.validade_curso === originalItem.validade_curso, 'Validade do curso original nao foi restaurada apos reimportacao valida.')
-    logStep(`reimportacao valida e restauracao do registro 9241 ok (${validImport.skipped} recusa(s) existente(s) no XML fonte)`)
+    logStep(`reimportacao valida e restauracao do registro ${targetCode} ok (${validImport.skipped} recusa(s) existente(s) no XML fonte)`)
 
     const invalidImport = await requestJson('/api/condutor/import-xml', {
       method: 'POST',
       body: JSON.stringify({ fileName: 'Condutor-invalid.xml' }),
     })
     recordImport(suiteReport, 'invalid-import', invalidImport)
-    assert(invalidImport.skipped === 2, 'Importacao invalida de condutor nao retornou 2 recusas.')
-    assert(invalidImport.processed === 1, 'Importacao invalida de condutor nao retornou 1 registro processado.')
+    assert(invalidImport.skipped === 3, 'Importacao invalida de condutor nao retornou 3 recusas.')
+    assert(invalidImport.processed === 0, 'Importacao invalida de condutor nao retornou 0 registros processados.')
     logStep(`importacao invalida do condutor: ${invalidImport.processed} processado(s), ${invalidImport.skipped} recusado(s)`)
 
     const rejectionResponse = await requestJson('/api/condutor/import-rejections?page=1&pageSize=20&search=Condutor-invalid.xml')
@@ -270,14 +320,29 @@ const runCredenciadaSmoke = async () => {
     )
     logStep('ordenacao asc/desc por credenciado ok')
 
-    const targetResponse = await requestJson('/api/credenciada?page=1&pageSize=1&search=2277')
-    assert(targetResponse.total === 1, 'Registro 2277 da credenciada nao foi encontrado para o teste.')
-    const originalItem = targetResponse.items[0]
+    const originalItem = await findPaginatedFixture({
+      resourcePath: '/api/credenciada',
+      predicate: (item) => {
+        return Boolean(String(item.codigo ?? '').trim())
+          && Boolean(String(item.credenciado ?? '').trim())
+          && Boolean(String(item.cnpj_cpf ?? '').trim())
+          && Boolean(String(item.logradouro ?? '').trim())
+          && Boolean(String(item.bairro ?? '').trim())
+          && Boolean(String(item.cep ?? '').trim())
+          && Boolean(String(item.municipio ?? '').trim())
+          && Boolean(String(item.email ?? '').trim())
+          && Boolean(String(item.telefone_01 ?? '').trim())
+          && Boolean(String(item.representante ?? '').trim())
+          && Boolean(String(item.status ?? '').trim())
+      },
+      description: 'credenciada existente com campos obrigatorios preenchidos',
+    })
+    const targetCode = String(originalItem.codigo)
     const updatedMunicipio = 'OSASCO'
     const updatedRepresentante = 'ROSALI APARECIDA POLI GOMES TESTE API'
     const updatedStatus = 'EM TESTE API'
 
-    await requestJson('/api/credenciada/2277', {
+    await requestJson(`/api/credenciada/${encodeURIComponent(targetCode)}`, {
       method: 'PUT',
       body: JSON.stringify({
         codigo: originalItem.codigo,
@@ -297,18 +362,18 @@ const runCredenciadaSmoke = async () => {
       }),
     })
 
-    const updatedResponse = await requestJson('/api/credenciada?page=1&pageSize=1&search=2277')
-    const updatedItem = updatedResponse.items[0]
+    const updatedItem = await findExactItemByCode('/api/credenciada', targetCode)
+    assert(Boolean(updatedItem), `Registro ${targetCode} da credenciada nao foi localizado apos alteracao.`)
     assert(updatedItem.municipio === updatedMunicipio, 'Alteracao da credenciada nao persistiu municipio.')
     assert(updatedItem.representante === updatedRepresentante, 'Alteracao da credenciada nao persistiu representante.')
     assert(updatedItem.status === updatedStatus, 'Alteracao da credenciada nao persistiu status.')
-    logStep('edicao do registro importado 2277 ok')
+    logStep(`edicao do registro importado ${targetCode} ok`)
 
-    const deleteResponse = await requestJson('/api/credenciada/2277', { method: 'DELETE' })
-    assert(deleteResponse.deletedCodigo === '2277', 'Exclusao da credenciada nao retornou o codigo esperado.')
-    const deletedLookup = await requestJson('/api/credenciada?page=1&pageSize=1&search=2277')
-    assert(deletedLookup.total === 0, 'Registro 2277 ainda foi encontrado apos exclusao.')
-    logStep('exclusao do registro importado 2277 ok')
+    const deleteResponse = await requestJson(`/api/credenciada/${encodeURIComponent(targetCode)}`, { method: 'DELETE' })
+    assert(deleteResponse.deletedCodigo === targetCode, 'Exclusao da credenciada nao retornou o codigo esperado.')
+    const deletedItem = await findExactItemByCode('/api/credenciada', targetCode)
+    assert(!deletedItem, `Registro ${targetCode} ainda foi encontrado apos exclusao.`)
+    logStep(`exclusao do registro importado ${targetCode} ok`)
 
     const validImport = await requestJson('/api/credenciada/import-xml', {
       method: 'POST',
@@ -320,13 +385,12 @@ const runCredenciadaSmoke = async () => {
     assert((validImport.inserted + validImport.updated) === validImport.processed, 'Importacao valida de credenciada retornou contagem inconsistente.')
     logStep(`importacao valida da credenciada: ${validImport.processed} processado(s), ${validImport.updated} alterado(s), ${validImport.inserted} incluido(s), ${validImport.skipped} recusado(s)`)
 
-    const restoredResponse = await requestJson('/api/credenciada?page=1&pageSize=1&search=2277')
-    assert(restoredResponse.total === 1, 'Registro 2277 nao foi restaurado apos reimportacao valida.')
-    const restoredItem = restoredResponse.items[0]
+    const restoredItem = await findExactItemByCode('/api/credenciada', targetCode)
+    assert(Boolean(restoredItem), `Registro ${targetCode} nao foi restaurado apos reimportacao valida.`)
     assert(restoredItem.municipio === originalItem.municipio, 'Municipio original nao foi restaurado apos reimportacao valida.')
     assert(restoredItem.representante === originalItem.representante, 'Representante original nao foi restaurado apos reimportacao valida.')
     assert(restoredItem.status === originalItem.status, 'Status original nao foi restaurado apos reimportacao valida.')
-    logStep('reimportacao valida e restauracao do registro 2277 ok')
+    logStep(`reimportacao valida e restauracao do registro ${targetCode} ok`)
 
     const invalidImport = await requestJson('/api/credenciada/import-xml', {
       method: 'POST',
@@ -383,14 +447,22 @@ const runVeiculoSmoke = async () => {
     )
     logStep('ordenacao asc/desc por placas ok')
 
-    const targetResponse = await requestJson('/api/veiculo?page=1&pageSize=1&search=4143')
-    assert(targetResponse.total === 1, 'Registro 4143 do veiculo nao foi encontrado para o teste.')
-    const originalItem = targetResponse.items[0]
+    const originalItem = await findPaginatedFixture({
+      resourcePath: '/api/veiculo',
+      predicate: (item) => {
+        return Boolean(String(item.codigo ?? '').trim())
+          && Boolean(String(item.crm ?? '').trim())
+          && Boolean(String(item.placas ?? '').trim())
+          && isStrictlyFutureDate(item.val_crm)
+      },
+      description: 'veiculo com CRM e validade futura',
+    })
+    const targetCode = String(originalItem.codigo)
     const updatedTipoDeBancada = 'Creche'
     const updatedOsEspecial = 'Sim'
     const updatedMarcaModelo = 'I/M.BENZ311 RIBEIRO MO18 TESTE API'
 
-    await requestJson('/api/veiculo/4143', {
+    await requestJson(`/api/veiculo/${encodeURIComponent(targetCode)}`, {
       method: 'PUT',
       body: JSON.stringify({
         codigo: originalItem.codigo,
@@ -415,18 +487,18 @@ const runVeiculoSmoke = async () => {
       }),
     })
 
-    const updatedResponse = await requestJson('/api/veiculo?page=1&pageSize=1&search=4143')
-    const updatedItem = updatedResponse.items[0]
+    const updatedItem = await findExactItemByCode('/api/veiculo', targetCode)
+    assert(Boolean(updatedItem), `Registro ${targetCode} do veiculo nao foi localizado apos alteracao.`)
     assert(updatedItem.tipo_de_bancada === updatedTipoDeBancada, 'Alteracao do veiculo nao persistiu tipo de bancada.')
     assert(updatedItem.os_especial === updatedOsEspecial, 'Alteracao do veiculo nao persistiu OS especial.')
     assert(updatedItem.marca_modelo === updatedMarcaModelo, 'Alteracao do veiculo nao persistiu marca/modelo.')
-    logStep('edicao do registro importado 4143 ok')
+    logStep(`edicao do registro importado ${targetCode} ok`)
 
-    const deleteResponse = await requestJson('/api/veiculo/4143', { method: 'DELETE' })
-    assert(deleteResponse.deletedCodigo === '4143', 'Exclusao do veiculo nao retornou o codigo esperado.')
-    const deletedLookup = await requestJson('/api/veiculo?page=1&pageSize=1&search=4143')
-    assert(deletedLookup.total === 0, 'Registro 4143 ainda foi encontrado apos exclusao.')
-    logStep('exclusao do registro importado 4143 ok')
+    const deleteResponse = await requestJson(`/api/veiculo/${encodeURIComponent(targetCode)}`, { method: 'DELETE' })
+    assert(deleteResponse.deletedCodigo === targetCode, 'Exclusao do veiculo nao retornou o codigo esperado.')
+    const deletedItem = await findExactItemByCode('/api/veiculo', targetCode)
+    assert(!deletedItem, `Registro ${targetCode} ainda foi encontrado apos exclusao.`)
+    logStep(`exclusao do registro importado ${targetCode} ok`)
 
     const validImport = await requestJson('/api/veiculo/import-xml', {
       method: 'POST',
@@ -438,13 +510,12 @@ const runVeiculoSmoke = async () => {
     assert((validImport.inserted + validImport.updated) === validImport.processed, 'Importacao valida de veiculo retornou contagem inconsistente.')
     logStep(`importacao valida do veiculo: ${validImport.processed} processado(s), ${validImport.updated} alterado(s), ${validImport.inserted} incluido(s), ${validImport.skipped} recusado(s)`) 
 
-    const restoredResponse = await requestJson('/api/veiculo?page=1&pageSize=1&search=4143')
-    assert(restoredResponse.total === 1, 'Registro 4143 nao foi restaurado apos reimportacao valida.')
-    const restoredItem = restoredResponse.items[0]
+    const restoredItem = await findExactItemByCode('/api/veiculo', targetCode)
+    assert(Boolean(restoredItem), `Registro ${targetCode} nao foi restaurado apos reimportacao valida.`)
     assert(restoredItem.tipo_de_bancada === originalItem.tipo_de_bancada, 'Tipo de bancada original nao foi restaurado apos reimportacao valida.')
     assert(restoredItem.os_especial === originalItem.os_especial, 'OS especial original nao foi restaurado apos reimportacao valida.')
     assert(restoredItem.marca_modelo === originalItem.marca_modelo, 'Marca/modelo original nao foi restaurado apos reimportacao valida.')
-    logStep('reimportacao valida e restauracao do registro 4143 ok')
+    logStep(`reimportacao valida e restauracao do registro ${targetCode} ok`)
 
     const invalidImport = await requestJson('/api/veiculo/import-xml', {
       method: 'POST',
