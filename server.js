@@ -164,6 +164,11 @@ const getVeiculoCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+const getTitularCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/titular\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 const getLoginDrePairFromUrl = (url) => {
   const match = url.match(/^\/api\/login-dre\/([^/]+)\/([^/]+)$/)
 
@@ -397,9 +402,39 @@ const normalizeCnpjCpf = (value) => {
   return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`
 }
 
+const normalizeTitularDocument = (value) => {
+  return normalizeRequestValue(value)
+    .replace(/[^0-9.,\/-]/g, '')
+    .slice(0, 18)
+}
+
+const extractDocumentDigits = (value) => {
+  return normalizeRequestValue(value).replace(/\D/g, '')
+}
+
 const isCnpjCpfValid = (value) => {
   const digits = value.replace(/\D/g, '')
   return digits.length === 11 || digits.length === 14
+}
+
+const findTitularByCnpjCpf = async (cnpjCpf) => {
+  const digits = extractDocumentDigits(cnpjCpf)
+
+  if (!digits) {
+    return null
+  }
+
+  const result = await pool.query(
+    `SELECT
+       ${titularSelectClause}
+     FROM ${titularTableName}
+     WHERE regexp_replace(COALESCE(cnpj_cpf, ''), '[^0-9]', '', 'g') = $1
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    [digits],
+  )
+
+  return result.rows[0] ?? null
 }
 
 const buildCredenciadaLegacyFields = ({ codigo, credenciado, representante, cnpjCpf }) => {
@@ -436,7 +471,44 @@ const normalizeVehiclePlaca = (value) => {
 }
 
 const isVehiclePlacaValid = (value) => {
-  return /^[A-Z0-9]{7}$/.test(value)
+  return /^[A-Z]{3}-?\d{4}$/.test(value) || /^[A-Z]{3}-?\d[A-Z]\d{2}$/.test(value)
+}
+
+const getVeiculoPersistenceError = (error, fallbackMessage) => {
+  if (error && typeof error === 'object') {
+    const databaseError = error
+    const constraintName = typeof databaseError.constraint === 'string' ? databaseError.constraint : ''
+    const errorCode = typeof databaseError.code === 'string' ? databaseError.code : ''
+    const errorMessage = error instanceof Error ? error.message : ''
+
+    const isUniqueViolation = errorCode === '23505' || /viol[ao].+unicidade|duplicate key/i.test(errorMessage)
+
+    if (constraintName === 'veiculo_crm_uk' || (isUniqueViolation && errorMessage.includes('veiculo_crm_uk'))) {
+      return {
+        status: 409,
+        message: 'CRM já cadastrado',
+      }
+    }
+
+    if (constraintName === 'veiculo_placa_uk' || (isUniqueViolation && errorMessage.includes('veiculo_placa_uk'))) {
+      return {
+        status: 409,
+        message: 'Placa já cadastrada',
+      }
+    }
+
+    if (constraintName === 'veiculo_crm_placa_uk' || (isUniqueViolation && errorMessage.includes('veiculo_crm_placa_uk'))) {
+      return {
+        status: 409,
+        message: 'CRM e placa já cadastrado',
+      }
+    }
+  }
+
+  return {
+    status: 500,
+    message: error instanceof Error ? error.message : fallbackMessage,
+  }
 }
 
 const normalizeVehicleInteger = (value, maxDigits = 5) => {
@@ -636,6 +708,72 @@ const parseVeiculoXml = (xmlContent) => {
   }))
 }
 
+const getSpreadsheetCellText = (cell) => {
+  const data = cell?.Data
+
+  if (data === null || data === undefined) {
+    return ''
+  }
+
+  if (typeof data === 'string' || typeof data === 'number' || typeof data === 'boolean') {
+    return normalizeRequestValue(data)
+  }
+
+  if (typeof data === 'object') {
+    return normalizeRequestValue(data['#text'])
+  }
+
+  return ''
+}
+
+const getSpreadsheetRowValues = (row) => {
+  const rawCells = Array.isArray(row?.Cell)
+    ? row.Cell
+    : row?.Cell
+      ? [row.Cell]
+      : []
+  const values = []
+  let currentColumnIndex = 0
+
+  for (const cell of rawCells) {
+    const explicitColumnIndex = Number(cell?.['@_ss:Index'])
+
+    if (Number.isInteger(explicitColumnIndex) && explicitColumnIndex > 0) {
+      currentColumnIndex = explicitColumnIndex - 1
+    }
+
+    values[currentColumnIndex] = getSpreadsheetCellText(cell)
+    currentColumnIndex += 1
+  }
+
+  return values.map((value) => normalizeRequestValue(value))
+}
+
+const parseTitularXml = (xmlContent) => {
+  const parsed = xmlParser.parse(xmlContent)
+  const worksheets = Array.isArray(parsed?.Workbook?.Worksheet)
+    ? parsed.Workbook.Worksheet
+    : parsed?.Workbook?.Worksheet
+      ? [parsed.Workbook.Worksheet]
+      : []
+  const table = worksheets[0]?.Table
+  const rows = Array.isArray(table?.Row)
+    ? table.Row
+    : table?.Row
+      ? [table.Row]
+      : []
+
+  return rows
+    .map((row) => getSpreadsheetRowValues(row))
+    .filter((values) => values.some(Boolean))
+    .filter((values) => values[0]?.toUpperCase() !== 'CODIGO')
+    .map((values) => ({
+      codigo: values[0] ?? '',
+      cnpjCpf: values[1] ?? '',
+      titular: values[2] ?? '',
+    }))
+}
+
 const normalizeImportedMonitorRecord = (record, index) => {
   const codigo = normalizeCondutorCodigo(record.codigo)
   const monitor = normalizeCondutorName(record.monitor)
@@ -827,6 +965,32 @@ const normalizeImportedVeiculoRecord = (record, index) => {
     osEspecial,
   }
 }
+
+const normalizeImportedTitularRecord = (record, index) => {
+  const codigo = normalizeCondutorCodigo(record.codigo)
+  const cnpjCpf = normalizeTitularDocument(record.cnpjCpf)
+  const titular = normalizeCredenciadaText(record.titular, 255)
+  const itemLabel = `Registro ${index + 1}`
+
+  if (codigo === null || Number.isNaN(codigo)) {
+    throw new Error(`${itemLabel}: codigo invalido no XML.`)
+  }
+
+  if (!cnpjCpf) {
+    throw new Error(`${itemLabel}: CNPJ/CPF invalido no XML.`)
+  }
+
+  if (!titular) {
+    throw new Error(`${itemLabel}: titular do CRM invalido no XML.`)
+  }
+
+  return {
+    codigo,
+    cnpjCpf,
+    titular,
+  }
+}
+
 const normalizeImportedCondutorRecord = (record, index) => {
   const codigo = normalizeCondutorCodigo(record.codigo)
   const condutor = normalizeCondutorName(record.condutor)
@@ -1182,6 +1346,16 @@ const veiculoImportRecusaSelectClause = `
   COALESCE(BTRIM(tipo_de_veiculo_xml), '') AS tipo_de_veiculo_xml,
   BTRIM(motivo_recusa) AS motivo_recusa,
   TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
+
+const titularSelectClause = `
+  codigo::text AS codigo,
+  COALESCE(BTRIM(cnpj_cpf), '') AS cnpj_cpf,
+  COALESCE(BTRIM(titular), '') AS titular,
+  TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
+  TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
+const titularTableName = '"titularCrm"'
+const titularSequenceName = '"titularCrm_codigo_seq"'
+const titularUniqueIndexName = '"titularCrm_codigo_unique_idx"'
 
 const credenciadaSelectClause = `
   codigo::text AS codigo,
@@ -1736,6 +1910,65 @@ const importVeiculoXmlFile = async (fileName) => {
       updated,
       skipped: skippedRecords.length,
       skippedRecords: skippedRecords.slice(0, 20),
+    }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
+const seedTitularTableFromXmlIfEmpty = async () => {
+  const countResult = await pool.query(`SELECT COUNT(*)::int AS total FROM ${titularTableName}`)
+  const total = countResult.rows[0]?.total ?? 0
+
+  if (total > 0) {
+    return null
+  }
+
+  const resolvedPath = path.resolve(importXmlDirectory, 'titular.xml')
+  const xmlContent = await readFile(resolvedPath, 'utf8')
+  const parsedRecords = parseTitularXml(xmlContent)
+
+  if (!parsedRecords.length) {
+    throw new Error('Nenhum registro de titular do CRM foi encontrado no XML informado.')
+  }
+
+  const normalizedRecords = parsedRecords.map((record, index) => normalizeImportedTitularRecord(record, index))
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+
+    for (const record of normalizedRecords) {
+      await client.query(
+        `INSERT INTO ${titularTableName} (
+           codigo,
+           cnpj_cpf,
+           titular,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, $3, NOW(), NOW())
+         ON CONFLICT (codigo) DO UPDATE
+         SET cnpj_cpf = EXCLUDED.cnpj_cpf,
+             titular = EXCLUDED.titular,
+             data_modificacao = NOW()`,
+        [record.codigo, record.cnpjCpf, record.titular],
+      )
+    }
+
+    await client.query(`SELECT setval('${titularSequenceName}', GREATEST(COALESCE((SELECT MAX(codigo) FROM ${titularTableName}), 0), 1), true)`)
+    await client.query('COMMIT')
+
+    return {
+      fileName: 'titular.xml',
+      filePath: resolvedPath,
+      total: parsedRecords.length,
+      processed: normalizedRecords.length,
+      inserted: normalizedRecords.length,
+      updated: 0,
     }
   } catch (error) {
     await client.query('ROLLBACK')
@@ -2445,6 +2678,52 @@ const validateMonitorPayload = async ({
     return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
   }
 
+  if (normalizedCrm) {
+    const duplicateCrmResult = await pool.query(
+      `SELECT 1
+       FROM veiculo
+       WHERE crm = $1
+         AND ($2::int IS NULL OR codigo <> $2)
+       LIMIT 1`,
+      [normalizedCrm, originalCodigo],
+    )
+
+    if (duplicateCrmResult.rowCount > 0) {
+      return { status: 409, payload: { message: 'CRM ja cadastrado.' } }
+    }
+  }
+
+  if (normalizedPlacas) {
+    const duplicatePlacaResult = await pool.query(
+      `SELECT 1
+       FROM veiculo
+       WHERE placas = $1
+         AND ($2::int IS NULL OR codigo <> $2)
+       LIMIT 1`,
+      [normalizedPlacas, originalCodigo],
+    )
+
+    if (duplicatePlacaResult.rowCount > 0) {
+      return { status: 409, payload: { message: 'Placa ja cadastrada.' } }
+    }
+  }
+
+  if (normalizedCrm && normalizedPlacas) {
+    const duplicateCrmPlacaResult = await pool.query(
+      `SELECT 1
+       FROM veiculo
+       WHERE crm = $1
+         AND placas = $2
+         AND ($3::int IS NULL OR codigo <> $3)
+       LIMIT 1`,
+      [normalizedCrm, normalizedPlacas, originalCodigo],
+    )
+
+    if (duplicateCrmPlacaResult.rowCount > 0) {
+      return { status: 409, payload: { message: 'CRM e placa ja cadastrado.' } }
+    }
+  }
+
   return {
     status: 200,
     payload: {
@@ -2497,7 +2776,7 @@ const validateVeiculoPayload = async ({
   const normalizedTipoDeBancada = normalizeTipoDeBancada(tipoDeBancada)
   const normalizedTipoDeVeiculo = normalizeTipoDeVeiculo(tipoDeVeiculo)
   const normalizedMarcaModelo = normalizeCredenciadaText(marcaModelo, 255)
-  const normalizedTitular = normalizeCredenciadaText(titular, 255)
+  let normalizedTitular = normalizeCredenciadaText(titular, 255)
   const normalizedCnpjCpf = normalizeCnpjCpf(cnpjCpf)
   const normalizedValorVeiculo = normalizeVehicleMoney(valorVeiculo)
   const normalizedOsEspecial = normalizeOsEspecial(osEspecial)
@@ -2515,7 +2794,7 @@ const validateVeiculoPayload = async ({
   }
 
   if (normalizedPlacas && !isVehiclePlacaValid(normalizedPlacas)) {
-    return { status: 400, payload: { message: 'Placa deve conter 7 caracteres alfanumericos.' } }
+    return { status: 400, payload: { message: 'Placa deve seguir o formato ABC-1234 ou ABC-1D23.' } }
   }
 
   if (normalizedAno !== null && Number.isNaN(normalizedAno)) {
@@ -2574,6 +2853,16 @@ const validateVeiculoPayload = async ({
     return { status: 400, payload: { message: 'CNPJ/CPF deve conter 11 ou 14 digitos.' } }
   }
 
+  if (normalizedCnpjCpf) {
+    const titularLinkedItem = await findTitularByCnpjCpf(normalizedCnpjCpf)
+
+    if (!titularLinkedItem) {
+      return { status: 400, payload: { message: 'CNPJ/CPF nao encontrado na tabela titularCrm.' } }
+    }
+
+    normalizedTitular = normalizeCredenciadaText(titularLinkedItem.titular, 255)
+  }
+
   if (normalizedValorVeiculo !== null && Number.isNaN(normalizedValorVeiculo)) {
     return { status: 400, payload: { message: 'Valor do veiculo invalido.' } }
   }
@@ -2617,6 +2906,55 @@ const validateVeiculoPayload = async ({
       cnpjCpf: normalizedCnpjCpf,
       valorVeiculo: normalizedValorVeiculo,
       osEspecial: normalizedOsEspecial,
+    },
+  }
+}
+
+const validateTitularPayload = async ({
+  codigo,
+  cnpjCpf,
+  titular,
+  originalCodigo = null,
+}) => {
+  const normalizedCodigo = normalizeCondutorCodigo(codigo)
+  const normalizedCnpjCpf = normalizeTitularDocument(cnpjCpf)
+  const normalizedTitular = normalizeCredenciadaText(titular, 255)
+
+  if (normalizedCodigo === null) {
+    return { status: 400, payload: { message: 'Codigo e obrigatorio.' } }
+  }
+
+  if (Number.isNaN(normalizedCodigo)) {
+    return { status: 400, payload: { message: 'Codigo deve ser um numero inteiro positivo.' } }
+  }
+
+  if (!normalizedCnpjCpf) {
+    return { status: 400, payload: { message: 'CNPJ/CPF e obrigatorio.' } }
+  }
+
+  if (!normalizedTitular) {
+    return { status: 400, payload: { message: 'Titular do CRM e obrigatorio.' } }
+  }
+
+  const duplicateCodeResult = await pool.query(
+    `SELECT 1
+     FROM ${titularTableName}
+     WHERE codigo = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedCodigo, originalCodigo],
+  )
+
+  if (duplicateCodeResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
+  }
+
+  return {
+    status: 200,
+    payload: {
+      codigo: normalizedCodigo,
+      cnpjCpf: normalizedCnpjCpf,
+      titular: normalizedTitular,
     },
   }
 }
@@ -3200,6 +3538,88 @@ const ensureDatabaseSchema = async () => {
   await pool.query('CREATE INDEX IF NOT EXISTS veiculo_crm_idx ON veiculo (crm)')
   await pool.query('CREATE INDEX IF NOT EXISTS veiculo_import_recusa_data_idx ON veiculo_import_recusa (data_importacao DESC)')
   await pool.query('CREATE INDEX IF NOT EXISTS veiculo_import_recusa_arquivo_idx ON veiculo_import_recusa (arquivo_xml)')
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM pg_class
+        WHERE relkind = 'r'
+          AND relname = 'titular'
+      ) AND NOT EXISTS (
+        SELECT 1
+        FROM pg_class
+        WHERE relkind = 'r'
+          AND relname = 'titularCrm'
+      ) THEN
+        ALTER TABLE titular RENAME TO "titularCrm";
+      END IF;
+    END $$;
+  `)
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM pg_class
+        WHERE relkind = 'S'
+          AND relname = 'titular_codigo_seq'
+      ) AND NOT EXISTS (
+        SELECT 1
+        FROM pg_class
+        WHERE relkind = 'S'
+          AND relname = 'titularCrm_codigo_seq'
+      ) THEN
+        ALTER SEQUENCE titular_codigo_seq RENAME TO "titularCrm_codigo_seq";
+      END IF;
+    END $$;
+  `)
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM pg_class
+        WHERE relkind = 'i'
+          AND relname = 'titular_codigo_unique_idx'
+      ) AND NOT EXISTS (
+        SELECT 1
+        FROM pg_class
+        WHERE relkind = 'i'
+          AND relname = 'titularCrm_codigo_unique_idx'
+      ) THEN
+        ALTER INDEX titular_codigo_unique_idx RENAME TO "titularCrm_codigo_unique_idx";
+      END IF;
+    END $$;
+  `)
+  await pool.query(`CREATE SEQUENCE IF NOT EXISTS ${titularSequenceName} START WITH 1 INCREMENT BY 1`)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ${titularTableName} (
+      codigo integer PRIMARY KEY DEFAULT nextval('${titularSequenceName}'),
+      cnpj_cpf varchar(18) NOT NULL,
+      titular varchar(255) NOT NULL,
+      data_inclusao timestamp without time zone NOT NULL DEFAULT NOW(),
+      data_modificacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query(`ALTER TABLE ${titularTableName} ADD COLUMN IF NOT EXISTS cnpj_cpf varchar(18)`)
+  await pool.query(`ALTER TABLE ${titularTableName} ADD COLUMN IF NOT EXISTS titular varchar(255)`)
+  await pool.query(`ALTER TABLE ${titularTableName} ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone`)
+  await pool.query(`ALTER TABLE ${titularTableName} ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone`)
+  await pool.query(`ALTER TABLE ${titularTableName} ALTER COLUMN codigo SET DEFAULT nextval('${titularSequenceName}')`)
+  await pool.query(`ALTER TABLE ${titularTableName} ALTER COLUMN data_inclusao SET DEFAULT NOW()`)
+  await pool.query(`ALTER TABLE ${titularTableName} ALTER COLUMN data_modificacao SET DEFAULT NOW()`)
+  await pool.query(`ALTER SEQUENCE ${titularSequenceName} OWNED BY ${titularTableName}.codigo`)
+  await pool.query(`
+    UPDATE ${titularTableName}
+    SET data_inclusao = COALESCE(data_inclusao, NOW()),
+        data_modificacao = COALESCE(data_modificacao, COALESCE(data_inclusao, NOW()))
+    WHERE data_inclusao IS NULL OR data_modificacao IS NULL
+  `)
+  await pool.query(`ALTER TABLE ${titularTableName} ALTER COLUMN cnpj_cpf SET NOT NULL`)
+  await pool.query(`ALTER TABLE ${titularTableName} ALTER COLUMN titular SET NOT NULL`)
+  await pool.query(`SELECT setval('${titularSequenceName}', GREATEST(COALESCE((SELECT MAX(codigo) FROM ${titularTableName}), 0), 1), true)`)
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS ${titularUniqueIndexName} ON ${titularTableName} (codigo)`)
   await pool.query(`
     DO $$
     BEGIN
@@ -3990,6 +4410,106 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar veiculos.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/titular') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
+      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
+        ? 'DESC'
+        : 'ASC'
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+      const orderByClause = sortBy === 'cnpj_cpf'
+        ? `BTRIM(cnpj_cpf) ${sortDirection}, codigo ASC`
+        : sortBy === 'titular'
+          ? `UPPER(BTRIM(titular)) ${sortDirection}, codigo ASC`
+          : `codigo ${sortDirection}`
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR COALESCE(BTRIM(cnpj_cpf), '') ILIKE $${values.length}
+          OR COALESCE(BTRIM(titular), '') ILIKE UPPER($${values.length})
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM ${titularTableName} ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           ${titularSelectClause}
+         FROM ${titularTableName}
+         ${whereClause}
+         ORDER BY ${orderByClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: sortBy === 'cnpj_cpf' || sortBy === 'titular' ? sortBy : 'codigo',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar titulares do CRM.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/titular/lookup') {
+    try {
+      const cnpjCpf = normalizeTitularDocument(requestUrl.searchParams.get('cnpjCpf') ?? '')
+
+      if (!cnpjCpf) {
+        sendJson(response, 400, { message: 'CNPJ/CPF e obrigatorio.' })
+        return
+      }
+
+      if (!isCnpjCpfValid(cnpjCpf)) {
+        sendJson(response, 400, { message: 'CNPJ/CPF deve conter 11 ou 14 digitos.' })
+        return
+      }
+
+      const titularItem = await findTitularByCnpjCpf(cnpjCpf)
+
+      if (!titularItem) {
+        sendJson(response, 404, { message: 'CNPJ/CPF nao encontrado na tabela titularCrm.' })
+        return
+      }
+
+      sendJson(response, 200, { item: titularItem })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar titular do CRM por CNPJ/CPF.'
 
       sendJson(response, 500, { message })
     }
@@ -4994,11 +5514,9 @@ const server = createServer(async (request, response) => {
         item: insertResult.rows[0],
       })
     } catch (error) {
-      const message = error instanceof Error
-        ? error.message
-        : 'Erro ao cadastrar veiculo.'
+      const persistenceError = getVeiculoPersistenceError(error, 'Erro ao cadastrar veiculo.')
 
-      sendJson(response, 500, { message })
+      sendJson(response, persistenceError.status, { message: persistenceError.message })
     }
 
     return
@@ -5017,6 +5535,51 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao importar veiculos do XML.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/titular') {
+    try {
+      const body = await readJsonBody(request)
+      const validationResult = await validateTitularPayload({
+        codigo: body.codigo,
+        cnpjCpf: body.cnpjCpf,
+        titular: body.titular,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const insertResult = await pool.query(
+        `INSERT INTO ${titularTableName} (
+           codigo,
+           cnpj_cpf,
+           titular,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, $3, NOW(), NOW())
+         RETURNING ${titularSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.cnpjCpf,
+          validationResult.payload.titular,
+        ],
+      )
+
+      sendJson(response, 201, {
+        item: insertResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao cadastrar titular do CRM.'
 
       sendJson(response, 500, { message })
     }
@@ -5194,6 +5757,68 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao alterar o registro dre.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'PUT' && getTitularCodigoFromUrl(pathname)) {
+    try {
+      const originalCodigo = getTitularCodigoFromUrl(pathname)
+      const body = await readJsonBody(request)
+
+      if (!originalCodigo) {
+        sendJson(response, 400, { message: 'Codigo original invalido.' })
+        return
+      }
+
+      const existingResult = await pool.query(
+        `SELECT 1 FROM ${titularTableName} WHERE codigo = $1 LIMIT 1`,
+        [originalCodigo],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Registro de titular do CRM nao encontrado.' })
+        return
+      }
+
+      const validationResult = await validateTitularPayload({
+        codigo: body.codigo,
+        cnpjCpf: body.cnpjCpf,
+        titular: body.titular,
+        originalCodigo,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE ${titularTableName}
+         SET codigo = $1,
+             cnpj_cpf = $2,
+             titular = $3,
+             data_modificacao = NOW()
+         WHERE codigo = $4
+         RETURNING ${titularSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.cnpjCpf,
+          validationResult.payload.titular,
+          originalCodigo,
+        ],
+      )
+
+      sendJson(response, 200, {
+        item: updateResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao alterar o titular do CRM.'
 
       sendJson(response, 500, { message })
     }
@@ -5715,11 +6340,9 @@ const server = createServer(async (request, response) => {
         item: updateResult.rows[0],
       })
     } catch (error) {
-      const message = error instanceof Error
-        ? error.message
-        : 'Erro ao alterar veiculo.'
+      const persistenceError = getVeiculoPersistenceError(error, 'Erro ao alterar veiculo.')
 
-      sendJson(response, 500, { message })
+      sendJson(response, persistenceError.status, { message: persistenceError.message })
     }
 
     return
@@ -5915,6 +6538,39 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao excluir o registro dre.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'DELETE' && getTitularCodigoFromUrl(pathname)) {
+    try {
+      const codigo = getTitularCodigoFromUrl(pathname)
+
+      if (!codigo) {
+        sendJson(response, 400, { message: 'Codigo invalido para exclusao.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        `DELETE FROM ${titularTableName} WHERE codigo = $1 RETURNING codigo::text AS codigo`,
+        [codigo],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Registro de titular do CRM nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, {
+        deletedCodigo: deleteResult.rows[0].codigo,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao excluir o titular do CRM.'
 
       sendJson(response, 500, { message })
     }
@@ -6248,6 +6904,9 @@ ensureDatabaseSchema()
   })
   .then(() => {
     return seedMarcaModeloTableFromXmlIfEmpty()
+  })
+  .then(() => {
+    return seedTitularTableFromXmlIfEmpty()
   })
   .then(() => {
     server.listen(port, () => {

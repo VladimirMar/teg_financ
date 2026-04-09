@@ -30,7 +30,10 @@
               <div class="dsc-form-row dsc-login-dre-form-row">
                 <label class="dsc-field-group" for="login-codigo">
                   <span>Usuario</span>
-                  <select class="dsc-form-control" id="login-codigo"></select>
+                  <input class="dsc-form-control" id="login-codigo" type="text" list="login-codigo-options" placeholder="Digite para filtrar o usuario" />
+                  <datalist id="login-codigo-options">
+                    <option value=""></option>
+                  </datalist>
                   <div class="dsc-form-error" id="login-codigo-error"></div>
                 </label>
 
@@ -43,7 +46,10 @@
               <div class="dsc-form-row dsc-login-dre-form-row">
                 <label class="dsc-field-group" for="dre-codigo">
                   <span>DRE</span>
-                  <select class="dsc-form-control" id="dre-codigo"></select>
+                  <input class="dsc-form-control" id="dre-codigo" type="text" list="dre-codigo-options" placeholder="Digite para filtrar a DRE" />
+                  <datalist id="dre-codigo-options">
+                    <option value=""></option>
+                  </datalist>
                   <div class="dsc-form-error" id="dre-codigo-error"></div>
                 </label>
 
@@ -67,7 +73,10 @@
               <div class="dsc-form-row dsc-login-dre-form-row">
                 <label class="dsc-field-group" for="bulk-login-codigo">
                   <span>Usuario</span>
-                  <select class="dsc-form-control" id="bulk-login-codigo"></select>
+                  <input class="dsc-form-control" id="bulk-login-codigo" type="text" list="bulk-login-codigo-options" placeholder="Digite para filtrar o usuario" />
+                  <datalist id="bulk-login-codigo-options">
+                    <option value=""></option>
+                  </datalist>
                   <div class="dsc-form-error" id="bulk-login-codigo-error"></div>
                 </label>
 
@@ -135,10 +144,13 @@
       const form = document.getElementById('login-dre-form');
       const bulkForm = document.getElementById('login-dre-bulk-form');
       const loginCodigoSelect = document.getElementById('login-codigo');
+      const loginCodigoOptions = document.getElementById('login-codigo-options');
       const loginNomeInput = document.getElementById('login-nome');
       const dreCodigoSelect = document.getElementById('dre-codigo');
+      const dreCodigoOptions = document.getElementById('dre-codigo-options');
       const dreDescricaoInput = document.getElementById('dre-descricao');
       const bulkLoginCodigoSelect = document.getElementById('bulk-login-codigo');
+      const bulkLoginCodigoOptions = document.getElementById('bulk-login-codigo-options');
       const bulkLoginNomeInput = document.getElementById('bulk-login-nome');
       const loginCodigoError = document.getElementById('login-codigo-error');
       const dreCodigoError = document.getElementById('dre-codigo-error');
@@ -242,27 +254,66 @@
         return error instanceof Error ? error.message : fallbackMessage;
       };
 
-      const fillSelect = (select, items, placeholder, labelField, selectedValue) => {
-        select.innerHTML = '';
-        const firstOption = document.createElement('option');
-        firstOption.value = '';
-        firstOption.textContent = placeholder;
-        select.appendChild(firstOption);
+      const normalizeKey = (value) => (value || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '');
 
-        items.forEach((item) => {
+      const buildOptionLabel = (item, labelField) => `${item.codigo} - ${item[labelField]}`;
+
+      const findSelectedItem = (rawValue, items, labelField) => {
+        const normalizedValue = String(rawValue || '').trim();
+
+        if (!normalizedValue) {
+          return null;
+        }
+
+        return items.find((item) => {
+          const optionLabel = buildOptionLabel(item, labelField);
+
+          return item.codigo === normalizedValue
+            || normalizeKey(optionLabel) === normalizeKey(normalizedValue)
+            || normalizeKey(item[labelField]) === normalizeKey(normalizedValue);
+        }) || null;
+      };
+
+      const renderAutocompleteOptions = ({ inputElement, listElement, items, labelField, selectedValue }) => {
+        const selectedItem = items.find((item) => item.codigo === selectedValue) || null;
+        const currentInputValue = selectedItem ? buildOptionLabel(selectedItem, labelField) : String(inputElement.value || '').trim();
+        const searchKey = normalizeKey(currentInputValue);
+        const filteredItems = searchKey
+          ? items.filter((item) => {
+              const optionLabel = buildOptionLabel(item, labelField);
+              return normalizeKey(optionLabel).includes(searchKey)
+                || normalizeKey(item[labelField]).includes(searchKey)
+                || String(item.codigo).includes(currentInputValue);
+            })
+          : items;
+
+        listElement.innerHTML = '<option value=""></option>';
+
+        filteredItems.forEach((item) => {
           const option = document.createElement('option');
-          option.value = item.codigo;
-          option.textContent = item[labelField];
-          select.appendChild(option);
+          option.value = buildOptionLabel(item, labelField);
+          listElement.appendChild(option);
         });
 
-        select.value = items.some((item) => item.codigo === selectedValue) ? selectedValue : '';
+        inputElement.value = currentInputValue;
       };
 
       const syncBulkLoginDetails = () => {
-        selectedBulkLoginCodigo = bulkLoginCodigoSelect.value;
-        const selected = loginOptions.find((item) => item.codigo === selectedBulkLoginCodigo);
+        const selected = findSelectedItem(bulkLoginCodigoSelect.value, loginOptions, 'nome');
+        selectedBulkLoginCodigo = selected ? selected.codigo : '';
         bulkLoginNomeInput.value = selected ? selected.nome : '';
+        renderAutocompleteOptions({
+          inputElement: bulkLoginCodigoSelect,
+          listElement: bulkLoginCodigoOptions,
+          items: loginOptions,
+          labelField: 'nome',
+          selectedValue: selectedBulkLoginCodigo,
+        });
 
         if (selectedBulkLoginCodigo) {
           bulkLoginCodigoError.textContent = '';
@@ -270,9 +321,16 @@
       };
 
       const syncLoginDetails = () => {
-        selectedLoginCodigo = loginCodigoSelect.value;
-        const selected = loginOptions.find((item) => item.codigo === selectedLoginCodigo);
+        const selected = findSelectedItem(loginCodigoSelect.value, loginOptions, 'nome');
+        selectedLoginCodigo = selected ? selected.codigo : '';
         loginNomeInput.value = selected ? selected.nome : '';
+        renderAutocompleteOptions({
+          inputElement: loginCodigoSelect,
+          listElement: loginCodigoOptions,
+          items: loginOptions,
+          labelField: 'nome',
+          selectedValue: selectedLoginCodigo,
+        });
 
         if (selectedLoginCodigo) {
           loginCodigoError.textContent = '';
@@ -280,9 +338,16 @@
       };
 
       const syncDreDetails = () => {
-        selectedDreCodigo = dreCodigoSelect.value;
-        const selected = dreOptions.find((item) => item.codigo === selectedDreCodigo);
+        const selected = findSelectedItem(dreCodigoSelect.value, dreOptions, 'descricao');
+        selectedDreCodigo = selected ? selected.codigo : '';
         dreDescricaoInput.value = selected ? selected.descricao : '';
+        renderAutocompleteOptions({
+          inputElement: dreCodigoSelect,
+          listElement: dreCodigoOptions,
+          items: dreOptions,
+          labelField: 'descricao',
+          selectedValue: selectedDreCodigo,
+        });
 
         if (selectedDreCodigo) {
           dreCodigoError.textContent = '';
@@ -299,9 +364,9 @@
 
         loginOptions = payload.loginOptions || [];
         dreOptions = payload.dreOptions || [];
-        fillSelect(loginCodigoSelect, loginOptions, 'Selecione o usuario', 'nome', selectedLoginCodigo);
-        fillSelect(bulkLoginCodigoSelect, loginOptions, 'Selecione o usuario', 'nome', selectedBulkLoginCodigo);
-        fillSelect(dreCodigoSelect, dreOptions, 'Selecione a DRE', 'descricao', selectedDreCodigo);
+        renderAutocompleteOptions({ inputElement: loginCodigoSelect, listElement: loginCodigoOptions, items: loginOptions, labelField: 'nome', selectedValue: selectedLoginCodigo });
+        renderAutocompleteOptions({ inputElement: bulkLoginCodigoSelect, listElement: bulkLoginCodigoOptions, items: loginOptions, labelField: 'nome', selectedValue: selectedBulkLoginCodigo });
+        renderAutocompleteOptions({ inputElement: dreCodigoSelect, listElement: dreCodigoOptions, items: dreOptions, labelField: 'descricao', selectedValue: selectedDreCodigo });
         syncLoginDetails();
         syncBulkLoginDetails();
         syncDreDetails();
@@ -508,18 +573,18 @@
         }
       });
 
-      loginCodigoSelect.addEventListener('change', syncLoginDetails);
-      dreCodigoSelect.addEventListener('change', syncDreDetails);
-      bulkLoginCodigoSelect.addEventListener('change', syncBulkLoginDetails);
-      loginCodigoSelect.addEventListener('change', () => {
+      loginCodigoSelect.addEventListener('input', syncLoginDetails);
+      dreCodigoSelect.addEventListener('input', syncDreDetails);
+      bulkLoginCodigoSelect.addEventListener('input', syncBulkLoginDetails);
+      loginCodigoSelect.addEventListener('input', () => {
         formFeedback.textContent = '';
         formFeedback.className = 'dsc-feedback';
       });
-      dreCodigoSelect.addEventListener('change', () => {
+      dreCodigoSelect.addEventListener('input', () => {
         formFeedback.textContent = '';
         formFeedback.className = 'dsc-feedback';
       });
-      bulkLoginCodigoSelect.addEventListener('change', () => {
+      bulkLoginCodigoSelect.addEventListener('input', () => {
         bulkFeedback.textContent = '';
         bulkFeedback.className = 'dsc-feedback';
       });
@@ -527,8 +592,8 @@
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const loginCodigo = loginCodigoSelect.value;
-        const dreCodigo = dreCodigoSelect.value;
+        const loginCodigo = selectedLoginCodigo;
+        const dreCodigo = selectedDreCodigo;
         let hasError = false;
 
         resetMessages();
@@ -587,7 +652,7 @@
       bulkForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const loginCodigo = bulkLoginCodigoSelect.value;
+        const loginCodigo = selectedBulkLoginCodigo;
         resetBulkMessages();
 
         if (!loginCodigo) {

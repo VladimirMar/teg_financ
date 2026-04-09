@@ -4,15 +4,18 @@ import './App.css'
 import { authenticate } from './services/auth'
 import { createDreItem, deleteDreItem, listDreItemsPaginated, updateDreItem } from './services/dre'
 import type { DreItem } from './services/dre'
+import { createTitularItem, deleteTitularItem, listTitularItemsPaginated, updateTitularItem } from './services/titular'
+import type { TitularItem } from './services/titular'
 import { createMarcaModeloItem, deleteMarcaModeloItem, listMarcaModeloItemsPaginated, updateMarcaModeloItem } from './services/marcaModelo'
 import type { MarcaModeloItem } from './services/marcaModelo'
 import { createSeguradoraItem, deleteSeguradoraItem, listSeguradoraItemsPaginated, updateSeguradoraItem } from './services/seguradora'
 import type { SeguradoraItem } from './services/seguradora'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo'
+type ActiveView = 'inicio' | 'dre' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
+type TitularSortField = 'codigo' | 'cnpj_cpf' | 'titular'
 type MarcaModeloSortField = 'codigo' | 'descricao'
 type SeguradoraSortField = 'codigo' | 'controle' | 'descricao'
 
@@ -109,6 +112,32 @@ function getUserDisplayName(user: unknown, fallbackEmail: string) {
   return fallbackEmail
 }
 
+function formatCpfOrCnpj(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 14)
+
+  if (digits.length <= 3) {
+    return digits
+  }
+
+  if (digits.length <= 6) {
+    return `${digits.slice(0, 3)}.${digits.slice(3)}`
+  }
+
+  if (digits.length <= 9) {
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
+  }
+
+  if (digits.length <= 11) {
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`
+  }
+
+  if (digits.length <= 12) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`
+  }
+
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`
+}
+
 function App() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -138,6 +167,27 @@ function App() {
   const [dreSortBy, setDreSortBy] = useState<DreSortField>('codigo')
   const [dreSortDirection, setDreSortDirection] = useState<DreSortDirection>('asc')
   const deferredDreSearch = useDeferredValue(dreSearch)
+  const [titularItems, setTitularItems] = useState<TitularItem[]>([])
+  const [titularCodigo, setTitularCodigo] = useState('')
+  const [titularCnpjCpf, setTitularCnpjCpf] = useState('')
+  const [titularNome, setTitularNome] = useState('')
+  const [titularCodigoError, setTitularCodigoError] = useState('')
+  const [titularCnpjCpfError, setTitularCnpjCpfError] = useState('')
+  const [titularNomeError, setTitularNomeError] = useState('')
+  const [titularStatusMessage, setTitularStatusMessage] = useState('')
+  const [titularStatusTone, setTitularStatusTone] = useState<StatusTone>('idle')
+  const [isLoadingTitular, setIsLoadingTitular] = useState(false)
+  const [isSavingTitular, setIsSavingTitular] = useState(false)
+  const [isDeletingTitular, setIsDeletingTitular] = useState(false)
+  const [isTitularFormVisible, setIsTitularFormVisible] = useState(false)
+  const [editingTitularCodigo, setEditingTitularCodigo] = useState<string | null>(null)
+  const [titularSearch, setTitularSearch] = useState('')
+  const [titularPage, setTitularPage] = useState(1)
+  const [titularTotalItems, setTitularTotalItems] = useState(0)
+  const [titularTotalPages, setTitularTotalPages] = useState(1)
+  const [titularSortBy, setTitularSortBy] = useState<TitularSortField>('codigo')
+  const [titularSortDirection, setTitularSortDirection] = useState<DreSortDirection>('asc')
+  const deferredTitularSearch = useDeferredValue(titularSearch)
   const [marcaModeloItems, setMarcaModeloItems] = useState<MarcaModeloItem[]>([])
   const [marcaModeloCodigo, setMarcaModeloCodigo] = useState('')
   const [marcaModeloDescricao, setMarcaModeloDescricao] = useState('')
@@ -249,6 +299,39 @@ function App() {
     }
   }, [deferredSeguradoraSearch, seguradoraSortBy, seguradoraSortDirection])
 
+  const loadTitularItems = useCallback(async (pageToLoad: number) => {
+    setIsLoadingTitular(true)
+    setTitularStatusMessage('Carregando registros de titulares do CRM...')
+    setTitularStatusTone('idle')
+
+    try {
+      const result = await listTitularItemsPaginated({
+        search: deferredTitularSearch,
+        page: pageToLoad,
+        pageSize: DRE_PAGE_SIZE,
+        sortBy: titularSortBy,
+        sortDirection: titularSortDirection,
+      })
+
+      setTitularItems(result.items)
+      setTitularTotalItems(result.total)
+      setTitularTotalPages(result.totalPages)
+      setTitularPage(result.page)
+      setTitularSortBy(result.sortBy)
+      setTitularSortDirection(result.sortDirection)
+      setTitularStatusMessage(result.items.length ? '' : 'Nenhum registro encontrado na tabela titular do CRM.')
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Falha ao carregar os registros de titulares do CRM.'
+
+      setTitularStatusTone('error')
+      setTitularStatusMessage(message)
+    } finally {
+      setIsLoadingTitular(false)
+    }
+  }, [deferredTitularSearch, titularSortBy, titularSortDirection])
+
   const loadMarcaModeloItems = useCallback(async (pageToLoad: number) => {
     setIsLoadingMarcaModelo(true)
     setMarcaModeloStatusMessage('Carregando registros de marca/modelo...')
@@ -309,6 +392,18 @@ function App() {
   useEffect(() => {
     setDrePage(1)
   }, [deferredDreSearch])
+
+  useEffect(() => {
+    if (!session || activeView !== 'titular') {
+      return
+    }
+
+    void loadTitularItems(titularPage)
+  }, [activeView, loadTitularItems, session, titularPage])
+
+  useEffect(() => {
+    setTitularPage(1)
+  }, [deferredTitularSearch])
 
   useEffect(() => {
     setSeguradoraPage(1)
@@ -570,6 +665,181 @@ function App() {
       setDreStatusMessage(message)
     } finally {
       setIsDeletingDre(false)
+    }
+  }
+
+  const resetTitularForm = () => {
+    setTitularCodigo('')
+    setTitularCnpjCpf('')
+    setTitularNome('')
+    setTitularCodigoError('')
+    setTitularCnpjCpfError('')
+    setTitularNomeError('')
+    setEditingTitularCodigo(null)
+  }
+
+  const handleStartInsertTitular = () => {
+    resetTitularForm()
+    setTitularStatusTone('idle')
+    setTitularStatusMessage('')
+    setIsTitularFormVisible(true)
+  }
+
+  const handleFilterTitularSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setTitularPage(1)
+    setTitularStatusMessage('Aplicando filtro de titular do CRM...')
+    setTitularStatusTone('idle')
+  }
+
+  const handleClearTitularFilter = () => {
+    setTitularSearch('')
+    setTitularPage(1)
+  }
+
+  const handleSortTitular = (field: TitularSortField) => {
+    setTitularPage(1)
+    setTitularSortBy((currentField) => {
+      if (currentField === field) {
+        setTitularSortDirection((currentDirection) => currentDirection === 'asc' ? 'desc' : 'asc')
+        return currentField
+      }
+
+      setTitularSortDirection('asc')
+      return field
+    })
+  }
+
+  const getTitularSortIndicator = (field: TitularSortField) => {
+    if (titularSortBy !== field) {
+      return '↕'
+    }
+
+    return titularSortDirection === 'asc' ? '↑' : '↓'
+  }
+
+  const handleStartEditTitular = (item: TitularItem) => {
+    setEditingTitularCodigo(item.codigo)
+    setTitularCodigo(item.codigo)
+    setTitularCnpjCpf(formatCpfOrCnpj(item.cnpj_cpf))
+    setTitularNome(item.titular)
+    setTitularCodigoError('')
+    setTitularCnpjCpfError('')
+    setTitularNomeError('')
+    setTitularStatusTone('idle')
+    setTitularStatusMessage(`Alterando registro ${item.codigo}.`)
+    setIsTitularFormVisible(true)
+  }
+
+  const handleCancelTitularForm = () => {
+    resetTitularForm()
+    setIsTitularFormVisible(false)
+    setTitularStatusTone('idle')
+    setTitularStatusMessage('')
+  }
+
+  const handleCreateTitular = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const normalizedCodigo = titularCodigo.trim()
+    const normalizedCnpjCpf = titularCnpjCpf.trim()
+    const normalizedTitular = titularNome.trim()
+    const editingCodigo = editingTitularCodigo
+    let hasError = false
+
+    setTitularCodigoError('')
+    setTitularCnpjCpfError('')
+    setTitularNomeError('')
+
+    if (!normalizedCodigo) {
+      setTitularCodigoError('Codigo e obrigatorio.')
+      hasError = true
+    }
+
+    if (!normalizedCnpjCpf) {
+      setTitularCnpjCpfError('CNPJ/CPF e obrigatorio.')
+      hasError = true
+    }
+
+    if (!normalizedTitular) {
+      setTitularNomeError('Titular do CRM e obrigatorio.')
+      hasError = true
+    }
+
+    if (hasError) {
+      setTitularStatusTone('error')
+      setTitularStatusMessage('Corrija os campos de titular do CRM para continuar.')
+      return
+    }
+
+    setIsSavingTitular(true)
+    setTitularStatusTone('idle')
+    setTitularStatusMessage(editingCodigo ? 'Alterando registro de titular do CRM...' : 'Gravando registro de titular do CRM...')
+
+    try {
+      const savedItem = editingCodigo
+        ? await updateTitularItem(editingCodigo, {
+            codigo: normalizedCodigo,
+            cnpj_cpf: normalizedCnpjCpf,
+            titular: normalizedTitular,
+          })
+        : await createTitularItem({
+            codigo: normalizedCodigo,
+            cnpj_cpf: normalizedCnpjCpf,
+            titular: normalizedTitular,
+          })
+
+      void savedItem
+      resetTitularForm()
+      setIsTitularFormVisible(false)
+      setTitularStatusTone('success')
+      setTitularStatusMessage(editingCodigo ? 'Registro de titular do CRM alterado com sucesso.' : 'Registro de titular do CRM cadastrado com sucesso.')
+      await loadTitularItems(editingCodigo ? titularPage : 1)
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Falha ao cadastrar titular do CRM.'
+
+      setTitularStatusTone('error')
+      setTitularStatusMessage(message)
+    } finally {
+      setIsSavingTitular(false)
+    }
+  }
+
+  const handleDeleteTitular = async (item: TitularItem) => {
+    const confirmed = window.confirm(`Excluir o registro ${item.codigo} - ${item.titular}?`)
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsDeletingTitular(true)
+    setTitularStatusTone('idle')
+    setTitularStatusMessage(`Excluindo registro ${item.codigo}...`)
+
+    try {
+      const deletedCodigo = await deleteTitularItem(item.codigo)
+      setTitularItems((currentItems) => currentItems.filter((currentItem) => currentItem.codigo !== deletedCodigo))
+
+      if (editingTitularCodigo === item.codigo) {
+        resetTitularForm()
+        setIsTitularFormVisible(false)
+      }
+
+      setTitularStatusTone('success')
+      setTitularStatusMessage('Registro de titular do CRM excluido com sucesso.')
+      const nextPage = titularItems.length === 1 && titularPage > 1 ? titularPage - 1 : titularPage
+      await loadTitularItems(nextPage)
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Falha ao excluir titular do CRM.'
+
+      setTitularStatusTone('error')
+      setTitularStatusMessage(message)
+    } finally {
+      setIsDeletingTitular(false)
     }
   }
 
@@ -972,7 +1242,6 @@ function App() {
                 type="button"
                 className="secondary-button"
                 onClick={handleCancel}
-                disabled={isSubmitting}
               >
                 Cancelar
               </button>
@@ -993,6 +1262,8 @@ function App() {
 
   const canGoToPreviousDrePage = drePage > 1
   const canGoToNextDrePage = drePage < dreTotalPages
+  const canGoToPreviousTitularPage = titularPage > 1
+  const canGoToNextTitularPage = titularPage < titularTotalPages
   const canGoToPreviousMarcaModeloPage = marcaModeloPage > 1
   const canGoToNextMarcaModeloPage = marcaModeloPage < marcaModeloTotalPages
   const canGoToPreviousSeguradoraPage = seguradoraPage > 1
@@ -1019,6 +1290,12 @@ function App() {
               onClick={() => setActiveView('dre')}
             >
               DRE
+            </li>
+            <li
+              className={`menu-item ${activeView === 'titular' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('titular')}
+            >
+              Titular do CRM
             </li>
             <li
               className={`menu-item ${activeView === 'marcaModelo' ? 'menu-item-active' : ''}`}
@@ -1256,6 +1533,189 @@ function App() {
                     className="secondary-button management-pagination-button"
                     onClick={() => setDrePage((currentPage) => currentPage + 1)}
                     disabled={!canGoToNextDrePage || isLoadingDre}
+                  >
+                    Proxima
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : activeView === 'titular' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Cadastro administrativo</p>
+              <h2 id="content-title">Tabela Titular do CRM</h2>
+              <p className="content-description">
+                Cadastre e consulte os registros de titulares do CRM carregados inicialmente a partir do XML. A tela segue o mesmo layout e funcionalidades da DRE, com filtro, ordenacao, paginacao e CRUD completo.
+              </p>
+            </div>
+
+            <div className="management-layout">
+              <div className="management-toolbar">
+                <button
+                  type="button"
+                  className="primary-button dre-insert-button"
+                  onClick={handleStartInsertTitular}
+                  disabled={isSavingTitular || isDeletingTitular}
+                >
+                  Inserir registro
+                </button>
+
+                <form className="management-filter-form" onSubmit={handleFilterTitularSubmit}>
+                  <input
+                    className="management-filter-input"
+                    type="text"
+                    placeholder="Filtrar por codigo, CNPJ/CPF ou titular do CRM"
+                    value={titularSearch}
+                    onChange={(event) => setTitularSearch(event.target.value)}
+                  />
+                  <button type="submit" className="secondary-button management-filter-button">
+                    Filtrar
+                  </button>
+                  <button type="button" className="secondary-button management-filter-button" onClick={handleClearTitularFilter}>
+                    Limpar
+                  </button>
+                </form>
+              </div>
+
+              {isTitularFormVisible ? (
+                <form className="management-card management-form dre-form" onSubmit={handleCreateTitular} noValidate>
+                  <h2>{editingTitularCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+
+                  <label className="field-group" htmlFor="titular-codigo">
+                    <span>Codigo</span>
+                    <input
+                      id="titular-codigo"
+                      name="codigo"
+                      type="text"
+                      value={titularCodigo}
+                      onChange={(event) => setTitularCodigo(event.target.value)}
+                      disabled={isSavingTitular || Boolean(editingTitularCodigo)}
+                      readOnly={Boolean(editingTitularCodigo)}
+                      aria-invalid={Boolean(titularCodigoError)}
+                    />
+                    {titularCodigoError ? <strong className="field-error">{titularCodigoError}</strong> : null}
+                  </label>
+
+                  <label className="field-group" htmlFor="titular-cnpj-cpf">
+                    <span>CNPJ/CPF</span>
+                    <input
+                      id="titular-cnpj-cpf"
+                      name="cnpj-cpf"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                      maxLength={18}
+                      value={titularCnpjCpf}
+                      onChange={(event) => setTitularCnpjCpf(formatCpfOrCnpj(event.target.value))}
+                      disabled={isSavingTitular}
+                      aria-invalid={Boolean(titularCnpjCpfError)}
+                    />
+                    {titularCnpjCpfError ? <strong className="field-error">{titularCnpjCpfError}</strong> : null}
+                  </label>
+
+                  <label className="field-group" htmlFor="titular-nome">
+                    <span>Titular do CRM</span>
+                    <input
+                      id="titular-nome"
+                      name="titular"
+                      type="text"
+                      value={titularNome}
+                      onChange={(event) => setTitularNome(event.target.value)}
+                      disabled={isSavingTitular}
+                      aria-invalid={Boolean(titularNomeError)}
+                    />
+                    {titularNomeError ? <strong className="field-error">{titularNomeError}</strong> : null}
+                  </label>
+
+                  <div className="button-row dre-button-row">
+                    <button type="submit" className="primary-button" disabled={isSavingTitular}>
+                      {isSavingTitular ? 'Salvando...' : editingTitularCodigo ? 'Salvar alteracao' : 'Salvar titular do CRM'}
+                    </button>
+                    <button type="button" className="secondary-button" onClick={handleCancelTitularForm} disabled={isSavingTitular}>
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+
+              <div className="management-card management-grid-card dre-list-card">
+                <div className="management-grid-header">
+                  <h2>Registros cadastrados</h2>
+                  <span>
+                    {isLoadingTitular ? 'Atualizando...' : `${titularTotalItems} item(ns) encontrados`}
+                  </span>
+                </div>
+
+                <div className="management-grid-wrapper">
+                  <table className="dre-table">
+                    <thead>
+                      <tr>
+                        <th>
+                          <button type="button" className="dre-sort-button" onClick={() => handleSortTitular('codigo')}>
+                            Codigo <span>{getTitularSortIndicator('codigo')}</span>
+                          </button>
+                        </th>
+                        <th>
+                          <button type="button" className="dre-sort-button" onClick={() => handleSortTitular('cnpj_cpf')}>
+                            CNPJ/CPF <span>{getTitularSortIndicator('cnpj_cpf')}</span>
+                          </button>
+                        </th>
+                        <th>
+                          <button type="button" className="dre-sort-button" onClick={() => handleSortTitular('titular')}>
+                            Titular do CRM <span>{getTitularSortIndicator('titular')}</span>
+                          </button>
+                        </th>
+                        <th className="dre-actions-column">Acoes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {titularItems.map((item) => (
+                        <tr key={item.codigo}>
+                          <td>{item.codigo}</td>
+                          <td>{item.cnpj_cpf}</td>
+                          <td>{item.titular}</td>
+                          <td>
+                            <div className="dre-row-actions">
+                              <button type="button" className="row-action-button row-action-edit" onClick={() => handleStartEditTitular(item)}>
+                                Alterar
+                              </button>
+                              <button type="button" className="row-action-button row-action-delete" onClick={() => handleDeleteTitular(item)}>
+                                Excluir
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {!isLoadingTitular && titularItems.length === 0 ? (
+                    <p className="management-empty-state">Nenhum registro de titular do CRM encontrado.</p>
+                  ) : null}
+                </div>
+
+                <p className={`status-message status-${titularStatusTone}`} aria-live="polite">
+                  {titularStatusMessage}
+                </p>
+
+                <div className="management-pagination">
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button"
+                    onClick={() => setTitularPage((currentPage) => currentPage - 1)}
+                    disabled={!canGoToPreviousTitularPage || isLoadingTitular}
+                  >
+                    Anterior
+                  </button>
+                  <span className="management-pagination-info">
+                    Pagina {titularPage} de {titularTotalPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button"
+                    onClick={() => setTitularPage((currentPage) => currentPage + 1)}
+                    disabled={!canGoToNextTitularPage || isLoadingTitular}
                   >
                     Proxima
                   </button>

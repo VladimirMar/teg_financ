@@ -46,11 +46,11 @@
                 <input class="dsc-form-control" type="text" placeholder="Imagem">
               </div>
               <div>
-                <select class="dsc-form-control dsc-select" required>
-                  <option value="" disabled selected>Categorias</option>
-                  <option value="1">Valor 1</option>
-                  <option value="2">Valor 2</option>
-                </select>
+                <input class="dsc-form-control" type="text" list="product-category-options" placeholder="Digite para filtrar categorias" required>
+                <datalist id="product-category-options">
+                  <option value="Valor 1"></option>
+                  <option value="Valor 2"></option>
+                </datalist>
               </div>
               <div>
                 <textarea class="dsc-form-control dsc-textarea" placeholder="Descrição"></textarea>

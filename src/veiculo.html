@@ -19,7 +19,7 @@
                 <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-veiculo-button">Inserir registro</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-veiculo-import-button">Importar XML</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-veiculo-rejections-button">Recusas XML</button>
-                <input class="dsc-form-control dsc-access-filter-input" id="veiculo-search" type="text" placeholder="Filtrar por codigo, placas, CRM, marca/modelo ou titular" />
+                <input class="dsc-form-control dsc-access-filter-input" id="veiculo-search" type="text" placeholder="Filtrar por codigo, placas, CRM, marca/modelo ou titular do CRM" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-veiculo-filter-button">Limpar</button>
               </form>
@@ -95,27 +95,31 @@
                 <div class="dsc-form-error" id="veiculo-codigo-error"></div>
               </label>
 
-              <div class="dsc-form-row">
-                <label class="dsc-field-group" for="veiculo-crm">
-                  <span>CRM</span>
-                  <input class="dsc-form-control" id="veiculo-crm" type="text" placeholder="000.000-00" maxlength="20" />
-                  <div class="dsc-form-error" id="veiculo-crm-error"></div>
-                </label>
+              <section class="dsc-form-section-card dsc-form-section-card-veiculo-identificacao">
+                <h3 class="dsc-form-section-title">Identificacao</h3>
 
-                <label class="dsc-field-group" for="veiculo-placas">
-                  <span>Placas</span>
-                  <input class="dsc-form-control" id="veiculo-placas" type="text" placeholder="ABC1D23" maxlength="7" />
-                  <div class="dsc-form-error" id="veiculo-placas-error"></div>
-                </label>
+                <div class="dsc-form-row dsc-form-row-veiculo-identificacao">
+                  <label class="dsc-field-group" for="veiculo-crm">
+                    <span>CRM</span>
+                    <input class="dsc-form-control" id="veiculo-crm" type="text" placeholder="000.000-00" maxlength="20" />
+                    <div class="dsc-form-error" id="veiculo-crm-error"></div>
+                  </label>
 
-                <label class="dsc-field-group" for="veiculo-ano">
-                  <span>Ano</span>
-                  <input class="dsc-form-control" id="veiculo-ano" type="text" inputmode="numeric" placeholder="2025" maxlength="4" />
-                  <div class="dsc-form-error" id="veiculo-ano-error"></div>
-                </label>
-              </div>
+                  <label class="dsc-field-group" for="veiculo-placas">
+                    <span>Placas</span>
+                    <input class="dsc-form-control" id="veiculo-placas" type="text" placeholder="ABC-1234 ou ABC-1D23." maxlength="8" />
+                    <div class="dsc-form-error" id="veiculo-placas-error"></div>
+                  </label>
 
-              <section class="dsc-form-section-card">
+                  <label class="dsc-field-group" for="veiculo-ano">
+                    <span>Ano</span>
+                    <input class="dsc-form-control" id="veiculo-ano" type="text" inputmode="numeric" placeholder="2025" maxlength="4" />
+                    <div class="dsc-form-error" id="veiculo-ano-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <section class="dsc-form-section-card dsc-form-section-card-veiculo-capacidades">
                 <h3 class="dsc-form-section-title">Capacidades</h3>
 
                 <div class="dsc-form-row">
@@ -145,105 +149,126 @@
                 </div>
               </section>
 
-              <div class="dsc-form-row">
-                <label class="dsc-field-group" for="veiculo-val-crm">
-                  <span>Validade CRM</span>
-                  <input class="dsc-form-control" id="veiculo-val-crm" type="date" />
-                  <div class="dsc-form-error" id="veiculo-val-crm-error"></div>
-                </label>
+              <section class="dsc-form-section-card dsc-form-section-card-veiculo-datas">
+                <h3 class="dsc-form-section-title">Datas</h3>
 
-                <label class="dsc-field-group" for="veiculo-seguro-inicio">
-                  <span>Seguro inicio</span>
-                  <input class="dsc-form-control" id="veiculo-seguro-inicio" type="date" />
-                  <div class="dsc-form-error" id="veiculo-seguro-inicio-error"></div>
-                </label>
+                <div class="dsc-form-row dsc-form-row-veiculo-datas">
+                  <label class="dsc-field-group" for="veiculo-val-crm">
+                    <span>Validade CRM</span>
+                    <input class="dsc-form-control" id="veiculo-val-crm" type="date" />
+                    <div class="dsc-form-error" id="veiculo-val-crm-error"></div>
+                  </label>
 
-                <label class="dsc-field-group" for="veiculo-seguro-termino">
-                  <span>Seguro termino</span>
-                  <input class="dsc-form-control" id="veiculo-seguro-termino" type="date" />
-                  <div class="dsc-form-error" id="veiculo-seguro-termino-error"></div>
-                </label>
-              </div>
+                  <label class="dsc-field-group" for="veiculo-seguro-inicio">
+                    <span>Seguro inicio</span>
+                    <input class="dsc-form-control" id="veiculo-seguro-inicio" type="date" />
+                    <div class="dsc-form-error" id="veiculo-seguro-inicio-error"></div>
+                  </label>
 
-              <div class="dsc-form-row dsc-form-row-veiculo-seguradora">
-                <label class="dsc-field-group" for="veiculo-seguradora">
-                  <span>Seguradora</span>
-                  <select class="dsc-form-control" id="veiculo-seguradora">
-                    <option value="">Em branco</option>
-                  </select>
-                  <div class="dsc-form-error" id="veiculo-seguradora-error"></div>
-                </label>
+                  <label class="dsc-field-group" for="veiculo-seguro-termino">
+                    <span>Seguro termino</span>
+                    <input class="dsc-form-control" id="veiculo-seguro-termino" type="date" />
+                    <div class="dsc-form-error" id="veiculo-seguro-termino-error"></div>
+                  </label>
+                </div>
+              </section>
 
-                <label class="dsc-field-group" for="veiculo-marca-modelo">
-                  <span>Marca/modelo</span>
-                  <input class="dsc-form-control" id="veiculo-marca-modelo" type="text" placeholder="MARCA E MODELO" maxlength="255" />
-                  <div class="dsc-form-error" id="veiculo-marca-modelo-error"></div>
-                </label>
-              </div>
+              <section class="dsc-form-section-card dsc-form-section-card-veiculo-comercial">
+                <h3 class="dsc-form-section-title">Dados do veiculo</h3>
 
-              <div class="dsc-form-row">
-                <label class="dsc-field-group" for="veiculo-titular">
-                  <span>Titular</span>
-                  <input class="dsc-form-control" id="veiculo-titular" type="text" placeholder="NOME DO TITULAR" maxlength="255" />
-                  <div class="dsc-form-error" id="veiculo-titular-error"></div>
-                </label>
+                <div class="dsc-form-row dsc-form-row-veiculo-comercial">
+                  <label class="dsc-field-group" for="veiculo-seguradora">
+                    <span>Seguradora</span>
+                    <input class="dsc-form-control" id="veiculo-seguradora" type="text" list="veiculo-seguradora-options" placeholder="DIGITE PARA FILTRAR A SEGURADORA" maxlength="255" />
+                    <datalist id="veiculo-seguradora-options">
+                      <option value=""></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="veiculo-seguradora-error"></div>
+                  </label>
 
-                <label class="dsc-field-group" for="veiculo-cnpj-cpf">
-                  <span>CNPJ/CPF</span>
-                  <input class="dsc-form-control" id="veiculo-cnpj-cpf" type="text" placeholder="00.000.000/0000-00" maxlength="18" />
-                  <div class="dsc-form-error" id="veiculo-cnpj-cpf-error"></div>
-                </label>
+                  <label class="dsc-field-group" for="veiculo-marca-modelo">
+                    <span>Marca/modelo</span>
+                    <input class="dsc-form-control" id="veiculo-marca-modelo" type="text" list="veiculo-marca-modelo-options" placeholder="DIGITE PARA FILTRAR A MARCA/MODELO" maxlength="255" />
+                    <datalist id="veiculo-marca-modelo-options">
+                      <option value=""></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="veiculo-marca-modelo-error"></div>
+                  </label>
 
-                <label class="dsc-field-group" for="veiculo-valor">
-                  <span>Valor do veiculo</span>
-                  <input class="dsc-form-control" id="veiculo-valor" type="text" inputmode="decimal" placeholder="0.00" maxlength="16" />
-                  <div class="dsc-form-error" id="veiculo-valor-error"></div>
-                </label>
-              </div>
+                  <label class="dsc-field-group" for="veiculo-valor">
+                    <span>Valor do veiculo</span>
+                    <input class="dsc-form-control" id="veiculo-valor" type="text" inputmode="decimal" placeholder="0.00" maxlength="16" />
+                    <div class="dsc-form-error" id="veiculo-valor-error"></div>
+                  </label>
+                </div>
+              </section>
 
-              <section class="dsc-form-section-card">
+              <section class="dsc-form-section-card dsc-form-section-card-veiculo-proprietario">
+                <h3 class="dsc-form-section-title">Titular do CRM</h3>
+
+                <div class="dsc-form-row dsc-form-row-veiculo-proprietario">
+                  <label class="dsc-field-group" for="veiculo-cnpj-cpf">
+                    <span>CNPJ/CPF</span>
+                    <input class="dsc-form-control" id="veiculo-cnpj-cpf" type="text" inputmode="numeric" list="veiculo-cnpj-cpf-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR CNPJ/CPF DA TITULARCRM" maxlength="18" />
+                    <datalist id="veiculo-cnpj-cpf-options">
+                      <option value=""></option>
+                    </datalist>
+                    <p class="dsc-form-hint">Digite o CNPJ/CPF para consultar a titularCrm.</p>
+                    <div class="dsc-form-error" id="veiculo-cnpj-cpf-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="veiculo-titular">
+                    <span>Titular do CRM</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="veiculo-titular" type="text" placeholder="TITULAR DO CRM" maxlength="255" readonly />
+                    <div class="dsc-form-error" id="veiculo-titular-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <section class="dsc-form-section-card dsc-form-section-card-veiculo-classificacao">
                 <h3 class="dsc-form-section-title">Classificacao</h3>
 
-                <div class="dsc-form-row">
+                <div class="dsc-form-row dsc-form-row-veiculo-classificacao">
                   <label class="dsc-field-group" for="veiculo-tipo-de-veiculo">
                     <span>Tipo de veiculo</span>
-                    <select class="dsc-form-control" id="veiculo-tipo-de-veiculo">
-                      <option value="">Em branco</option>
-                      <option value="Ônibus">Ônibus</option>
-                      <option value="Micro-Ônibus">Micro-Ônibus</option>
-                    </select>
+                    <input class="dsc-form-control" id="veiculo-tipo-de-veiculo" type="text" list="veiculo-tipo-de-veiculo-options" placeholder="DIGITE PARA FILTRAR O TIPO" maxlength="50" />
+                    <datalist id="veiculo-tipo-de-veiculo-options">
+                      <option value=""></option>
+                      <option value="Ônibus"></option>
+                      <option value="Micro-Ônibus"></option>
+                    </datalist>
                     <div class="dsc-form-error" id="veiculo-tipo-de-veiculo-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="veiculo-tipo-de-bancada">
                     <span>Tipo de bancada</span>
-                    <select class="dsc-form-control" id="veiculo-tipo-de-bancada">
-                      <option value="">Em branco</option>
-                      <option value="Convencional">Convencional</option>
-                      <option value="Creche">Creche</option>
-                      <option value="Acessível">Acessível</option>
-                    </select>
+                    <input class="dsc-form-control" id="veiculo-tipo-de-bancada" type="text" list="veiculo-tipo-de-bancada-options" placeholder="DIGITE PARA FILTRAR A BANCADA" maxlength="50" />
+                    <datalist id="veiculo-tipo-de-bancada-options">
+                      <option value=""></option>
+                      <option value="Convencional"></option>
+                      <option value="Creche"></option>
+                      <option value="Acessível"></option>
+                    </datalist>
                     <div class="dsc-form-error" id="veiculo-tipo-de-bancada-error"></div>
                   </label>
+                  <fieldset class="dsc-field-group dsc-radio-field-group dsc-field-group-veiculo-os-especial">
+                    <span>OS especial</span>
+                    <div class="dsc-radio-group" id="veiculo-os-especial-group">
+                      <label class="dsc-radio-option" for="veiculo-os-especial-branco">
+                        <input id="veiculo-os-especial-branco" type="radio" name="veiculo-os-especial" value="" checked />
+                        <span>Em branco</span>
+                      </label>
+                      <label class="dsc-radio-option" for="veiculo-os-especial-sim">
+                        <input id="veiculo-os-especial-sim" type="radio" name="veiculo-os-especial" value="Sim" />
+                        <span>Sim</span>
+                      </label>
+                      <label class="dsc-radio-option" for="veiculo-os-especial-nao">
+                        <input id="veiculo-os-especial-nao" type="radio" name="veiculo-os-especial" value="Não" />
+                        <span>N&atilde;o</span>
+                      </label>
+                    </div>
+                  </fieldset>
                 </div>
-
-                <fieldset class="dsc-field-group dsc-radio-field-group">
-                  <span>OS especial</span>
-                  <div class="dsc-radio-group" id="veiculo-os-especial-group">
-                    <label class="dsc-radio-option" for="veiculo-os-especial-branco">
-                      <input id="veiculo-os-especial-branco" type="radio" name="veiculo-os-especial" value="" checked />
-                      <span>Em branco</span>
-                    </label>
-                    <label class="dsc-radio-option" for="veiculo-os-especial-sim">
-                      <input id="veiculo-os-especial-sim" type="radio" name="veiculo-os-especial" value="Sim" />
-                      <span>Sim</span>
-                    </label>
-                    <label class="dsc-radio-option" for="veiculo-os-especial-nao">
-                      <input id="veiculo-os-especial-nao" type="radio" name="veiculo-os-especial" value="Não" />
-                      <span>N&atilde;o</span>
-                    </label>
-                  </div>
-                </fieldset>
               </section>
 
               <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
@@ -309,13 +334,18 @@
       const capAcessivelInput = document.getElementById('veiculo-cap-acessivel');
       const valCrmInput = document.getElementById('veiculo-val-crm');
       const seguradoraInput = document.getElementById('veiculo-seguradora');
+      const seguradoraOptionsList = document.getElementById('veiculo-seguradora-options');
       const seguroInicioInput = document.getElementById('veiculo-seguro-inicio');
       const seguroTerminoInput = document.getElementById('veiculo-seguro-termino');
       const tipoDeBancadaInput = document.getElementById('veiculo-tipo-de-bancada');
+      const tipoDeBancadaOptionsList = document.getElementById('veiculo-tipo-de-bancada-options');
       const tipoDeVeiculoInput = document.getElementById('veiculo-tipo-de-veiculo');
+      const tipoDeVeiculoOptionsList = document.getElementById('veiculo-tipo-de-veiculo-options');
       const marcaModeloInput = document.getElementById('veiculo-marca-modelo');
+      const marcaModeloOptionsList = document.getElementById('veiculo-marca-modelo-options');
       const titularInput = document.getElementById('veiculo-titular');
       const cnpjCpfInput = document.getElementById('veiculo-cnpj-cpf');
+      const cnpjCpfOptionsList = document.getElementById('veiculo-cnpj-cpf-options');
       const valorInput = document.getElementById('veiculo-valor');
       const osEspecialRadios = Array.from(document.querySelectorAll('input[name="veiculo-os-especial"]'));
       const codigoError = document.getElementById('veiculo-codigo-error');
@@ -387,7 +417,20 @@
       let currentRejectionSearch = '';
       let editingCodigo = null;
       let bannerTimeoutId = null;
+      let titularLookupRequestId = 0;
+      let titularSuggestionRequestId = 0;
+      let titularSuggestionTimeoutId = null;
+      let titularSuggestionOptions = [];
       let seguradoraOptions = [];
+      let marcaModeloOptions = [];
+      const tipoDeVeiculoOptions = ['Ônibus', 'Micro-Ônibus'];
+      const tipoDeBancadaOptions = ['Convencional', 'Creche', 'Acessível'];
+      const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
 
       const normalizeText = (value, maxLength = 255) => value
         .replace(/\s+/g, ' ')
@@ -398,6 +441,18 @@
       const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
       const normalizeCrm = (value) => value.toUpperCase().replace(/[^0-9A-Z.\-/]/g, '').slice(0, 20);
       const normalizePlaca = (value) => value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+      const isValidPlaca = (value) => /^[A-Z]{3}-?\d{4}$/.test(value) || /^[A-Z]{3}-?\d[A-Z]\d{2}$/.test(value);
+      const formatPlacaDisplay = (value) => {
+        const normalizedValue = normalizePlaca(value);
+
+        if (!normalizedValue) {
+          return '';
+        }
+
+        const prefix = normalizedValue.slice(0, 3);
+        const suffix = normalizedValue.slice(3);
+        return suffix ? `${prefix}-${suffix}` : prefix;
+      };
       const normalizeIntegerInput = (value, maxDigits = 3) => value.replace(/\D/g, '').slice(0, maxDigits);
       const normalizeMoney = (value) => {
         const normalizedValue = value
@@ -412,6 +467,27 @@
 
         const parsed = Number(normalizedValue);
         return Number.isFinite(parsed) ? parsed.toFixed(2) : value;
+      };
+
+      const formatMoneyDisplay = (value) => {
+        const normalizedValue = normalizeMoney(value);
+
+        if (!normalizedValue) {
+          return '';
+        }
+
+        const parsed = Number(normalizedValue);
+        return Number.isFinite(parsed) ? currencyFormatter.format(parsed) : value;
+      };
+
+      const formatMoneyInput = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 13);
+
+        if (!digits) {
+          return '';
+        }
+
+        return currencyFormatter.format(Number(digits) / 100);
       };
 
       const normalizeCnpjCpf = (value) => {
@@ -440,12 +516,19 @@
         return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
       };
 
+      const getDocumentDigits = (value) => value.replace(/\D/g, '');
+
       const normalizeKey = (value) => (value || '')
         .trim()
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z]/g, '');
+
+      const normalizeComboInput = (value, maxLength = 255) => value
+        .replace(/\s+/g, ' ')
+        .trimStart()
+        .slice(0, maxLength);
 
       const buildSeguradoraOptionList = (items = []) => {
         const uniqueValues = new Map();
@@ -461,29 +544,143 @@
         return Array.from(uniqueValues.values()).sort((left, right) => left.localeCompare(right, 'pt-BR'));
       };
 
+      const buildMarcaModeloOptionList = (items = []) => {
+        const uniqueValues = new Map();
+
+        items.forEach((item) => {
+          const descricao = normalizeText(String(item?.descricao || ''), 255);
+
+          if (descricao && !uniqueValues.has(descricao)) {
+            uniqueValues.set(descricao, descricao);
+          }
+        });
+
+        return Array.from(uniqueValues.values()).sort((left, right) => left.localeCompare(right, 'pt-BR'));
+      };
+
+      const resolveOptionValue = (value, options, normalizer = normalizeComboInput) => {
+        const normalizedValue = normalizer(String(value || ''));
+
+        if (!normalizedValue) {
+          return '';
+        }
+
+        const matchedOption = options.find((option) => normalizeKey(option) === normalizeKey(normalizedValue));
+        return matchedOption || normalizedValue;
+      };
+
+      const renderDatalistOptions = ({ inputElement, listElement, options, selectedValue = '', normalizer = normalizeComboInput }) => {
+        const normalizedSelectedValue = normalizer(String(selectedValue || ''));
+        const searchKey = normalizeKey(normalizedSelectedValue);
+        const filteredOptions = searchKey
+          ? options.filter((option) => normalizeKey(option).includes(searchKey))
+          : options;
+        const visibleOptions = filteredOptions.length ? filteredOptions : options;
+
+        listElement.innerHTML = '<option value=""></option>';
+
+        visibleOptions.forEach((optionValue) => {
+          const option = document.createElement('option');
+          option.value = optionValue;
+          listElement.appendChild(option);
+        });
+
+        inputElement.value = normalizedSelectedValue;
+      };
+
       const renderSeguradoraOptions = (selectedValue = seguradoraInput.value || '') => {
-        const normalizedSelectedValue = normalizeText(String(selectedValue || ''), 255);
-        const availableOptions = new Set(seguradoraOptions);
+        renderDatalistOptions({
+          inputElement: seguradoraInput,
+          listElement: seguradoraOptionsList,
+          options: seguradoraOptions,
+          selectedValue,
+          normalizer: (value) => normalizeText(value, 255),
+        });
+      };
 
-        seguradoraInput.innerHTML = '<option value="">Em branco</option>';
+      const renderMarcaModeloOptions = (selectedValue = marcaModeloInput.value || '') => {
+        renderDatalistOptions({
+          inputElement: marcaModeloInput,
+          listElement: marcaModeloOptionsList,
+          options: marcaModeloOptions,
+          selectedValue,
+          normalizer: (value) => normalizeText(value, 255),
+        });
+      };
 
-        if (normalizedSelectedValue && !availableOptions.has(normalizedSelectedValue)) {
-          availableOptions.add(normalizedSelectedValue);
+      const renderTipoDeVeiculoOptions = (selectedValue = tipoDeVeiculoInput.value || '') => {
+        renderDatalistOptions({
+          inputElement: tipoDeVeiculoInput,
+          listElement: tipoDeVeiculoOptionsList,
+          options: tipoDeVeiculoOptions,
+          selectedValue,
+        });
+      };
+
+      const renderTipoDeBancadaOptions = (selectedValue = tipoDeBancadaInput.value || '') => {
+        renderDatalistOptions({
+          inputElement: tipoDeBancadaInput,
+          listElement: tipoDeBancadaOptionsList,
+          options: tipoDeBancadaOptions,
+          selectedValue,
+        });
+      };
+
+      const renderTitularSuggestions = (items = []) => {
+        titularSuggestionOptions = items;
+        cnpjCpfOptionsList.innerHTML = '<option value=""></option>';
+
+        items.forEach((item) => {
+          const option = document.createElement('option');
+          option.value = item.cnpj_cpf || '';
+          option.label = item.titular || '';
+          option.textContent = `${item.cnpj_cpf || ''} - ${item.titular || ''}`;
+          cnpjCpfOptionsList.appendChild(option);
+        });
+      };
+
+      const loadTitularSuggestions = async (searchValue) => {
+        const requestId = ++titularSuggestionRequestId;
+        const normalizedSearch = normalizeCnpjCpf(String(searchValue || ''));
+        const digits = getDocumentDigits(normalizedSearch);
+
+        if (!digits.length) {
+          renderTitularSuggestions([]);
+          return;
         }
 
-        Array.from(availableOptions)
-          .sort((left, right) => left.localeCompare(right, 'pt-BR'))
-          .forEach((optionValue) => {
-            const option = document.createElement('option');
-            option.value = optionValue;
-            option.textContent = optionValue;
-            option.selected = optionValue === normalizedSelectedValue;
-            seguradoraInput.appendChild(option);
+        try {
+          const response = await fetch(`/api/titular?page=1&pageSize=8&sortBy=cnpj_cpf&sortDirection=asc&search=${encodeURIComponent(normalizedSearch)}`, {
+            headers: { Accept: 'application/json' },
           });
+          const payload = await readJsonResponse(response);
 
-        if (!normalizedSelectedValue) {
-          seguradoraInput.value = '';
+          if (requestId !== titularSuggestionRequestId) {
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar sugestoes de titular do CRM.');
+          }
+
+          renderTitularSuggestions(payload.items || []);
+        } catch {
+          if (requestId !== titularSuggestionRequestId) {
+            return;
+          }
+
+          renderTitularSuggestions([]);
         }
+      };
+
+      const queueTitularSuggestions = () => {
+        if (titularSuggestionTimeoutId) {
+          window.clearTimeout(titularSuggestionTimeoutId);
+        }
+
+        titularSuggestionTimeoutId = window.setTimeout(() => {
+          void loadTitularSuggestions(cnpjCpfInput.value);
+        }, 180);
       };
 
       const loadSeguradoraOptions = async () => {
@@ -503,6 +700,26 @@
           seguradoraOptions = [];
           renderSeguradoraOptions();
           showBanner(getRequestErrorMessage(error, 'Falha ao carregar seguradoras.'), 'error');
+        }
+      };
+
+      const loadMarcaModeloOptions = async () => {
+        try {
+          const response = await fetch('/api/marca-modelo?page=1&pageSize=300&sortBy=descricao&sortDirection=asc', {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar marcas/modelos.');
+          }
+
+          marcaModeloOptions = buildMarcaModeloOptionList(payload.items || []);
+          renderMarcaModeloOptions();
+        } catch (error) {
+          marcaModeloOptions = [];
+          renderMarcaModeloOptions();
+          showBanner(getRequestErrorMessage(error, 'Falha ao carregar marcas/modelos.'), 'error');
         }
       };
 
@@ -596,6 +813,60 @@
         feedback.className = 'dsc-feedback';
       };
 
+      const clearTitularLookupState = () => {
+        titularInput.value = '';
+        titularError.textContent = '';
+      };
+
+      const syncTitularByCnpjCpf = async () => {
+        const requestId = ++titularLookupRequestId;
+        const cnpjCpf = normalizeCnpjCpf(cnpjCpfInput.value);
+        const digits = getDocumentDigits(cnpjCpf);
+
+        cnpjCpfInput.value = cnpjCpf;
+
+        if (!digits.length) {
+          clearTitularLookupState();
+          renderTitularSuggestions([]);
+          cnpjCpfError.textContent = '';
+          return;
+        }
+
+        if (![11, 14].includes(digits.length)) {
+          clearTitularLookupState();
+          cnpjCpfError.textContent = '';
+          return;
+        }
+
+        titularInput.value = 'CARREGANDO TITULAR DO CRM...';
+        titularError.textContent = '';
+        cnpjCpfError.textContent = '';
+
+        try {
+          const response = await fetch(`/api/titular/lookup?cnpjCpf=${encodeURIComponent(cnpjCpf)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (requestId !== titularLookupRequestId) {
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao localizar titular do CRM.');
+          }
+
+          titularInput.value = normalizeText(String(payload.item?.titular || ''), 255);
+        } catch (error) {
+          if (requestId !== titularLookupRequestId) {
+            return;
+          }
+
+          clearTitularLookupState();
+          cnpjCpfError.textContent = getRequestErrorMessage(error, 'Falha ao localizar titular do CRM.');
+        }
+      };
+
       const resetImportMessages = () => {
         importFileNameError.textContent = '';
         importFeedback.textContent = '';
@@ -663,8 +934,9 @@
         form.reset();
         codigoInput.value = '';
         renderSeguradoraOptions('');
-        tipoDeVeiculoInput.value = '';
-        tipoDeBancadaInput.value = '';
+        renderMarcaModeloOptions('');
+        renderTipoDeVeiculoOptions('');
+        renderTipoDeBancadaOptions('');
         setSelectedOsEspecial('');
         editingCodigo = null;
         resetMessages();
@@ -835,9 +1107,12 @@
         form.reset();
         codigoInput.value = '';
         renderSeguradoraOptions('');
-        tipoDeVeiculoInput.value = '';
-        tipoDeBancadaInput.value = '';
+        renderMarcaModeloOptions('');
+        renderTipoDeVeiculoOptions('');
+        renderTipoDeBancadaOptions('');
         setSelectedOsEspecial('');
+        clearTitularLookupState();
+        renderTitularSuggestions([]);
         resetMessages();
         showForm(false);
       };
@@ -846,7 +1121,7 @@
         editingCodigo = item.codigo;
         codigoInput.value = item.codigo;
         crmInput.value = item.crm || '';
-        placasInput.value = item.placas || '';
+        placasInput.value = formatPlacaDisplay(item.placas || '');
         anoInput.value = item.ano || '';
         capDetranInput.value = item.cap_detran || '';
         capTegInput.value = item.cap_teg || '';
@@ -856,15 +1131,16 @@
         renderSeguradoraOptions(item.seguradora || '');
         seguroInicioInput.value = item.seguro_inicio || '';
         seguroTerminoInput.value = item.seguro_termino || '';
-        tipoDeBancadaInput.value = item.tipo_de_bancada || '';
-        tipoDeVeiculoInput.value = item.tipo_de_veiculo || '';
-        marcaModeloInput.value = item.marca_modelo || '';
+        renderTipoDeBancadaOptions(item.tipo_de_bancada || '');
+        renderTipoDeVeiculoOptions(item.tipo_de_veiculo || '');
+        renderMarcaModeloOptions(item.marca_modelo || '');
+        cnpjCpfInput.value = normalizeCnpjCpf(item.cnpj_cpf || '');
         titularInput.value = item.titular || '';
-        cnpjCpfInput.value = item.cnpj_cpf || '';
-        valorInput.value = item.valor_veiculo || '';
+        valorInput.value = formatMoneyDisplay(item.valor_veiculo || '');
         setSelectedOsEspecial(item.os_especial || '');
         resetMessages();
         showForm(true);
+        void syncTitularByCnpjCpf();
       };
 
       const handleDelete = async (item) => {
@@ -934,7 +1210,7 @@
       });
 
       placasInput.addEventListener('input', () => {
-        placasInput.value = normalizePlaca(placasInput.value);
+        placasInput.value = formatPlacaDisplay(placasInput.value);
       });
 
       anoInput.addEventListener('input', () => {
@@ -961,20 +1237,45 @@
         syncSeguroTerminoMin();
       });
 
-      marcaModeloInput.addEventListener('input', () => {
-        marcaModeloInput.value = normalizeText(marcaModeloInput.value, 255);
+      seguradoraInput.addEventListener('input', () => {
+        seguradoraInput.value = normalizeText(seguradoraInput.value, 255);
+        renderSeguradoraOptions(seguradoraInput.value);
       });
 
-      titularInput.addEventListener('input', () => {
-        titularInput.value = normalizeText(titularInput.value, 255);
+      marcaModeloInput.addEventListener('input', () => {
+        marcaModeloInput.value = normalizeText(marcaModeloInput.value, 255);
+        renderMarcaModeloOptions(marcaModeloInput.value);
+      });
+
+      tipoDeVeiculoInput.addEventListener('input', () => {
+        tipoDeVeiculoInput.value = normalizeComboInput(tipoDeVeiculoInput.value, 50);
+        renderTipoDeVeiculoOptions(tipoDeVeiculoInput.value);
+      });
+
+      tipoDeBancadaInput.addEventListener('input', () => {
+        tipoDeBancadaInput.value = normalizeComboInput(tipoDeBancadaInput.value, 50);
+        renderTipoDeBancadaOptions(tipoDeBancadaInput.value);
       });
 
       cnpjCpfInput.addEventListener('input', () => {
-        cnpjCpfInput.value = normalizeCnpjCpf(cnpjCpfInput.value);
+        queueTitularSuggestions();
+        void syncTitularByCnpjCpf();
+      });
+
+      cnpjCpfInput.addEventListener('focus', () => {
+        queueTitularSuggestions();
+      });
+
+      cnpjCpfInput.addEventListener('blur', () => {
+        void syncTitularByCnpjCpf();
+      });
+
+      valorInput.addEventListener('input', () => {
+        valorInput.value = formatMoneyInput(valorInput.value);
       });
 
       valorInput.addEventListener('blur', () => {
-        valorInput.value = normalizeMoney(valorInput.value);
+        valorInput.value = formatMoneyDisplay(valorInput.value);
       });
 
       form.addEventListener('submit', async (event) => {
@@ -989,12 +1290,12 @@
         const capTegCreche = normalizeIntegerInput(capTegCrecheInput.value);
         const capAcessivel = normalizeIntegerInput(capAcessivelInput.value);
         const valCrm = valCrmInput.value;
-        const seguradora = normalizeText(seguradoraInput.value, 255);
+        const seguradora = resolveOptionValue(seguradoraInput.value, seguradoraOptions, (value) => normalizeText(value, 255));
         const seguroInicio = seguroInicioInput.value;
         const seguroTermino = seguroTerminoInput.value;
-        const tipoDeBancada = tipoDeBancadaInput.value;
-        const tipoDeVeiculo = tipoDeVeiculoInput.value;
-        const marcaModelo = normalizeText(marcaModeloInput.value, 255);
+        const tipoDeBancada = resolveOptionValue(tipoDeBancadaInput.value, tipoDeBancadaOptions, (value) => normalizeComboInput(value, 50));
+        const tipoDeVeiculo = resolveOptionValue(tipoDeVeiculoInput.value, tipoDeVeiculoOptions, (value) => normalizeComboInput(value, 50));
+        const marcaModelo = resolveOptionValue(marcaModeloInput.value, marcaModeloOptions, (value) => normalizeText(value, 255));
         const titular = normalizeText(titularInput.value, 255);
         const cnpjCpf = normalizeCnpjCpf(cnpjCpfInput.value);
         const valorVeiculo = normalizeMoney(valorInput.value);
@@ -1004,17 +1305,19 @@
         resetMessages();
         codigoInput.value = codigo;
         crmInput.value = crm;
-        placasInput.value = placas;
+        placasInput.value = formatPlacaDisplay(placas);
         anoInput.value = ano;
         capDetranInput.value = capDetran;
         capTegInput.value = capTeg;
         capTegCrecheInput.value = capTegCreche;
         capAcessivelInput.value = capAcessivel;
         renderSeguradoraOptions(seguradora);
-        marcaModeloInput.value = marcaModelo;
+        renderTipoDeBancadaOptions(tipoDeBancada);
+        renderTipoDeVeiculoOptions(tipoDeVeiculo);
+        renderMarcaModeloOptions(marcaModelo);
         titularInput.value = titular;
         cnpjCpfInput.value = cnpjCpf;
-        valorInput.value = valorVeiculo;
+        valorInput.value = formatMoneyDisplay(valorVeiculo);
 
         if (!codigo) {
           codigoError.textContent = 'Informe o codigo.';
@@ -1026,8 +1329,8 @@
           hasError = true;
         }
 
-        if (placas && !/^[A-Z0-9]{7}$/.test(placas)) {
-          placasError.textContent = 'Placa deve conter 7 caracteres alfanumericos.';
+        if (placas && !isValidPlaca(placas)) {
+          placasError.textContent = 'Placa deve seguir o formato ABC-1234 ou ABC-1D23.';
           hasError = true;
         }
 
@@ -1064,6 +1367,12 @@
 
         if (cnpjCpf && ![11, 14].includes(cnpjCpf.replace(/\D/g, '').length)) {
           cnpjCpfError.textContent = 'CNPJ/CPF deve conter 11 ou 14 digitos.';
+          hasError = true;
+        }
+
+        if (cnpjCpf && !titular) {
+          cnpjCpfError.textContent = cnpjCpfError.textContent || 'CNPJ/CPF nao encontrado na tabela titularCrm.';
+          titularError.textContent = 'Titular do CRM nao encontrado para o CNPJ/CPF informado.';
           hasError = true;
         }
 
@@ -1270,6 +1579,7 @@
       valCrmInput.min = getCurrentDateInputValue();
       syncSeguroTerminoMin();
       void loadSeguradoraOptions();
+      void loadMarcaModeloOptions();
 
       hideForm();
       hideImportForm();

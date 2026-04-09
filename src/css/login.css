@@ -21,11 +21,14 @@ main {
 }
 
 .dsc-container {
+  width: min(100%, 1120px);
   max-width: 1120px;
+  margin-inline: auto;
 }
 
 body:has(#condutor-grid-body) .dsc-container,
 body:has(#condutor-rejection-grid-body) .dsc-container {
+  width: min(100%, 1480px);
   max-width: 1480px;
 }
 
@@ -55,11 +58,13 @@ body:has(#condutor-rejection-grid-body) .dsc-container {
 .dsc-access-layout {
   display: grid;
   gap: 20px;
+  min-width: 0;
 }
 
 .dsc-access-management-layout {
   display: grid;
   gap: 20px;
+  min-width: 0;
 }
 
 .dsc-access-copy {
@@ -96,6 +101,8 @@ body:has(#condutor-rejection-grid-body) .dsc-container {
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .dsc-access-insert-button {
@@ -117,14 +124,14 @@ body:has(#condutor-rejection-grid-body) .dsc-container {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   flex: 1 1 auto;
   width: 100%;
 }
 
 .dsc-access-filter-input,
 .dsc-form-control {
-  min-width: 280px;
+  min-width: 0;
   width: 100%;
   border: 1px solid rgba(121, 91, 56, 0.24);
   border-radius: 18px;
@@ -137,7 +144,7 @@ body:has(#condutor-rejection-grid-body) .dsc-container {
 
 .dsc-access-filter-input {
   flex: 1 1 320px;
-  min-width: 320px;
+  min-width: 220px;
   border-radius: 999px;
   padding: 13px 16px;
 }
@@ -188,6 +195,7 @@ body:has(#credenciada-search) #credenciada-search {
 
 .dsc-access-form {
   max-width: 520px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -206,9 +214,13 @@ body:has(#credenciada-search) #credenciada-search {
 
 #veiculo-form {
   max-width: 1240px;
+  min-height: 980px;
 }
 
-#veiculo-seguradora {
+#veiculo-seguradora,
+#veiculo-marca-modelo,
+#veiculo-tipo-de-veiculo,
+#veiculo-tipo-de-bancada {
   font-size: 0.88rem;
   min-height: 44px;
   padding-top: 10px;
@@ -252,6 +264,31 @@ body:has(#credenciada-search) #credenciada-search {
   grid-template-columns: minmax(420px, 1.35fr) minmax(320px, 1fr);
 }
 
+.dsc-form-row-veiculo-identificacao {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(180px, 0.55fr);
+}
+
+.dsc-form-row-veiculo-comercial {
+  grid-template-columns: minmax(280px, 1.1fr) minmax(320px, 1.35fr) minmax(220px, 0.75fr);
+}
+
+.dsc-form-row-veiculo-proprietario {
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.85fr);
+}
+
+.dsc-form-control-auto-filled {
+  border-color: rgba(91, 133, 116, 0.42);
+  background: linear-gradient(180deg, rgba(235, 244, 239, 0.96), rgba(225, 236, 230, 0.94));
+}
+
+.dsc-form-row-veiculo-datas {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dsc-form-row-veiculo-classificacao {
+  grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) minmax(280px, 1.2fr);
+}
+
 .dsc-form-column-stack {
   display: flex;
   flex-direction: column;
@@ -267,6 +304,27 @@ body:has(#credenciada-search) #credenciada-search {
   border: 1px solid rgba(121, 91, 56, 0.16);
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.42);
+}
+
+.dsc-form-section-card-veiculo-capacidades {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 24px 26px;
+}
+
+.dsc-form-section-card-veiculo-identificacao,
+.dsc-form-section-card-veiculo-comercial,
+.dsc-form-section-card-veiculo-proprietario,
+.dsc-form-section-card-veiculo-datas {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 22px 24px;
+}
+
+.dsc-form-section-card-veiculo-classificacao {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 24px 26px;
 }
 
 .dsc-form-section-title {
@@ -321,10 +379,20 @@ body:has(#credenciada-search) #credenciada-search {
   min-width: 0;
 }
 
+.dsc-field-group-veiculo-os-especial {
+  align-self: stretch;
+}
+
 .dsc-radio-group {
   display: flex;
   flex-wrap: wrap;
   gap: 10px 16px;
+}
+
+.dsc-field-group-veiculo-os-especial .dsc-radio-group {
+  min-height: 50px;
+  align-items: center;
+  padding: 0 4px;
 }
 
 .dsc-radio-option {
@@ -404,6 +472,7 @@ body:has(#credenciada-rejection-grid-body) .dsc-access-grid-card {
 
 .dsc-access-grid-wrapper {
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dsc-access-grid {
@@ -578,6 +647,79 @@ body:has(#credenciada-rejection-grid-body) .dsc-access-grid td {
   color: #9a3412;
 }
 
+@media (max-width: 1080px) {
+  main {
+    padding: 20px;
+  }
+
+  .dsc-card {
+    padding: 22px;
+  }
+
+  .dsc-access-form {
+    max-width: 100%;
+  }
+
+  #condutor-form,
+  #condutor-import-form,
+  #condutor-rejection-panel,
+  #login-dre-form,
+  #monitor-form,
+  #veiculo-form,
+  #credenciada-form {
+    max-width: 100%;
+  }
+
+  .dsc-access-toolbar {
+    align-items: stretch;
+  }
+
+  .dsc-access-filter-form {
+    width: 100%;
+  }
+
+  .dsc-access-filter-form .dsc-btn,
+  .dsc-access-insert-button,
+  .dsc-access-import-button,
+  .dsc-access-bulk-button {
+    flex: 1 1 180px;
+  }
+
+  .dsc-access-grid-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dsc-form-row-credenciada-top,
+  .dsc-form-row-condutor-top,
+  .dsc-form-row-monitor-top,
+  .dsc-form-row-monitor-dates,
+  .dsc-form-row-veiculo-identificacao,
+  .dsc-form-row-veiculo-comercial,
+  .dsc-form-row-veiculo-proprietario,
+  .dsc-form-row-veiculo-datas,
+  .dsc-form-row-veiculo-seguradora,
+  .dsc-form-row-veiculo-classificacao,
+  .dsc-form-row-contact,
+  .dsc-form-row-address {
+    grid-template-columns: 1fr;
+  }
+
+  #credenciada-form .dsc-form-section-card,
+  .dsc-form-section-card-veiculo-capacidades,
+  .dsc-form-section-card-veiculo-identificacao,
+  .dsc-form-section-card-veiculo-comercial,
+  .dsc-form-section-card-veiculo-proprietario,
+  .dsc-form-section-card-veiculo-datas,
+  .dsc-form-section-card-veiculo-classificacao {
+    padding: 20px;
+  }
+
+  #veiculo-form {
+    min-height: auto;
+  }
+}
+
 @media (max-width: 768px) {
   main {
     padding: 16px;
@@ -586,6 +728,10 @@ body:has(#credenciada-rejection-grid-body) .dsc-access-grid td {
   .dsc-card {
     border-radius: 24px;
     padding: 22px;
+  }
+
+  .dsc-access-form {
+    gap: 14px;
   }
 
   .dsc-access-filter-input,
@@ -610,15 +756,74 @@ body:has(#credenciada-rejection-grid-body) .dsc-access-grid td {
 
   .dsc-form-row {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .dsc-form-row-credenciada-top,
   .dsc-form-row-condutor-top,
   .dsc-form-row-monitor-top,
   .dsc-form-row-monitor-dates,
+  .dsc-form-row-veiculo-identificacao,
+  .dsc-form-row-veiculo-comercial,
+  .dsc-form-row-veiculo-proprietario,
+  .dsc-form-row-veiculo-datas,
   .dsc-form-row-veiculo-seguradora,
+  .dsc-form-row-veiculo-classificacao,
   .dsc-form-row-contact,
   .dsc-form-row-address {
     grid-template-columns: 1fr;
+  }
+
+  .dsc-form-section-card,
+  #credenciada-form .dsc-form-section-card,
+  .dsc-form-section-card-veiculo-capacidades,
+  .dsc-form-section-card-veiculo-identificacao,
+  .dsc-form-section-card-veiculo-comercial,
+  .dsc-form-section-card-veiculo-proprietario,
+  .dsc-form-section-card-veiculo-datas,
+  .dsc-form-section-card-veiculo-classificacao {
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .dsc-field-group {
+    gap: 6px;
+  }
+
+  .dsc-access-grid-header {
+    margin-bottom: 14px;
+  }
+
+  .dsc-form-hint,
+  .dsc-form-error,
+  .dsc-feedback {
+    font-size: 13px;
+  }
+
+  #veiculo-form {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  main {
+    padding: 12px;
+  }
+
+  .dsc-card {
+    border-radius: 20px;
+    padding: 18px;
+  }
+
+  .dsc-access-copy h1 {
+    line-height: 1.04;
+  }
+
+  .dsc-access-description {
+    font-size: 0.96rem;
+  }
+
+  .dsc-access-grid-card {
+    min-height: 360px;
   }
 }

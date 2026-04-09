@@ -105,7 +105,7 @@
 
                 <label class="dsc-field-group" for="credenciada-cnpj-cpf">
                   <span>CNPJ/CPF</span>
-                  <input class="dsc-form-control" id="credenciada-cnpj-cpf" type="text" placeholder="00.000.000/0000-00" maxlength="18" />
+                  <input class="dsc-form-control" id="credenciada-cnpj-cpf" type="text" inputmode="numeric" placeholder="000.000.000-00 ou 00.000.000/0000-00" maxlength="18" />
                   <div class="dsc-form-error" id="credenciada-cnpj-cpf-error"></div>
                 </label>
               </div>
@@ -700,7 +700,7 @@
         editingCodigo = item.codigo;
         codigoInput.value = item.codigo;
         nomeInput.value = item.credenciado || '';
-        cnpjCpfInput.value = item.cnpj_cpf || '';
+        cnpjCpfInput.value = normalizeCnpjCpf(item.cnpj_cpf || '');
         logradouroInput.value = item.logradouro || '';
         bairroInput.value = item.bairro || '';
         cepInput.value = item.cep || '';
