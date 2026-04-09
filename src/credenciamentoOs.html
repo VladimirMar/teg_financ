@@ -154,7 +154,10 @@
                 <div class="dsc-form-row dsc-form-row-credenciamento-os-vinculos-top">
                   <label class="dsc-field-group" for="credenciamento-os-cnpj-cpf">
                     <span>CNPJ/CPF do credenciado</span>
-                    <input class="dsc-form-control" id="credenciamento-os-cnpj-cpf" type="text" inputmode="numeric" placeholder="DIGITE O CNPJ/CPF DA CREDENCIADA" maxlength="18" />
+                    <input class="dsc-form-control" id="credenciamento-os-cnpj-cpf" type="text" inputmode="numeric" list="credenciamento-os-cnpj-cpf-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CNPJ/CPF DA CREDENCIADA" maxlength="18" />
+                    <datalist id="credenciamento-os-cnpj-cpf-options">
+                      <option value=""></option>
+                    </datalist>
                     <div class="dsc-form-error" id="credenciamento-os-cnpj-cpf-error"></div>
                   </label>
 
@@ -166,7 +169,10 @@
 
                   <label class="dsc-field-group" for="credenciamento-os-dre-codigo">
                     <span>DRE</span>
-                    <input class="dsc-form-control" id="credenciamento-os-dre-codigo" type="text" placeholder="PJ" maxlength="30" />
+                    <input class="dsc-form-control" id="credenciamento-os-dre-codigo" type="text" list="credenciamento-os-dre-codigo-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR A DRE" maxlength="30" />
+                    <datalist id="credenciamento-os-dre-codigo-options">
+                      <option value=""></option>
+                    </datalist>
                     <div class="dsc-form-error" id="credenciamento-os-dre-codigo-error"></div>
                   </label>
 
@@ -180,7 +186,10 @@
                 <div class="dsc-form-row dsc-form-row-credenciamento-os-vinculos-middle">
                   <label class="dsc-field-group" for="credenciamento-os-cpf-condutor">
                     <span>CPF condutor</span>
-                    <input class="dsc-form-control" id="credenciamento-os-cpf-condutor" type="text" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" />
+                    <input class="dsc-form-control" id="credenciamento-os-cpf-condutor" type="text" inputmode="numeric" list="credenciamento-os-cpf-condutor-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO CONDUTOR" maxlength="14" />
+                    <datalist id="credenciamento-os-cpf-condutor-options">
+                      <option value=""></option>
+                    </datalist>
                     <div class="dsc-form-error" id="credenciamento-os-cpf-condutor-error"></div>
                   </label>
 
@@ -192,7 +201,10 @@
 
                   <label class="dsc-field-group" for="credenciamento-os-cpf-preposto">
                     <span>CPF preposto</span>
-                    <input class="dsc-form-control" id="credenciamento-os-cpf-preposto" type="text" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" />
+                    <input class="dsc-form-control" id="credenciamento-os-cpf-preposto" type="text" inputmode="numeric" list="credenciamento-os-cpf-preposto-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO PREPOSTO" maxlength="14" />
+                    <datalist id="credenciamento-os-cpf-preposto-options">
+                      <option value=""></option>
+                    </datalist>
                     <div class="dsc-form-error" id="credenciamento-os-cpf-preposto-error"></div>
                   </label>
 
@@ -218,7 +230,10 @@
 
                   <label class="dsc-field-group" for="credenciamento-os-crm">
                     <span>CRM</span>
-                    <input class="dsc-form-control" id="credenciamento-os-crm" type="text" placeholder="000.000-00" maxlength="20" />
+                    <input class="dsc-form-control" id="credenciamento-os-crm" type="text" list="credenciamento-os-crm-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CRM DO VEICULO" maxlength="20" />
+                    <datalist id="credenciamento-os-crm-options">
+                      <option value=""></option>
+                    </datalist>
                     <div class="dsc-form-error" id="credenciamento-os-crm-error"></div>
                   </label>
 
@@ -232,7 +247,10 @@
                 <div class="dsc-form-row dsc-form-row-credenciamento-os-vinculos-final">
                   <label class="dsc-field-group" for="credenciamento-os-cpf-monitor">
                     <span>CPF monitor</span>
-                    <input class="dsc-form-control" id="credenciamento-os-cpf-monitor" type="text" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" />
+                    <input class="dsc-form-control" id="credenciamento-os-cpf-monitor" type="text" inputmode="numeric" list="credenciamento-os-cpf-monitor-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO MONITOR" maxlength="14" />
+                    <datalist id="credenciamento-os-cpf-monitor-options">
+                      <option value=""></option>
+                    </datalist>
                     <div class="dsc-form-error" id="credenciamento-os-cpf-monitor-error"></div>
                   </label>
 
@@ -363,18 +381,24 @@
       const conexaoInput = document.getElementById('credenciamento-os-conexao');
       const uniaoTermosInput = document.getElementById('credenciamento-os-uniao-termos');
       const cnpjCpfInput = document.getElementById('credenciamento-os-cnpj-cpf');
+      const cnpjCpfOptionsList = document.getElementById('credenciamento-os-cnpj-cpf-options');
       const credenciadoInput = document.getElementById('credenciamento-os-credenciado');
       const dreCodigoInput = document.getElementById('credenciamento-os-dre-codigo');
+      const dreCodigoOptionsList = document.getElementById('credenciamento-os-dre-codigo-options');
       const dreDescricaoInput = document.getElementById('credenciamento-os-dre-descricao');
       const cpfCondutorInput = document.getElementById('credenciamento-os-cpf-condutor');
+      const cpfCondutorOptionsList = document.getElementById('credenciamento-os-cpf-condutor-options');
       const condutorInput = document.getElementById('credenciamento-os-condutor');
       const cpfPrepostoInput = document.getElementById('credenciamento-os-cpf-preposto');
+      const cpfPrepostoOptionsList = document.getElementById('credenciamento-os-cpf-preposto-options');
       const prepostoCondutorInput = document.getElementById('credenciamento-os-preposto-condutor');
       const prepostoInicioInput = document.getElementById('credenciamento-os-preposto-inicio');
       const prepostoDiasInput = document.getElementById('credenciamento-os-preposto-dias');
       const crmInput = document.getElementById('credenciamento-os-crm');
+      const crmOptionsList = document.getElementById('credenciamento-os-crm-options');
       const veiculoPlacasInput = document.getElementById('credenciamento-os-veiculo-placas');
       const cpfMonitorInput = document.getElementById('credenciamento-os-cpf-monitor');
+      const cpfMonitorOptionsList = document.getElementById('credenciamento-os-cpf-monitor-options');
       const monitorInput = document.getElementById('credenciamento-os-monitor');
       const tipoTrocaInput = document.getElementById('credenciamento-os-tipo-troca');
       const tipoTrocaOptionsList = document.getElementById('credenciamento-os-tipo-troca-options');
@@ -459,7 +483,18 @@
       let currentRejectionSearch = '';
       let editingCodigo = null;
       let bannerTimeoutId = null;
+      let credenciadaSuggestionRequestId = 0;
+      let credenciadaSuggestionTimeoutId = null;
+      let condutorSuggestionRequestId = 0;
+      let condutorSuggestionTimeoutId = null;
+      let prepostoSuggestionRequestId = 0;
+      let prepostoSuggestionTimeoutId = null;
+      let monitorSuggestionRequestId = 0;
+      let monitorSuggestionTimeoutId = null;
+      let veiculoSuggestionRequestId = 0;
+      let veiculoSuggestionTimeoutId = null;
       let tipoTrocaOptions = [];
+      let dreOptions = [];
 
       const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
       const normalizeText = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trimStart().toUpperCase().slice(0, maxLength);
@@ -467,6 +502,7 @@
       const normalizeIntegerInput = (value, maxDigits = 3) => value.replace(/\D/g, '').slice(0, maxDigits);
       const normalizeCrm = (value) => value.toUpperCase().replace(/[^0-9A-Z.\-/]/g, '').slice(0, 20);
       const normalizeKey = (value) => (value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+      const normalizeComboInput = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trimStart().slice(0, maxLength);
       const getDocumentDigits = (value) => value.replace(/\D/g, '');
 
       const normalizeCpf = (value) => {
@@ -639,6 +675,7 @@
         form.reset();
         editingCodigo = null;
         clearLookupFields();
+        renderDreOptions('');
         tipoTrocaInput.value = '';
         setSelectedSituacao('Ativo');
         resetMessages();
@@ -713,6 +750,222 @@
         rejectionPaginationInfo.textContent = `Pagina ${currentRejectionPage} de ${totalRejectionPages}`;
         previousRejectionPageButton.disabled = currentRejectionPage <= 1;
         nextRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
+      };
+
+      const renderEntitySuggestions = (listElement, items, getValue, getLabel) => {
+        listElement.innerHTML = '<option value=""></option>';
+
+        items.forEach((item) => {
+          const optionValue = String(getValue(item) || '').trim();
+
+          if (!optionValue) {
+            return;
+          }
+
+          const option = document.createElement('option');
+          option.value = optionValue;
+          const optionLabel = String(getLabel(item) || '').trim();
+
+          if (optionLabel) {
+            option.label = optionLabel;
+            option.textContent = `${optionValue} - ${optionLabel}`;
+          }
+
+          listElement.appendChild(option);
+        });
+      };
+
+      const renderDreOptions = (selectedValue = dreCodigoInput.value || '') => {
+        const normalizedSelectedValue = normalizeText(String(selectedValue || ''), 30);
+        const searchKey = normalizeKey(normalizedSelectedValue);
+        const options = dreOptions.filter((item) => {
+          const codigo = String(item.codigo_operacional || item.codigo || '').trim();
+          const descricao = String(item.descricao || '').trim();
+          return !searchKey
+            || normalizeKey(codigo).includes(searchKey)
+            || normalizeKey(descricao).includes(searchKey);
+        });
+
+        renderEntitySuggestions(
+          dreCodigoOptionsList,
+          options,
+          (item) => item.codigo_operacional || item.codigo,
+          (item) => item.descricao,
+        );
+
+        dreCodigoInput.value = normalizedSelectedValue;
+      };
+
+      const loadDreOptions = async () => {
+        try {
+          const response = await fetch('/api/dre?page=1&pageSize=50&sortBy=descricao&sortDirection=asc', {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar DREs.');
+          }
+
+          dreOptions = payload.items || [];
+        } catch {
+          dreOptions = [];
+        }
+
+        renderDreOptions();
+      };
+
+      const loadCredenciadaSuggestions = async (searchValue) => {
+        const requestId = ++credenciadaSuggestionRequestId;
+        const normalizedSearch = normalizeCnpjCpf(String(searchValue || ''));
+
+        if (!getDocumentDigits(normalizedSearch).length) {
+          renderEntitySuggestions(cnpjCpfOptionsList, [], () => '', () => '');
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/credenciada?page=1&pageSize=8&sortBy=credenciado&sortDirection=asc&search=${encodeURIComponent(normalizedSearch)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (requestId !== credenciadaSuggestionRequestId) {
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar sugestoes de credenciada.');
+          }
+
+          renderEntitySuggestions(cnpjCpfOptionsList, payload.items || [], (item) => item.cnpj_cpf, (item) => item.credenciado);
+        } catch {
+          if (requestId !== credenciadaSuggestionRequestId) {
+            return;
+          }
+
+          renderEntitySuggestions(cnpjCpfOptionsList, [], () => '', () => '');
+        }
+      };
+
+      const loadCondutorSuggestions = async (searchValue, listElement, requestKind) => {
+        const requestId = requestKind === 'preposto'
+          ? ++prepostoSuggestionRequestId
+          : ++condutorSuggestionRequestId;
+        const normalizedSearch = normalizeCpf(String(searchValue || ''));
+
+        if (!getDocumentDigits(normalizedSearch).length) {
+          renderEntitySuggestions(listElement, [], () => '', () => '');
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/condutor?page=1&pageSize=8&sortBy=condutor&sortDirection=asc&search=${encodeURIComponent(normalizedSearch)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          const activeRequestId = requestKind === 'preposto' ? prepostoSuggestionRequestId : condutorSuggestionRequestId;
+
+          if (requestId !== activeRequestId) {
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar sugestoes de condutor.');
+          }
+
+          renderEntitySuggestions(listElement, payload.items || [], (item) => item.cpf_condutor, (item) => item.condutor);
+        } catch {
+          const activeRequestId = requestKind === 'preposto' ? prepostoSuggestionRequestId : condutorSuggestionRequestId;
+
+          if (requestId !== activeRequestId) {
+            return;
+          }
+
+          renderEntitySuggestions(listElement, [], () => '', () => '');
+        }
+      };
+
+      const loadMonitorSuggestions = async (searchValue) => {
+        const requestId = ++monitorSuggestionRequestId;
+        const normalizedSearch = normalizeCpf(String(searchValue || ''));
+
+        if (!getDocumentDigits(normalizedSearch).length) {
+          renderEntitySuggestions(cpfMonitorOptionsList, [], () => '', () => '');
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/monitor?page=1&pageSize=8&sortBy=monitor&sortDirection=asc&search=${encodeURIComponent(normalizedSearch)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (requestId !== monitorSuggestionRequestId) {
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar sugestoes de monitor.');
+          }
+
+          renderEntitySuggestions(cpfMonitorOptionsList, payload.items || [], (item) => item.cpf_monitor, (item) => item.monitor);
+        } catch {
+          if (requestId !== monitorSuggestionRequestId) {
+            return;
+          }
+
+          renderEntitySuggestions(cpfMonitorOptionsList, [], () => '', () => '');
+        }
+      };
+
+      const loadVeiculoSuggestions = async (searchValue) => {
+        const requestId = ++veiculoSuggestionRequestId;
+        const normalizedSearch = normalizeCrm(String(searchValue || ''));
+
+        if (!normalizedSearch) {
+          renderEntitySuggestions(crmOptionsList, [], () => '', () => '');
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/veiculo?page=1&pageSize=8&sortBy=placas&sortDirection=asc&search=${encodeURIComponent(normalizedSearch)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (requestId !== veiculoSuggestionRequestId) {
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar sugestoes de veiculo.');
+          }
+
+          renderEntitySuggestions(
+            crmOptionsList,
+            payload.items || [],
+            (item) => item.crm,
+            (item) => [String(item.placas || '').trim(), String(item.marca_modelo || '').trim()].filter(Boolean).join(' - '),
+          );
+        } catch {
+          if (requestId !== veiculoSuggestionRequestId) {
+            return;
+          }
+
+          renderEntitySuggestions(crmOptionsList, [], () => '', () => '');
+        }
+      };
+
+      const queueSuggestionLoad = (currentTimeoutId, setTimeoutId, loader, value) => {
+        if (currentTimeoutId) {
+          window.clearTimeout(currentTimeoutId);
+        }
+
+        setTimeoutId(window.setTimeout(() => {
+          void loader(value());
+        }, 180));
       };
 
       const renderTipoTrocaOptions = (selectedValue = '') => {
@@ -903,7 +1156,7 @@
 
         try {
           const item = await fetchLookupItem(`/api/dre/lookup?codigo=${encodeURIComponent(codigo)}`, 'Falha ao localizar DRE.');
-          dreCodigoInput.value = String(item.codigo || codigo).toUpperCase();
+          dreCodigoInput.value = normalizeText(String(item.codigo_operacional || item.codigo || codigo), 30);
           dreDescricaoInput.value = normalizeText(String(item.descricao || ''), 255);
           dreCodigoError.textContent = '';
         } catch (error) {
@@ -1036,6 +1289,7 @@
         dataEncerramentoInput.value = item.data_encerramento || '';
         anotacaoInput.value = item.anotacao || '';
         setSelectedSituacao(item.situacao || 'Ativo');
+        renderDreOptions(dreCodigoInput.value);
         renderTipoTrocaOptions(tipoTrocaInput.value);
         resetMessages();
         showForm(true);
@@ -1129,6 +1383,7 @@
 
       cnpjCpfInput.addEventListener('input', () => {
         cnpjCpfInput.value = normalizeCnpjCpf(cnpjCpfInput.value);
+        queueSuggestionLoad(credenciadaSuggestionTimeoutId, (timeoutId) => { credenciadaSuggestionTimeoutId = timeoutId; }, loadCredenciadaSuggestions, () => cnpjCpfInput.value);
       });
 
       cnpjCpfInput.addEventListener('blur', () => {
@@ -1137,6 +1392,7 @@
 
       dreCodigoInput.addEventListener('input', () => {
         dreCodigoInput.value = normalizeText(dreCodigoInput.value, 30);
+        renderDreOptions(dreCodigoInput.value);
       });
 
       dreCodigoInput.addEventListener('blur', () => {
@@ -1145,6 +1401,7 @@
 
       cpfCondutorInput.addEventListener('input', () => {
         cpfCondutorInput.value = normalizeCpf(cpfCondutorInput.value);
+        queueSuggestionLoad(condutorSuggestionTimeoutId, (timeoutId) => { condutorSuggestionTimeoutId = timeoutId; }, (value) => loadCondutorSuggestions(value, cpfCondutorOptionsList, 'condutor'), () => cpfCondutorInput.value);
       });
 
       cpfCondutorInput.addEventListener('blur', () => {
@@ -1153,6 +1410,7 @@
 
       cpfPrepostoInput.addEventListener('input', () => {
         cpfPrepostoInput.value = normalizeCpf(cpfPrepostoInput.value);
+        queueSuggestionLoad(prepostoSuggestionTimeoutId, (timeoutId) => { prepostoSuggestionTimeoutId = timeoutId; }, (value) => loadCondutorSuggestions(value, cpfPrepostoOptionsList, 'preposto'), () => cpfPrepostoInput.value);
       });
 
       cpfPrepostoInput.addEventListener('blur', () => {
@@ -1165,6 +1423,7 @@
 
       crmInput.addEventListener('input', () => {
         crmInput.value = normalizeCrm(crmInput.value);
+        queueSuggestionLoad(veiculoSuggestionTimeoutId, (timeoutId) => { veiculoSuggestionTimeoutId = timeoutId; }, loadVeiculoSuggestions, () => crmInput.value);
       });
 
       crmInput.addEventListener('blur', () => {
@@ -1173,6 +1432,7 @@
 
       cpfMonitorInput.addEventListener('input', () => {
         cpfMonitorInput.value = normalizeCpf(cpfMonitorInput.value);
+        queueSuggestionLoad(monitorSuggestionTimeoutId, (timeoutId) => { monitorSuggestionTimeoutId = timeoutId; }, loadMonitorSuggestions, () => cpfMonitorInput.value);
       });
 
       cpfMonitorInput.addEventListener('blur', () => {
@@ -1434,7 +1694,14 @@
 
       importFileNameInput.value = defaultImportFileName;
       setSelectedSituacao('Ativo');
+      renderEntitySuggestions(cnpjCpfOptionsList, [], () => '', () => '');
+      renderEntitySuggestions(cpfCondutorOptionsList, [], () => '', () => '');
+      renderEntitySuggestions(cpfPrepostoOptionsList, [], () => '', () => '');
+      renderEntitySuggestions(cpfMonitorOptionsList, [], () => '', () => '');
+      renderEntitySuggestions(crmOptionsList, [], () => '', () => '');
+      renderDreOptions('');
       renderTipoTrocaOptions('');
+      void loadDreOptions();
       void loadTipoTrocaOptions();
       void loadItems();
     </script>

@@ -4862,6 +4862,7 @@ const server = createServer(async (request, response) => {
         values.push(`%${search}%`)
         filters.push(`(
           CAST(codigo AS text) ILIKE $${values.length}
+          OR COALESCE(BTRIM(codigo_operacional), '') ILIKE UPPER($${values.length})
           OR BTRIM(CAST(descricao AS text)) ILIKE $${values.length}
         )`)
       }
