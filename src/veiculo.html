@@ -165,10 +165,12 @@
                 </label>
               </div>
 
-              <div class="dsc-form-row">
+              <div class="dsc-form-row dsc-form-row-veiculo-seguradora">
                 <label class="dsc-field-group" for="veiculo-seguradora">
                   <span>Seguradora</span>
-                  <input class="dsc-form-control" id="veiculo-seguradora" type="text" placeholder="SEGURADORA" maxlength="255" />
+                  <select class="dsc-form-control" id="veiculo-seguradora">
+                    <option value="">Em branco</option>
+                  </select>
                   <div class="dsc-form-error" id="veiculo-seguradora-error"></div>
                 </label>
 
@@ -385,6 +387,7 @@
       let currentRejectionSearch = '';
       let editingCodigo = null;
       let bannerTimeoutId = null;
+      let seguradoraOptions = [];
 
       const normalizeText = (value, maxLength = 255) => value
         .replace(/\s+/g, ' ')
@@ -444,6 +447,65 @@
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z]/g, '');
 
+      const buildSeguradoraOptionList = (items = []) => {
+        const uniqueValues = new Map();
+
+        items.forEach((item) => {
+          const descricao = normalizeText(String(item?.descricao || item?.lista || ''), 255);
+
+          if (descricao && !uniqueValues.has(descricao)) {
+            uniqueValues.set(descricao, descricao);
+          }
+        });
+
+        return Array.from(uniqueValues.values()).sort((left, right) => left.localeCompare(right, 'pt-BR'));
+      };
+
+      const renderSeguradoraOptions = (selectedValue = seguradoraInput.value || '') => {
+        const normalizedSelectedValue = normalizeText(String(selectedValue || ''), 255);
+        const availableOptions = new Set(seguradoraOptions);
+
+        seguradoraInput.innerHTML = '<option value="">Em branco</option>';
+
+        if (normalizedSelectedValue && !availableOptions.has(normalizedSelectedValue)) {
+          availableOptions.add(normalizedSelectedValue);
+        }
+
+        Array.from(availableOptions)
+          .sort((left, right) => left.localeCompare(right, 'pt-BR'))
+          .forEach((optionValue) => {
+            const option = document.createElement('option');
+            option.value = optionValue;
+            option.textContent = optionValue;
+            option.selected = optionValue === normalizedSelectedValue;
+            seguradoraInput.appendChild(option);
+          });
+
+        if (!normalizedSelectedValue) {
+          seguradoraInput.value = '';
+        }
+      };
+
+      const loadSeguradoraOptions = async () => {
+        try {
+          const response = await fetch('/api/seguradora?page=1&pageSize=50&sortBy=lista&sortDirection=asc', {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar seguradoras.');
+          }
+
+          seguradoraOptions = buildSeguradoraOptionList(payload.items || []);
+          renderSeguradoraOptions();
+        } catch (error) {
+          seguradoraOptions = [];
+          renderSeguradoraOptions();
+          showBanner(getRequestErrorMessage(error, 'Falha ao carregar seguradoras.'), 'error');
+        }
+      };
+
       const getSelectedOsEspecial = () => {
         const selectedRadio = osEspecialRadios.find((radio) => radio.checked);
         return selectedRadio ? selectedRadio.value : '';
@@ -457,6 +519,23 @@
       };
 
       const formatDateLabel = (value) => value ? value.split('-').reverse().join('/') : '';
+
+      const getCurrentDateInputValue = () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const isTodayOrFutureDate = (value) => Boolean(value) && value >= getCurrentDateInputValue();
+
+      const syncSeguroTerminoMin = () => {
+        const currentDate = getCurrentDateInputValue();
+        seguroTerminoInput.min = seguroInicioInput.value && seguroInicioInput.value > currentDate
+          ? seguroInicioInput.value
+          : currentDate;
+      };
 
       const formatDateTimeLabel = (value) => {
         if (!value) {
@@ -583,6 +662,7 @@
         form.classList.add('dsc-hidden');
         form.reset();
         codigoInput.value = '';
+        renderSeguradoraOptions('');
         tipoDeVeiculoInput.value = '';
         tipoDeBancadaInput.value = '';
         setSelectedOsEspecial('');
@@ -754,6 +834,7 @@
         editingCodigo = null;
         form.reset();
         codigoInput.value = '';
+        renderSeguradoraOptions('');
         tipoDeVeiculoInput.value = '';
         tipoDeBancadaInput.value = '';
         setSelectedOsEspecial('');
@@ -772,7 +853,7 @@
         capTegCrecheInput.value = item.cap_teg_creche || '';
         capAcessivelInput.value = item.cap_acessivel || '';
         valCrmInput.value = item.val_crm || '';
-        seguradoraInput.value = item.seguradora || '';
+        renderSeguradoraOptions(item.seguradora || '');
         seguroInicioInput.value = item.seguro_inicio || '';
         seguroTerminoInput.value = item.seguro_termino || '';
         tipoDeBancadaInput.value = item.tipo_de_bancada || '';
@@ -876,8 +957,8 @@
         capAcessivelInput.value = normalizeIntegerInput(capAcessivelInput.value);
       });
 
-      seguradoraInput.addEventListener('input', () => {
-        seguradoraInput.value = normalizeText(seguradoraInput.value, 255);
+      seguroInicioInput.addEventListener('input', () => {
+        syncSeguroTerminoMin();
       });
 
       marcaModeloInput.addEventListener('input', () => {
@@ -929,7 +1010,7 @@
         capTegInput.value = capTeg;
         capTegCrecheInput.value = capTegCreche;
         capAcessivelInput.value = capAcessivel;
-        seguradoraInput.value = seguradora;
+        renderSeguradoraOptions(seguradora);
         marcaModeloInput.value = marcaModelo;
         titularInput.value = titular;
         cnpjCpfInput.value = cnpjCpf;
@@ -958,6 +1039,9 @@
         if (valCrm && Number.isNaN(new Date(`${valCrm}T00:00:00`).getTime())) {
           valCrmError.textContent = 'Validade do CRM invalida.';
           hasError = true;
+        } else if (valCrm && !isTodayOrFutureDate(valCrm)) {
+          valCrmError.textContent = 'Validade do CRM nao pode ser passada.';
+          hasError = true;
         }
 
         if (seguroInicio && Number.isNaN(new Date(`${seguroInicio}T00:00:00`).getTime())) {
@@ -967,6 +1051,9 @@
 
         if (seguroTermino && Number.isNaN(new Date(`${seguroTermino}T00:00:00`).getTime())) {
           seguroTerminoError.textContent = 'Data final do seguro invalida.';
+          hasError = true;
+        } else if (seguroTermino && !isTodayOrFutureDate(seguroTermino)) {
+          seguroTerminoError.textContent = 'Data final do seguro nao pode ser passada.';
           hasError = true;
         }
 
@@ -1179,6 +1266,10 @@
         currentPage = 1;
         void loadItems();
       });
+
+      valCrmInput.min = getCurrentDateInputValue();
+      syncSeguroTerminoMin();
+      void loadSeguradoraOptions();
 
       hideForm();
       hideImportForm();

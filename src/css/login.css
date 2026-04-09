@@ -204,6 +204,17 @@ body:has(#credenciada-search) #credenciada-search {
   max-width: 1120px;
 }
 
+#veiculo-form {
+  max-width: 1240px;
+}
+
+#veiculo-seguradora {
+  font-size: 0.88rem;
+  min-height: 44px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
 #credenciada-form {
   max-width: 980px;
 }
@@ -235,6 +246,10 @@ body:has(#credenciada-search) #credenciada-search {
 
 .dsc-form-row-monitor-dates {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dsc-form-row-veiculo-seguradora {
+  grid-template-columns: minmax(420px, 1.35fr) minmax(320px, 1fr);
 }
 
 .dsc-form-column-stack {
@@ -601,6 +616,7 @@ body:has(#credenciada-rejection-grid-body) .dsc-access-grid td {
   .dsc-form-row-condutor-top,
   .dsc-form-row-monitor-top,
   .dsc-form-row-monitor-dates,
+  .dsc-form-row-veiculo-seguradora,
   .dsc-form-row-contact,
   .dsc-form-row-address {
     grid-template-columns: 1fr;
