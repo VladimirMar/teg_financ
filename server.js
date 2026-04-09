@@ -1635,6 +1635,7 @@ const importCredenciamentoOsXmlFile = async (fileName) => {
         dataEncerramento: record.dataEncerramento,
         anotacao: record.anotacao,
         uniaoTermos: record.uniaoTermos,
+        importMode: true,
       })
 
       if (validationResult.status !== 200) {
@@ -3758,6 +3759,7 @@ const validateCredenciamentoOsPayload = async ({
   anotacao,
   uniaoTermos,
   originalCodigo = null,
+  importMode = false,
 }) => {
   const normalizedCodigo = normalizeCondutorCodigo(codigo)
   const normalizedTermoAdesao = normalizeOperationalCode(termoAdesao, 255)
@@ -3777,9 +3779,11 @@ const validateCredenciamentoOsPayload = async ({
   const normalizedSituacao = normalizeCredenciamentoSituacao(situacao)
   const normalizedTipoTroca = normalizeTrocaText(tipoTroca, 255)
   const normalizedConexao = normalizeOperationalCode(conexao, 50)
-  const normalizedDataEncerramento = normalizeRequestValue(dataEncerramento)
+  let normalizedDataEncerramento = normalizeRequestValue(dataEncerramento)
   const normalizedAnotacao = normalizeCredenciamentoAnnotation(anotacao)
   const normalizedUniaoTermos = normalizeOperationalCode(uniaoTermos, 255)
+  const hasValidCpfCondutor = normalizedCpfCondutor && isCpfValid(normalizedCpfCondutor)
+  const hasValidCrm = normalizedCrm && isVehicleCrmValid(normalizedCrm)
 
   if (normalizedCodigo === null) {
     return { status: 400, payload: { message: 'Codigo e obrigatorio.' } }
@@ -3805,7 +3809,7 @@ const validateCredenciamentoOsPayload = async ({
     return { status: 400, payload: { message: 'DRE e obrigatoria.' } }
   }
 
-  if (!normalizedCpfCondutor || !isCpfValid(normalizedCpfCondutor)) {
+  if (!importMode && !hasValidCpfCondutor) {
     return { status: 400, payload: { message: 'CPF do condutor deve conter 11 digitos.' } }
   }
 
@@ -3821,7 +3825,7 @@ const validateCredenciamentoOsPayload = async ({
     return { status: 400, payload: { message: 'Dias de preposto invalido.' } }
   }
 
-  if (!normalizedCrm || !isVehicleCrmValid(normalizedCrm)) {
+  if (!importMode && !hasValidCrm) {
     return { status: 400, payload: { message: 'CRM do veiculo invalido.' } }
   }
 
@@ -3838,33 +3842,39 @@ const validateCredenciamentoOsPayload = async ({
   }
 
   if (normalizedVigenciaOs && normalizedDataEncerramento && normalizedDataEncerramento < normalizedVigenciaOs) {
-    return { status: 400, payload: { message: 'Data de encerramento deve ser maior ou igual a vigencia da OS.' } }
+    if (!importMode) {
+      return { status: 400, payload: { message: 'Data de encerramento deve ser maior ou igual a vigencia da OS.' } }
+    }
+
+    normalizedDataEncerramento = ''
   }
 
-  const duplicateCodeResult = await pool.query(
-    `SELECT 1
-     FROM credenciamento_os
-     WHERE codigo = $1
-       AND ($2::int IS NULL OR codigo <> $2)
-     LIMIT 1`,
-    [normalizedCodigo, originalCodigo],
-  )
+  if (!importMode) {
+    const duplicateCodeResult = await pool.query(
+      `SELECT 1
+       FROM credenciamento_os
+       WHERE codigo = $1
+         AND ($2::int IS NULL OR codigo <> $2)
+       LIMIT 1`,
+      [normalizedCodigo, originalCodigo],
+    )
 
-  if (duplicateCodeResult.rowCount > 0) {
-    return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
-  }
+    if (duplicateCodeResult.rowCount > 0) {
+      return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
+    }
 
-  const duplicateOsResult = await pool.query(
-    `SELECT 1
-     FROM credenciamento_os
-     WHERE UPPER(BTRIM(os)) = $1
-       AND ($2::int IS NULL OR codigo <> $2)
-     LIMIT 1`,
-    [normalizedOs, originalCodigo],
-  )
+    const duplicateOsResult = await pool.query(
+      `SELECT 1
+       FROM credenciamento_os
+       WHERE UPPER(BTRIM(os)) = $1
+         AND ($2::int IS NULL OR codigo <> $2)
+       LIMIT 1`,
+      [normalizedOs, originalCodigo],
+    )
 
-  if (duplicateOsResult.rowCount > 0) {
-    return { status: 409, payload: { message: 'OS ja cadastrada.' } }
+    if (duplicateOsResult.rowCount > 0) {
+      return { status: 409, payload: { message: 'OS ja cadastrada.' } }
+    }
   }
 
   const credenciadaItem = normalizedCnpjCpf
@@ -3881,9 +3891,9 @@ const validateCredenciamentoOsPayload = async ({
     return { status: 400, payload: { message: 'DRE nao encontrada.' } }
   }
 
-  const condutorItem = await findCondutorByCpf(normalizedCpfCondutor)
+  const condutorItem = hasValidCpfCondutor ? await findCondutorByCpf(normalizedCpfCondutor) : null
 
-  if (!condutorItem) {
+  if (!condutorItem && hasValidCpfCondutor && !importMode) {
     return { status: 400, payload: { message: 'CPF do condutor nao encontrado na tabela condutor.' } }
   }
 
@@ -3893,9 +3903,9 @@ const validateCredenciamentoOsPayload = async ({
     return { status: 400, payload: { message: 'CPF do preposto nao encontrado na tabela condutor.' } }
   }
 
-  const veiculoItem = await findVeiculoByCrm(normalizedCrm)
+  const veiculoItem = hasValidCrm ? await findVeiculoByCrm(normalizedCrm) : null
 
-  if (!veiculoItem) {
+  if (!veiculoItem && hasValidCrm && !importMode) {
     return { status: 400, payload: { message: 'CRM nao encontrado na tabela veiculo.' } }
   }
 
@@ -3927,14 +3937,14 @@ const validateCredenciamentoOsPayload = async ({
       cnpjCpf: normalizeCnpjCpf(credenciadaItem.cnpj_cpf),
       dreCodigo: normalizeDreOperationalCode(dreItem.codigo_operacional || dreItem.codigo),
       dreDescricao: normalizeOperationalCode(dreItem.descricao, 255),
-      cpfCondutor: normalizeCpf(condutorItem.cpf_condutor),
-      condutor: normalizeCondutorName(condutorItem.condutor),
+      cpfCondutor: condutorItem ? normalizeCpf(condutorItem.cpf_condutor) : hasValidCpfCondutor ? normalizedCpfCondutor : '',
+      condutor: condutorItem ? normalizeCondutorName(condutorItem.condutor) : '',
       cpfPreposto: prepostoItem ? normalizeCpf(prepostoItem.cpf_condutor) : '',
       prepostoCondutor: prepostoItem ? normalizeCondutorName(prepostoItem.condutor) : '',
       prepostoInicio: normalizedPrepostoInicio,
       prepostoDias: normalizedPrepostoDias,
-      crm: normalizeVehicleCrm(veiculoItem.crm),
-      veiculoPlacas: normalizeOperationalCode(veiculoItem.placas, 20),
+      crm: veiculoItem ? normalizeVehicleCrm(veiculoItem.crm) : hasValidCrm ? normalizedCrm : '',
+      veiculoPlacas: veiculoItem ? normalizeOperationalCode(veiculoItem.placas, 20) : '',
       cpfMonitor: monitorItem ? normalizeCpf(monitorItem.cpf_monitor) : '',
       monitor: monitorItem ? normalizeCondutorName(monitorItem.monitor) : '',
       situacao: normalizedSituacao,
