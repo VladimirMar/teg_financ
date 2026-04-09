@@ -12,7 +12,7 @@ import { createSeguradoraItem, deleteSeguradoraItem, listSeguradoraItemsPaginate
 import type { SeguradoraItem } from './services/seguradora'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo'
+type ActiveView = 'inicio' | 'dre' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo' | 'credenciamentoOs'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
 type TitularSortField = 'codigo' | 'cnpj_cpf' | 'titular'
@@ -1351,6 +1351,12 @@ function App() {
             >
               Veiculo
             </li>
+            <li
+              className={`menu-item ${activeView === 'credenciamentoOs' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('credenciamentoOs')}
+            >
+              Credenciamento OS
+            </li>
             <li className="menu-item">Relatorios</li>
           </ul>
         </nav>
@@ -2168,6 +2174,24 @@ function App() {
                 className="access-embed-frame"
                 src="/src/veiculo.html"
                 title="Cadastro de veiculo"
+              />
+            </div>
+          </>
+        ) : activeView === 'credenciamentoOs' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Cadastro operacional</p>
+              <h2 id="content-title">Credenciamento de OS</h2>
+              <p className="content-description">
+                Consulte, inclua, altere e importe os credenciamentos de OS com busca relacional de credenciada, DRE, condutor, preposto, veiculo, monitor e tipo de troca.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/credenciamentoOs.html"
+                title="Credenciamento de OS"
               />
             </div>
           </>

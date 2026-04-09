@@ -164,6 +164,11 @@ const getVeiculoCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+const getCredenciamentoOsCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/credenciamento-os\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 const getTitularCodigoFromUrl = (url) => {
   const match = url.match(/^\/api\/titular\/([^/]+)$/)
   return match ? decodeURIComponent(match[1]) : null
@@ -317,6 +322,60 @@ const normalizeTrocaText = (value, maxLength = 255) => {
     .slice(0, maxLength)
 }
 
+const normalizeOperationalCode = (value, maxLength = 255) => {
+  return normalizeRequestValue(value)
+    .replace(/\s+/g, ' ')
+    .toUpperCase()
+    .slice(0, maxLength)
+}
+
+const normalizeCredenciamentoSituacao = (value) => {
+  const normalizedValue = normalizeRequestValue(value)
+
+  if (!normalizedValue) {
+    return ''
+  }
+
+  const normalizedKey = normalizedValue
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+
+  if (normalizedKey === 'ativo') {
+    return 'Ativo'
+  }
+
+  if (normalizedKey === 'inativo') {
+    return 'Inativo'
+  }
+
+  if (normalizedKey === 'cancelado') {
+    return 'Cancelado'
+  }
+
+  return null
+}
+
+const normalizeCredenciamentoAnnotation = (value) => {
+  return normalizeRequestValue(value)
+    .replace(/\s+/g, ' ')
+    .slice(0, 1000)
+}
+
+const normalizeDreOperationalCode = (value) => {
+  return normalizeRequestValue(value)
+    .replace(/\s+/g, ' ')
+    .toUpperCase()
+    .slice(0, 30)
+}
+
+const normalizeDreDescription = (value) => {
+  return normalizeRequestValue(value)
+    .replace(/\s+/g, ' ')
+    .toUpperCase()
+    .slice(0, 255)
+}
+
 const normalizeEmailList = (value) => {
   const normalizedValue = normalizeRequestValue(value)
 
@@ -432,6 +491,225 @@ const findTitularByCnpjCpf = async (cnpjCpf) => {
      ORDER BY codigo ASC
      LIMIT 1`,
     [digits],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const findCredenciadaByCnpjCpf = async (cnpjCpf) => {
+  const digits = extractDocumentDigits(cnpjCpf)
+
+  if (!digits) {
+    return null
+  }
+
+  const result = await pool.query(
+    `SELECT
+       ${credenciadaSelectClause}
+     FROM credenciada
+     WHERE regexp_replace(COALESCE(cnpj_cpf, ''), '[^0-9]', '', 'g') = $1
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    [digits],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const findCredenciadaByName = async (credenciado) => {
+  const normalizedCredenciado = normalizeCredenciadaText(credenciado, 255)
+
+  if (!normalizedCredenciado) {
+    return null
+  }
+
+  const result = await pool.query(
+    `SELECT
+       ${credenciadaSelectClause}
+     FROM credenciada
+     WHERE UPPER(BTRIM(credenciado)) = $1
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    [normalizedCredenciado],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const dreSelectClause = `
+  CAST(codigo AS text) AS codigo,
+  COALESCE(BTRIM(codigo_operacional), '') AS codigo_operacional,
+  BTRIM(CAST(descricao AS text)) AS descricao`
+
+const findDreByCodigo = async (codigo) => {
+  const normalizedCodigo = normalizeDreOperationalCode(codigo)
+
+  if (!normalizedCodigo) {
+    return null
+  }
+
+  const result = await pool.query(
+    `SELECT ${dreSelectClause}
+     FROM dre
+     WHERE CAST(codigo AS text) = $1
+        OR UPPER(BTRIM(COALESCE(codigo_operacional, ''))) = $1
+     LIMIT 1`,
+    [normalizedCodigo],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const findDreByDescription = async (descricao) => {
+  const normalizedDescricao = normalizeDreDescription(descricao)
+
+  if (!normalizedDescricao) {
+    return null
+  }
+
+  const result = await pool.query(
+    `SELECT ${dreSelectClause}
+     FROM dre
+     WHERE UPPER(BTRIM(CAST(descricao AS text))) = $1
+     LIMIT 1`,
+    [normalizedDescricao],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const ensureDreOperationalEntry = async ({ codigo, descricao }) => {
+  const normalizedCodigo = normalizeDreOperationalCode(codigo)
+  const normalizedDescricao = normalizeDreDescription(descricao)
+
+  if (!normalizedCodigo && !normalizedDescricao) {
+    return null
+  }
+
+  let existingItem = normalizedCodigo ? await findDreByCodigo(normalizedCodigo) : null
+
+  if (!existingItem && normalizedDescricao) {
+    existingItem = await findDreByDescription(normalizedDescricao)
+  }
+
+  if (existingItem) {
+    if (normalizedCodigo && normalizeDreOperationalCode(existingItem.codigo_operacional) !== normalizedCodigo) {
+      const updatedResult = await pool.query(
+        `UPDATE dre
+         SET codigo_operacional = $1
+         WHERE codigo = $2
+         RETURNING ${dreSelectClause}`,
+        [normalizedCodigo, existingItem.codigo],
+      )
+
+      return updatedResult.rows[0] ?? existingItem
+    }
+
+    return existingItem
+  }
+
+  if (!normalizedCodigo || !normalizedDescricao) {
+    return null
+  }
+
+  const insertResult = await pool.query(
+    `INSERT INTO dre (codigo_operacional, descricao)
+     VALUES ($1, $2)
+     RETURNING ${dreSelectClause}`,
+    [normalizedCodigo, normalizedDescricao],
+  )
+
+  return insertResult.rows[0] ?? null
+}
+
+const findCondutorByCpf = async (cpfCondutor) => {
+  const digits = extractDocumentDigits(cpfCondutor)
+
+  if (!digits) {
+    return null
+  }
+
+  const result = await pool.query(
+    `SELECT
+       ${condutorSelectClause}
+     FROM condutor
+     WHERE regexp_replace(COALESCE(cpf_condutor, ''), '[^0-9]', '', 'g') = $1
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    [digits],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const findMonitorByCpf = async (cpfMonitor) => {
+  const digits = extractDocumentDigits(cpfMonitor)
+
+  if (!digits) {
+    return null
+  }
+
+  const result = await pool.query(
+    `SELECT
+       ${monitorSelectClause}
+     FROM monitor
+     WHERE regexp_replace(COALESCE(cpf_monitor, ''), '[^0-9]', '', 'g') = $1
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    [digits],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const findVeiculoByCrm = async (crm) => {
+  const normalizedCrm = normalizeVehicleCrm(crm)
+
+  if (!normalizedCrm) {
+    return null
+  }
+
+  const result = await pool.query(
+    `SELECT
+       ${veiculoSelectClause}
+     FROM veiculo
+     WHERE UPPER(BTRIM(COALESCE(crm, ''))) = UPPER($1)
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    [normalizedCrm],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const findTrocaByCodigoOrDescricao = async ({ codigo, descricao }) => {
+  const normalizedCodigo = normalizeRequestValue(codigo)
+  const normalizedDescricao = normalizeTrocaText(descricao, 255)
+
+  if (!normalizedCodigo && !normalizedDescricao) {
+    return null
+  }
+
+  const values = []
+  const filters = []
+
+  if (normalizedCodigo) {
+    values.push(normalizedCodigo)
+    filters.push(`CAST(codigo AS text) = $${values.length}`)
+  }
+
+  if (normalizedDescricao) {
+    values.push(normalizedDescricao)
+    filters.push(`BTRIM(lista) = $${values.length}`)
+  }
+
+  const result = await pool.query(
+    `SELECT ${trocaSelectClause}
+     FROM tipo_troca
+     WHERE ${filters.join(' OR ')}
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    values,
   )
 
   return result.rows[0] ?? null
@@ -1078,6 +1356,42 @@ const parseCredenciadaXml = (xmlContent) => {
   }))
 }
 
+const parseCredenciamentoOsXml = (xmlContent) => {
+  const parsed = xmlParser.parse(xmlContent)
+  const rawRecords = parsed?.dataroot?.Credenciamento_OS
+  const records = (Array.isArray(rawRecords)
+    ? rawRecords
+    : rawRecords
+      ? [rawRecords]
+      : [])
+    .filter((record) => record && typeof record === 'object')
+
+  return records.map((record) => ({
+    codigo: normalizeRequestValue(record?.Código),
+    termoAdesao: normalizeRequestValue(record?.Termo_de_adesao),
+    os: normalizeRequestValue(record?.OS),
+    revisao: normalizeRequestValue(record?.revisao),
+    osOrigem: normalizeRequestValue(record?.OS_origem),
+    vigenciaOs: normalizeXmlDateInput(record?.Vigencia_da_OS),
+    credenciado: normalizeRequestValue(record?.Credenciado),
+    dreCodigo: normalizeRequestValue(record?.DRE),
+    dreDescricao: normalizeRequestValue(record?.DRE_ext),
+    cpfCondutor: normalizeRequestValue(record?.CPF_condutor),
+    crm: normalizeRequestValue(record?.CRM),
+    cpfMonitor: normalizeRequestValue(record?.CPF_monitor),
+    anotacao: normalizeRequestValue(record?.Anotação),
+    situacao: normalizeRequestValue(record?.Situacao_de_OS),
+    tipoTrocaDescricao: normalizeRequestValue(record?.Campo_de_Troca),
+    prepostoInicio: normalizeXmlDateInput(record?.Preposto),
+    prepostoDias: normalizeRequestValue(record?.Preposto_dias),
+    conexao: normalizeRequestValue(record?.Conexao),
+    dataEncerramento: normalizeXmlDateInput(record?.Data_de_encerramento),
+    buscaVeiculo: normalizeRequestValue(record?.Busca_veiculo),
+    cnpjCpf: normalizeRequestValue(record?.CNPJ_CPF),
+    uniaoTermos: normalizeRequestValue(record?.Uniao_de_termos),
+  }))
+}
+
 const parseTrocaXml = (xmlContent) => {
   const parsed = xmlParser.parse(xmlContent)
   const rawRecords = parsed?.dataroot?.Listagem_x0020_de_x0020_Trocas
@@ -1265,6 +1579,285 @@ const normalizeImportedMarcaModeloRecord = (record, index) => {
   }
 }
 
+const importCredenciamentoOsXmlFile = async (fileName) => {
+  const sanitizedFileName = path.basename(normalizeRequestValue(fileName))
+
+  if (!sanitizedFileName) {
+    throw new Error('Nome do arquivo XML e obrigatorio.')
+  }
+
+  if (path.extname(sanitizedFileName).toLowerCase() !== '.xml') {
+    throw new Error('Informe um arquivo XML valido.')
+  }
+
+  const resolvedPath = path.resolve(importXmlDirectory, sanitizedFileName)
+
+  if (!resolvedPath.startsWith(importXmlDirectory)) {
+    throw new Error('Arquivo XML invalido.')
+  }
+
+  const xmlContent = await readFile(resolvedPath, 'utf8')
+  const parsedRecords = parseCredenciamentoOsXml(xmlContent)
+
+  if (!parsedRecords.length) {
+    throw new Error('Nenhum registro de credenciamento OS foi encontrado no XML informado.')
+  }
+
+  const normalizedRecords = []
+  const skippedRecords = []
+
+  for (const [index, record] of parsedRecords.entries()) {
+    try {
+      await ensureDreOperationalEntry({
+        codigo: record.dreCodigo,
+        descricao: record.dreDescricao,
+      })
+
+      const validationResult = await validateCredenciamentoOsPayload({
+        codigo: record.codigo,
+        termoAdesao: record.termoAdesao,
+        os: record.os,
+        revisao: record.revisao,
+        osOrigem: record.osOrigem,
+        vigenciaOs: record.vigenciaOs,
+        credenciado: record.credenciado,
+        cnpjCpf: record.cnpjCpf,
+        dreCodigo: record.dreCodigo,
+        cpfCondutor: record.cpfCondutor,
+        cpfPreposto: '',
+        prepostoInicio: record.prepostoInicio,
+        prepostoDias: record.prepostoDias,
+        crm: record.crm,
+        cpfMonitor: record.cpfMonitor,
+        situacao: record.situacao,
+        tipoTroca: record.tipoTrocaDescricao,
+        conexao: record.conexao,
+        dataEncerramento: record.dataEncerramento,
+        anotacao: record.anotacao,
+        uniaoTermos: record.uniaoTermos,
+      })
+
+      if (validationResult.status !== 200) {
+        throw new Error(validationResult.payload.message)
+      }
+
+      normalizedRecords.push(validationResult.payload)
+    } catch (error) {
+      skippedRecords.push({
+        index: index + 1,
+        codigoXml: normalizeRequestValue(record.codigo),
+        osXml: normalizeRequestValue(record.os),
+        credenciadoXml: normalizeRequestValue(record.credenciado),
+        dreXml: normalizeRequestValue(record.dreCodigo),
+        cpfCondutorXml: normalizeRequestValue(record.cpfCondutor),
+        cpfMonitorXml: normalizeRequestValue(record.cpfMonitor),
+        crmXml: normalizeRequestValue(record.crm),
+        message: error instanceof Error ? error.message : `Registro ${index + 1}: erro ao validar o XML.`,
+      })
+    }
+  }
+
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+    await client.query('TRUNCATE TABLE credenciamento_os_import_recusa RESTART IDENTITY')
+    let inserted = 0
+    let updated = 0
+
+    for (const skippedRecord of skippedRecords) {
+      await client.query(
+        `INSERT INTO credenciamento_os_import_recusa (
+           arquivo_xml,
+           linha_xml,
+           codigo_xml,
+           os_xml,
+           credenciado_xml,
+           dre_xml,
+           cpf_condutor_xml,
+           cpf_monitor_xml,
+           crm_xml,
+           motivo_recusa,
+           data_importacao
+         )
+         VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, ''), NULLIF($7, ''), NULLIF($8, ''), NULLIF($9, ''), $10, NOW())`,
+        [
+          sanitizedFileName,
+          skippedRecord.index,
+          skippedRecord.codigoXml,
+          skippedRecord.osXml,
+          skippedRecord.credenciadoXml,
+          skippedRecord.dreXml,
+          skippedRecord.cpfCondutorXml,
+          skippedRecord.cpfMonitorXml,
+          skippedRecord.crmXml,
+          skippedRecord.message,
+        ],
+      )
+    }
+
+    for (const record of normalizedRecords) {
+      const existingResult = await client.query('SELECT 1 FROM credenciamento_os WHERE codigo = $1 LIMIT 1', [record.codigo])
+
+      if (existingResult.rowCount > 0) {
+        await client.query(
+          `UPDATE credenciamento_os
+           SET termo_adesao = NULLIF($1, ''),
+               os = $2,
+               revisao = NULLIF($3, ''),
+               os_origem = NULLIF($4, ''),
+               vigencia_os = NULLIF($5, '')::date,
+               credenciada_codigo = $6,
+               credenciado = $7,
+               cnpj_cpf = $8,
+               dre_codigo = $9,
+               dre_descricao = $10,
+               cpf_condutor = $11,
+               condutor = $12,
+               cpf_preposto = NULLIF($13, ''),
+               preposto_condutor = NULLIF($14, ''),
+               preposto_inicio = NULLIF($15, '')::date,
+               preposto_dias = $16,
+               crm = $17,
+               veiculo_placas = NULLIF($18, ''),
+               cpf_monitor = NULLIF($19, ''),
+               monitor = NULLIF($20, ''),
+               situacao = $21,
+               tipo_troca_codigo = $22,
+               tipo_troca_descricao = NULLIF($23, ''),
+               conexao = NULLIF($24, ''),
+               data_encerramento = NULLIF($25, '')::date,
+               anotacao = NULLIF($26, ''),
+               uniao_termos = NULLIF($27, ''),
+               data_modificacao = NOW()
+           WHERE codigo = $28`,
+          [
+            record.termoAdesao,
+            record.os,
+            record.revisao,
+            record.osOrigem,
+            record.vigenciaOs,
+            record.credenciadaCodigo,
+            record.credenciado,
+            record.cnpjCpf,
+            record.dreCodigo,
+            record.dreDescricao,
+            record.cpfCondutor,
+            record.condutor,
+            record.cpfPreposto,
+            record.prepostoCondutor,
+            record.prepostoInicio,
+            record.prepostoDias,
+            record.crm,
+            record.veiculoPlacas,
+            record.cpfMonitor,
+            record.monitor,
+            record.situacao,
+            record.tipoTrocaCodigo,
+            record.tipoTrocaDescricao,
+            record.conexao,
+            record.dataEncerramento,
+            record.anotacao,
+            record.uniaoTermos,
+            record.codigo,
+          ],
+        )
+        updated += 1
+        continue
+      }
+
+      await client.query(
+        `INSERT INTO credenciamento_os (
+           codigo,
+           termo_adesao,
+           os,
+           revisao,
+           os_origem,
+           vigencia_os,
+           credenciada_codigo,
+           credenciado,
+           cnpj_cpf,
+           dre_codigo,
+           dre_descricao,
+           cpf_condutor,
+           condutor,
+           cpf_preposto,
+           preposto_condutor,
+           preposto_inicio,
+           preposto_dias,
+           crm,
+           veiculo_placas,
+           cpf_monitor,
+           monitor,
+           situacao,
+           tipo_troca_codigo,
+           tipo_troca_descricao,
+           conexao,
+           data_encerramento,
+           anotacao,
+           uniao_termos,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, NULLIF($2, ''), $3, NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, '')::date, $7, $8, $9, $10, $11, $12, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, '')::date, $17, $18, NULLIF($19, ''), NULLIF($20, ''), NULLIF($21, ''), $22, $23, NULLIF($24, ''), NULLIF($25, ''), NULLIF($26, '')::date, NULLIF($27, ''), NULLIF($28, ''), NOW(), NOW())`,
+        [
+          record.codigo,
+          record.termoAdesao,
+          record.os,
+          record.revisao,
+          record.osOrigem,
+          record.vigenciaOs,
+          record.credenciadaCodigo,
+          record.credenciado,
+          record.cnpjCpf,
+          record.dreCodigo,
+          record.dreDescricao,
+          record.cpfCondutor,
+          record.condutor,
+          record.cpfPreposto,
+          record.prepostoCondutor,
+          record.prepostoInicio,
+          record.prepostoDias,
+          record.crm,
+          record.veiculoPlacas,
+          record.cpfMonitor,
+          record.monitor,
+          record.situacao,
+          record.tipoTrocaCodigo,
+          record.tipoTrocaDescricao,
+          record.conexao,
+          record.dataEncerramento,
+          record.anotacao,
+          record.uniaoTermos,
+        ],
+      )
+      inserted += 1
+    }
+
+    if (normalizedRecords.length) {
+      await client.query('SELECT setval(\'credenciamento_os_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM credenciamento_os), 0), 1), true)')
+    }
+
+    await client.query('COMMIT')
+
+    return {
+      fileName: sanitizedFileName,
+      filePath: resolvedPath,
+      total: parsedRecords.length,
+      processed: normalizedRecords.length,
+      inserted,
+      updated,
+      skipped: skippedRecords.length,
+      skippedRecords: skippedRecords.slice(0, 20),
+    }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
 const condutorSelectClause = `
   codigo::text AS codigo,
   BTRIM(condutor) AS condutor,
@@ -1384,6 +1977,52 @@ const credenciadaImportRecusaSelectClause = `
   COALESCE(BTRIM(cnpj_cpf_xml), '') AS cnpj_cpf_xml,
   COALESCE(BTRIM(representante_xml), '') AS representante_xml,
   COALESCE(BTRIM(status_xml), '') AS status_xml,
+  BTRIM(motivo_recusa) AS motivo_recusa,
+  TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
+
+const credenciamentoOsSelectClause = `
+  codigo::text AS codigo,
+  COALESCE(BTRIM(termo_adesao), '') AS termo_adesao,
+  BTRIM(os) AS os,
+  COALESCE(BTRIM(revisao), '') AS revisao,
+  COALESCE(BTRIM(os_origem), '') AS os_origem,
+  TO_CHAR(vigencia_os::date, 'YYYY-MM-DD') AS vigencia_os,
+  COALESCE(credenciada_codigo::text, '') AS credenciada_codigo,
+  COALESCE(BTRIM(credenciado), '') AS credenciado,
+  COALESCE(BTRIM(cnpj_cpf), '') AS cnpj_cpf,
+  COALESCE(BTRIM(dre_codigo), '') AS dre_codigo,
+  COALESCE(BTRIM(dre_descricao), '') AS dre_descricao,
+  COALESCE(BTRIM(cpf_condutor), '') AS cpf_condutor,
+  COALESCE(BTRIM(condutor), '') AS condutor,
+  COALESCE(BTRIM(cpf_preposto), '') AS cpf_preposto,
+  COALESCE(BTRIM(preposto_condutor), '') AS preposto_condutor,
+  TO_CHAR(preposto_inicio::date, 'YYYY-MM-DD') AS preposto_inicio,
+  COALESCE(preposto_dias::text, '') AS preposto_dias,
+  COALESCE(BTRIM(crm), '') AS crm,
+  COALESCE(BTRIM(veiculo_placas), '') AS veiculo_placas,
+  COALESCE(BTRIM(cpf_monitor), '') AS cpf_monitor,
+  COALESCE(BTRIM(monitor), '') AS monitor,
+  COALESCE(BTRIM(situacao), '') AS situacao,
+  COALESCE(tipo_troca_codigo::text, '') AS tipo_troca_codigo,
+  COALESCE(BTRIM(tipo_troca_descricao), '') AS tipo_troca_descricao,
+  COALESCE(BTRIM(conexao), '') AS conexao,
+  TO_CHAR(data_encerramento::date, 'YYYY-MM-DD') AS data_encerramento,
+  COALESCE(BTRIM(anotacao), '') AS anotacao,
+  COALESCE(BTRIM(uniao_termos), '') AS uniao_termos,
+  TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
+  TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
+
+const credenciamentoOsImportRecusaSelectClause = `
+  id::text AS id,
+  BTRIM(arquivo_xml) AS arquivo_xml,
+  linha_xml::text AS linha_xml,
+  COALESCE(BTRIM(codigo_xml), '') AS codigo_xml,
+  COALESCE(BTRIM(os_xml), '') AS os_xml,
+  COALESCE(BTRIM(credenciado_xml), '') AS credenciado_xml,
+  COALESCE(BTRIM(dre_xml), '') AS dre_xml,
+  COALESCE(BTRIM(cpf_condutor_xml), '') AS cpf_condutor_xml,
+  COALESCE(BTRIM(cpf_monitor_xml), '') AS cpf_monitor_xml,
+  COALESCE(BTRIM(crm_xml), '') AS crm_xml,
   BTRIM(motivo_recusa) AS motivo_recusa,
   TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
 
@@ -2445,6 +3084,31 @@ const seedMarcaModeloTableFromXmlIfEmpty = async () => {
   return importMarcaModeloXmlFile('marca-modelo.xml')
 }
 
+const seedCredenciamentoOsTableFromXmlIfEmpty = async () => {
+  const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM credenciamento_os')
+  const total = countResult.rows[0]?.total ?? 0
+
+  if (total > 0) {
+    return null
+  }
+
+  const dependencyResult = await pool.query(`
+    SELECT
+      (SELECT COUNT(*)::int FROM credenciada) AS total_credenciada,
+      (SELECT COUNT(*)::int FROM condutor) AS total_condutor,
+      (SELECT COUNT(*)::int FROM monitor) AS total_monitor,
+      (SELECT COUNT(*)::int FROM veiculo) AS total_veiculo,
+      (SELECT COUNT(*)::int FROM dre) AS total_dre
+  `)
+  const dependencies = dependencyResult.rows[0] ?? {}
+
+  if (!dependencies.total_credenciada || !dependencies.total_condutor || !dependencies.total_monitor || !dependencies.total_veiculo || !dependencies.total_dre) {
+    return null
+  }
+
+  return importCredenciamentoOsXmlFile('Credenciamento_OS.xml')
+}
+
 const isDateInputValid = (value) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return false
@@ -3071,6 +3735,219 @@ const validateCredenciadaPayload = async ({
   }
 }
 
+const validateCredenciamentoOsPayload = async ({
+  codigo,
+  termoAdesao,
+  os,
+  revisao,
+  osOrigem,
+  vigenciaOs,
+  credenciado,
+  cnpjCpf,
+  dreCodigo,
+  cpfCondutor,
+  cpfPreposto,
+  prepostoInicio,
+  prepostoDias,
+  crm,
+  cpfMonitor,
+  situacao,
+  tipoTroca,
+  conexao,
+  dataEncerramento,
+  anotacao,
+  uniaoTermos,
+  originalCodigo = null,
+}) => {
+  const normalizedCodigo = normalizeCondutorCodigo(codigo)
+  const normalizedTermoAdesao = normalizeOperationalCode(termoAdesao, 255)
+  const normalizedOs = normalizeOperationalCode(os, 255)
+  const normalizedRevisao = normalizeOperationalCode(revisao, 30)
+  const normalizedOsOrigem = normalizeOperationalCode(osOrigem, 255)
+  const normalizedVigenciaOs = normalizeRequestValue(vigenciaOs)
+  const normalizedCredenciado = normalizeCredenciadaText(credenciado, 255)
+  const normalizedCnpjCpf = normalizeCnpjCpf(cnpjCpf)
+  const normalizedDreCodigo = normalizeRequestValue(dreCodigo).toUpperCase().slice(0, 30)
+  const normalizedCpfCondutor = normalizeCpf(cpfCondutor)
+  const normalizedCpfPreposto = normalizeCpf(cpfPreposto)
+  const normalizedPrepostoInicio = normalizeRequestValue(prepostoInicio)
+  const normalizedPrepostoDias = normalizeVehicleInteger(prepostoDias, 3)
+  const normalizedCrm = normalizeVehicleCrm(crm)
+  const normalizedCpfMonitor = normalizeCpf(cpfMonitor)
+  const normalizedSituacao = normalizeCredenciamentoSituacao(situacao)
+  const normalizedTipoTroca = normalizeTrocaText(tipoTroca, 255)
+  const normalizedConexao = normalizeOperationalCode(conexao, 50)
+  const normalizedDataEncerramento = normalizeRequestValue(dataEncerramento)
+  const normalizedAnotacao = normalizeCredenciamentoAnnotation(anotacao)
+  const normalizedUniaoTermos = normalizeOperationalCode(uniaoTermos, 255)
+
+  if (normalizedCodigo === null) {
+    return { status: 400, payload: { message: 'Codigo e obrigatorio.' } }
+  }
+
+  if (Number.isNaN(normalizedCodigo)) {
+    return { status: 400, payload: { message: 'Codigo deve ser um numero inteiro positivo.' } }
+  }
+
+  if (!normalizedOs) {
+    return { status: 400, payload: { message: 'Numero da OS e obrigatorio.' } }
+  }
+
+  if (normalizedVigenciaOs && !isDateInputValid(normalizedVigenciaOs)) {
+    return { status: 400, payload: { message: 'Vigencia da OS invalida.' } }
+  }
+
+  if (!normalizedCredenciado && !normalizedCnpjCpf) {
+    return { status: 400, payload: { message: 'Credenciado e obrigatorio.' } }
+  }
+
+  if (!normalizedDreCodigo) {
+    return { status: 400, payload: { message: 'DRE e obrigatoria.' } }
+  }
+
+  if (!normalizedCpfCondutor || !isCpfValid(normalizedCpfCondutor)) {
+    return { status: 400, payload: { message: 'CPF do condutor deve conter 11 digitos.' } }
+  }
+
+  if (normalizedCpfPreposto && !isCpfValid(normalizedCpfPreposto)) {
+    return { status: 400, payload: { message: 'CPF do preposto invalido.' } }
+  }
+
+  if (normalizedPrepostoInicio && !isDateInputValid(normalizedPrepostoInicio)) {
+    return { status: 400, payload: { message: 'Inicio do preposto invalido.' } }
+  }
+
+  if (normalizedPrepostoDias !== null && Number.isNaN(normalizedPrepostoDias)) {
+    return { status: 400, payload: { message: 'Dias de preposto invalido.' } }
+  }
+
+  if (!normalizedCrm || !isVehicleCrmValid(normalizedCrm)) {
+    return { status: 400, payload: { message: 'CRM do veiculo invalido.' } }
+  }
+
+  if (normalizedCpfMonitor && !isCpfValid(normalizedCpfMonitor)) {
+    return { status: 400, payload: { message: 'CPF do monitor invalido.' } }
+  }
+
+  if (!normalizedSituacao) {
+    return { status: 400, payload: { message: 'Situacao da OS invalida.' } }
+  }
+
+  if (normalizedDataEncerramento && !isDateInputValid(normalizedDataEncerramento)) {
+    return { status: 400, payload: { message: 'Data de encerramento invalida.' } }
+  }
+
+  if (normalizedVigenciaOs && normalizedDataEncerramento && normalizedDataEncerramento < normalizedVigenciaOs) {
+    return { status: 400, payload: { message: 'Data de encerramento deve ser maior ou igual a vigencia da OS.' } }
+  }
+
+  const duplicateCodeResult = await pool.query(
+    `SELECT 1
+     FROM credenciamento_os
+     WHERE codigo = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedCodigo, originalCodigo],
+  )
+
+  if (duplicateCodeResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
+  }
+
+  const duplicateOsResult = await pool.query(
+    `SELECT 1
+     FROM credenciamento_os
+     WHERE UPPER(BTRIM(os)) = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedOs, originalCodigo],
+  )
+
+  if (duplicateOsResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'OS ja cadastrada.' } }
+  }
+
+  const credenciadaItem = normalizedCnpjCpf
+    ? await findCredenciadaByCnpjCpf(normalizedCnpjCpf)
+    : await findCredenciadaByName(normalizedCredenciado)
+
+  if (!credenciadaItem) {
+    return { status: 400, payload: { message: 'Credenciado nao encontrado na tabela credenciada.' } }
+  }
+
+  const dreItem = await findDreByCodigo(normalizedDreCodigo)
+
+  if (!dreItem) {
+    return { status: 400, payload: { message: 'DRE nao encontrada.' } }
+  }
+
+  const condutorItem = await findCondutorByCpf(normalizedCpfCondutor)
+
+  if (!condutorItem) {
+    return { status: 400, payload: { message: 'CPF do condutor nao encontrado na tabela condutor.' } }
+  }
+
+  const prepostoItem = normalizedCpfPreposto ? await findCondutorByCpf(normalizedCpfPreposto) : null
+
+  if (normalizedCpfPreposto && !prepostoItem) {
+    return { status: 400, payload: { message: 'CPF do preposto nao encontrado na tabela condutor.' } }
+  }
+
+  const veiculoItem = await findVeiculoByCrm(normalizedCrm)
+
+  if (!veiculoItem) {
+    return { status: 400, payload: { message: 'CRM nao encontrado na tabela veiculo.' } }
+  }
+
+  const monitorItem = normalizedCpfMonitor ? await findMonitorByCpf(normalizedCpfMonitor) : null
+
+  if (normalizedCpfMonitor && !monitorItem) {
+    return { status: 400, payload: { message: 'CPF do monitor nao encontrado na tabela monitor.' } }
+  }
+
+  const tipoTrocaItem = normalizedTipoTroca
+    ? await findTrocaByCodigoOrDescricao({ descricao: normalizedTipoTroca })
+    : null
+
+  if (normalizedTipoTroca && !tipoTrocaItem) {
+    return { status: 400, payload: { message: 'Tipo de troca nao encontrado na tabela tipo_troca.' } }
+  }
+
+  return {
+    status: 200,
+    payload: {
+      codigo: normalizedCodigo,
+      termoAdesao: normalizedTermoAdesao,
+      os: normalizedOs,
+      revisao: normalizedRevisao,
+      osOrigem: normalizedOsOrigem,
+      vigenciaOs: normalizedVigenciaOs,
+      credenciadaCodigo: Number(credenciadaItem.codigo),
+      credenciado: normalizeCredenciadaText(credenciadaItem.credenciado, 255),
+      cnpjCpf: normalizeCnpjCpf(credenciadaItem.cnpj_cpf),
+      dreCodigo: normalizeDreOperationalCode(dreItem.codigo_operacional || dreItem.codigo),
+      dreDescricao: normalizeOperationalCode(dreItem.descricao, 255),
+      cpfCondutor: normalizeCpf(condutorItem.cpf_condutor),
+      condutor: normalizeCondutorName(condutorItem.condutor),
+      cpfPreposto: prepostoItem ? normalizeCpf(prepostoItem.cpf_condutor) : '',
+      prepostoCondutor: prepostoItem ? normalizeCondutorName(prepostoItem.condutor) : '',
+      prepostoInicio: normalizedPrepostoInicio,
+      prepostoDias: normalizedPrepostoDias,
+      crm: normalizeVehicleCrm(veiculoItem.crm),
+      veiculoPlacas: normalizeOperationalCode(veiculoItem.placas, 20),
+      cpfMonitor: monitorItem ? normalizeCpf(monitorItem.cpf_monitor) : '',
+      monitor: monitorItem ? normalizeCondutorName(monitorItem.monitor) : '',
+      situacao: normalizedSituacao,
+      tipoTrocaCodigo: tipoTrocaItem ? Number(tipoTrocaItem.codigo) : null,
+      tipoTrocaDescricao: tipoTrocaItem ? normalizeTrocaText(tipoTrocaItem.lista, 255) : '',
+      conexao: normalizedConexao,
+      dataEncerramento: normalizedDataEncerramento,
+      anotacao: normalizedAnotacao,
+      uniaoTermos: normalizedUniaoTermos,
+    },
+  }
+}
+
 const validateTrocaPayload = async ({ codigo, controle, lista, originalCodigo = null }) => {
   const normalizedCodigo = normalizeCondutorCodigo(codigo)
   const normalizedControle = normalizeCondutorCodigo(controle)
@@ -3407,6 +4284,29 @@ const ensureDatabaseSchema = async () => {
   await pool.query('UPDATE login SET nome = LEFT(UPPER(BTRIM(nome)), 50) WHERE nome IS NOT NULL')
   await pool.query('ALTER TABLE login ALTER COLUMN codigo SET NOT NULL')
   await pool.query('ALTER TABLE login ALTER COLUMN nome SET NOT NULL')
+  await pool.query('CREATE SEQUENCE IF NOT EXISTS dre_codigo_seq START WITH 1 INCREMENT BY 1')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS dre (
+      codigo integer PRIMARY KEY DEFAULT nextval('dre_codigo_seq'),
+      descricao varchar(255) NOT NULL,
+      codigo_operacional varchar(30)
+    )
+  `)
+  await pool.query('ALTER TABLE dre ADD COLUMN IF NOT EXISTS descricao varchar(255)')
+  await pool.query('ALTER TABLE dre ADD COLUMN IF NOT EXISTS codigo_operacional varchar(30)')
+  await pool.query('ALTER TABLE dre ALTER COLUMN codigo SET DEFAULT nextval(\'dre_codigo_seq\')')
+  await pool.query('ALTER SEQUENCE dre_codigo_seq OWNED BY dre.codigo')
+  await pool.query('ALTER TABLE dre ALTER COLUMN descricao TYPE varchar(255)')
+  await pool.query('UPDATE dre SET descricao = UPPER(BTRIM(CAST(descricao AS text))) WHERE descricao IS NOT NULL')
+  await pool.query('UPDATE dre SET codigo_operacional = UPPER(BTRIM(codigo_operacional)) WHERE codigo_operacional IS NOT NULL')
+  await pool.query('ALTER TABLE dre ALTER COLUMN descricao SET NOT NULL')
+  await pool.query('SELECT setval(\'dre_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM dre), 0), 1), true)')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS dre_codigo_unique_idx ON dre (codigo)')
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS dre_codigo_operacional_unique_idx
+    ON dre (UPPER(BTRIM(codigo_operacional)))
+    WHERE codigo_operacional IS NOT NULL AND BTRIM(codigo_operacional) <> ''
+  `)
   await pool.query('CREATE SEQUENCE IF NOT EXISTS condutor_codigo_seq START WITH 1 INCREMENT BY 1')
   await pool.query('ALTER TABLE condutor ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone')
   await pool.query('ALTER TABLE condutor ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone')
@@ -3803,6 +4703,116 @@ const ensureDatabaseSchema = async () => {
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS credenciada_codigo_unique_idx ON credenciada (codigo)')
   await pool.query('CREATE INDEX IF NOT EXISTS credenciada_import_recusa_data_idx ON credenciada_import_recusa (data_importacao DESC)')
   await pool.query('CREATE INDEX IF NOT EXISTS credenciada_import_recusa_arquivo_idx ON credenciada_import_recusa (arquivo_xml)')
+  await pool.query('CREATE SEQUENCE IF NOT EXISTS credenciamento_os_codigo_seq START WITH 1 INCREMENT BY 1')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS credenciamento_os (
+      codigo integer PRIMARY KEY DEFAULT nextval('credenciamento_os_codigo_seq'),
+      termo_adesao varchar(255),
+      os varchar(255) NOT NULL,
+      revisao varchar(30),
+      os_origem varchar(255),
+      vigencia_os date,
+      credenciada_codigo integer NOT NULL,
+      credenciado varchar(255) NOT NULL,
+      cnpj_cpf varchar(18) NOT NULL,
+      dre_codigo varchar(30) NOT NULL,
+      dre_descricao varchar(255) NOT NULL,
+      cpf_condutor varchar(14) NOT NULL,
+      condutor varchar(255) NOT NULL,
+      cpf_preposto varchar(14),
+      preposto_condutor varchar(255),
+      preposto_inicio date,
+      preposto_dias integer,
+      crm varchar(20) NOT NULL,
+      veiculo_placas varchar(20),
+      cpf_monitor varchar(14),
+      monitor varchar(255),
+      situacao varchar(20) NOT NULL,
+      tipo_troca_codigo integer,
+      tipo_troca_descricao varchar(255),
+      conexao varchar(50),
+      data_encerramento date,
+      anotacao text,
+      uniao_termos varchar(255),
+      data_inclusao timestamp without time zone NOT NULL DEFAULT NOW(),
+      data_modificacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query('ALTER SEQUENCE credenciamento_os_codigo_seq OWNED BY credenciamento_os.codigo')
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN codigo SET DEFAULT nextval(\'credenciamento_os_codigo_seq\')')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS termo_adesao varchar(255)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS os varchar(255)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS revisao varchar(30)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS os_origem varchar(255)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS vigencia_os date')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS credenciada_codigo integer')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS credenciado varchar(255)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS cnpj_cpf varchar(18)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS dre_codigo varchar(30)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS dre_descricao varchar(255)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS cpf_condutor varchar(14)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS condutor varchar(255)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS cpf_preposto varchar(14)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS preposto_condutor varchar(255)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS preposto_inicio date')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS preposto_dias integer')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS crm varchar(20)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS veiculo_placas varchar(20)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS cpf_monitor varchar(14)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS monitor varchar(255)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS situacao varchar(20)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS tipo_troca_codigo integer')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS tipo_troca_descricao varchar(255)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS conexao varchar(50)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS data_encerramento date')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS anotacao text')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS uniao_termos varchar(255)')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone')
+  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone')
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN data_inclusao SET DEFAULT NOW()')
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN data_modificacao SET DEFAULT NOW()')
+  await pool.query(`
+    UPDATE credenciamento_os
+    SET data_inclusao = COALESCE(data_inclusao, NOW()),
+        data_modificacao = COALESCE(data_modificacao, COALESCE(data_inclusao, NOW()))
+    WHERE data_inclusao IS NULL OR data_modificacao IS NULL
+  `)
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN os SET NOT NULL')
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN credenciada_codigo SET NOT NULL')
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN credenciado SET NOT NULL')
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN cnpj_cpf SET NOT NULL')
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN dre_codigo SET NOT NULL')
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN dre_descricao SET NOT NULL')
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN cpf_condutor SET NOT NULL')
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN condutor SET NOT NULL')
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN crm SET NOT NULL')
+  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN situacao SET NOT NULL')
+  await pool.query('SELECT setval(\'credenciamento_os_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM credenciamento_os), 0), 1), true)')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS credenciamento_os_codigo_unique_idx ON credenciamento_os (codigo)')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS credenciamento_os_os_unique_idx ON credenciamento_os (UPPER(BTRIM(os)))')
+  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_credenciado_idx ON credenciamento_os (UPPER(BTRIM(credenciado)))')
+  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_dre_idx ON credenciamento_os (dre_codigo)')
+  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_condutor_idx ON credenciamento_os (cpf_condutor)')
+  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_monitor_idx ON credenciamento_os (cpf_monitor)')
+  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_veiculo_idx ON credenciamento_os (crm)')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS credenciamento_os_import_recusa (
+      id bigserial PRIMARY KEY,
+      arquivo_xml varchar(255) NOT NULL,
+      linha_xml integer NOT NULL,
+      codigo_xml varchar(50),
+      os_xml varchar(255),
+      credenciado_xml varchar(255),
+      dre_xml varchar(50),
+      cpf_condutor_xml varchar(20),
+      cpf_monitor_xml varchar(20),
+      crm_xml varchar(20),
+      motivo_recusa text NOT NULL,
+      data_importacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_import_recusa_data_idx ON credenciamento_os_import_recusa (data_importacao DESC)')
+  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_import_recusa_arquivo_idx ON credenciamento_os_import_recusa (arquivo_xml)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_nome_unique_idx ON login (UPPER(BTRIM(nome)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_email_unique_idx ON login (LOWER(TRIM(email)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_dre_unique_idx ON login_dre (login_codigo, dre_codigo)')
@@ -3855,7 +4865,7 @@ const server = createServer(async (request, response) => {
       values.push(pageSize)
       values.push(offset)
       const result = await pool.query(
-        `SELECT CAST(codigo AS text) AS codigo, BTRIM(CAST(descricao AS text)) AS descricao
+        `SELECT ${dreSelectClause}
          FROM dre
          ${whereClause}
          ORDER BY ${orderByClause}
@@ -4017,6 +5027,276 @@ const server = createServer(async (request, response) => {
         ? error.message
         : 'Erro ao consultar a tabela troca.'
 
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/credenciamento-os') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
+      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
+        ? 'DESC'
+        : 'ASC'
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+      const orderByClause = sortBy === 'os'
+        ? `UPPER(BTRIM(os)) ${sortDirection}, codigo ASC`
+        : sortBy === 'credenciado'
+          ? `UPPER(BTRIM(credenciado)) ${sortDirection}, codigo ASC`
+          : `codigo ${sortDirection}`
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR COALESCE(BTRIM(termo_adesao), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(os), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(credenciado), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(dre_codigo), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(condutor), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(monitor), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(crm), '') ILIKE UPPER($${values.length})
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM credenciamento_os ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           ${credenciamentoOsSelectClause}
+         FROM credenciamento_os
+         ${whereClause}
+         ORDER BY ${orderByClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: sortBy === 'os' || sortBy === 'credenciado' ? sortBy : 'codigo',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar credenciamentos OS.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/credenciamento-os/import-rejections') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 10) || 10, 1), 100)
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          arquivo_xml ILIKE $${values.length}
+          OR COALESCE(codigo_xml, '') ILIKE $${values.length}
+          OR COALESCE(os_xml, '') ILIKE $${values.length}
+          OR COALESCE(credenciado_xml, '') ILIKE $${values.length}
+          OR COALESCE(dre_xml, '') ILIKE $${values.length}
+          OR COALESCE(cpf_condutor_xml, '') ILIKE $${values.length}
+          OR COALESCE(cpf_monitor_xml, '') ILIKE $${values.length}
+          OR COALESCE(crm_xml, '') ILIKE $${values.length}
+          OR motivo_recusa ILIKE $${values.length}
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM credenciamento_os_import_recusa ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           ${credenciamentoOsImportRecusaSelectClause}
+         FROM credenciamento_os_import_recusa
+         ${whereClause}
+         ORDER BY data_importacao DESC, linha_xml ASC, id DESC
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar recusas do credenciamento OS.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/credenciada/lookup') {
+    try {
+      const cnpjCpf = normalizeCnpjCpf(requestUrl.searchParams.get('cnpjCpf') ?? '')
+      const credenciado = normalizeCredenciadaText(requestUrl.searchParams.get('credenciado') ?? '', 255)
+      const item = cnpjCpf
+        ? await findCredenciadaByCnpjCpf(cnpjCpf)
+        : await findCredenciadaByName(credenciado)
+
+      if (!item) {
+        sendJson(response, 404, { message: 'Credenciado nao encontrado na tabela credenciada.' })
+        return
+      }
+
+      sendJson(response, 200, { item })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao localizar credenciado.'
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/dre/lookup') {
+    try {
+      const codigo = normalizeRequestValue(requestUrl.searchParams.get('codigo') ?? '').toUpperCase()
+      const item = await findDreByCodigo(codigo)
+
+      if (!item) {
+        sendJson(response, 404, { message: 'DRE nao encontrada.' })
+        return
+      }
+
+      sendJson(response, 200, { item })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao localizar DRE.'
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/condutor/lookup') {
+    try {
+      const cpf = normalizeCpf(requestUrl.searchParams.get('cpf') ?? '')
+
+      if (!cpf || !isCpfValid(cpf)) {
+        sendJson(response, 400, { message: 'CPF do condutor deve conter 11 digitos.' })
+        return
+      }
+
+      const item = await findCondutorByCpf(cpf)
+
+      if (!item) {
+        sendJson(response, 404, { message: 'Condutor nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, { item })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao localizar condutor.'
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/monitor/lookup') {
+    try {
+      const cpf = normalizeCpf(requestUrl.searchParams.get('cpf') ?? '')
+
+      if (!cpf || !isCpfValid(cpf)) {
+        sendJson(response, 400, { message: 'CPF do monitor deve conter 11 digitos.' })
+        return
+      }
+
+      const item = await findMonitorByCpf(cpf)
+
+      if (!item) {
+        sendJson(response, 404, { message: 'Monitor nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, { item })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao localizar monitor.'
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/veiculo/lookup') {
+    try {
+      const crm = normalizeVehicleCrm(requestUrl.searchParams.get('crm') ?? '')
+
+      if (!crm) {
+        sendJson(response, 400, { message: 'CRM e obrigatorio.' })
+        return
+      }
+
+      const item = await findVeiculoByCrm(crm)
+
+      if (!item) {
+        sendJson(response, 404, { message: 'Veiculo nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, { item })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao localizar veiculo.'
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/troca/lookup') {
+    try {
+      const codigo = normalizeRequestValue(requestUrl.searchParams.get('codigo') ?? '')
+      const descricao = normalizeTrocaText(requestUrl.searchParams.get('descricao') ?? '', 255)
+      const item = await findTrocaByCodigoOrDescricao({ codigo, descricao })
+
+      if (!item) {
+        sendJson(response, 404, { message: 'Tipo de troca nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, { item })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao localizar tipo de troca.'
       sendJson(response, 500, { message })
     }
 
@@ -4959,6 +6239,7 @@ const server = createServer(async (request, response) => {
     try {
       const body = await readJsonBody(request)
       const codigo = normalizeRequestValue(body.codigo)
+      const codigoOperacional = normalizeDreOperationalCode(body.codigoOperacional)
       const descricao = normalizeRequestValue(body.descricao)
 
       if (!codigo) {
@@ -4991,9 +6272,26 @@ const server = createServer(async (request, response) => {
         return
       }
 
+      if (codigoOperacional) {
+        const duplicateOperationalCodeResult = await pool.query(
+          `SELECT 1
+           FROM dre
+           WHERE UPPER(BTRIM(COALESCE(codigo_operacional, ''))) = $1
+           LIMIT 1`,
+          [codigoOperacional],
+        )
+
+        if (duplicateOperationalCodeResult.rowCount > 0) {
+          sendJson(response, 409, { message: 'Codigo operacional ja cadastrado.' })
+          return
+        }
+      }
+
       const insertResult = await pool.query(
-        'INSERT INTO dre (codigo, descricao) VALUES ($1, $2) RETURNING CAST(codigo AS text) AS codigo, BTRIM(CAST(descricao AS text)) AS descricao',
-        [codigo, descricao],
+        `INSERT INTO dre (codigo, codigo_operacional, descricao)
+         VALUES ($1, NULLIF($2, ''), $3)
+         RETURNING ${dreSelectClause}`,
+        [codigo, codigoOperacional, descricao],
       )
 
       sendJson(response, 201, {
@@ -5542,6 +6840,131 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'POST' && pathname === '/api/credenciamento-os') {
+    try {
+      const body = await readJsonBody(request)
+      const validationResult = await validateCredenciamentoOsPayload({
+        codigo: body.codigo,
+        termoAdesao: body.termoAdesao,
+        os: body.os,
+        revisao: body.revisao,
+        osOrigem: body.osOrigem,
+        vigenciaOs: body.vigenciaOs,
+        credenciado: body.credenciado,
+        cnpjCpf: body.cnpjCpf,
+        dreCodigo: body.dreCodigo,
+        cpfCondutor: body.cpfCondutor,
+        cpfPreposto: body.cpfPreposto,
+        prepostoInicio: body.prepostoInicio,
+        prepostoDias: body.prepostoDias,
+        crm: body.crm,
+        cpfMonitor: body.cpfMonitor,
+        situacao: body.situacao,
+        tipoTroca: body.tipoTroca,
+        conexao: body.conexao,
+        dataEncerramento: body.dataEncerramento,
+        anotacao: body.anotacao,
+        uniaoTermos: body.uniaoTermos,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const insertResult = await pool.query(
+        `INSERT INTO credenciamento_os (
+           codigo,
+           termo_adesao,
+           os,
+           revisao,
+           os_origem,
+           vigencia_os,
+           credenciada_codigo,
+           credenciado,
+           cnpj_cpf,
+           dre_codigo,
+           dre_descricao,
+           cpf_condutor,
+           condutor,
+           cpf_preposto,
+           preposto_condutor,
+           preposto_inicio,
+           preposto_dias,
+           crm,
+           veiculo_placas,
+           cpf_monitor,
+           monitor,
+           situacao,
+           tipo_troca_codigo,
+           tipo_troca_descricao,
+           conexao,
+           data_encerramento,
+           anotacao,
+           uniao_termos,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, NULLIF($2, ''), $3, NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, '')::date, $7, $8, $9, $10, $11, $12, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, '')::date, $17, $18, NULLIF($19, ''), NULLIF($20, ''), NULLIF($21, ''), $22, $23, NULLIF($24, ''), NULLIF($25, ''), NULLIF($26, '')::date, NULLIF($27, ''), NULLIF($28, ''), NOW(), NOW())
+         RETURNING ${credenciamentoOsSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.termoAdesao,
+          validationResult.payload.os,
+          validationResult.payload.revisao,
+          validationResult.payload.osOrigem,
+          validationResult.payload.vigenciaOs,
+          validationResult.payload.credenciadaCodigo,
+          validationResult.payload.credenciado,
+          validationResult.payload.cnpjCpf,
+          validationResult.payload.dreCodigo,
+          validationResult.payload.dreDescricao,
+          validationResult.payload.cpfCondutor,
+          validationResult.payload.condutor,
+          validationResult.payload.cpfPreposto,
+          validationResult.payload.prepostoCondutor,
+          validationResult.payload.prepostoInicio,
+          validationResult.payload.prepostoDias,
+          validationResult.payload.crm,
+          validationResult.payload.veiculoPlacas,
+          validationResult.payload.cpfMonitor,
+          validationResult.payload.monitor,
+          validationResult.payload.situacao,
+          validationResult.payload.tipoTrocaCodigo,
+          validationResult.payload.tipoTrocaDescricao,
+          validationResult.payload.conexao,
+          validationResult.payload.dataEncerramento,
+          validationResult.payload.anotacao,
+          validationResult.payload.uniaoTermos,
+        ],
+      )
+
+      sendJson(response, 201, { item: insertResult.rows[0] })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao cadastrar credenciamento OS.'
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/credenciamento-os/import-xml') {
+    try {
+      const body = await readJsonBody(request)
+      const result = await importCredenciamentoOsXmlFile(body.fileName)
+
+      sendJson(response, 200, {
+        message: 'Importacao de credenciamentos OS concluida com sucesso.',
+        ...result,
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao importar credenciamentos OS do XML.'
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'POST' && pathname === '/api/titular') {
     try {
       const body = await readJsonBody(request)
@@ -5698,6 +7121,7 @@ const server = createServer(async (request, response) => {
       const originalCodigo = getDreCodigoFromUrl(pathname)
       const body = await readJsonBody(request)
       const codigo = normalizeRequestValue(body.codigo)
+      const codigoOperacional = normalizeDreOperationalCode(body.codigoOperacional)
       const descricao = normalizeRequestValue(body.descricao)
 
       if (!originalCodigo) {
@@ -5745,9 +7169,30 @@ const server = createServer(async (request, response) => {
         return
       }
 
+      if (codigoOperacional) {
+        const duplicateOperationalCodeResult = await pool.query(
+          `SELECT 1
+           FROM dre
+           WHERE UPPER(BTRIM(COALESCE(codigo_operacional, ''))) = $1
+             AND CAST(codigo AS text) <> $2
+           LIMIT 1`,
+          [codigoOperacional, originalCodigo],
+        )
+
+        if (duplicateOperationalCodeResult.rowCount > 0) {
+          sendJson(response, 409, { message: 'Codigo operacional ja cadastrado.' })
+          return
+        }
+      }
+
       const updateResult = await pool.query(
-        'UPDATE dre SET codigo = $1, descricao = $2 WHERE CAST(codigo AS text) = $3 RETURNING CAST(codigo AS text) AS codigo, BTRIM(CAST(descricao AS text)) AS descricao',
-        [codigo, descricao, originalCodigo],
+        `UPDATE dre
+         SET codigo = $1,
+             codigo_operacional = NULLIF($2, ''),
+             descricao = $3
+         WHERE CAST(codigo AS text) = $4
+         RETURNING ${dreSelectClause}`,
+        [codigo, codigoOperacional, descricao, originalCodigo],
       )
 
       sendJson(response, 200, {
@@ -6512,6 +7957,131 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'PUT' && getCredenciamentoOsCodigoFromUrl(pathname)) {
+    try {
+      const originalCodigo = Number(getCredenciamentoOsCodigoFromUrl(pathname))
+      const body = await readJsonBody(request)
+
+      if (!Number.isInteger(originalCodigo) || originalCodigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo original invalido.' })
+        return
+      }
+
+      const existingResult = await pool.query(
+        'SELECT 1 FROM credenciamento_os WHERE codigo = $1 LIMIT 1',
+        [originalCodigo],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Credenciamento OS nao encontrado.' })
+        return
+      }
+
+      const validationResult = await validateCredenciamentoOsPayload({
+        codigo: body.codigo,
+        termoAdesao: body.termoAdesao,
+        os: body.os,
+        revisao: body.revisao,
+        osOrigem: body.osOrigem,
+        vigenciaOs: body.vigenciaOs,
+        credenciado: body.credenciado,
+        cnpjCpf: body.cnpjCpf,
+        dreCodigo: body.dreCodigo,
+        cpfCondutor: body.cpfCondutor,
+        cpfPreposto: body.cpfPreposto,
+        prepostoInicio: body.prepostoInicio,
+        prepostoDias: body.prepostoDias,
+        crm: body.crm,
+        cpfMonitor: body.cpfMonitor,
+        situacao: body.situacao,
+        tipoTroca: body.tipoTroca,
+        conexao: body.conexao,
+        dataEncerramento: body.dataEncerramento,
+        anotacao: body.anotacao,
+        uniaoTermos: body.uniaoTermos,
+        originalCodigo,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE credenciamento_os
+         SET codigo = $1,
+             termo_adesao = NULLIF($2, ''),
+             os = $3,
+             revisao = NULLIF($4, ''),
+             os_origem = NULLIF($5, ''),
+             vigencia_os = NULLIF($6, '')::date,
+             credenciada_codigo = $7,
+             credenciado = $8,
+             cnpj_cpf = $9,
+             dre_codigo = $10,
+             dre_descricao = $11,
+             cpf_condutor = $12,
+             condutor = $13,
+             cpf_preposto = NULLIF($14, ''),
+             preposto_condutor = NULLIF($15, ''),
+             preposto_inicio = NULLIF($16, '')::date,
+             preposto_dias = $17,
+             crm = $18,
+             veiculo_placas = NULLIF($19, ''),
+             cpf_monitor = NULLIF($20, ''),
+             monitor = NULLIF($21, ''),
+             situacao = $22,
+             tipo_troca_codigo = $23,
+             tipo_troca_descricao = NULLIF($24, ''),
+             conexao = NULLIF($25, ''),
+             data_encerramento = NULLIF($26, '')::date,
+             anotacao = NULLIF($27, ''),
+             uniao_termos = NULLIF($28, ''),
+             data_modificacao = NOW()
+         WHERE codigo = $29
+         RETURNING ${credenciamentoOsSelectClause}`,
+        [
+          validationResult.payload.codigo,
+          validationResult.payload.termoAdesao,
+          validationResult.payload.os,
+          validationResult.payload.revisao,
+          validationResult.payload.osOrigem,
+          validationResult.payload.vigenciaOs,
+          validationResult.payload.credenciadaCodigo,
+          validationResult.payload.credenciado,
+          validationResult.payload.cnpjCpf,
+          validationResult.payload.dreCodigo,
+          validationResult.payload.dreDescricao,
+          validationResult.payload.cpfCondutor,
+          validationResult.payload.condutor,
+          validationResult.payload.cpfPreposto,
+          validationResult.payload.prepostoCondutor,
+          validationResult.payload.prepostoInicio,
+          validationResult.payload.prepostoDias,
+          validationResult.payload.crm,
+          validationResult.payload.veiculoPlacas,
+          validationResult.payload.cpfMonitor,
+          validationResult.payload.monitor,
+          validationResult.payload.situacao,
+          validationResult.payload.tipoTrocaCodigo,
+          validationResult.payload.tipoTrocaDescricao,
+          validationResult.payload.conexao,
+          validationResult.payload.dataEncerramento,
+          validationResult.payload.anotacao,
+          validationResult.payload.uniaoTermos,
+          originalCodigo,
+        ],
+      )
+
+      sendJson(response, 200, { item: updateResult.rows[0] })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao alterar credenciamento OS.'
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'DELETE' && getDreCodigoFromUrl(pathname)) {
     try {
       const codigo = getDreCodigoFromUrl(pathname)
@@ -6875,6 +8445,34 @@ const server = createServer(async (request, response) => {
         ? error.message
         : 'Erro ao excluir a seguradora.'
 
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'DELETE' && getCredenciamentoOsCodigoFromUrl(pathname)) {
+    try {
+      const codigo = Number(getCredenciamentoOsCodigoFromUrl(pathname))
+
+      if (!Number.isInteger(codigo) || codigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo invalido.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        'DELETE FROM credenciamento_os WHERE codigo = $1 RETURNING codigo::text AS codigo',
+        [codigo],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Credenciamento OS nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, { deletedCodigo: deleteResult.rows[0].codigo })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao excluir credenciamento OS.'
       sendJson(response, 500, { message })
     }
 
