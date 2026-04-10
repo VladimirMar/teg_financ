@@ -518,32 +518,47 @@
         return normalizedDescricao ? 'TEG REGULAR' : '';
       };
 
-      const isPenhaTegVariantDre = (dreCodigo, dreDescricao) => {
-        const codigoKey = normalizeKey(dreCodigo);
-        const descricaoKey = normalizeKey(dreDescricao);
+      const getCanonicalDreDescription = (dreDescricao) => {
+        const normalizedDescricao = normalizeText(String(dreDescricao || ''), 255);
 
-        return codigoKey === 'pec'
-          || codigoKey === 'pee'
-          || descricaoKey === 'penhategcreche'
-          || descricaoKey === 'penhategespecial';
+        if (!normalizedDescricao) {
+          return '';
+        }
+
+        return normalizedDescricao
+          .replace(/\s+TEG\s+CRECHE$/i, '')
+          .replace(/\s+TEG\s+ESPECIAL$/i, '')
+          .trim();
       };
 
       const normalizeOrdemServicoDre = (dreCodigo, dreDescricao) => {
         const normalizedCodigo = normalizeText(String(dreCodigo || ''), 30);
         const normalizedDescricao = normalizeText(String(dreDescricao || ''), 255);
+        const modalidadeDescricao = deriveModalidadeFromDreDescricao(normalizedDescricao);
+        const canonicalDescricao = getCanonicalDreDescription(normalizedDescricao);
 
-        if (isPenhaTegVariantDre(normalizedCodigo, normalizedDescricao)) {
+        if (modalidadeDescricao && modalidadeDescricao !== 'TEG REGULAR' && canonicalDescricao) {
+          const canonicalDre = dreOptions.find((item) => normalizeText(String(item.descricao || ''), 255) === canonicalDescricao);
+
+          if (canonicalDre) {
+            return {
+              dreCodigo: normalizeText(String(canonicalDre.codigo_operacional || canonicalDre.codigo || normalizedCodigo), 30),
+              dreDescricao: normalizeText(String(canonicalDre.descricao || canonicalDescricao), 255),
+              modalidadeDescricao,
+            };
+          }
+
           return {
-            dreCodigo: 'PE',
-            dreDescricao: 'PENHA',
-            modalidadeDescricao: deriveModalidadeFromDreDescricao(normalizedDescricao),
+            dreCodigo: normalizedCodigo,
+            dreDescricao: canonicalDescricao,
+            modalidadeDescricao,
           };
         }
 
         return {
           dreCodigo: normalizedCodigo,
           dreDescricao: normalizedDescricao,
-          modalidadeDescricao: deriveModalidadeFromDreDescricao(normalizedDescricao),
+          modalidadeDescricao,
         };
       };
       const getDocumentDigits = (value) => value.replace(/\D/g, '');

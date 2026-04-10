@@ -615,32 +615,40 @@ const deriveModalidadeDescricaoFromDreDescricao = (dreDescricao) => {
   return 'TEG REGULAR'
 }
 
+const getCanonicalDreDescription = (dreDescricao) => {
+  const normalizedDescricao = normalizeRequestValue(dreDescricao).toUpperCase().slice(0, 255)
+
+  if (!normalizedDescricao) {
+    return ''
+  }
+
+  return normalizedDescricao
+    .replace(/\s+TEG\s+CRECHE$/i, '')
+    .replace(/\s+TEG\s+ESPECIAL$/i, '')
+    .trim()
+}
+
 const normalizeDreKey = (value) => normalizeRequestValue(value)
   .toUpperCase()
   .normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '')
   .replace(/[^A-Z0-9]/g, '')
 
-const isPenhaTegVariantDre = ({ codigoOperacional = '', descricao = '' }) => {
-  const codigoKey = normalizeDreKey(codigoOperacional)
-  const descricaoKey = normalizeDreKey(descricao)
-
-  return codigoKey === 'PEC'
-    || codigoKey === 'PEE'
-    || descricaoKey === 'PENHATEGCRECHE'
-    || descricaoKey === 'PENHATEGESPECIAL'
-}
+const isTegVariantDre = ({ descricao = '' }) => deriveModalidadeDescricaoFromDreDescricao(descricao) !== 'TEG REGULAR'
 
 const resolveCanonicalOrdemServicoDre = async (dreItem) => {
-  if (!dreItem || !isPenhaTegVariantDre({
-    codigoOperacional: dreItem.codigo_operacional || dreItem.codigo,
-    descricao: dreItem.descricao,
-  })) {
+  if (!dreItem || !isTegVariantDre({ descricao: dreItem.descricao })) {
     return dreItem
   }
 
-  const canonicalPenhaItem = await findDreByCodigo('PE')
-  return canonicalPenhaItem ?? dreItem
+  const canonicalDescricao = getCanonicalDreDescription(dreItem.descricao)
+
+  if (!canonicalDescricao) {
+    return dreItem
+  }
+
+  const canonicalDreItem = await findDreByDescription(canonicalDescricao)
+  return canonicalDreItem ?? dreItem
 }
 
 const ensureDefaultModalidadeEntries = async () => {
@@ -666,8 +674,6 @@ const backfillOrdemServicoModalidadesFromDre = async () => {
     modalidadeResult.rows.map((item) => [normalizeRequestValue(item.descricao).toUpperCase().slice(0, 255), item]),
   )
 
-  const penhaDreItem = await findDreByCodigo('PE')
-
   const ordemServicoResult = await pool.query(
     `SELECT
        codigo,
@@ -686,10 +692,11 @@ const backfillOrdemServicoModalidadesFromDre = async () => {
 
     for (const row of ordemServicoResult.rows) {
       const derivedDescricao = deriveModalidadeDescricaoFromDreDescricao(row.dre_descricao)
-      const shouldNormalizePenhaDre = penhaDreItem && isPenhaTegVariantDre({
-        codigoOperacional: row.dre_codigo,
-        descricao: row.dre_descricao,
-      })
+      const shouldNormalizeDre = isTegVariantDre({ descricao: row.dre_descricao })
+      const canonicalDescricao = getCanonicalDreDescription(row.dre_descricao)
+      const canonicalDreItem = shouldNormalizeDre && canonicalDescricao
+        ? await findDreByDescription(canonicalDescricao)
+        : null
 
       if (!derivedDescricao) {
         continue
@@ -703,11 +710,11 @@ const backfillOrdemServicoModalidadesFromDre = async () => {
 
       const currentCodigo = normalizeRequestValue(row.modalidade_codigo)
       const currentDescricao = normalizeRequestValue(row.modalidade_descricao).toUpperCase().slice(0, 255)
-      const nextDreCodigo = shouldNormalizePenhaDre
-        ? normalizeRequestValue(penhaDreItem.codigo_operacional || penhaDreItem.codigo)
+      const nextDreCodigo = canonicalDreItem
+        ? normalizeRequestValue(canonicalDreItem.codigo_operacional || canonicalDreItem.codigo)
         : normalizeRequestValue(row.dre_codigo)
-      const nextDreDescricao = shouldNormalizePenhaDre
-        ? normalizeRequestValue(penhaDreItem.descricao)
+      const nextDreDescricao = canonicalDreItem
+        ? normalizeRequestValue(canonicalDreItem.descricao)
         : normalizeRequestValue(row.dre_descricao)
 
       if (
@@ -5203,8 +5210,8 @@ const server = createServer(async (request, response) => {
       const filters = []
       const values = []
       const orderByClause = sortBy === 'descricao'
-        ? `BTRIM(CAST(descricao AS text)) ${sortDirection}, CAST(codigo AS text) ASC`
-        : `CAST(codigo AS text) ${sortDirection}`
+        ? `BTRIM(CAST(descricao AS text)) ${sortDirection}, dre.codigo ASC`
+        : `dre.codigo ${sortDirection}`
 
       if (search) {
         values.push(`%${search}%`)
@@ -5800,9 +5807,9 @@ const server = createServer(async (request, response) => {
       const filters = []
       const orderByClause = sortBy === 'nome'
         ? `UPPER(BTRIM(nome)) ${sortDirection}, codigo ASC`
-        : sortBy === 'email'
-          ? `LOWER(TRIM(email)) ${sortDirection}, codigo ASC`
-          : `codigo ${sortDirection}`
+          : sortBy === 'email'
+            ? `LOWER(TRIM(email)) ${sortDirection}, codigo ASC`
+            : `codigo ${sortDirection}`
 
       if (search) {
         values.push(`%${search}%`)
