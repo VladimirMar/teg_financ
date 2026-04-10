@@ -134,6 +134,11 @@ const getDreCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+const getModalidadeCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/modalidade\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 const getMarcaModeloCodigoFromUrl = (url) => {
   const match = url.match(/^\/api\/marca-modelo\/([^/]+)$/)
   return match ? decodeURIComponent(match[1]) : null
@@ -550,6 +555,200 @@ const dreSelectClause = `
   CAST(codigo AS text) AS codigo,
   COALESCE(BTRIM(codigo_operacional), '') AS codigo_operacional,
   BTRIM(CAST(descricao AS text)) AS descricao`
+
+const modalidadeSelectClause = `
+  CAST(codigo AS text) AS codigo,
+  BTRIM(CAST(descricao AS text)) AS descricao`
+
+const findModalidadeByCodigoOrDescription = async ({ codigo, descricao }) => {
+  const normalizedCodigo = normalizeRequestValue(codigo)
+  const normalizedDescricao = normalizeRequestValue(descricao).toUpperCase().slice(0, 255)
+
+  if (!normalizedCodigo && !normalizedDescricao) {
+    return null
+  }
+
+  const values = []
+  const filters = []
+
+  if (normalizedCodigo) {
+    values.push(normalizedCodigo)
+    filters.push(`CAST(codigo AS text) = $${values.length}`)
+  }
+
+  if (normalizedDescricao) {
+    values.push(normalizedDescricao)
+    filters.push(`UPPER(BTRIM(CAST(descricao AS text))) = $${values.length}`)
+  }
+
+  const result = await pool.query(
+    `SELECT ${modalidadeSelectClause}
+     FROM modalidade
+     WHERE ${filters.join(' OR ')}
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    values,
+  )
+
+  return result.rows[0] ?? null
+}
+
+const deriveModalidadeDescricaoFromDreDescricao = (dreDescricao) => {
+  const normalizedDescricao = normalizeRequestValue(dreDescricao).toUpperCase().slice(0, 255)
+  const normalizedKey = normalizedDescricao
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Z0-9]/g, '')
+
+  if (!normalizedDescricao) {
+    return ''
+  }
+
+  if (normalizedKey.includes('CRECHE')) {
+    return 'TEG CRECHE'
+  }
+
+  if (normalizedKey.includes('ESPECIAL')) {
+    return 'TEG ESPECIAL'
+  }
+
+  return 'TEG REGULAR'
+}
+
+const normalizeDreKey = (value) => normalizeRequestValue(value)
+  .toUpperCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^A-Z0-9]/g, '')
+
+const isPenhaTegVariantDre = ({ codigoOperacional = '', descricao = '' }) => {
+  const codigoKey = normalizeDreKey(codigoOperacional)
+  const descricaoKey = normalizeDreKey(descricao)
+
+  return codigoKey === 'PEC'
+    || codigoKey === 'PEE'
+    || descricaoKey === 'PENHATEGCRECHE'
+    || descricaoKey === 'PENHATEGESPECIAL'
+}
+
+const resolveCanonicalOrdemServicoDre = async (dreItem) => {
+  if (!dreItem || !isPenhaTegVariantDre({
+    codigoOperacional: dreItem.codigo_operacional || dreItem.codigo,
+    descricao: dreItem.descricao,
+  })) {
+    return dreItem
+  }
+
+  const canonicalPenhaItem = await findDreByCodigo('PE')
+  return canonicalPenhaItem ?? dreItem
+}
+
+const ensureDefaultModalidadeEntries = async () => {
+  const defaultDescriptions = ['TEG REGULAR', 'TEG CRECHE', 'TEG ESPECIAL']
+
+  for (const descricao of defaultDescriptions) {
+    await pool.query(
+      `INSERT INTO modalidade (descricao)
+       SELECT CAST($1 AS varchar(255))
+       WHERE NOT EXISTS (
+         SELECT 1
+         FROM modalidade
+         WHERE UPPER(BTRIM(CAST(descricao AS text))) = CAST($1 AS text)
+       )`,
+      [descricao],
+    )
+  }
+}
+
+const backfillOrdemServicoModalidadesFromDre = async () => {
+  const modalidadeResult = await pool.query(`SELECT ${modalidadeSelectClause} FROM modalidade`)
+  const modalidadeByDescricao = new Map(
+    modalidadeResult.rows.map((item) => [normalizeRequestValue(item.descricao).toUpperCase().slice(0, 255), item]),
+  )
+
+  const penhaDreItem = await findDreByCodigo('PE')
+
+  const ordemServicoResult = await pool.query(
+    `SELECT
+       codigo,
+       COALESCE(BTRIM(dre_codigo), '') AS dre_codigo,
+       COALESCE(BTRIM(dre_descricao), '') AS dre_descricao,
+       COALESCE(modalidade_codigo::text, '') AS modalidade_codigo,
+       COALESCE(BTRIM(modalidade_descricao), '') AS modalidade_descricao
+     FROM ${ordemServicoTableName}`,
+  )
+
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+    let updatedCount = 0
+
+    for (const row of ordemServicoResult.rows) {
+      const derivedDescricao = deriveModalidadeDescricaoFromDreDescricao(row.dre_descricao)
+      const shouldNormalizePenhaDre = penhaDreItem && isPenhaTegVariantDre({
+        codigoOperacional: row.dre_codigo,
+        descricao: row.dre_descricao,
+      })
+
+      if (!derivedDescricao) {
+        continue
+      }
+
+      const modalidadeItem = modalidadeByDescricao.get(derivedDescricao)
+
+      if (!modalidadeItem) {
+        continue
+      }
+
+      const currentCodigo = normalizeRequestValue(row.modalidade_codigo)
+      const currentDescricao = normalizeRequestValue(row.modalidade_descricao).toUpperCase().slice(0, 255)
+      const nextDreCodigo = shouldNormalizePenhaDre
+        ? normalizeRequestValue(penhaDreItem.codigo_operacional || penhaDreItem.codigo)
+        : normalizeRequestValue(row.dre_codigo)
+      const nextDreDescricao = shouldNormalizePenhaDre
+        ? normalizeRequestValue(penhaDreItem.descricao)
+        : normalizeRequestValue(row.dre_descricao)
+
+      if (
+        currentCodigo === String(modalidadeItem.codigo)
+        && currentDescricao === derivedDescricao
+        && nextDreCodigo === normalizeRequestValue(row.dre_codigo)
+        && nextDreDescricao === normalizeRequestValue(row.dre_descricao)
+      ) {
+        continue
+      }
+
+      await client.query(
+        `UPDATE ${ordemServicoTableName}
+         SET dre_codigo = $1,
+             dre_descricao = $2,
+             modalidade_codigo = $3,
+             modalidade_descricao = $4,
+             data_modificacao = NOW()
+         WHERE codigo = $5`,
+        [
+          normalizeOperationalCode(nextDreCodigo, 30),
+          normalizeOperationalCode(nextDreDescricao, 255),
+          Number(modalidadeItem.codigo),
+          normalizeOperationalCode(modalidadeItem.descricao, 255),
+          Number(row.codigo),
+        ],
+      )
+
+      updatedCount += 1
+    }
+
+    await client.query('COMMIT')
+
+    return updatedCount
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
 
 const findDreByCodigo = async (codigo) => {
   const normalizedCodigo = normalizeDreOperationalCode(codigo)
@@ -1723,25 +1922,27 @@ const importOrdemServicoXmlFile = async (fileName) => {
                cnpj_cpf = $8,
                dre_codigo = $9,
                dre_descricao = $10,
-               cpf_condutor = $11,
-               condutor = $12,
-               cpf_preposto = NULLIF($13, ''),
-               preposto_condutor = NULLIF($14, ''),
-               preposto_inicio = NULLIF($15, '')::date,
-               preposto_dias = $16,
-               crm = $17,
-               veiculo_placas = NULLIF($18, ''),
-               cpf_monitor = NULLIF($19, ''),
-               monitor = NULLIF($20, ''),
-               situacao = $21,
-               tipo_troca_codigo = $22,
-               tipo_troca_descricao = NULLIF($23, ''),
-               conexao = NULLIF($24, ''),
-               data_encerramento = NULLIF($25, '')::date,
-               anotacao = NULLIF($26, ''),
-               uniao_termos = NULLIF($27, ''),
+               modalidade_codigo = $11,
+               modalidade_descricao = NULLIF($12, ''),
+               cpf_condutor = $13,
+               condutor = $14,
+               cpf_preposto = NULLIF($15, ''),
+               preposto_condutor = NULLIF($16, ''),
+               preposto_inicio = NULLIF($17, '')::date,
+               preposto_dias = $18,
+               crm = $19,
+               veiculo_placas = NULLIF($20, ''),
+               cpf_monitor = NULLIF($21, ''),
+               monitor = NULLIF($22, ''),
+               situacao = $23,
+               tipo_troca_codigo = $24,
+               tipo_troca_descricao = NULLIF($25, ''),
+               conexao = NULLIF($26, ''),
+               data_encerramento = NULLIF($27, '')::date,
+               anotacao = NULLIF($28, ''),
+               uniao_termos = NULLIF($29, ''),
                data_modificacao = NOW()
-           WHERE codigo = $28`,
+               WHERE codigo = $30`,
           [
             record.termoAdesao,
             record.os,
@@ -1753,6 +1954,8 @@ const importOrdemServicoXmlFile = async (fileName) => {
             record.cnpjCpf,
             record.dreCodigo,
             record.dreDescricao,
+                record.modalidadeCodigo,
+                record.modalidadeDescricao,
             record.cpfCondutor,
             record.condutor,
             record.cpfPreposto,
@@ -1790,6 +1993,8 @@ const importOrdemServicoXmlFile = async (fileName) => {
            cnpj_cpf,
            dre_codigo,
            dre_descricao,
+           modalidade_codigo,
+           modalidade_descricao,
            cpf_condutor,
            condutor,
            cpf_preposto,
@@ -1810,7 +2015,7 @@ const importOrdemServicoXmlFile = async (fileName) => {
            data_inclusao,
            data_modificacao
          )
-         VALUES ($1, NULLIF($2, ''), $3, NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, '')::date, $7, $8, $9, $10, $11, $12, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, '')::date, $17, $18, NULLIF($19, ''), NULLIF($20, ''), NULLIF($21, ''), $22, $23, NULLIF($24, ''), NULLIF($25, ''), NULLIF($26, '')::date, NULLIF($27, ''), NULLIF($28, ''), NOW(), NOW())`,
+         VALUES ($1, NULLIF($2, ''), $3, NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, '')::date, $7, $8, $9, $10, $11, $12, NULLIF($13, ''), $14, $15, NULLIF($16, ''), NULLIF($17, ''), NULLIF($18, '')::date, $19, $20, NULLIF($21, ''), NULLIF($22, ''), NULLIF($23, ''), $24, $25, NULLIF($26, ''), NULLIF($27, ''), NULLIF($28, '')::date, NULLIF($29, ''), NULLIF($30, ''), NOW(), NOW())`,
         [
           record.codigo,
           record.termoAdesao,
@@ -1823,6 +2028,8 @@ const importOrdemServicoXmlFile = async (fileName) => {
           record.cnpjCpf,
           record.dreCodigo,
           record.dreDescricao,
+          record.modalidadeCodigo,
+          record.modalidadeDescricao,
           record.cpfCondutor,
           record.condutor,
           record.cpfPreposto,
@@ -2007,6 +2214,8 @@ const ordemServicoSelectClause = `
   COALESCE(BTRIM(cnpj_cpf), '') AS cnpj_cpf,
   COALESCE(BTRIM(dre_codigo), '') AS dre_codigo,
   COALESCE(BTRIM(dre_descricao), '') AS dre_descricao,
+  COALESCE(modalidade_codigo::text, '') AS modalidade_codigo,
+  COALESCE(BTRIM(modalidade_descricao), '') AS modalidade_descricao,
   COALESCE(BTRIM(cpf_condutor), '') AS cpf_condutor,
   COALESCE(BTRIM(condutor), '') AS condutor,
   COALESCE(BTRIM(cpf_preposto), '') AS cpf_preposto,
@@ -3828,6 +4037,7 @@ const validateOrdemServicoPayload = async ({
   credenciado,
   cnpjCpf,
   dreCodigo,
+  modalidadeDescricao,
   cpfCondutor,
   cpfPreposto,
   prepostoInicio,
@@ -3852,6 +4062,7 @@ const validateOrdemServicoPayload = async ({
   const normalizedCredenciado = normalizeCredenciadaText(credenciado, 255)
   const normalizedCnpjCpf = normalizeCnpjCpf(cnpjCpf)
   const normalizedDreCodigo = normalizeRequestValue(dreCodigo).toUpperCase().slice(0, 30)
+  const normalizedModalidadeDescricao = normalizeRequestValue(modalidadeDescricao).toUpperCase().slice(0, 255)
   const normalizedCpfCondutor = normalizeCpf(cpfCondutor)
   const normalizedCpfPreposto = normalizeCpf(cpfPreposto)
   const normalizedPrepostoInicio = normalizeRequestValue(prepostoInicio)
@@ -3964,6 +4175,18 @@ const validateOrdemServicoPayload = async ({
     return { status: 400, payload: { message: 'DRE nao encontrada.' } }
   }
 
+  const canonicalDreItem = await resolveCanonicalOrdemServicoDre(dreItem)
+
+  const derivedModalidadeDescricao = deriveModalidadeDescricaoFromDreDescricao(dreItem.descricao)
+
+  const modalidadeItem = derivedModalidadeDescricao
+    ? await findModalidadeByCodigoOrDescription({ descricao: derivedModalidadeDescricao })
+    : null
+
+  if (derivedModalidadeDescricao && !modalidadeItem) {
+    return { status: 400, payload: { message: `Modalidade derivada da DRE nao encontrada: ${derivedModalidadeDescricao}.` } }
+  }
+
   const condutorItem = hasValidCpfCondutor ? await findCondutorByCpf(normalizedCpfCondutor) : null
 
   if (!condutorItem && hasValidCpfCondutor && !importMode) {
@@ -4008,8 +4231,10 @@ const validateOrdemServicoPayload = async ({
       credenciadaCodigo: Number(credenciadaItem.codigo),
       credenciado: normalizeCredenciadaText(credenciadaItem.credenciado, 255),
       cnpjCpf: normalizeCnpjCpf(credenciadaItem.cnpj_cpf),
-      dreCodigo: normalizeDreOperationalCode(dreItem.codigo_operacional || dreItem.codigo),
-      dreDescricao: normalizeOperationalCode(dreItem.descricao, 255),
+      dreCodigo: normalizeDreOperationalCode(canonicalDreItem.codigo_operacional || canonicalDreItem.codigo),
+      dreDescricao: normalizeOperationalCode(canonicalDreItem.descricao, 255),
+      modalidadeCodigo: modalidadeItem ? Number(modalidadeItem.codigo) : null,
+      modalidadeDescricao: modalidadeItem ? normalizeOperationalCode(modalidadeItem.descricao, 255) : '',
       cpfCondutor: condutorItem ? normalizeCpf(condutorItem.cpf_condutor) : hasValidCpfCondutor ? normalizedCpfCondutor : '',
       condutor: condutorItem ? normalizeCondutorName(condutorItem.condutor) : '',
       cpfPreposto: prepostoItem ? normalizeCpf(prepostoItem.cpf_condutor) : '',
@@ -4390,6 +4615,23 @@ const ensureDatabaseSchema = async () => {
     ON dre (UPPER(BTRIM(codigo_operacional)))
     WHERE codigo_operacional IS NOT NULL AND BTRIM(codigo_operacional) <> ''
   `)
+  await pool.query('CREATE SEQUENCE IF NOT EXISTS modalidade_codigo_seq START WITH 1 INCREMENT BY 1')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS modalidade (
+      codigo integer PRIMARY KEY DEFAULT nextval('modalidade_codigo_seq'),
+      descricao varchar(255) NOT NULL
+    )
+  `)
+  await pool.query('ALTER TABLE modalidade ADD COLUMN IF NOT EXISTS descricao varchar(255)')
+  await pool.query('ALTER TABLE modalidade ALTER COLUMN codigo SET DEFAULT nextval(\'modalidade_codigo_seq\')')
+  await pool.query('ALTER SEQUENCE modalidade_codigo_seq OWNED BY modalidade.codigo')
+  await pool.query('ALTER TABLE modalidade ALTER COLUMN descricao TYPE varchar(255)')
+  await pool.query('UPDATE modalidade SET descricao = UPPER(BTRIM(CAST(descricao AS text))) WHERE descricao IS NOT NULL')
+  await pool.query('ALTER TABLE modalidade ALTER COLUMN descricao SET NOT NULL')
+  await ensureDefaultModalidadeEntries()
+  await pool.query('SELECT setval(\'modalidade_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM modalidade), 0), 1), true)')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS modalidade_codigo_unique_idx ON modalidade (codigo)')
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS modalidade_descricao_unique_idx ON modalidade (UPPER(BTRIM(descricao)))')
   await pool.query('CREATE SEQUENCE IF NOT EXISTS condutor_codigo_seq START WITH 1 INCREMENT BY 1')
   await pool.query('ALTER TABLE condutor ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone')
   await pool.query('ALTER TABLE condutor ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone')
@@ -4824,6 +5066,8 @@ const ensureDatabaseSchema = async () => {
       cnpj_cpf varchar(18) NOT NULL,
       dre_codigo varchar(30) NOT NULL,
       dre_descricao varchar(255) NOT NULL,
+      modalidade_codigo integer,
+      modalidade_descricao varchar(255),
       cpf_condutor varchar(14) NOT NULL,
       condutor varchar(255) NOT NULL,
       cpf_preposto varchar(14),
@@ -4857,6 +5101,8 @@ const ensureDatabaseSchema = async () => {
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS cnpj_cpf varchar(18)`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS dre_codigo varchar(30)`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS dre_descricao varchar(255)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS modalidade_codigo integer`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS modalidade_descricao varchar(255)`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS cpf_condutor varchar(14)`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS condutor varchar(255)`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS cpf_preposto varchar(14)`)
@@ -4899,6 +5145,7 @@ const ensureDatabaseSchema = async () => {
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS ordem_servico_os_unique_idx ON ${ordemServicoTableName} (UPPER(BTRIM(os)))`)
   await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_credenciado_idx ON ${ordemServicoTableName} (UPPER(BTRIM(credenciado)))`)
   await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_dre_idx ON ${ordemServicoTableName} (dre_codigo)`)
+  await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_modalidade_idx ON ${ordemServicoTableName} (modalidade_codigo)`)
   await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_condutor_idx ON ${ordemServicoTableName} (cpf_condutor)`)
   await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_monitor_idx ON ${ordemServicoTableName} (cpf_monitor)`)
   await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_veiculo_idx ON ${ordemServicoTableName} (crm)`)
@@ -4920,6 +5167,10 @@ const ensureDatabaseSchema = async () => {
   `)
   await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_import_recusa_data_idx ON ${ordemServicoImportRecusaTableName} (data_importacao DESC)`)
   await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_import_recusa_arquivo_idx ON ${ordemServicoImportRecusaTableName} (arquivo_xml)`)
+  const updatedOrdemServicoModalidades = await backfillOrdemServicoModalidadesFromDre()
+  if (updatedOrdemServicoModalidades > 0) {
+    console.log(`Modalidades da OrdemServico atualizadas em lote: ${updatedOrdemServicoModalidades}`)
+  }
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_nome_unique_idx ON login (UPPER(BTRIM(nome)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_email_unique_idx ON login (LOWER(TRIM(email)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_dre_unique_idx ON login_dre (login_codigo, dre_codigo)')
@@ -4996,6 +5247,69 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar a tabela dre.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/modalidade') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
+      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
+        ? 'DESC'
+        : 'ASC'
+      const offset = (page - 1) * pageSize
+      const filters = []
+      const values = []
+      const orderByClause = sortBy === 'descricao'
+        ? `BTRIM(CAST(descricao AS text)) ${sortDirection}, CAST(codigo AS text) ASC`
+        : `CAST(codigo AS text) ${sortDirection}`
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR BTRIM(CAST(descricao AS text)) ILIKE $${values.length}
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM modalidade ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT ${modalidadeSelectClause}
+         FROM modalidade
+         ${whereClause}
+         ORDER BY ${orderByClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: sortBy === 'descricao' ? 'descricao' : 'codigo',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar a tabela modalidade.'
 
       sendJson(response, 500, { message })
     }
@@ -6408,6 +6722,63 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'POST' && pathname === '/api/modalidade') {
+    try {
+      const body = await readJsonBody(request)
+      const codigo = normalizeRequestValue(body.codigo)
+      const descricao = normalizeRequestValue(body.descricao)
+
+      if (!codigo) {
+        sendJson(response, 400, { message: 'Codigo e obrigatorio.' })
+        return
+      }
+
+      if (!descricao) {
+        sendJson(response, 400, { message: 'Descricao e obrigatoria.' })
+        return
+      }
+
+      const duplicateCodeResult = await pool.query(
+        'SELECT 1 FROM modalidade WHERE CAST(codigo AS text) = $1 LIMIT 1',
+        [codigo],
+      )
+
+      if (duplicateCodeResult.rowCount > 0) {
+        sendJson(response, 409, { message: 'Codigo ja cadastrado.' })
+        return
+      }
+
+      const duplicateDescriptionResult = await pool.query(
+        'SELECT 1 FROM modalidade WHERE UPPER(BTRIM(CAST(descricao AS text))) = UPPER($1) LIMIT 1',
+        [descricao],
+      )
+
+      if (duplicateDescriptionResult.rowCount > 0) {
+        sendJson(response, 409, { message: 'Descricao ja cadastrada.' })
+        return
+      }
+
+      const insertResult = await pool.query(
+        `INSERT INTO modalidade (codigo, descricao)
+         VALUES ($1, $2)
+         RETURNING ${modalidadeSelectClause}`,
+        [codigo, descricao],
+      )
+
+      sendJson(response, 201, {
+        item: insertResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao gravar o registro modalidade.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'POST' && pathname === '/api/troca') {
     try {
       const body = await readJsonBody(request)
@@ -6953,6 +7324,7 @@ const server = createServer(async (request, response) => {
         credenciado: body.credenciado,
         cnpjCpf: body.cnpjCpf,
         dreCodigo: body.dreCodigo,
+        modalidadeDescricao: body.modalidadeDescricao,
         cpfCondutor: body.cpfCondutor,
         cpfPreposto: body.cpfPreposto,
         prepostoInicio: body.prepostoInicio,
@@ -6990,6 +7362,8 @@ const server = createServer(async (request, response) => {
              cnpj_cpf,
              dre_codigo,
              dre_descricao,
+             modalidade_codigo,
+             modalidade_descricao,
              cpf_condutor,
              condutor,
              cpf_preposto,
@@ -7010,7 +7384,7 @@ const server = createServer(async (request, response) => {
              data_inclusao,
              data_modificacao
            )
-           VALUES ($1, NULLIF($2, ''), $3, NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, '')::date, $7, $8, $9, $10, $11, $12, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, '')::date, $17, $18, NULLIF($19, ''), NULLIF($20, ''), NULLIF($21, ''), $22, $23, NULLIF($24, ''), NULLIF($25, ''), NULLIF($26, '')::date, NULLIF($27, ''), NULLIF($28, ''), NOW(), NOW())`,
+           VALUES ($1, NULLIF($2, ''), $3, NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, '')::date, $7, $8, $9, $10, $11, $12, NULLIF($13, ''), $14, $15, NULLIF($16, ''), NULLIF($17, ''), NULLIF($18, '')::date, $19, $20, NULLIF($21, ''), NULLIF($22, ''), NULLIF($23, ''), $24, $25, NULLIF($26, ''), NULLIF($27, ''), NULLIF($28, '')::date, NULLIF($29, ''), NULLIF($30, ''), NOW(), NOW())`,
           [
             validationResult.payload.codigo,
             validationResult.payload.termoAdesao,
@@ -7023,6 +7397,8 @@ const server = createServer(async (request, response) => {
             validationResult.payload.cnpjCpf,
             validationResult.payload.dreCodigo,
             validationResult.payload.dreDescricao,
+            validationResult.payload.modalidadeCodigo,
+            validationResult.payload.modalidadeDescricao,
             validationResult.payload.cpfCondutor,
             validationResult.payload.condutor,
             validationResult.payload.cpfPreposto,
@@ -7317,6 +7693,81 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao alterar o registro dre.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'PUT' && getModalidadeCodigoFromUrl(pathname)) {
+    try {
+      const originalCodigo = getModalidadeCodigoFromUrl(pathname)
+      const body = await readJsonBody(request)
+      const codigo = normalizeRequestValue(body.codigo)
+      const descricao = normalizeRequestValue(body.descricao)
+
+      if (!originalCodigo) {
+        sendJson(response, 400, { message: 'Codigo original invalido.' })
+        return
+      }
+
+      if (!codigo) {
+        sendJson(response, 400, { message: 'Codigo e obrigatorio.' })
+        return
+      }
+
+      if (!descricao) {
+        sendJson(response, 400, { message: 'Descricao e obrigatoria.' })
+        return
+      }
+
+      const existingResult = await pool.query(
+        'SELECT 1 FROM modalidade WHERE CAST(codigo AS text) = $1 LIMIT 1',
+        [originalCodigo],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Registro da modalidade nao encontrado.' })
+        return
+      }
+
+      const duplicateCodeResult = await pool.query(
+        'SELECT 1 FROM modalidade WHERE CAST(codigo AS text) = $1 AND CAST(codigo AS text) <> $2 LIMIT 1',
+        [codigo, originalCodigo],
+      )
+
+      if (duplicateCodeResult.rowCount > 0) {
+        sendJson(response, 409, { message: 'Codigo ja cadastrado.' })
+        return
+      }
+
+      const duplicateDescriptionResult = await pool.query(
+        'SELECT 1 FROM modalidade WHERE UPPER(BTRIM(CAST(descricao AS text))) = UPPER($1) AND CAST(codigo AS text) <> $2 LIMIT 1',
+        [descricao, originalCodigo],
+      )
+
+      if (duplicateDescriptionResult.rowCount > 0) {
+        sendJson(response, 409, { message: 'Descricao ja cadastrada.' })
+        return
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE modalidade
+         SET codigo = $1,
+             descricao = $2
+         WHERE CAST(codigo AS text) = $3
+         RETURNING ${modalidadeSelectClause}`,
+        [codigo, descricao, originalCodigo],
+      )
+
+      sendJson(response, 200, {
+        item: updateResult.rows[0],
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao alterar modalidade.'
 
       sendJson(response, 500, { message })
     }
@@ -8106,6 +8557,7 @@ const server = createServer(async (request, response) => {
         credenciado: body.credenciado,
         cnpjCpf: body.cnpjCpf,
         dreCodigo: body.dreCodigo,
+        modalidadeDescricao: body.modalidadeDescricao,
         cpfCondutor: body.cpfCondutor,
         cpfPreposto: body.cpfPreposto,
         prepostoInicio: body.prepostoInicio,
@@ -8144,25 +8596,27 @@ const server = createServer(async (request, response) => {
                cnpj_cpf = $9,
                dre_codigo = $10,
                dre_descricao = $11,
-               cpf_condutor = $12,
-               condutor = $13,
-               cpf_preposto = NULLIF($14, ''),
-               preposto_condutor = NULLIF($15, ''),
-               preposto_inicio = NULLIF($16, '')::date,
-               preposto_dias = $17,
-               crm = $18,
-               veiculo_placas = NULLIF($19, ''),
-               cpf_monitor = NULLIF($20, ''),
-               monitor = NULLIF($21, ''),
-               situacao = $22,
-               tipo_troca_codigo = $23,
-               tipo_troca_descricao = NULLIF($24, ''),
-               conexao = NULLIF($25, ''),
-               data_encerramento = NULLIF($26, '')::date,
-               anotacao = NULLIF($27, ''),
-               uniao_termos = NULLIF($28, ''),
+               modalidade_codigo = $12,
+               modalidade_descricao = NULLIF($13, ''),
+               cpf_condutor = $14,
+               condutor = $15,
+               cpf_preposto = NULLIF($16, ''),
+               preposto_condutor = NULLIF($17, ''),
+               preposto_inicio = NULLIF($18, '')::date,
+               preposto_dias = $19,
+               crm = $20,
+               veiculo_placas = NULLIF($21, ''),
+               cpf_monitor = NULLIF($22, ''),
+               monitor = NULLIF($23, ''),
+               situacao = $24,
+               tipo_troca_codigo = $25,
+               tipo_troca_descricao = NULLIF($26, ''),
+               conexao = NULLIF($27, ''),
+               data_encerramento = NULLIF($28, '')::date,
+               anotacao = NULLIF($29, ''),
+               uniao_termos = NULLIF($30, ''),
                data_modificacao = NOW()
-           WHERE codigo = $29`,
+           WHERE codigo = $31`,
           [
             validationResult.payload.codigo,
             validationResult.payload.termoAdesao,
@@ -8175,6 +8629,8 @@ const server = createServer(async (request, response) => {
             validationResult.payload.cnpjCpf,
             validationResult.payload.dreCodigo,
             validationResult.payload.dreDescricao,
+            validationResult.payload.modalidadeCodigo,
+            validationResult.payload.modalidadeDescricao,
             validationResult.payload.cpfCondutor,
             validationResult.payload.condutor,
             validationResult.payload.cpfPreposto,
@@ -8248,6 +8704,39 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao excluir o registro dre.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'DELETE' && getModalidadeCodigoFromUrl(pathname)) {
+    try {
+      const codigo = getModalidadeCodigoFromUrl(pathname)
+
+      if (!codigo) {
+        sendJson(response, 400, { message: 'Codigo invalido para exclusao.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        'DELETE FROM modalidade WHERE CAST(codigo AS text) = $1 RETURNING CAST(codigo AS text) AS codigo',
+        [codigo],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Registro da modalidade nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, {
+        deletedCodigo: deleteResult.rows[0].codigo,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao excluir o registro modalidade.'
 
       sendJson(response, 500, { message })
     }

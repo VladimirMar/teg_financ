@@ -306,10 +306,35 @@ body:has(#credenciada-search) #credenciada-search {
 }
 
 .dsc-form-row-ordem-servico-vinculos-top,
+.dsc-form-row-ordem-servico-vinculos-dre,
 .dsc-form-row-ordem-servico-vinculos-middle,
 .dsc-form-row-ordem-servico-vinculos-bottom,
 .dsc-form-row-ordem-servico-vinculos-final {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dsc-form-row-ordem-servico-vinculos-dre {
+  grid-template-columns: minmax(180px, 0.65fr) minmax(320px, 1.45fr) minmax(180px, 0.65fr);
+}
+
+.dsc-form-row-ordem-servico-vinculos-dre .dsc-form-control {
+  min-height: 40px;
+}
+
+#ordem-servico-modalidade-descricao {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  box-sizing: border-box;
+  height: 40px;
+  min-height: 40px;
+  padding-top: 10px;
+  padding-right: 14px;
+  padding-bottom: 10px;
+  padding-left: 14px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .dsc-form-row-ordem-servico-situacao {
@@ -755,6 +780,7 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
   .dsc-form-row-ordem-servico-identificacao,
   .dsc-form-row-ordem-servico-origem,
   .dsc-form-row-ordem-servico-vinculos-top,
+  .dsc-form-row-ordem-servico-vinculos-dre,
   .dsc-form-row-ordem-servico-vinculos-middle,
   .dsc-form-row-ordem-servico-vinculos-bottom,
   .dsc-form-row-ordem-servico-vinculos-final,

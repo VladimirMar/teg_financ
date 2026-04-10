@@ -4,6 +4,8 @@ import './App.css'
 import { authenticate } from './services/auth'
 import { createDreItem, deleteDreItem, listDreItemsPaginated, updateDreItem } from './services/dre'
 import type { DreItem } from './services/dre'
+import { createModalidadeItem, deleteModalidadeItem, listModalidadeItemsPaginated, updateModalidadeItem } from './services/modalidade'
+import type { ModalidadeItem } from './services/modalidade'
 import { createTitularItem, deleteTitularItem, listTitularItemsPaginated, updateTitularItem } from './services/titular'
 import type { TitularItem } from './services/titular'
 import { createMarcaModeloItem, deleteMarcaModeloItem, listMarcaModeloItemsPaginated, updateMarcaModeloItem } from './services/marcaModelo'
@@ -12,7 +14,7 @@ import { createSeguradoraItem, deleteSeguradoraItem, listSeguradoraItemsPaginate
 import type { SeguradoraItem } from './services/seguradora'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo' | 'ordemServico'
+type ActiveView = 'inicio' | 'dre' | 'modalidade' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo' | 'ordemServico'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
 type TitularSortField = 'codigo' | 'cnpj_cpf' | 'titular'
@@ -167,6 +169,25 @@ function App() {
   const [dreSortBy, setDreSortBy] = useState<DreSortField>('codigo')
   const [dreSortDirection, setDreSortDirection] = useState<DreSortDirection>('asc')
   const deferredDreSearch = useDeferredValue(dreSearch)
+  const [modalidadeItems, setModalidadeItems] = useState<ModalidadeItem[]>([])
+  const [modalidadeCodigo, setModalidadeCodigo] = useState('')
+  const [modalidadeDescricao, setModalidadeDescricao] = useState('')
+  const [modalidadeCodigoError, setModalidadeCodigoError] = useState('')
+  const [modalidadeDescricaoError, setModalidadeDescricaoError] = useState('')
+  const [modalidadeStatusMessage, setModalidadeStatusMessage] = useState('')
+  const [modalidadeStatusTone, setModalidadeStatusTone] = useState<StatusTone>('idle')
+  const [isLoadingModalidade, setIsLoadingModalidade] = useState(false)
+  const [isSavingModalidade, setIsSavingModalidade] = useState(false)
+  const [isDeletingModalidade, setIsDeletingModalidade] = useState(false)
+  const [isModalidadeFormVisible, setIsModalidadeFormVisible] = useState(false)
+  const [editingModalidadeCodigo, setEditingModalidadeCodigo] = useState<string | null>(null)
+  const [modalidadeSearch, setModalidadeSearch] = useState('')
+  const [modalidadePage, setModalidadePage] = useState(1)
+  const [modalidadeTotalItems, setModalidadeTotalItems] = useState(0)
+  const [modalidadeTotalPages, setModalidadeTotalPages] = useState(1)
+  const [modalidadeSortBy, setModalidadeSortBy] = useState<DreSortField>('codigo')
+  const [modalidadeSortDirection, setModalidadeSortDirection] = useState<DreSortDirection>('asc')
+  const deferredModalidadeSearch = useDeferredValue(modalidadeSearch)
   const [titularItems, setTitularItems] = useState<TitularItem[]>([])
   const [titularCodigo, setTitularCodigo] = useState('')
   const [titularCnpjCpf, setTitularCnpjCpf] = useState('')
@@ -265,6 +286,39 @@ function App() {
       setIsLoadingDre(false)
     }
   }, [deferredDreSearch, dreSortBy, dreSortDirection])
+
+  const loadModalidadeItems = useCallback(async (pageToLoad: number) => {
+    setIsLoadingModalidade(true)
+    setModalidadeStatusMessage('Carregando registros de modalidade...')
+    setModalidadeStatusTone('idle')
+
+    try {
+      const result = await listModalidadeItemsPaginated({
+        search: deferredModalidadeSearch,
+        page: pageToLoad,
+        pageSize: DRE_PAGE_SIZE,
+        sortBy: modalidadeSortBy,
+        sortDirection: modalidadeSortDirection,
+      })
+
+      setModalidadeItems(result.items)
+      setModalidadeTotalItems(result.total)
+      setModalidadeTotalPages(result.totalPages)
+      setModalidadePage(result.page)
+      setModalidadeSortBy(result.sortBy)
+      setModalidadeSortDirection(result.sortDirection)
+      setModalidadeStatusMessage(result.items.length ? '' : 'Nenhum registro encontrado na tabela Modalidade.')
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Falha ao carregar os registros de modalidade.'
+
+      setModalidadeStatusTone('error')
+      setModalidadeStatusMessage(message)
+    } finally {
+      setIsLoadingModalidade(false)
+    }
+  }, [deferredModalidadeSearch, modalidadeSortBy, modalidadeSortDirection])
 
   const loadSeguradoraItems = useCallback(async (pageToLoad: number) => {
     setIsLoadingSeguradora(true)
@@ -374,6 +428,14 @@ function App() {
   }, [activeView, drePage, loadDreItems, session])
 
   useEffect(() => {
+    if (!session || activeView !== 'modalidade') {
+      return
+    }
+
+    void loadModalidadeItems(modalidadePage)
+  }, [activeView, loadModalidadeItems, modalidadePage, session])
+
+  useEffect(() => {
     if (!session || activeView !== 'seguradora') {
       return
     }
@@ -392,6 +454,10 @@ function App() {
   useEffect(() => {
     setDrePage(1)
   }, [deferredDreSearch])
+
+  useEffect(() => {
+    setModalidadePage(1)
+  }, [deferredModalidadeSearch])
 
   useEffect(() => {
     if (!session || activeView !== 'titular') {
@@ -514,11 +580,26 @@ function App() {
     setEditingDreCodigo(null)
   }
 
+  const resetModalidadeForm = () => {
+    setModalidadeCodigo('')
+    setModalidadeDescricao('')
+    setModalidadeCodigoError('')
+    setModalidadeDescricaoError('')
+    setEditingModalidadeCodigo(null)
+  }
+
   const handleStartInsertDre = () => {
     resetDreForm()
     setDreStatusTone('idle')
     setDreStatusMessage('')
     setIsDreFormVisible(true)
+  }
+
+  const handleStartInsertModalidade = () => {
+    resetModalidadeForm()
+    setModalidadeStatusTone('idle')
+    setModalidadeStatusMessage('')
+    setIsModalidadeFormVisible(true)
   }
 
   const handleFilterDreSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -531,6 +612,18 @@ function App() {
   const handleClearDreFilter = () => {
     setDreSearch('')
     setDrePage(1)
+  }
+
+  const handleFilterModalidadeSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setModalidadePage(1)
+    setModalidadeStatusMessage('Aplicando filtro de modalidade...')
+    setModalidadeStatusTone('idle')
+  }
+
+  const handleClearModalidadeFilter = () => {
+    setModalidadeSearch('')
+    setModalidadePage(1)
   }
 
   const handleSortDre = (field: DreSortField) => {
@@ -554,6 +647,27 @@ function App() {
     return dreSortDirection === 'asc' ? '↑' : '↓'
   }
 
+  const handleSortModalidade = (field: DreSortField) => {
+    setModalidadePage(1)
+    setModalidadeSortBy((currentField) => {
+      if (currentField === field) {
+        setModalidadeSortDirection((currentDirection) => currentDirection === 'asc' ? 'desc' : 'asc')
+        return currentField
+      }
+
+      setModalidadeSortDirection('asc')
+      return field
+    })
+  }
+
+  const getModalidadeSortIndicator = (field: DreSortField) => {
+    if (modalidadeSortBy !== field) {
+      return '↕'
+    }
+
+    return modalidadeSortDirection === 'asc' ? '↑' : '↓'
+  }
+
   const handleStartEditDre = (item: DreItem) => {
     setEditingDreCodigo(item.codigo)
     setDreCodigo(item.codigo)
@@ -570,6 +684,24 @@ function App() {
     setIsDreFormVisible(false)
     setDreStatusTone('idle')
     setDreStatusMessage('')
+  }
+
+  const handleStartEditModalidade = (item: ModalidadeItem) => {
+    setEditingModalidadeCodigo(item.codigo)
+    setModalidadeCodigo(item.codigo)
+    setModalidadeDescricao(item.descricao)
+    setModalidadeCodigoError('')
+    setModalidadeDescricaoError('')
+    setModalidadeStatusTone('idle')
+    setModalidadeStatusMessage(`Alterando registro ${item.codigo}.`)
+    setIsModalidadeFormVisible(true)
+  }
+
+  const handleCancelModalidadeForm = () => {
+    resetModalidadeForm()
+    setIsModalidadeFormVisible(false)
+    setModalidadeStatusTone('idle')
+    setModalidadeStatusMessage('')
   }
 
   const handleCreateDre = async (event: FormEvent<HTMLFormElement>) => {
@@ -632,6 +764,66 @@ function App() {
     }
   }
 
+  const handleCreateModalidade = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const normalizedCodigo = modalidadeCodigo.trim()
+    const normalizedDescricao = modalidadeDescricao.trim()
+    const editingCodigo = editingModalidadeCodigo
+    let hasError = false
+
+    setModalidadeCodigoError('')
+    setModalidadeDescricaoError('')
+
+    if (!normalizedCodigo) {
+      setModalidadeCodigoError('Codigo e obrigatorio.')
+      hasError = true
+    }
+
+    if (!normalizedDescricao) {
+      setModalidadeDescricaoError('Descricao e obrigatoria.')
+      hasError = true
+    }
+
+    if (hasError) {
+      setModalidadeStatusTone('error')
+      setModalidadeStatusMessage('Corrija os campos da modalidade para continuar.')
+      return
+    }
+
+    setIsSavingModalidade(true)
+    setModalidadeStatusTone('idle')
+    setModalidadeStatusMessage(editingCodigo ? 'Alterando registro da modalidade...' : 'Gravando registro da modalidade...')
+
+    try {
+      const savedItem = editingCodigo
+        ? await updateModalidadeItem(editingCodigo, {
+            codigo: normalizedCodigo,
+            descricao: normalizedDescricao,
+          })
+        : await createModalidadeItem({
+            codigo: normalizedCodigo,
+            descricao: normalizedDescricao,
+          })
+
+      void savedItem
+      resetModalidadeForm()
+      setIsModalidadeFormVisible(false)
+      setModalidadeStatusTone('success')
+      setModalidadeStatusMessage(editingCodigo ? 'Registro da modalidade alterado com sucesso.' : 'Registro da modalidade cadastrado com sucesso.')
+      await loadModalidadeItems(editingCodigo ? modalidadePage : 1)
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Falha ao cadastrar registro da modalidade.'
+
+      setModalidadeStatusTone('error')
+      setModalidadeStatusMessage(message)
+    } finally {
+      setIsSavingModalidade(false)
+    }
+  }
+
   const handleDeleteDre = async (item: DreItem) => {
     const confirmed = window.confirm(`Excluir o registro ${item.codigo} - ${item.descricao}?`)
 
@@ -665,6 +857,42 @@ function App() {
       setDreStatusMessage(message)
     } finally {
       setIsDeletingDre(false)
+    }
+  }
+
+  const handleDeleteModalidade = async (item: ModalidadeItem) => {
+    const confirmed = window.confirm(`Excluir o registro ${item.codigo} - ${item.descricao}?`)
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsDeletingModalidade(true)
+    setModalidadeStatusTone('idle')
+    setModalidadeStatusMessage(`Excluindo registro ${item.codigo}...`)
+
+    try {
+      const deletedCodigo = await deleteModalidadeItem(item.codigo)
+      setModalidadeItems((currentItems) => currentItems.filter((currentItem) => currentItem.codigo !== deletedCodigo))
+
+      if (editingModalidadeCodigo === item.codigo) {
+        resetModalidadeForm()
+        setIsModalidadeFormVisible(false)
+      }
+
+      setModalidadeStatusTone('success')
+      setModalidadeStatusMessage('Registro da modalidade excluido com sucesso.')
+      const nextPage = modalidadeItems.length === 1 && modalidadePage > 1 ? modalidadePage - 1 : modalidadePage
+      await loadModalidadeItems(nextPage)
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Falha ao excluir registro da modalidade.'
+
+      setModalidadeStatusTone('error')
+      setModalidadeStatusMessage(message)
+    } finally {
+      setIsDeletingModalidade(false)
     }
   }
 
@@ -1262,6 +1490,8 @@ function App() {
 
   const canGoToPreviousDrePage = drePage > 1
   const canGoToNextDrePage = drePage < dreTotalPages
+  const canGoToPreviousModalidadePage = modalidadePage > 1
+  const canGoToNextModalidadePage = modalidadePage < modalidadeTotalPages
   const canGoToPreviousTitularPage = titularPage > 1
   const canGoToNextTitularPage = titularPage < titularTotalPages
   const canGoToPreviousMarcaModeloPage = marcaModeloPage > 1
@@ -1290,6 +1520,12 @@ function App() {
               onClick={() => setActiveView('dre')}
             >
               DRE
+            </li>
+            <li
+              className={`menu-item ${activeView === 'modalidade' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('modalidade')}
+            >
+              Modalidade
             </li>
             <li
               className={`menu-item ${activeView === 'titular' ? 'menu-item-active' : ''}`}
@@ -1539,6 +1775,166 @@ function App() {
                     className="secondary-button management-pagination-button"
                     onClick={() => setDrePage((currentPage) => currentPage + 1)}
                     disabled={!canGoToNextDrePage || isLoadingDre}
+                  >
+                    Proxima
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : activeView === 'modalidade' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Cadastro administrativo</p>
+              <h2 id="content-title">Tabela Modalidade</h2>
+              <p className="content-description">
+                Cadastre e consulte os registros da tabela Modalidade. Os campos codigo e
+                descricao sao obrigatorios e nao podem se repetir.
+              </p>
+            </div>
+
+            <div className="management-layout">
+              <div className="management-toolbar">
+                <button
+                  type="button"
+                  className="primary-button dre-insert-button"
+                  onClick={handleStartInsertModalidade}
+                  disabled={isSavingModalidade || isDeletingModalidade}
+                >
+                  Inserir registro
+                </button>
+
+                <form className="management-filter-form" onSubmit={handleFilterModalidadeSubmit}>
+                  <input
+                    className="management-filter-input"
+                    type="text"
+                    placeholder="Filtrar por codigo ou descricao"
+                    value={modalidadeSearch}
+                    onChange={(event) => setModalidadeSearch(event.target.value)}
+                  />
+                  <button type="submit" className="secondary-button management-filter-button">
+                    Filtrar
+                  </button>
+                  <button type="button" className="secondary-button management-filter-button" onClick={handleClearModalidadeFilter}>
+                    Limpar
+                  </button>
+                </form>
+              </div>
+
+              {isModalidadeFormVisible ? (
+                <form className="management-card management-form dre-form" onSubmit={handleCreateModalidade} noValidate>
+                  <h2>{editingModalidadeCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+
+                  <label className="field-group" htmlFor="modalidade-codigo">
+                    <span>Codigo</span>
+                    <input
+                      id="modalidade-codigo"
+                      name="codigo"
+                      type="text"
+                      value={modalidadeCodigo}
+                      onChange={(event) => setModalidadeCodigo(event.target.value)}
+                      disabled={isSavingModalidade}
+                      aria-invalid={Boolean(modalidadeCodigoError)}
+                    />
+                    {modalidadeCodigoError ? <strong className="field-error">{modalidadeCodigoError}</strong> : null}
+                  </label>
+
+                  <label className="field-group" htmlFor="modalidade-descricao">
+                    <span>Descricao</span>
+                    <input
+                      id="modalidade-descricao"
+                      name="descricao"
+                      type="text"
+                      value={modalidadeDescricao}
+                      onChange={(event) => setModalidadeDescricao(event.target.value)}
+                      disabled={isSavingModalidade}
+                      aria-invalid={Boolean(modalidadeDescricaoError)}
+                    />
+                    {modalidadeDescricaoError ? <strong className="field-error">{modalidadeDescricaoError}</strong> : null}
+                  </label>
+
+                  <div className="button-row dre-button-row">
+                    <button type="submit" className="primary-button" disabled={isSavingModalidade}>
+                      {isSavingModalidade ? 'Salvando...' : editingModalidadeCodigo ? 'Salvar alteracao' : 'Salvar Modalidade'}
+                    </button>
+                    <button type="button" className="secondary-button" onClick={handleCancelModalidadeForm} disabled={isSavingModalidade}>
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+
+              <div className="management-card management-grid-card dre-list-card">
+                <div className="management-grid-header">
+                  <h2>Registros cadastrados</h2>
+                  <span>
+                    {isLoadingModalidade ? 'Atualizando...' : `${modalidadeTotalItems} item(ns) encontrados`}
+                  </span>
+                </div>
+
+                <div className="management-grid-wrapper">
+                  <table className="dre-table">
+                    <thead>
+                      <tr>
+                        <th>
+                          <button type="button" className="dre-sort-button" onClick={() => handleSortModalidade('codigo')}>
+                            Codigo <span>{getModalidadeSortIndicator('codigo')}</span>
+                          </button>
+                        </th>
+                        <th>
+                          <button type="button" className="dre-sort-button" onClick={() => handleSortModalidade('descricao')}>
+                            Descricao <span>{getModalidadeSortIndicator('descricao')}</span>
+                          </button>
+                        </th>
+                        <th className="dre-actions-column">Acoes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {modalidadeItems.map((item) => (
+                        <tr key={item.codigo}>
+                          <td>{item.codigo}</td>
+                          <td>{item.descricao}</td>
+                          <td>
+                            <div className="dre-row-actions">
+                              <button type="button" className="row-action-button row-action-edit" onClick={() => handleStartEditModalidade(item)}>
+                                Alterar
+                              </button>
+                              <button type="button" className="row-action-button row-action-delete" onClick={() => handleDeleteModalidade(item)}>
+                                Excluir
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {!isLoadingModalidade && modalidadeItems.length === 0 ? (
+                    <p className="management-empty-state">Nenhum registro de modalidade encontrado.</p>
+                  ) : null}
+                </div>
+
+                <p className={`status-message status-${modalidadeStatusTone}`} aria-live="polite">
+                  {modalidadeStatusMessage}
+                </p>
+
+                <div className="management-pagination">
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button"
+                    onClick={() => setModalidadePage((currentPage) => currentPage - 1)}
+                    disabled={!canGoToPreviousModalidadePage || isLoadingModalidade}
+                  >
+                    Anterior
+                  </button>
+                  <span className="management-pagination-info">
+                    Pagina {modalidadePage} de {modalidadeTotalPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button"
+                    onClick={() => setModalidadePage((currentPage) => currentPage + 1)}
+                    disabled={!canGoToNextModalidadePage || isLoadingModalidade}
                   >
                     Proxima
                   </button>

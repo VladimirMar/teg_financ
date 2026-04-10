@@ -155,6 +155,11 @@
                     <div class="dsc-form-error" id="ordem-servico-credenciado-error"></div>
                   </label>
 
+
+                </div>
+
+                <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-dre">
+
                   <label class="dsc-field-group" for="ordem-servico-dre-codigo">
                     <span>DRE</span>
                     <input class="dsc-form-control" id="ordem-servico-dre-codigo" type="text" list="ordem-servico-dre-codigo-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR A DRE" maxlength="30" />
@@ -168,6 +173,14 @@
                     <span>Descricao da DRE</span>
                     <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-dre-descricao" type="text" placeholder="DESCRICAO DA DRE" maxlength="255" readonly />
                     <div class="dsc-form-error" id="ordem-servico-dre-descricao-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-modalidade-descricao">
+                    <span>Modalidade</span>
+                    <select class="dsc-form-control" id="ordem-servico-modalidade-descricao">
+                      <option value="">Selecione a modalidade</option>
+                    </select>
+                    <div class="dsc-form-error" id="ordem-servico-modalidade-descricao-error"></div>
                   </label>
                 </div>
 
@@ -315,18 +328,18 @@
                     <tr>
                       <th>
                         <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-codigo-button">
-                          Codigo <span id="sort-ordem-servico-codigo-indicator">�?'</span>
+                          Codigo <span id="sort-ordem-servico-codigo-indicator">^</span>
                         </button>
                       </th>
                       <th>Termo</th>
                       <th>
                         <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-os-button">
-                          OS <span id="sort-ordem-servico-os-indicator">�?.</span>
+                          OS <span id="sort-ordem-servico-os-indicator">v</span>
                         </button>
                       </th>
                       <th>
                         <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-credenciado-button">
-                          Credenciado <span id="sort-ordem-servico-credenciado-indicator">�?.</span>
+                          Credenciado <span id="sort-ordem-servico-credenciado-indicator">v</span>
                         </button>
                       </th>
                       <th>DRE</th>
@@ -372,6 +385,7 @@
       const dreCodigoInput = document.getElementById('ordem-servico-dre-codigo');
       const dreCodigoOptionsList = document.getElementById('ordem-servico-dre-codigo-options');
       const dreDescricaoInput = document.getElementById('ordem-servico-dre-descricao');
+      const modalidadeDescricaoInput = document.getElementById('ordem-servico-modalidade-descricao');
       const cpfCondutorInput = document.getElementById('ordem-servico-cpf-condutor');
       const cpfCondutorOptionsList = document.getElementById('ordem-servico-cpf-condutor-options');
       const condutorInput = document.getElementById('ordem-servico-condutor');
@@ -401,6 +415,7 @@
       const credenciadoError = document.getElementById('ordem-servico-credenciado-error');
       const dreCodigoError = document.getElementById('ordem-servico-dre-codigo-error');
       const dreDescricaoError = document.getElementById('ordem-servico-dre-descricao-error');
+      const modalidadeDescricaoError = document.getElementById('ordem-servico-modalidade-descricao-error');
       const cpfCondutorError = document.getElementById('ordem-servico-cpf-condutor-error');
       const condutorError = document.getElementById('ordem-servico-condutor-error');
       const cpfPrepostoError = document.getElementById('ordem-servico-cpf-preposto-error');
@@ -479,6 +494,7 @@
       let veiculoSuggestionTimeoutId = null;
       let tipoTrocaOptions = [];
       let dreOptions = [];
+      let modalidadeOptions = [];
 
       const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
       const normalizeText = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trimStart().toUpperCase().slice(0, maxLength);
@@ -487,6 +503,49 @@
       const normalizeCrm = (value) => value.toUpperCase().replace(/[^0-9A-Z.\-/]/g, '').slice(0, 20);
       const normalizeKey = (value) => (value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
       const normalizeComboInput = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trimStart().slice(0, maxLength);
+      const deriveModalidadeFromDreDescricao = (dreDescricao) => {
+        const normalizedDescricao = normalizeText(String(dreDescricao || ''), 255);
+        const descricaoKey = normalizeKey(normalizedDescricao);
+
+        if (descricaoKey.includes('creche')) {
+          return 'TEG CRECHE';
+        }
+
+        if (descricaoKey.includes('especial')) {
+          return 'TEG ESPECIAL';
+        }
+
+        return normalizedDescricao ? 'TEG REGULAR' : '';
+      };
+
+      const isPenhaTegVariantDre = (dreCodigo, dreDescricao) => {
+        const codigoKey = normalizeKey(dreCodigo);
+        const descricaoKey = normalizeKey(dreDescricao);
+
+        return codigoKey === 'pec'
+          || codigoKey === 'pee'
+          || descricaoKey === 'penhategcreche'
+          || descricaoKey === 'penhategespecial';
+      };
+
+      const normalizeOrdemServicoDre = (dreCodigo, dreDescricao) => {
+        const normalizedCodigo = normalizeText(String(dreCodigo || ''), 30);
+        const normalizedDescricao = normalizeText(String(dreDescricao || ''), 255);
+
+        if (isPenhaTegVariantDre(normalizedCodigo, normalizedDescricao)) {
+          return {
+            dreCodigo: 'PE',
+            dreDescricao: 'PENHA',
+            modalidadeDescricao: deriveModalidadeFromDreDescricao(normalizedDescricao),
+          };
+        }
+
+        return {
+          dreCodigo: normalizedCodigo,
+          dreDescricao: normalizedDescricao,
+          modalidadeDescricao: deriveModalidadeFromDreDescricao(normalizedDescricao),
+        };
+      };
       const getDocumentDigits = (value) => value.replace(/\D/g, '');
       const getCurrentDateInputValue = () => {
         const today = new Date();
@@ -636,6 +695,7 @@
         credenciadoError.textContent = '';
         dreCodigoError.textContent = '';
         dreDescricaoError.textContent = '';
+        modalidadeDescricaoError.textContent = '';
         cpfCondutorError.textContent = '';
         condutorError.textContent = '';
         cpfPrepostoError.textContent = '';
@@ -686,6 +746,7 @@
       const clearLookupFields = () => {
         credenciadoInput.value = '';
         dreDescricaoInput.value = '';
+        modalidadeDescricaoInput.value = '';
         condutorInput.value = '';
         prepostoCondutorInput.value = '';
         veiculoPlacasInput.value = '';
@@ -698,6 +759,7 @@
         editingCodigo = null;
         clearLookupFields();
         renderDreOptions('');
+        renderModalidadeOptions('');
         tipoTrocaInput.value = '';
         setSelectedSituacao('Ativo');
         resetMessages();
@@ -756,9 +818,9 @@
       const updateSortIndicators = () => {
         currentSortBy = 'codigo';
         currentSortDirection = 'asc';
-        sortCodigoIndicator.textContent = '�?'';
-        sortOsIndicator.textContent = '�?.';
-        sortCredenciadoIndicator.textContent = '�?.';
+        sortCodigoIndicator.textContent = '^';
+        sortOsIndicator.textContent = 'v';
+        sortCredenciadoIndicator.textContent = 'v';
       };
 
       const updatePagination = (totalItems) => {
@@ -837,6 +899,59 @@
         }
 
         renderDreOptions();
+      };
+
+      const renderModalidadeOptions = (selectedValue = modalidadeDescricaoInput.value || '') => {
+        const normalizedSelectedValue = normalizeText(String(selectedValue || ''), 255);
+        modalidadeDescricaoInput.innerHTML = '<option value="">Selecione a modalidade</option>';
+
+        modalidadeOptions.forEach((item) => {
+          const descricao = normalizeText(String(item.descricao || ''), 255);
+
+          if (!descricao) {
+            return;
+          }
+
+          const option = document.createElement('option');
+          option.value = descricao;
+          option.textContent = descricao;
+          option.selected = descricao === normalizedSelectedValue;
+          modalidadeDescricaoInput.appendChild(option);
+        });
+
+        modalidadeDescricaoInput.value = normalizedSelectedValue;
+      };
+
+      const loadModalidadeOptions = async (selectedValue = modalidadeDescricaoInput.value || '') => {
+        modalidadeDescricaoInput.disabled = true;
+
+        try {
+          const response = await fetch('/api/modalidade?page=1&pageSize=100&sortBy=descricao&sortDirection=asc', {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar modalidades.');
+          }
+
+          modalidadeOptions = payload.items || [];
+        } catch {
+          modalidadeOptions = [];
+        }
+
+        renderModalidadeOptions(selectedValue);
+        modalidadeDescricaoInput.disabled = false;
+      };
+
+      const ensureModalidadeOptionsLoaded = async (selectedValue = modalidadeDescricaoInput.value || '') => {
+        if (modalidadeOptions.length > 0) {
+          renderModalidadeOptions(selectedValue);
+          modalidadeDescricaoInput.disabled = false;
+          return;
+        }
+
+        await loadModalidadeOptions(selectedValue);
       };
 
       const loadCredenciadaSuggestions = async (searchValue) => {
@@ -1174,17 +1289,23 @@
 
         if (!codigo) {
           dreDescricaoInput.value = '';
+          modalidadeDescricaoInput.value = '';
           dreCodigoError.textContent = '';
           return;
         }
 
         try {
           const item = await fetchLookupItem(`/api/dre/lookup?codigo=${encodeURIComponent(codigo)}`, 'Falha ao localizar DRE.');
-          dreCodigoInput.value = normalizeText(String(item.codigo_operacional || item.codigo || codigo), 30);
-          dreDescricaoInput.value = normalizeText(String(item.descricao || ''), 255);
+          const normalizedDre = normalizeOrdemServicoDre(item.codigo_operacional || item.codigo || codigo, item.descricao || '');
+          dreCodigoInput.value = normalizedDre.dreCodigo;
+          dreDescricaoInput.value = normalizedDre.dreDescricao;
+          modalidadeDescricaoInput.value = normalizedDre.modalidadeDescricao;
+          renderModalidadeOptions(modalidadeDescricaoInput.value);
           dreCodigoError.textContent = '';
         } catch (error) {
           dreDescricaoInput.value = '';
+          modalidadeDescricaoInput.value = '';
+          renderModalidadeOptions('');
           dreCodigoError.textContent = getRequestErrorMessage(error, 'Falha ao localizar DRE.');
         }
       };
@@ -1283,10 +1404,13 @@
         vigenciaOsInput.min = getTomorrowDateInputValue();
         setSelectedSituacao('Ativo');
         resetMessages();
+        renderModalidadeOptions('');
         showForm(false);
+        void ensureModalidadeOptionsLoaded('');
       };
 
       const startEdit = (item) => {
+        const normalizedDre = normalizeOrdemServicoDre(item.dre_codigo || '', item.dre_descricao || '');
         editingCodigo = item.codigo;
         codigoInput.value = item.codigo || '';
         termoAdesaoInput.value = normalizeTermoAdesao(String(item.termo_adesao || ''));
@@ -1296,8 +1420,9 @@
         vigenciaOsInput.value = item.vigencia_os || '';
         cnpjCpfInput.value = item.cnpj_cpf || '';
         credenciadoInput.value = item.credenciado || '';
-        dreCodigoInput.value = item.dre_codigo || '';
-        dreDescricaoInput.value = item.dre_descricao || '';
+        dreCodigoInput.value = normalizedDre.dreCodigo;
+        dreDescricaoInput.value = normalizedDre.dreDescricao;
+        modalidadeDescricaoInput.value = item.modalidade_descricao || normalizedDre.modalidadeDescricao;
         cpfCondutorInput.value = item.cpf_condutor || '';
         condutorInput.value = item.condutor || '';
         cpfPrepostoInput.value = item.cpf_preposto || '';
@@ -1314,9 +1439,11 @@
         anotacaoInput.value = item.anotacao || '';
         setSelectedSituacao(item.situacao || 'Ativo');
         renderDreOptions(dreCodigoInput.value);
+        renderModalidadeOptions(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
         renderTipoTrocaOptions(tipoTrocaInput.value);
         resetMessages();
         showForm(true);
+        void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
       };
 
       const handleDelete = async (item) => {
@@ -1426,6 +1553,11 @@
         void syncDreByCodigo();
       });
 
+      modalidadeDescricaoInput.addEventListener('change', () => {
+        modalidadeDescricaoInput.value = normalizeText(modalidadeDescricaoInput.value, 255);
+        modalidadeDescricaoError.textContent = '';
+      });
+
       cpfCondutorInput.addEventListener('input', () => {
         cpfCondutorInput.value = normalizeCpf(cpfCondutorInput.value);
         queueSuggestionLoad(condutorSuggestionTimeoutId, (timeoutId) => { condutorSuggestionTimeoutId = timeoutId; }, (value) => loadCondutorSuggestions(value, cpfCondutorOptionsList, 'condutor'), () => cpfCondutorInput.value);
@@ -1492,6 +1624,7 @@
           credenciado: normalizeText(credenciadoInput.value, 255),
           cnpjCpf: normalizeCnpjCpf(cnpjCpfInput.value),
           dreCodigo: normalizeText(dreCodigoInput.value, 30),
+          modalidadeDescricao: normalizeText(modalidadeDescricaoInput.value, 255),
           cpfCondutor: normalizeCpf(cpfCondutorInput.value),
           cpfPreposto: normalizeCpf(cpfPrepostoInput.value),
           prepostoInicio: prepostoInicioInput.value,
@@ -1514,6 +1647,7 @@
         osOrigemInput.value = payload.osOrigem;
         cnpjCpfInput.value = payload.cnpjCpf;
         dreCodigoInput.value = payload.dreCodigo;
+        modalidadeDescricaoInput.value = payload.modalidadeDescricao;
         cpfCondutorInput.value = payload.cpfCondutor;
         cpfPrepostoInput.value = payload.cpfPreposto;
         prepostoDiasInput.value = payload.prepostoDias;
@@ -1751,8 +1885,10 @@
       renderEntitySuggestions(cpfMonitorOptionsList, [], () => '', () => '');
       renderEntitySuggestions(crmOptionsList, [], () => '', () => '');
       renderDreOptions('');
+      renderModalidadeOptions('');
       renderTipoTrocaOptions('');
       void loadDreOptions();
+      void loadModalidadeOptions();
       void loadTipoTrocaOptions();
       void loadItems();
     </script>
