@@ -757,6 +757,104 @@ const backfillOrdemServicoModalidadesFromDre = async () => {
   }
 }
 
+const compactDreCodes = async () => {
+  const dreResult = await pool.query(
+    `SELECT
+       codigo,
+       COALESCE(BTRIM(codigo_operacional), '') AS codigo_operacional,
+       BTRIM(CAST(descricao AS text)) AS descricao
+     FROM dre
+     ORDER BY codigo ASC`,
+  )
+
+  const dreRows = dreResult.rows.map((row, index) => ({
+    codigoAtual: Number(row.codigo),
+    codigoNovo: index + 1,
+    codigoOperacional: normalizeRequestValue(row.codigo_operacional).toUpperCase().slice(0, 30),
+    descricao: normalizeRequestValue(row.descricao).toUpperCase().slice(0, 255),
+  }))
+
+  const dreRowsToRenumber = dreRows.filter((row) => row.codigoAtual !== row.codigoNovo)
+
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+    await client.query('LOCK TABLE dre IN ACCESS EXCLUSIVE MODE')
+
+    const loginDreExistsResult = await client.query("SELECT to_regclass('public.login_dre') IS NOT NULL AS exists")
+    const ordemServicoExistsResult = await client.query(`SELECT to_regclass('public.${ordemServicoTableName}') IS NOT NULL AS exists`)
+    const loginDreExists = Boolean(loginDreExistsResult.rows[0]?.exists)
+    const ordemServicoExists = Boolean(ordemServicoExistsResult.rows[0]?.exists)
+
+    if (loginDreExists) {
+      await client.query('LOCK TABLE login_dre IN ACCESS EXCLUSIVE MODE')
+      await client.query('ALTER TABLE login_dre DROP CONSTRAINT IF EXISTS login_dre_dre_fk')
+    }
+
+    if (ordemServicoExists) {
+      await client.query(`LOCK TABLE ${ordemServicoTableName} IN ACCESS EXCLUSIVE MODE`)
+    }
+
+    let updatedOrdemServicoCount = 0
+
+    if (ordemServicoExists) {
+      for (const row of dreRows) {
+        const nextDreCodigo = row.codigoOperacional || String(row.codigoNovo)
+        const updateResult = await client.query(
+          `UPDATE ${ordemServicoTableName}
+           SET dre_codigo = $1,
+               dre_descricao = $2,
+               data_modificacao = NOW()
+           WHERE BTRIM(COALESCE(dre_codigo, '')) = $3`,
+          [nextDreCodigo, row.descricao, String(row.codigoAtual)],
+        )
+
+        updatedOrdemServicoCount += updateResult.rowCount
+      }
+    }
+
+    if (dreRowsToRenumber.length > 0) {
+      for (const row of dreRowsToRenumber) {
+        await client.query('UPDATE dre SET codigo = $1 WHERE codigo = $2', [-row.codigoAtual, row.codigoAtual])
+
+        if (loginDreExists) {
+          await client.query('UPDATE login_dre SET dre_codigo = $1 WHERE dre_codigo = $2', [-row.codigoAtual, row.codigoAtual])
+        }
+      }
+
+      for (const row of dreRowsToRenumber) {
+        await client.query('UPDATE dre SET codigo = $1 WHERE codigo = $2', [row.codigoNovo, -row.codigoAtual])
+
+        if (loginDreExists) {
+          await client.query('UPDATE login_dre SET dre_codigo = $1 WHERE dre_codigo = $2', [row.codigoNovo, -row.codigoAtual])
+        }
+      }
+    }
+
+    if (loginDreExists) {
+      await client.query(`
+        ALTER TABLE login_dre
+        ADD CONSTRAINT login_dre_dre_fk
+        FOREIGN KEY (dre_codigo) REFERENCES dre(codigo)
+      `)
+    }
+
+    await client.query("SELECT setval('dre_codigo_seq', GREATEST(COALESCE((SELECT MAX(codigo) FROM dre), 0), 1), true)")
+    await client.query('COMMIT')
+
+    return {
+      updatedDreCount: dreRowsToRenumber.length,
+      updatedOrdemServicoCount,
+    }
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
 const findDreByCodigo = async (codigo) => {
   const normalizedCodigo = normalizeDreOperationalCode(codigo)
 
@@ -5174,6 +5272,10 @@ const ensureDatabaseSchema = async () => {
   `)
   await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_import_recusa_data_idx ON ${ordemServicoImportRecusaTableName} (data_importacao DESC)`)
   await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_import_recusa_arquivo_idx ON ${ordemServicoImportRecusaTableName} (arquivo_xml)`)
+  const compactedDreCodes = await compactDreCodes()
+  if (compactedDreCodes.updatedDreCount > 0 || compactedDreCodes.updatedOrdemServicoCount > 0) {
+    console.log(`Codigos da DRE compactados: ${compactedDreCodes.updatedDreCount}; OrdemServico remapeada: ${compactedDreCodes.updatedOrdemServicoCount}`)
+  }
   const updatedOrdemServicoModalidades = await backfillOrdemServicoModalidadesFromDre()
   if (updatedOrdemServicoModalidades > 0) {
     console.log(`Modalidades da OrdemServico atualizadas em lote: ${updatedOrdemServicoModalidades}`)
