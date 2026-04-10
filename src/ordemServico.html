@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OrdemServico</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
+    <main class="dsc-access-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-management-layout">
+            <div class="dsc-access-toolbar">
+              <form class="dsc-access-filter-form" id="ordem-servico-filter-form">
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-ordem-servico-button">Inserir registro</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-ordem-servico-import-button">Importar XML</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-ordem-servico-rejections-button">Recusas XML</button>
+                <input class="dsc-form-control dsc-access-filter-input" id="ordem-servico-search" type="text" placeholder="Filtrar por codigo, termo, OS, credenciado, DRE, condutor, monitor ou CRM" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-ordem-servico-filter-button">Limpar</button>
+              </form>
+            </div>
+
+            <section class="dsc-card dsc-hidden" id="ordem-servico-rejection-panel">
+              <div class="dsc-access-grid-header">
+                <h2>Registros nao importados</h2>
+                <span id="ordem-servico-rejection-total"></span>
+              </div>
+
+              <form class="dsc-access-filter-form" id="ordem-servico-rejection-filter-form">
+                <input class="dsc-form-control dsc-access-filter-input" id="ordem-servico-rejection-search" type="text" placeholder="Filtrar por arquivo, linha, OS, credenciado, DRE, CPF, CRM ou motivo" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-ordem-servico-rejection-filter-button">Limpar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="close-ordem-servico-rejection-panel-button">Fechar</button>
+              </form>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Data importacao</th>
+                      <th>Arquivo XML</th>
+                      <th>Linha XML</th>
+                      <th>Codigo XML</th>
+                      <th>OS XML</th>
+                      <th>Credenciado XML</th>
+                      <th>DRE XML</th>
+                      <th>CPF condutor XML</th>
+                      <th>CPF monitor XML</th>
+                      <th>CRM XML</th>
+                      <th>Motivo da recusa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ordem-servico-rejection-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="ordem-servico-rejection-empty-state">Nenhum registro recusado encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="ordem-servico-rejection-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-ordem-servico-rejection-page-button">Anterior</button>
+                <span id="ordem-servico-rejection-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-ordem-servico-rejection-page-button">Proxima</button>
+              </div>
+            </section>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="ordem-servico-import-form">
+              <h2>Importacao de OrdemServico por XML</h2>
+
+              <label class="dsc-field-group" for="ordem-servico-import-file-name">
+                <span>Nome do arquivo XML</span>
+                <input class="dsc-form-control" id="ordem-servico-import-file-name" type="text" placeholder="OrdemServico.xml" />
+                <div class="dsc-form-error" id="ordem-servico-import-file-name-error"></div>
+              </label>
+
+              <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-ordem-servico-import-button">Executar importacao</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-ordem-servico-import-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="ordem-servico-import-feedback"></p>
+            </form>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="ordem-servico-form">
+              <h2 id="ordem-servico-form-title">Novo registro</h2>
+
+              <section class="dsc-form-section-card dsc-form-section-card-ordem-servico-identificacao">
+                <h3 class="dsc-form-section-title">Identificacao</h3>
+
+                <div class="dsc-form-row dsc-form-row-ordem-servico-identificacao">
+                  <label class="dsc-field-group" for="ordem-servico-codigo">
+                    <span>Codigo</span>
+                    <input class="dsc-form-control" id="ordem-servico-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
+                    <div class="dsc-form-error" id="ordem-servico-codigo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-termo-adesao">
+                    <span>Termo</span>
+                    <input class="dsc-form-control" id="ordem-servico-termo-adesao" type="text" inputmode="numeric" placeholder="2026-0011093" maxlength="12" />
+                    <div class="dsc-form-error" id="ordem-servico-termo-adesao-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-os">
+                    <span>Numero da OS</span>
+                    <input class="dsc-form-control" id="ordem-servico-os" type="text" inputmode="numeric" placeholder="2026-0011093-001" maxlength="16" />
+                    <div class="dsc-form-error" id="ordem-servico-os-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-revisao">
+                    <span>Revisao</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-revisao" type="text" placeholder="Gerada automaticamente" maxlength="30" readonly />
+                    <div class="dsc-form-error" id="ordem-servico-revisao-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row dsc-form-row-ordem-servico-origem">
+                  <label class="dsc-field-group" for="ordem-servico-os-origem">
+                    <span>OS origem</span>
+                    <input class="dsc-form-control" id="ordem-servico-os-origem" type="text" inputmode="numeric" placeholder="2026-0011093-001" maxlength="16" />
+                    <div class="dsc-form-error" id="ordem-servico-os-origem-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-vigencia-os">
+                    <span>Vigencia da OS</span>
+                    <input class="dsc-form-control" id="ordem-servico-vigencia-os" type="date" />
+                    <div class="dsc-form-error" id="ordem-servico-vigencia-os-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <section class="dsc-form-section-card dsc-form-section-card-ordem-servico-vinculos">
+                <h3 class="dsc-form-section-title">Vinculos operacionais</h3>
+
+                <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-top">
+                  <label class="dsc-field-group" for="ordem-servico-cnpj-cpf">
+                    <span>CNPJ/CPF do credenciado</span>
+                    <input class="dsc-form-control" id="ordem-servico-cnpj-cpf" type="text" inputmode="numeric" list="ordem-servico-cnpj-cpf-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CNPJ/CPF DA CREDENCIADA" maxlength="18" />
+                    <datalist id="ordem-servico-cnpj-cpf-options">
+                      <option value=""></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="ordem-servico-cnpj-cpf-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-credenciado">
+                    <span>Credenciado</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-credenciado" type="text" placeholder="CREDENCIADO" maxlength="255" readonly />
+                    <div class="dsc-form-error" id="ordem-servico-credenciado-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-dre-codigo">
+                    <span>DRE</span>
+                    <input class="dsc-form-control" id="ordem-servico-dre-codigo" type="text" list="ordem-servico-dre-codigo-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR A DRE" maxlength="30" />
+                    <datalist id="ordem-servico-dre-codigo-options">
+                      <option value=""></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="ordem-servico-dre-codigo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-dre-descricao">
+                    <span>Descricao da DRE</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-dre-descricao" type="text" placeholder="DESCRICAO DA DRE" maxlength="255" readonly />
+                    <div class="dsc-form-error" id="ordem-servico-dre-descricao-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-middle">
+                  <label class="dsc-field-group" for="ordem-servico-cpf-condutor">
+                    <span>CPF condutor</span>
+                    <input class="dsc-form-control" id="ordem-servico-cpf-condutor" type="text" inputmode="numeric" list="ordem-servico-cpf-condutor-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO CONDUTOR" maxlength="14" />
+                    <datalist id="ordem-servico-cpf-condutor-options">
+                      <option value=""></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="ordem-servico-cpf-condutor-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-condutor">
+                    <span>Condutor</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-condutor" type="text" placeholder="CONDUTOR" maxlength="255" readonly />
+                    <div class="dsc-form-error" id="ordem-servico-condutor-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-cpf-preposto">
+                    <span>CPF preposto</span>
+                    <input class="dsc-form-control" id="ordem-servico-cpf-preposto" type="text" inputmode="numeric" list="ordem-servico-cpf-preposto-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO PREPOSTO" maxlength="14" />
+                    <datalist id="ordem-servico-cpf-preposto-options">
+                      <option value=""></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="ordem-servico-cpf-preposto-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-preposto-condutor">
+                    <span>Preposto</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-preposto-condutor" type="text" placeholder="PREPOSTO" maxlength="255" readonly />
+                    <div class="dsc-form-error" id="ordem-servico-preposto-condutor-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-bottom">
+                  <label class="dsc-field-group" for="ordem-servico-preposto-inicio">
+                    <span>Inicio de preposto</span>
+                    <input class="dsc-form-control" id="ordem-servico-preposto-inicio" type="date" />
+                    <div class="dsc-form-error" id="ordem-servico-preposto-inicio-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-preposto-dias" id="label-preposto-dias">
+                    <span id="span-preposto-dias">Dias</span>
+                    <input class="dsc-form-control" id="ordem-servico-preposto-dias" type="text" inputmode="numeric" placeholder="0" maxlength="3" />
+                    <div class="dsc-form-error" id="ordem-servico-preposto-dias-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-crm">
+                    <span>CRM</span>
+                    <input class="dsc-form-control" id="ordem-servico-crm" type="text" list="ordem-servico-crm-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CRM DO VEICULO" maxlength="20" />
+                    <datalist id="ordem-servico-crm-options">
+                      <option value=""></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="ordem-servico-crm-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-veiculo-placas">
+                    <span>Veiculo</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-veiculo-placas" type="text" placeholder="PLACAS DO VEICULO" maxlength="20" readonly />
+                    <div class="dsc-form-error" id="ordem-servico-veiculo-placas-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-final">
+                  <label class="dsc-field-group" for="ordem-servico-cpf-monitor">
+                    <span>CPF monitor</span>
+                    <input class="dsc-form-control" id="ordem-servico-cpf-monitor" type="text" inputmode="numeric" list="ordem-servico-cpf-monitor-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO MONITOR" maxlength="14" />
+                    <datalist id="ordem-servico-cpf-monitor-options">
+                      <option value=""></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="ordem-servico-cpf-monitor-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-monitor">
+                    <span>Monitor</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-monitor" type="text" placeholder="MONITOR" maxlength="255" readonly />
+                    <div class="dsc-form-error" id="ordem-servico-monitor-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-tipo-troca">
+                    <span>Tipo de troca</span>
+                    <input class="dsc-form-control" id="ordem-servico-tipo-troca" type="text" list="ordem-servico-tipo-troca-options" placeholder="DIGITE PARA FILTRAR O TIPO DE TROCA" maxlength="255" />
+                    <datalist id="ordem-servico-tipo-troca-options">
+                      <option value=""></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="ordem-servico-tipo-troca-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-data-encerramento">
+                    <span>Encerramento</span>
+                    <input class="dsc-form-control" id="ordem-servico-data-encerramento" type="date" />
+                    <div class="dsc-form-error" id="ordem-servico-data-encerramento-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <section class="dsc-form-section-card dsc-form-section-card-ordem-servico-anotacao">
+                <h3 class="dsc-form-section-title">Situacao e anotacao</h3>
+
+                <div class="dsc-form-row dsc-form-row-ordem-servico-situacao">
+                  <fieldset class="dsc-field-group dsc-radio-field-group">
+                    <span>Situacao</span>
+                    <div class="dsc-radio-group" id="ordem-servico-situacao-group">
+                      <label class="dsc-radio-option" for="ordem-servico-situacao-ativo">
+                        <input id="ordem-servico-situacao-ativo" type="radio" name="ordem-servico-situacao" value="Ativo" checked />
+                        <span>Ativo</span>
+                      </label>
+                      <label class="dsc-radio-option" for="ordem-servico-situacao-inativo">
+                        <input id="ordem-servico-situacao-inativo" type="radio" name="ordem-servico-situacao" value="Inativo" />
+                        <span>Inativo</span>
+                      </label>
+                      <label class="dsc-radio-option" for="ordem-servico-situacao-cancelado">
+                        <input id="ordem-servico-situacao-cancelado" type="radio" name="ordem-servico-situacao" value="Cancelado" />
+                        <span>Cancelado</span>
+                      </label>
+                    </div>
+                  </fieldset>
+                </div>
+
+                <label class="dsc-field-group" for="ordem-servico-anotacao">
+                  <span>Anotacao</span>
+                  <textarea class="dsc-form-control dsc-form-textarea" id="ordem-servico-anotacao" placeholder="ANOTACOES DA OS" maxlength="1000"></textarea>
+                  <div class="dsc-form-error" id="ordem-servico-anotacao-error"></div>
+                </label>
+              </section>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-ordem-servico-button">Salvar OrdemServico</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-ordem-servico-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="ordem-servico-form-feedback"></p>
+            </form>
+
+            <div class="dsc-card dsc-access-grid-card">
+              <div class="dsc-access-grid-header">
+                <h2>Registros cadastrados</h2>
+                <span id="ordem-servico-total"></span>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-codigo-button">
+                          Codigo <span id="sort-ordem-servico-codigo-indicator">�?'</span>
+                        </button>
+                      </th>
+                      <th>Termo</th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-os-button">
+                          OS <span id="sort-ordem-servico-os-indicator">�?.</span>
+                        </button>
+                      </th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-credenciado-button">
+                          Credenciado <span id="sort-ordem-servico-credenciado-indicator">�?.</span>
+                        </button>
+                      </th>
+                      <th>DRE</th>
+                      <th>Condutor</th>
+                      <th>CRM</th>
+                      <th>Placa</th>
+                      <th>Situacao</th>
+                      <th class="dsc-grid-actions-column">Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ordem-servico-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="ordem-servico-empty-state">Nenhuma OrdemServico encontrada.</p>
+              </div>
+
+              <p class="dsc-feedback" id="ordem-servico-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-ordem-servico-page-button">Anterior</button>
+                <span id="ordem-servico-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-ordem-servico-page-button">Proxima</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('ordem-servico-form');
+      const importForm = document.getElementById('ordem-servico-import-form');
+      const rejectionPanel = document.getElementById('ordem-servico-rejection-panel');
+      const codigoInput = document.getElementById('ordem-servico-codigo');
+      const termoAdesaoInput = document.getElementById('ordem-servico-termo-adesao');
+      const osInput = document.getElementById('ordem-servico-os');
+      const revisaoInput = document.getElementById('ordem-servico-revisao');
+      const osOrigemInput = document.getElementById('ordem-servico-os-origem');
+      const vigenciaOsInput = document.getElementById('ordem-servico-vigencia-os');
+      const cnpjCpfInput = document.getElementById('ordem-servico-cnpj-cpf');
+      const cnpjCpfOptionsList = document.getElementById('ordem-servico-cnpj-cpf-options');
+      const credenciadoInput = document.getElementById('ordem-servico-credenciado');
+      const dreCodigoInput = document.getElementById('ordem-servico-dre-codigo');
+      const dreCodigoOptionsList = document.getElementById('ordem-servico-dre-codigo-options');
+      const dreDescricaoInput = document.getElementById('ordem-servico-dre-descricao');
+      const cpfCondutorInput = document.getElementById('ordem-servico-cpf-condutor');
+      const cpfCondutorOptionsList = document.getElementById('ordem-servico-cpf-condutor-options');
+      const condutorInput = document.getElementById('ordem-servico-condutor');
+      const cpfPrepostoInput = document.getElementById('ordem-servico-cpf-preposto');
+      const cpfPrepostoOptionsList = document.getElementById('ordem-servico-cpf-preposto-options');
+      const prepostoCondutorInput = document.getElementById('ordem-servico-preposto-condutor');
+      const prepostoInicioInput = document.getElementById('ordem-servico-preposto-inicio');
+      const prepostoDiasInput = document.getElementById('ordem-servico-preposto-dias');
+      const crmInput = document.getElementById('ordem-servico-crm');
+      const crmOptionsList = document.getElementById('ordem-servico-crm-options');
+      const veiculoPlacasInput = document.getElementById('ordem-servico-veiculo-placas');
+      const cpfMonitorInput = document.getElementById('ordem-servico-cpf-monitor');
+      const cpfMonitorOptionsList = document.getElementById('ordem-servico-cpf-monitor-options');
+      const monitorInput = document.getElementById('ordem-servico-monitor');
+      const tipoTrocaInput = document.getElementById('ordem-servico-tipo-troca');
+      const tipoTrocaOptionsList = document.getElementById('ordem-servico-tipo-troca-options');
+      const dataEncerramentoInput = document.getElementById('ordem-servico-data-encerramento');
+      const anotacaoInput = document.getElementById('ordem-servico-anotacao');
+      const situacaoRadios = Array.from(document.querySelectorAll('input[name="ordem-servico-situacao"]'));
+      const codigoError = document.getElementById('ordem-servico-codigo-error');
+      const termoAdesaoError = document.getElementById('ordem-servico-termo-adesao-error');
+      const osError = document.getElementById('ordem-servico-os-error');
+      const revisaoError = document.getElementById('ordem-servico-revisao-error');
+      const osOrigemError = document.getElementById('ordem-servico-os-origem-error');
+      const vigenciaOsError = document.getElementById('ordem-servico-vigencia-os-error');
+      const cnpjCpfError = document.getElementById('ordem-servico-cnpj-cpf-error');
+      const credenciadoError = document.getElementById('ordem-servico-credenciado-error');
+      const dreCodigoError = document.getElementById('ordem-servico-dre-codigo-error');
+      const dreDescricaoError = document.getElementById('ordem-servico-dre-descricao-error');
+      const cpfCondutorError = document.getElementById('ordem-servico-cpf-condutor-error');
+      const condutorError = document.getElementById('ordem-servico-condutor-error');
+      const cpfPrepostoError = document.getElementById('ordem-servico-cpf-preposto-error');
+      const prepostoCondutorError = document.getElementById('ordem-servico-preposto-condutor-error');
+      const prepostoInicioError = document.getElementById('ordem-servico-preposto-inicio-error');
+      const prepostoDiasError = document.getElementById('ordem-servico-preposto-dias-error');
+      const crmError = document.getElementById('ordem-servico-crm-error');
+      const veiculoPlacasError = document.getElementById('ordem-servico-veiculo-placas-error');
+      const cpfMonitorError = document.getElementById('ordem-servico-cpf-monitor-error');
+      const monitorError = document.getElementById('ordem-servico-monitor-error');
+      const tipoTrocaError = document.getElementById('ordem-servico-tipo-troca-error');
+      const dataEncerramentoError = document.getElementById('ordem-servico-data-encerramento-error');
+      const anotacaoError = document.getElementById('ordem-servico-anotacao-error');
+      const feedback = document.getElementById('ordem-servico-form-feedback');
+      const gridFeedback = document.getElementById('ordem-servico-grid-feedback');
+      const insertButton = document.getElementById('insert-ordem-servico-button');
+      const cancelButton = document.getElementById('cancel-ordem-servico-button');
+      const filterForm = document.getElementById('ordem-servico-filter-form');
+      const clearFilterButton = document.getElementById('clear-ordem-servico-filter-button');
+      const searchInput = document.getElementById('ordem-servico-search');
+      const gridBody = document.getElementById('ordem-servico-grid-body');
+      const emptyState = document.getElementById('ordem-servico-empty-state');
+      const totalLabel = document.getElementById('ordem-servico-total');
+      const previousPageButton = document.getElementById('previous-ordem-servico-page-button');
+      const nextPageButton = document.getElementById('next-ordem-servico-page-button');
+      const paginationInfo = document.getElementById('ordem-servico-pagination-info');
+      const sortCodigoButton = document.getElementById('sort-ordem-servico-codigo-button');
+      const sortOsButton = document.getElementById('sort-ordem-servico-os-button');
+      const sortCredenciadoButton = document.getElementById('sort-ordem-servico-credenciado-button');
+      const sortCodigoIndicator = document.getElementById('sort-ordem-servico-codigo-indicator');
+      const sortOsIndicator = document.getElementById('sort-ordem-servico-os-indicator');
+      const sortCredenciadoIndicator = document.getElementById('sort-ordem-servico-credenciado-indicator');
+      const formTitle = document.getElementById('ordem-servico-form-title');
+      const saveButton = document.getElementById('save-ordem-servico-button');
+      const statusBanner = document.getElementById('status-banner');
+      const importButton = document.getElementById('open-ordem-servico-import-button');
+      const rejectionButton = document.getElementById('open-ordem-servico-rejections-button');
+      const importFileNameInput = document.getElementById('ordem-servico-import-file-name');
+      const importFileNameError = document.getElementById('ordem-servico-import-file-name-error');
+      const importFeedback = document.getElementById('ordem-servico-import-feedback');
+      const cancelImportButton = document.getElementById('cancel-ordem-servico-import-button');
+      const rejectionFilterForm = document.getElementById('ordem-servico-rejection-filter-form');
+      const rejectionSearchInput = document.getElementById('ordem-servico-rejection-search');
+      const rejectionGridBody = document.getElementById('ordem-servico-rejection-grid-body');
+      const rejectionEmptyState = document.getElementById('ordem-servico-rejection-empty-state');
+      const rejectionGridFeedback = document.getElementById('ordem-servico-rejection-grid-feedback');
+      const rejectionTotalLabel = document.getElementById('ordem-servico-rejection-total');
+      const previousRejectionPageButton = document.getElementById('previous-ordem-servico-rejection-page-button');
+      const nextRejectionPageButton = document.getElementById('next-ordem-servico-rejection-page-button');
+      const rejectionPaginationInfo = document.getElementById('ordem-servico-rejection-pagination-info');
+      const clearRejectionFilterButton = document.getElementById('clear-ordem-servico-rejection-filter-button');
+      const closeRejectionPanelButton = document.getElementById('close-ordem-servico-rejection-panel-button');
+
+      const pageSize = 5;
+      const rejectionPageSize = 10;
+      const defaultImportFileName = 'OrdemServico.xml';
+      let currentPage = 1;
+      let totalPages = 1;
+      let currentSearch = '';
+      let currentSortBy = 'codigo';
+      let currentSortDirection = 'asc';
+      let currentRejectionPage = 1;
+      let totalRejectionPages = 1;
+      let currentRejectionSearch = '';
+      let editingCodigo = null;
+      let bannerTimeoutId = null;
+      let credenciadaSuggestionRequestId = 0;
+      let credenciadaSuggestionTimeoutId = null;
+      let condutorSuggestionRequestId = 0;
+      let condutorSuggestionTimeoutId = null;
+      let prepostoSuggestionRequestId = 0;
+      let prepostoSuggestionTimeoutId = null;
+      let monitorSuggestionRequestId = 0;
+      let monitorSuggestionTimeoutId = null;
+      let veiculoSuggestionRequestId = 0;
+      let veiculoSuggestionTimeoutId = null;
+      let tipoTrocaOptions = [];
+      let dreOptions = [];
+
+      const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
+      const normalizeText = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trimStart().toUpperCase().slice(0, maxLength);
+      const normalizeAnnotation = (value) => value.replace(/\s+/g, ' ').trimStart().slice(0, 1000);
+      const normalizeIntegerInput = (value, maxDigits = 3) => value.replace(/\D/g, '').slice(0, maxDigits);
+      const normalizeCrm = (value) => value.toUpperCase().replace(/[^0-9A-Z.\-/]/g, '').slice(0, 20);
+      const normalizeKey = (value) => (value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+      const normalizeComboInput = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trimStart().slice(0, maxLength);
+      const getDocumentDigits = (value) => value.replace(/\D/g, '');
+      const getCurrentDateInputValue = () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const getTomorrowDateInputValue = () => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const year = tomorrow.getFullYear();
+        const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const day = String(tomorrow.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const normalizeTermoAdesao = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+
+        if (digits.length <= 4) {
+          return digits;
+        }
+
+        return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+      };
+
+      const normalizeOsNumber = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 14);
+
+        if (digits.length <= 4) {
+          return digits;
+        }
+
+        if (digits.length <= 11) {
+          return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+        }
+
+        return `${digits.slice(0, 4)}-${digits.slice(4, 11)}-${digits.slice(11)}`;
+      };
+
+      const normalizeCpf = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+
+        if (digits.length <= 3) {
+          return digits;
+        }
+
+        if (digits.length <= 6) {
+          return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+        }
+
+        if (digits.length <= 9) {
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+        }
+
+        return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+      };
+
+      const normalizeCnpjCpf = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 14);
+
+        if (digits.length <= 3) {
+          return digits;
+        }
+
+        if (digits.length <= 6) {
+          return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+        }
+
+        if (digits.length <= 9) {
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+        }
+
+        if (digits.length <= 11) {
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+        }
+
+        if (digits.length <= 12) {
+          return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+        }
+
+        return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
+      };
+
+      const getSelectedSituacao = () => {
+        const selectedRadio = situacaoRadios.find((radio) => radio.checked);
+        return selectedRadio ? selectedRadio.value : 'Ativo';
+      };
+
+      const setSelectedSituacao = (value) => {
+        const selectedRadio = situacaoRadios.find((radio) => normalizeKey(radio.value) === normalizeKey(value)) || situacaoRadios[0];
+        situacaoRadios.forEach((radio) => {
+          radio.checked = radio === selectedRadio;
+        });
+      };
+
+      const readJsonResponse = async (response) => {
+        const rawBody = await response.text();
+
+        if (!rawBody) {
+          throw new Error('Resposta vazia do servidor.');
+        }
+
+        try {
+          return JSON.parse(rawBody);
+        } catch {
+          throw new Error('Resposta invalida do servidor.');
+        }
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof TypeError) {
+          return 'API indisponivel. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        if (error instanceof Error && ['Resposta vazia do servidor.', 'Resposta invalida do servidor.'].includes(error.message)) {
+          return 'API indisponivel ou respondeu de forma incompleta. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        return error instanceof Error ? error.message : fallbackMessage;
+      };
+
+      const showBanner = (message, tone = 'success') => {
+        if (bannerTimeoutId) {
+          window.clearTimeout(bannerTimeoutId);
+        }
+
+        statusBanner.textContent = message;
+        statusBanner.className = `dsc-status-banner dsc-status-banner-${tone}`;
+
+        bannerTimeoutId = window.setTimeout(() => {
+          statusBanner.className = 'dsc-status-banner dsc-hidden';
+          statusBanner.textContent = '';
+        }, 3500);
+      };
+
+      const resetMessages = () => {
+        codigoError.textContent = '';
+        termoAdesaoError.textContent = '';
+        osError.textContent = '';
+        revisaoError.textContent = '';
+        osOrigemError.textContent = '';
+        vigenciaOsError.textContent = '';
+        cnpjCpfError.textContent = '';
+        credenciadoError.textContent = '';
+        dreCodigoError.textContent = '';
+        dreDescricaoError.textContent = '';
+        cpfCondutorError.textContent = '';
+        condutorError.textContent = '';
+        cpfPrepostoError.textContent = '';
+        prepostoCondutorError.textContent = '';
+        prepostoInicioError.textContent = '';
+        prepostoDiasError.textContent = '';
+        crmError.textContent = '';
+        veiculoPlacasError.textContent = '';
+        cpfMonitorError.textContent = '';
+        monitorError.textContent = '';
+        tipoTrocaError.textContent = '';
+        dataEncerramentoError.textContent = '';
+        anotacaoError.textContent = '';
+        feedback.textContent = '';
+        feedback.className = 'dsc-feedback';
+      };
+
+      const resetImportMessages = () => {
+        importFileNameError.textContent = '';
+        importFeedback.textContent = '';
+        importFeedback.className = 'dsc-feedback';
+      };
+
+      const setGridMessage = (message, tone = '') => {
+        gridFeedback.textContent = message;
+        gridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          gridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const setRejectionGridMessage = (message, tone = '') => {
+        rejectionGridFeedback.textContent = message;
+        rejectionGridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          rejectionGridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const showForm = (isEditing = false) => {
+        rejectionPanel.classList.add('dsc-hidden');
+        importForm.classList.add('dsc-hidden');
+        form.classList.remove('dsc-hidden');
+        formTitle.textContent = isEditing ? 'Alteracao de OrdemServico' : 'Nova OrdemServico';
+        saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar OrdemServico';
+      };
+
+      const clearLookupFields = () => {
+        credenciadoInput.value = '';
+        dreDescricaoInput.value = '';
+        condutorInput.value = '';
+        prepostoCondutorInput.value = '';
+        veiculoPlacasInput.value = '';
+        monitorInput.value = '';
+      };
+
+      const hideForm = () => {
+        form.classList.add('dsc-hidden');
+        form.reset();
+        editingCodigo = null;
+        clearLookupFields();
+        renderDreOptions('');
+        tipoTrocaInput.value = '';
+        setSelectedSituacao('Ativo');
+        resetMessages();
+      };
+
+      const showImportForm = () => {
+        form.classList.add('dsc-hidden');
+        rejectionPanel.classList.add('dsc-hidden');
+        importForm.classList.remove('dsc-hidden');
+      };
+
+      const hideImportForm = () => {
+        importForm.classList.add('dsc-hidden');
+        importFileNameInput.value = defaultImportFileName;
+        resetImportMessages();
+      };
+
+      const showRejectionPanel = () => {
+        form.classList.add('dsc-hidden');
+        importForm.classList.add('dsc-hidden');
+        rejectionPanel.classList.remove('dsc-hidden');
+      };
+
+      const hideRejectionPanel = () => {
+        rejectionPanel.classList.add('dsc-hidden');
+      };
+
+      const buildUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          pageSize: String(pageSize),
+          sortBy: 'codigo',
+          sortDirection: 'asc',
+        });
+
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+
+        return `/api/ordem-servico?${params.toString()}`;
+      };
+
+      const buildRejectionUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentRejectionPage),
+          pageSize: String(rejectionPageSize),
+        });
+
+        if (currentRejectionSearch) {
+          params.set('search', currentRejectionSearch);
+        }
+
+        return `/api/ordem-servico/import-rejections?${params.toString()}`;
+      };
+
+      const updateSortIndicators = () => {
+        currentSortBy = 'codigo';
+        currentSortDirection = 'asc';
+        sortCodigoIndicator.textContent = '�?'';
+        sortOsIndicator.textContent = '�?.';
+        sortCredenciadoIndicator.textContent = '�?.';
+      };
+
+      const updatePagination = (totalItems) => {
+        totalLabel.textContent = `${totalItems} item(ns) encontrados`;
+        paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        previousPageButton.disabled = currentPage <= 1;
+        nextPageButton.disabled = currentPage >= totalPages;
+        updateSortIndicators();
+      };
+
+      const updateRejectionPagination = (totalItems) => {
+        rejectionTotalLabel.textContent = `${totalItems} item(ns) encontrados`;
+        rejectionPaginationInfo.textContent = `Pagina ${currentRejectionPage} de ${totalRejectionPages}`;
+        previousRejectionPageButton.disabled = currentRejectionPage <= 1;
+        nextRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
+      };
+
+      const renderEntitySuggestions = (listElement, items, getValue, getLabel) => {
+        listElement.innerHTML = '<option value=""></option>';
+
+        items.forEach((item) => {
+          const optionValue = String(getValue(item) || '').trim();
+
+          if (!optionValue) {
+            return;
+          }
+
+          const option = document.createElement('option');
+          option.value = optionValue;
+          const optionLabel = String(getLabel(item) || '').trim();
+
+          if (optionLabel) {
+            option.label = optionLabel;
+            option.textContent = `${optionValue} - ${optionLabel}`;
+          }
+
+          listElement.appendChild(option);
+        });
+      };
+
+      const renderDreOptions = (selectedValue = dreCodigoInput.value || '') => {
+        const normalizedSelectedValue = normalizeText(String(selectedValue || ''), 30);
+        const searchKey = normalizeKey(normalizedSelectedValue);
+        const options = dreOptions.filter((item) => {
+          const codigo = String(item.codigo_operacional || item.codigo || '').trim();
+          const descricao = String(item.descricao || '').trim();
+          return !searchKey
+            || normalizeKey(codigo).includes(searchKey)
+            || normalizeKey(descricao).includes(searchKey);
+        });
+
+        renderEntitySuggestions(
+          dreCodigoOptionsList,
+          options,
+          (item) => item.codigo_operacional || item.codigo,
+          (item) => item.descricao,
+        );
+
+        dreCodigoInput.value = normalizedSelectedValue;
+      };
+
+      const loadDreOptions = async () => {
+        try {
+          const response = await fetch('/api/dre?page=1&pageSize=50&sortBy=descricao&sortDirection=asc', {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar DREs.');
+          }
+
+          dreOptions = payload.items || [];
+        } catch {
+          dreOptions = [];
+        }
+
+        renderDreOptions();
+      };
+
+      const loadCredenciadaSuggestions = async (searchValue) => {
+        const requestId = ++credenciadaSuggestionRequestId;
+        const normalizedSearch = normalizeCnpjCpf(String(searchValue || ''));
+
+        if (!getDocumentDigits(normalizedSearch).length) {
+          renderEntitySuggestions(cnpjCpfOptionsList, [], () => '', () => '');
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/credenciada?page=1&pageSize=8&sortBy=credenciado&sortDirection=asc&search=${encodeURIComponent(normalizedSearch)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (requestId !== credenciadaSuggestionRequestId) {
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar sugestoes de credenciada.');
+          }
+
+          renderEntitySuggestions(cnpjCpfOptionsList, payload.items || [], (item) => item.cnpj_cpf, (item) => item.credenciado);
+        } catch {
+          if (requestId !== credenciadaSuggestionRequestId) {
+            return;
+          }
+
+          renderEntitySuggestions(cnpjCpfOptionsList, [], () => '', () => '');
+        }
+      };
+
+      const loadCondutorSuggestions = async (searchValue, listElement, requestKind) => {
+        const requestId = requestKind === 'preposto'
+          ? ++prepostoSuggestionRequestId
+          : ++condutorSuggestionRequestId;
+        const normalizedSearch = normalizeCpf(String(searchValue || ''));
+
+        if (!getDocumentDigits(normalizedSearch).length) {
+          renderEntitySuggestions(listElement, [], () => '', () => '');
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/condutor?page=1&pageSize=8&sortBy=condutor&sortDirection=asc&search=${encodeURIComponent(normalizedSearch)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          const activeRequestId = requestKind === 'preposto' ? prepostoSuggestionRequestId : condutorSuggestionRequestId;
+
+          if (requestId !== activeRequestId) {
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar sugestoes de condutor.');
+          }
+
+          renderEntitySuggestions(listElement, payload.items || [], (item) => item.cpf_condutor, (item) => item.condutor);
+        } catch {
+          const activeRequestId = requestKind === 'preposto' ? prepostoSuggestionRequestId : condutorSuggestionRequestId;
+
+          if (requestId !== activeRequestId) {
+            return;
+          }
+
+          renderEntitySuggestions(listElement, [], () => '', () => '');
+        }
+      };
+
+      const loadMonitorSuggestions = async (searchValue) => {
+        const requestId = ++monitorSuggestionRequestId;
+        const normalizedSearch = normalizeCpf(String(searchValue || ''));
+
+        if (!getDocumentDigits(normalizedSearch).length) {
+          renderEntitySuggestions(cpfMonitorOptionsList, [], () => '', () => '');
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/monitor?page=1&pageSize=8&sortBy=monitor&sortDirection=asc&search=${encodeURIComponent(normalizedSearch)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (requestId !== monitorSuggestionRequestId) {
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar sugestoes de monitor.');
+          }
+
+          renderEntitySuggestions(cpfMonitorOptionsList, payload.items || [], (item) => item.cpf_monitor, (item) => item.monitor);
+        } catch {
+          if (requestId !== monitorSuggestionRequestId) {
+            return;
+          }
+
+          renderEntitySuggestions(cpfMonitorOptionsList, [], () => '', () => '');
+        }
+      };
+
+      const loadVeiculoSuggestions = async (searchValue) => {
+        const requestId = ++veiculoSuggestionRequestId;
+        const normalizedSearch = normalizeCrm(String(searchValue || ''));
+
+        if (!normalizedSearch) {
+          renderEntitySuggestions(crmOptionsList, [], () => '', () => '');
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/veiculo?page=1&pageSize=8&sortBy=placas&sortDirection=asc&search=${encodeURIComponent(normalizedSearch)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (requestId !== veiculoSuggestionRequestId) {
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar sugestoes de veiculo.');
+          }
+
+          renderEntitySuggestions(
+            crmOptionsList,
+            payload.items || [],
+            (item) => item.crm,
+            (item) => [String(item.placas || '').trim(), String(item.marca_modelo || '').trim()].filter(Boolean).join(' - '),
+          );
+        } catch {
+          if (requestId !== veiculoSuggestionRequestId) {
+            return;
+          }
+
+          renderEntitySuggestions(crmOptionsList, [], () => '', () => '');
+        }
+      };
+
+      const queueSuggestionLoad = (currentTimeoutId, setTimeoutId, loader, value) => {
+        if (currentTimeoutId) {
+          window.clearTimeout(currentTimeoutId);
+        }
+
+        setTimeoutId(window.setTimeout(() => {
+          void loader(value());
+        }, 180));
+      };
+
+      const renderTipoTrocaOptions = (selectedValue = '') => {
+        tipoTrocaOptionsList.innerHTML = '<option value=""></option>';
+
+        const filteredOptions = normalizeKey(selectedValue)
+          ? tipoTrocaOptions.filter((item) => normalizeKey(item.lista).includes(normalizeKey(selectedValue)) || String(item.codigo).includes(selectedValue.trim()))
+          : tipoTrocaOptions;
+
+        filteredOptions.forEach((item) => {
+          const option = document.createElement('option');
+          option.value = item.lista;
+          option.label = String(item.codigo);
+          option.textContent = `${item.codigo} - ${item.lista}`;
+          tipoTrocaOptionsList.appendChild(option);
+        });
+      };
+
+      const loadTipoTrocaOptions = async () => {
+        try {
+          const response = await fetch('/api/troca?page=1&pageSize=100&sortBy=descricao&sortDirection=asc', {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar tipos de troca.');
+          }
+
+          tipoTrocaOptions = payload.items || [];
+          renderTipoTrocaOptions(tipoTrocaInput.value);
+        } catch {
+          tipoTrocaOptions = [];
+          renderTipoTrocaOptions('');
+        }
+      };
+
+      const renderGrid = (items) => {
+        gridBody.innerHTML = '';
+
+        if (!items.length) {
+          emptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        emptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.codigo || ''}</td>
+            <td>${item.termo_adesao || ''}</td>
+            <td>${item.os || ''}</td>
+            <td>${item.credenciado || ''}</td>
+            <td>${item.dre_codigo || ''}</td>
+            <td>${item.condutor || ''}</td>
+            <td>${item.crm || ''}</td>
+            <td>${item.veiculo_placas || ''}</td>
+            <td>${item.situacao || ''}</td>
+            <td>
+              <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}">Excluir</button>
+              </div>
+            </td>
+          `;
+          row.dataset.item = JSON.stringify(item);
+          gridBody.appendChild(row);
+        });
+      };
+
+      const renderRejectionGrid = (items) => {
+        rejectionGridBody.innerHTML = '';
+
+        if (!items.length) {
+          rejectionEmptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        rejectionEmptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.data_importacao || ''}</td>
+            <td>${item.arquivo_xml || ''}</td>
+            <td>${item.linha_xml || ''}</td>
+            <td>${item.codigo_xml || ''}</td>
+            <td>${item.os_xml || ''}</td>
+            <td>${item.credenciado_xml || ''}</td>
+            <td>${item.dre_xml || ''}</td>
+            <td>${item.cpf_condutor_xml || ''}</td>
+            <td>${item.cpf_monitor_xml || ''}</td>
+            <td>${item.crm_xml || ''}</td>
+            <td>${item.motivo_recusa || ''}</td>
+          `;
+          rejectionGridBody.appendChild(row);
+        });
+      };
+
+      const loadItems = async () => {
+        setGridMessage('Carregando Ordens de Servico...');
+
+        try {
+          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar Ordens de Servico.');
+          }
+
+          totalPages = payload.totalPages || 1;
+          currentPage = payload.page || 1;
+          renderGrid(payload.items || []);
+          updatePagination(payload.total || 0);
+          setGridMessage(payload.items && payload.items.length ? '' : 'Nenhuma OrdemServico encontrada.');
+        } catch (error) {
+          gridBody.innerHTML = '';
+          emptyState.classList.remove('dsc-hidden');
+          setGridMessage(getRequestErrorMessage(error, 'Falha ao carregar Ordens de Servico.'), 'error');
+        }
+      };
+
+      const loadRejections = async () => {
+        setRejectionGridMessage('Carregando recusas de importacao...');
+
+        try {
+          const response = await fetch(buildRejectionUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar recusas de importacao.');
+          }
+
+          totalRejectionPages = payload.totalPages || 1;
+          currentRejectionPage = payload.page || 1;
+          renderRejectionGrid(payload.items || []);
+          updateRejectionPagination(payload.total || 0);
+          setRejectionGridMessage(payload.items && payload.items.length ? '' : 'Nenhuma recusa encontrada.');
+        } catch (error) {
+          rejectionGridBody.innerHTML = '';
+          rejectionEmptyState.classList.remove('dsc-hidden');
+          setRejectionGridMessage(getRequestErrorMessage(error, 'Falha ao carregar recusas de importacao.'), 'error');
+        }
+      };
+
+      const fetchLookupItem = async (url, fallbackMessage) => {
+        const response = await fetch(url, { headers: { Accept: 'application/json' } });
+        const payload = await readJsonResponse(response);
+
+        if (!response.ok) {
+          throw new Error(payload.message || fallbackMessage);
+        }
+
+        return payload.item;
+      };
+
+      const syncCredenciadaByDocument = async () => {
+        const cnpjCpf = normalizeCnpjCpf(cnpjCpfInput.value);
+        cnpjCpfInput.value = cnpjCpf;
+
+        if (!getDocumentDigits(cnpjCpf)) {
+          credenciadoInput.value = '';
+          cnpjCpfError.textContent = '';
+          return;
+        }
+
+        try {
+          const item = await fetchLookupItem(`/api/credenciada/lookup?cnpjCpf=${encodeURIComponent(cnpjCpf)}`, 'Falha ao localizar credenciado.');
+          credenciadoInput.value = normalizeText(String(item.credenciado || ''), 255);
+          cnpjCpfInput.value = normalizeCnpjCpf(String(item.cnpj_cpf || cnpjCpf));
+          cnpjCpfError.textContent = '';
+        } catch (error) {
+          credenciadoInput.value = '';
+          cnpjCpfError.textContent = getRequestErrorMessage(error, 'Falha ao localizar credenciado.');
+        }
+      };
+
+      const syncDreByCodigo = async () => {
+        const codigo = normalizeText(dreCodigoInput.value, 30);
+        dreCodigoInput.value = codigo;
+
+        if (!codigo) {
+          dreDescricaoInput.value = '';
+          dreCodigoError.textContent = '';
+          return;
+        }
+
+        try {
+          const item = await fetchLookupItem(`/api/dre/lookup?codigo=${encodeURIComponent(codigo)}`, 'Falha ao localizar DRE.');
+          dreCodigoInput.value = normalizeText(String(item.codigo_operacional || item.codigo || codigo), 30);
+          dreDescricaoInput.value = normalizeText(String(item.descricao || ''), 255);
+          dreCodigoError.textContent = '';
+        } catch (error) {
+          dreDescricaoInput.value = '';
+          dreCodigoError.textContent = getRequestErrorMessage(error, 'Falha ao localizar DRE.');
+        }
+      };
+
+      const syncCondutorByCpf = async (cpfInputElement, nameInputElement, errorElement, emptyMessage) => {
+        const cpf = normalizeCpf(cpfInputElement.value);
+        cpfInputElement.value = cpf;
+
+        if (!getDocumentDigits(cpf)) {
+          nameInputElement.value = '';
+          errorElement.textContent = '';
+          return;
+        }
+
+        try {
+          const item = await fetchLookupItem(`/api/condutor/lookup?cpf=${encodeURIComponent(cpf)}`, emptyMessage);
+          cpfInputElement.value = normalizeCpf(String(item.cpf_condutor || cpf));
+          nameInputElement.value = normalizeText(String(item.condutor || ''), 255);
+          errorElement.textContent = '';
+        } catch (error) {
+          nameInputElement.value = '';
+          errorElement.textContent = getRequestErrorMessage(error, emptyMessage);
+        }
+      };
+
+      const syncMonitorByCpf = async () => {
+        const cpf = normalizeCpf(cpfMonitorInput.value);
+        cpfMonitorInput.value = cpf;
+
+        if (!getDocumentDigits(cpf)) {
+          monitorInput.value = '';
+          cpfMonitorError.textContent = '';
+          return;
+        }
+
+        try {
+          const item = await fetchLookupItem(`/api/monitor/lookup?cpf=${encodeURIComponent(cpf)}`, 'Falha ao localizar monitor.');
+          cpfMonitorInput.value = normalizeCpf(String(item.cpf_monitor || cpf));
+          monitorInput.value = normalizeText(String(item.monitor || ''), 255);
+          cpfMonitorError.textContent = '';
+        } catch (error) {
+          monitorInput.value = '';
+          cpfMonitorError.textContent = getRequestErrorMessage(error, 'Falha ao localizar monitor.');
+        }
+      };
+
+      const syncVeiculoByCrm = async () => {
+        const crm = normalizeCrm(crmInput.value);
+        crmInput.value = crm;
+
+        if (!crm) {
+          veiculoPlacasInput.value = '';
+          crmError.textContent = '';
+          return;
+        }
+
+        try {
+          const item = await fetchLookupItem(`/api/veiculo/lookup?crm=${encodeURIComponent(crm)}`, 'Falha ao localizar veiculo.');
+          crmInput.value = normalizeCrm(String(item.crm || crm));
+          veiculoPlacasInput.value = normalizeText(String(item.placas || ''), 20);
+          crmError.textContent = '';
+        } catch (error) {
+          veiculoPlacasInput.value = '';
+          crmError.textContent = getRequestErrorMessage(error, 'Falha ao localizar veiculo.');
+        }
+      };
+
+      const syncTipoTroca = async () => {
+        const rawValue = tipoTrocaInput.value.trim();
+        const normalizedValue = normalizeText(rawValue, 255);
+        tipoTrocaInput.value = normalizedValue;
+        renderTipoTrocaOptions(normalizedValue);
+
+        if (!normalizedValue) {
+          tipoTrocaError.textContent = '';
+          return;
+        }
+
+        try {
+          const query = /^\d+$/.test(rawValue)
+            ? `/api/troca/lookup?codigo=${encodeURIComponent(rawValue)}`
+            : `/api/troca/lookup?descricao=${encodeURIComponent(normalizedValue)}`;
+          const item = await fetchLookupItem(query, 'Falha ao localizar tipo de troca.');
+          tipoTrocaInput.value = normalizeText(String(item.lista || normalizedValue), 255);
+          tipoTrocaError.textContent = '';
+        } catch (error) {
+          tipoTrocaError.textContent = getRequestErrorMessage(error, 'Falha ao localizar tipo de troca.');
+        }
+      };
+
+      const startInsert = () => {
+        form.reset();
+        clearLookupFields();
+        tipoTrocaInput.value = '';
+        editingCodigo = null;
+        vigenciaOsInput.min = getTomorrowDateInputValue();
+        setSelectedSituacao('Ativo');
+        resetMessages();
+        showForm(false);
+      };
+
+      const startEdit = (item) => {
+        editingCodigo = item.codigo;
+        codigoInput.value = item.codigo || '';
+        termoAdesaoInput.value = normalizeTermoAdesao(String(item.termo_adesao || ''));
+        osInput.value = normalizeOsNumber(String(item.os || ''));
+        revisaoInput.value = item.revisao || '';
+        osOrigemInput.value = normalizeOsNumber(String(item.os_origem || ''));
+        vigenciaOsInput.value = item.vigencia_os || '';
+        cnpjCpfInput.value = item.cnpj_cpf || '';
+        credenciadoInput.value = item.credenciado || '';
+        dreCodigoInput.value = item.dre_codigo || '';
+        dreDescricaoInput.value = item.dre_descricao || '';
+        cpfCondutorInput.value = item.cpf_condutor || '';
+        condutorInput.value = item.condutor || '';
+        cpfPrepostoInput.value = item.cpf_preposto || '';
+        prepostoCondutorInput.value = item.preposto_condutor || '';
+        prepostoInicioInput.value = item.preposto_inicio || '';
+        prepostoDiasInput.value = item.preposto_dias || '';
+        crmInput.value = item.crm || '';
+        veiculoPlacasInput.value = item.veiculo_placas || '';
+        cpfMonitorInput.value = item.cpf_monitor || '';
+        monitorInput.value = item.monitor || '';
+        tipoTrocaInput.value = item.tipo_troca_descricao || '';
+        vigenciaOsInput.min = getTomorrowDateInputValue();
+        dataEncerramentoInput.value = item.data_encerramento || '';
+        anotacaoInput.value = item.anotacao || '';
+        setSelectedSituacao(item.situacao || 'Ativo');
+        renderDreOptions(dreCodigoInput.value);
+        renderTipoTrocaOptions(tipoTrocaInput.value);
+        resetMessages();
+        showForm(true);
+      };
+
+      const handleDelete = async (item) => {
+        if (!window.confirm(`Excluir a OrdemServico ${item.codigo} - ${item.os}?`)) {
+          return;
+        }
+
+        setGridMessage(`Excluindo OrdemServico ${item.codigo}...`);
+
+        try {
+          const response = await fetch(`/api/ordem-servico/${encodeURIComponent(item.codigo)}`, {
+            method: 'DELETE',
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao excluir OrdemServico.');
+          }
+
+          setGridMessage('OrdemServico excluida com sucesso.', 'success');
+          showBanner(`OrdemServico ${item.codigo} excluida com sucesso.`, 'success');
+          if (editingCodigo === item.codigo) {
+            hideForm();
+          }
+          await loadItems();
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao excluir OrdemServico.');
+          setGridMessage(message, 'error');
+          showBanner(message, 'error');
+        }
+      };
+
+      gridBody.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (!(target instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const action = target.dataset.action;
+        const row = target.closest('tr');
+        const rawItem = row ? row.dataset.item : '';
+
+        if (!rawItem) {
+          return;
+        }
+
+        const item = JSON.parse(rawItem);
+
+        if (action === 'edit') {
+          startEdit(item);
+          return;
+        }
+
+        if (action === 'delete') {
+          void handleDelete(item);
+        }
+      });
+
+      codigoInput.addEventListener('input', () => {
+        codigoInput.value = normalizeCodigo(codigoInput.value);
+      });
+
+      termoAdesaoInput.addEventListener('input', () => {
+        termoAdesaoInput.value = normalizeTermoAdesao(termoAdesaoInput.value);
+      });
+
+      osInput.addEventListener('input', () => {
+        osInput.value = normalizeOsNumber(osInput.value);
+      });
+
+      revisaoInput.addEventListener('input', () => {
+        revisaoInput.value = normalizeText(revisaoInput.value, 30);
+      });
+
+      osOrigemInput.addEventListener('input', () => {
+        osOrigemInput.value = normalizeOsNumber(osOrigemInput.value);
+      });
+
+      cnpjCpfInput.addEventListener('input', () => {
+        cnpjCpfInput.value = normalizeCnpjCpf(cnpjCpfInput.value);
+        queueSuggestionLoad(credenciadaSuggestionTimeoutId, (timeoutId) => { credenciadaSuggestionTimeoutId = timeoutId; }, loadCredenciadaSuggestions, () => cnpjCpfInput.value);
+      });
+
+      vigenciaOsInput.addEventListener('input', () => {
+        if (!vigenciaOsInput.value) {
+          vigenciaOsError.textContent = '';
+          return;
+        }
+
+        vigenciaOsError.textContent = vigenciaOsInput.value <= getCurrentDateInputValue()
+          ? 'A vigencia da OS deve ser futura.'
+          : '';
+      });
+
+      cnpjCpfInput.addEventListener('blur', () => {
+        void syncCredenciadaByDocument();
+      });
+
+      dreCodigoInput.addEventListener('input', () => {
+        dreCodigoInput.value = normalizeText(dreCodigoInput.value, 30);
+        renderDreOptions(dreCodigoInput.value);
+      });
+
+      dreCodigoInput.addEventListener('blur', () => {
+        void syncDreByCodigo();
+      });
+
+      cpfCondutorInput.addEventListener('input', () => {
+        cpfCondutorInput.value = normalizeCpf(cpfCondutorInput.value);
+        queueSuggestionLoad(condutorSuggestionTimeoutId, (timeoutId) => { condutorSuggestionTimeoutId = timeoutId; }, (value) => loadCondutorSuggestions(value, cpfCondutorOptionsList, 'condutor'), () => cpfCondutorInput.value);
+      });
+
+      cpfCondutorInput.addEventListener('blur', () => {
+        void syncCondutorByCpf(cpfCondutorInput, condutorInput, cpfCondutorError, 'Falha ao localizar condutor.');
+      });
+
+      cpfPrepostoInput.addEventListener('input', () => {
+        cpfPrepostoInput.value = normalizeCpf(cpfPrepostoInput.value);
+        queueSuggestionLoad(prepostoSuggestionTimeoutId, (timeoutId) => { prepostoSuggestionTimeoutId = timeoutId; }, (value) => loadCondutorSuggestions(value, cpfPrepostoOptionsList, 'preposto'), () => cpfPrepostoInput.value);
+      });
+
+      cpfPrepostoInput.addEventListener('blur', () => {
+        void syncCondutorByCpf(cpfPrepostoInput, prepostoCondutorInput, cpfPrepostoError, 'Falha ao localizar preposto.');
+      });
+
+      prepostoDiasInput.addEventListener('input', () => {
+        prepostoDiasInput.value = normalizeIntegerInput(prepostoDiasInput.value, 3);
+      });
+
+      crmInput.addEventListener('input', () => {
+        crmInput.value = normalizeCrm(crmInput.value);
+        queueSuggestionLoad(veiculoSuggestionTimeoutId, (timeoutId) => { veiculoSuggestionTimeoutId = timeoutId; }, loadVeiculoSuggestions, () => crmInput.value);
+      });
+
+      crmInput.addEventListener('blur', () => {
+        void syncVeiculoByCrm();
+      });
+
+      cpfMonitorInput.addEventListener('input', () => {
+        cpfMonitorInput.value = normalizeCpf(cpfMonitorInput.value);
+        queueSuggestionLoad(monitorSuggestionTimeoutId, (timeoutId) => { monitorSuggestionTimeoutId = timeoutId; }, loadMonitorSuggestions, () => cpfMonitorInput.value);
+      });
+
+      cpfMonitorInput.addEventListener('blur', () => {
+        void syncMonitorByCpf();
+      });
+
+      tipoTrocaInput.addEventListener('input', () => {
+        tipoTrocaInput.value = normalizeText(tipoTrocaInput.value, 255);
+        renderTipoTrocaOptions(tipoTrocaInput.value);
+      });
+
+      tipoTrocaInput.addEventListener('blur', () => {
+        void syncTipoTroca();
+      });
+
+      anotacaoInput.addEventListener('input', () => {
+        anotacaoInput.value = normalizeAnnotation(anotacaoInput.value);
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const payload = {
+          codigo: normalizeCodigo(codigoInput.value),
+          termoAdesao: normalizeTermoAdesao(termoAdesaoInput.value),
+          os: normalizeOsNumber(osInput.value),
+          revisao: normalizeText(revisaoInput.value, 30),
+          osOrigem: normalizeOsNumber(osOrigemInput.value),
+          vigenciaOs: vigenciaOsInput.value,
+          credenciado: normalizeText(credenciadoInput.value, 255),
+          cnpjCpf: normalizeCnpjCpf(cnpjCpfInput.value),
+          dreCodigo: normalizeText(dreCodigoInput.value, 30),
+          cpfCondutor: normalizeCpf(cpfCondutorInput.value),
+          cpfPreposto: normalizeCpf(cpfPrepostoInput.value),
+          prepostoInicio: prepostoInicioInput.value,
+          prepostoDias: normalizeIntegerInput(prepostoDiasInput.value, 3),
+          crm: normalizeCrm(crmInput.value),
+          cpfMonitor: normalizeCpf(cpfMonitorInput.value),
+          situacao: getSelectedSituacao(),
+          tipoTroca: normalizeText(tipoTrocaInput.value, 255),
+          dataEncerramento: dataEncerramentoInput.value,
+          anotacao: normalizeAnnotation(anotacaoInput.value),
+        };
+        let hasError = false;
+
+        resetMessages();
+
+        codigoInput.value = payload.codigo;
+        termoAdesaoInput.value = payload.termoAdesao;
+        osInput.value = payload.os;
+        revisaoInput.value = payload.revisao;
+        osOrigemInput.value = payload.osOrigem;
+        cnpjCpfInput.value = payload.cnpjCpf;
+        dreCodigoInput.value = payload.dreCodigo;
+        cpfCondutorInput.value = payload.cpfCondutor;
+        cpfPrepostoInput.value = payload.cpfPreposto;
+        prepostoDiasInput.value = payload.prepostoDias;
+        crmInput.value = payload.crm;
+        cpfMonitorInput.value = payload.cpfMonitor;
+        tipoTrocaInput.value = payload.tipoTroca;
+        anotacaoInput.value = payload.anotacao;
+        dataEncerramentoInput.value = payload.dataEncerramento;
+
+        if (!payload.codigo) {
+          codigoError.textContent = 'Informe o codigo.';
+          hasError = true;
+        }
+
+        if (!payload.os) {
+          osError.textContent = 'Informe o numero da OS.';
+          hasError = true;
+        }
+
+        if (!payload.vigenciaOs) {
+          vigenciaOsError.textContent = 'Informe a vigencia da OS.';
+          hasError = true;
+        } else if (payload.vigenciaOs <= getCurrentDateInputValue()) {
+          vigenciaOsError.textContent = 'A vigencia da OS deve ser futura.';
+          hasError = true;
+        }
+
+        if (!payload.cnpjCpf) {
+          cnpjCpfError.textContent = 'Informe o CNPJ/CPF do credenciado.';
+          hasError = true;
+        }
+
+        if (!payload.dreCodigo) {
+          dreCodigoError.textContent = 'Informe a DRE.';
+          hasError = true;
+        }
+
+
+        // Validação: CPF do preposto não pode ser igual ao do condutor
+        if (payload.cpfCondutor && payload.cpfPreposto && payload.cpfCondutor === payload.cpfPreposto) {
+          cpfPrepostoError.textContent = 'O CPF do preposto não pode ser igual ao do condutor.';
+          hasError = true;
+        }
+
+        // Se CPF do preposto for preenchido, início e dias são obrigatórios
+        if (payload.cpfPreposto && getDocumentDigits(payload.cpfPreposto).length) {
+          // Renomeia label para "Dias como preposto"
+          document.getElementById('span-preposto-dias').textContent = 'Dias como preposto';
+          if (!payload.prepostoInicio) {
+            prepostoInicioError.textContent = 'Informe o início de preposto.';
+            hasError = true;
+          }
+          if (!payload.prepostoDias || isNaN(Number(payload.prepostoDias)) || Number(payload.prepostoDias) <= 0) {
+            prepostoDiasError.textContent = 'Informe os dias como preposto.';
+            hasError = true;
+          }
+        } else {
+          // Volta label para "Dias"
+          document.getElementById('span-preposto-dias').textContent = 'Dias';
+        }
+
+        if (!payload.crm) {
+          crmError.textContent = 'Informe o CRM do veiculo.';
+          hasError = true;
+        }
+
+        if (hasError) {
+          feedback.textContent = 'Corrija os campos para continuar.';
+          feedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        feedback.textContent = editingCodigo ? 'Salvando alteracao...' : 'Salvando OrdemServico...';
+
+        try {
+          const response = await fetch(editingCodigo ? `/api/ordem-servico/${encodeURIComponent(editingCodigo)}` : '/api/ordem-servico', {
+            method: editingCodigo ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+          const responsePayload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(responsePayload.message || 'Falha ao salvar OrdemServico.');
+          }
+
+          hideForm();
+          await loadItems();
+          showBanner(editingCodigo ? 'OrdemServico alterada com sucesso.' : 'OrdemServico cadastrada com sucesso.', 'success');
+          setGridMessage(editingCodigo ? 'OrdemServico alterada com sucesso.' : 'OrdemServico cadastrada com sucesso.', 'success');
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao salvar OrdemServico.');
+          feedback.textContent = message;
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+        }
+      });
+
+      importForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const fileName = importFileNameInput.value.trim();
+        resetImportMessages();
+        importFileNameInput.value = fileName || defaultImportFileName;
+
+        if (!fileName) {
+          importFileNameError.textContent = 'Informe o nome do arquivo XML.';
+          importFeedback.textContent = 'Corrija o campo para continuar.';
+          importFeedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        importFeedback.textContent = 'Executando importacao...';
+
+        try {
+          const response = await fetch('/api/ordem-servico/import-xml', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ fileName }),
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao importar XML.');
+          }
+
+          importFeedback.textContent = `Importacao concluida. Processados: ${payload.processed || 0}, inseridos: ${payload.inserted || 0}, atualizados: ${payload.updated || 0}, recusados: ${payload.skipped || 0}.`;
+          importFeedback.className = 'dsc-feedback dsc-feedback-success';
+          await loadItems();
+          await loadRejections();
+          showBanner('Importacao de OrdemServico concluida com sucesso.', 'success');
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao importar XML.');
+          importFeedback.textContent = message;
+          importFeedback.className = 'dsc-feedback dsc-feedback-error';
+        }
+      });
+
+      filterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentSearch = searchInput.value.trim();
+        currentPage = 1;
+        void loadItems();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      rejectionFilterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentRejectionSearch = rejectionSearchInput.value.trim();
+        currentRejectionPage = 1;
+        void loadRejections();
+      });
+
+      clearRejectionFilterButton.addEventListener('click', () => {
+        rejectionSearchInput.value = '';
+        currentRejectionSearch = '';
+        currentRejectionPage = 1;
+        void loadRejections();
+      });
+
+      previousPageButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage -= 1;
+          void loadItems();
+        }
+      });
+
+      nextPageButton.addEventListener('click', () => {
+        if (currentPage < totalPages) {
+          currentPage += 1;
+          void loadItems();
+        }
+      });
+
+      previousRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage > 1) {
+          currentRejectionPage -= 1;
+          void loadRejections();
+        }
+      });
+
+      nextRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage < totalRejectionPages) {
+          currentRejectionPage += 1;
+          void loadRejections();
+        }
+      });
+
+      const toggleSort = (field) => {
+        if (field !== 'codigo') {
+          return;
+        }
+
+        currentSortBy = 'codigo';
+        currentSortDirection = 'asc';
+
+        currentPage = 1;
+        void loadItems();
+      };
+
+      sortCodigoButton.addEventListener('click', () => toggleSort('codigo'));
+      sortOsButton.addEventListener('click', () => toggleSort('os'));
+      sortCredenciadoButton.addEventListener('click', () => toggleSort('credenciado'));
+      insertButton.addEventListener('click', startInsert);
+      cancelButton.addEventListener('click', hideForm);
+      importButton.addEventListener('click', () => {
+        hideForm();
+        showImportForm();
+      });
+      cancelImportButton.addEventListener('click', hideImportForm);
+      rejectionButton.addEventListener('click', () => {
+        hideForm();
+        hideImportForm();
+        showRejectionPanel();
+        void loadRejections();
+      });
+      closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
+
+      importFileNameInput.value = defaultImportFileName;
+      setSelectedSituacao('Ativo');
+      renderEntitySuggestions(cnpjCpfOptionsList, [], () => '', () => '');
+      renderEntitySuggestions(cpfCondutorOptionsList, [], () => '', () => '');
+      renderEntitySuggestions(cpfPrepostoOptionsList, [], () => '', () => '');
+      renderEntitySuggestions(cpfMonitorOptionsList, [], () => '', () => '');
+      renderEntitySuggestions(crmOptionsList, [], () => '', () => '');
+      renderDreOptions('');
+      renderTipoTrocaOptions('');
+      void loadDreOptions();
+      void loadTipoTrocaOptions();
+      void loadItems();
+    </script>
+  </body>
+</html>
+
+
+

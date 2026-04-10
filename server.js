@@ -1,4 +1,4 @@
-import { createServer } from 'node:http'
+﻿import { createServer } from 'node:http'
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { XMLParser } from 'fast-xml-parser'
@@ -21,6 +21,16 @@ const pool = new Pool({
   password: process.env.PGPASSWORD ?? '12345',
   database: process.env.PGDATABASE ?? 'teg_financ',
 })
+
+const ordemServicoTableName = 'ordem_servico'
+const ordemServicoImportRecusaTableName = 'ordem_servico_import_recusa'
+const ordemServicoCodigoSequenceName = 'ordem_servico_codigo_seq'
+const legacyCredenciamentoOsTableName = 'credenciamento_os'
+const legacyCredenciamentoOsImportRecusaTableName = 'credenciamento_os_import_recusa'
+const legacyCredenciamentoOsCodigoSequenceName = 'credenciamento_os_codigo_seq'
+const ordemServicoCollectionPath = '/api/ordem-servico'
+const ordemServicoImportXmlPath = '/api/ordem-servico/import-xml'
+const ordemServicoImportRejectionsPath = '/api/ordem-servico/import-rejections'
 
 const sendJson = (response, statusCode, payload) => {
   response.writeHead(statusCode, {
@@ -70,12 +80,12 @@ const normalizeAccessName = (value) => {
 }
 
 const isAccessNameValid = (value) => {
-  return /^[A-ZÀ-Ý ]{1,50}$/.test(value)
+  return /^[\p{Lu} ]{1,50}$/u.test(value)
 }
 
 const buildGeneratedAccessName = (email, sequenceNumber) => {
   const emailBaseName = normalizeAccessName(email.split('@')[0] ?? '')
-    .replace(/[^A-ZÀ-Ý ]/g, '')
+    .replace(/[^\p{Lu} ]/gu, '')
   const fallbackBase = emailBaseName || 'USUARIO'
   const suffix = sequenceNumber > 1 ? ` ${sequenceNumber}` : ''
 
@@ -164,8 +174,8 @@ const getVeiculoCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
-const getCredenciamentoOsCodigoFromUrl = (url) => {
-  const match = url.match(/^\/api\/credenciamento-os\/([^/]+)$/)
+const getOrdemServicoCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/ordem-servico\/([^/]+)$/)
   return match ? decodeURIComponent(match[1]) : null
 }
 
@@ -199,7 +209,7 @@ const createAccessHashPayload = (password) => {
 const normalizeCondutorName = (value) => {
   return normalizeRequestValue(value)
     .replace(/\([^)]*\)/g, ' ')
-    .replace(/[^A-ZÀ-Ýa-zà-ý\s]/g, ' ')
+    .replace(/[^\p{L}\s]/gu, ' ')
     .toUpperCase()
     .toUpperCase()
     .replace(/\s+/g, ' ')
@@ -218,11 +228,11 @@ const normalizeCondutorCodigo = (value) => {
 }
 
 const isCondutorNameValid = (value) => {
-  return /^[A-ZÀ-Ý ]{1,100}$/.test(value)
+  return /^[\p{Lu} ]{1,100}$/u.test(value)
 }
 
 const isMonitorNameValid = (value) => {
-  return /^[A-ZÀ-Ý ]{1,255}$/.test(value)
+  return /^[\p{Lu} ]{1,255}$/u.test(value)
 }
 
 const normalizeCpf = (value) => {
@@ -294,11 +304,11 @@ const normalizeTipoVinculo = (value) => {
   }
 
   if (normalizedKey === 'socio') {
-    return 'Sócio'
+    return 'S\u00f3cio'
   }
 
   if (normalizedKey === 'funcionario') {
-    return 'Funcionário'
+    return 'Funcion\u00e1rio'
   }
 
   return null
@@ -764,21 +774,21 @@ const getVeiculoPersistenceError = (error, fallbackMessage) => {
     if (constraintName === 'veiculo_crm_uk' || (isUniqueViolation && errorMessage.includes('veiculo_crm_uk'))) {
       return {
         status: 409,
-        message: 'CRM já cadastrado',
+        message: 'CRM j\u00e1 cadastrado',
       }
     }
 
     if (constraintName === 'veiculo_placa_uk' || (isUniqueViolation && errorMessage.includes('veiculo_placa_uk'))) {
       return {
         status: 409,
-        message: 'Placa já cadastrada',
+        message: 'Placa j\u00e1 cadastrada',
       }
     }
 
     if (constraintName === 'veiculo_crm_placa_uk' || (isUniqueViolation && errorMessage.includes('veiculo_crm_placa_uk'))) {
       return {
         status: 409,
-        message: 'CRM e placa já cadastrado',
+        message: 'CRM e placa j\u00e1 cadastrado',
       }
     }
   }
@@ -828,11 +838,11 @@ const normalizeTipoDeVeiculo = (value) => {
     .replace(/[^a-z]/g, '')
 
   if (normalizedKey === 'onibus') {
-    return 'Ônibus'
+    return '\u00d4nibus'
   }
 
   if (normalizedKey === 'microonibus') {
-    return 'Micro-Ônibus'
+    return 'Micro-\u00d4nibus'
   }
 
   return null
@@ -860,7 +870,7 @@ const normalizeTipoDeBancada = (value) => {
   }
 
   if (normalizedKey === 'acessivel') {
-    return 'Acessível'
+    return 'Acess\u00edvel'
   }
 
   return null
@@ -884,7 +894,7 @@ const normalizeOsEspecial = (value) => {
   }
 
   if (normalizedKey === 'nao') {
-    return 'Não'
+    return 'N\u00e3o'
   }
 
   return null
@@ -918,7 +928,7 @@ const parseCondutorXml = (xmlContent) => {
       || validadeCrmc
 
     return {
-      codigo: normalizeRequestValue(record?.Código),
+      codigo: normalizeRequestValue(record?.['C\u00f3digo']),
       condutor: normalizeRequestValue(record?.Condutor),
       cpfCondutor: normalizeRequestValue(record?.CPF_condutor),
       crmc: normalizeRequestValue(record?.CRMC),
@@ -942,7 +952,7 @@ const parseMonitorXml = (xmlContent) => {
     .filter((record) => record && typeof record === 'object')
 
   return records.map((record) => ({
-    codigo: normalizeRequestValue(record?.Código),
+    codigo: normalizeRequestValue(record?.['C\u00f3digo']),
     monitor: normalizeRequestValue(record?.Monitor),
     rgMonitor: normalizeRequestValue(record?.RG_monitor),
     cpfMonitor: normalizeRequestValue(record?.CPF_monitor),
@@ -964,7 +974,7 @@ const parseVeiculoXml = (xmlContent) => {
     .filter((record) => record && typeof record === 'object')
 
   return records.map((record) => ({
-    codigo: normalizeRequestValue(record?.Código),
+    codigo: normalizeRequestValue(record?.['C\u00f3digo']),
     crm: normalizeRequestValue(record?.CRM),
     placas: normalizeRequestValue(record?.Placas),
     ano: normalizeRequestValue(record?.Ano),
@@ -1339,7 +1349,7 @@ const parseCredenciadaXml = (xmlContent) => {
     .filter((record) => record && typeof record === 'object')
 
   return records.map((record) => ({
-    codigo: normalizeRequestValue(record?.Código),
+    codigo: normalizeRequestValue(record?.['C\u00f3digo']),
     credenciado: normalizeRequestValue(record?.Credenciado),
     cnpjCpf: normalizeRequestValue(record?.CNPJ_CPF),
     logradouro: normalizeRequestValue(record?.Logradouro),
@@ -1356,9 +1366,9 @@ const parseCredenciadaXml = (xmlContent) => {
   }))
 }
 
-const parseCredenciamentoOsXml = (xmlContent) => {
+const parseOrdemServicoXml = (xmlContent) => {
   const parsed = xmlParser.parse(xmlContent)
-  const rawRecords = parsed?.dataroot?.Credenciamento_OS
+  const rawRecords = parsed?.dataroot?.OrdemServico
   const records = (Array.isArray(rawRecords)
     ? rawRecords
     : rawRecords
@@ -1367,7 +1377,7 @@ const parseCredenciamentoOsXml = (xmlContent) => {
     .filter((record) => record && typeof record === 'object')
 
   return records.map((record) => ({
-    codigo: normalizeRequestValue(record?.Código),
+    codigo: normalizeRequestValue(record?.['C\u00f3digo']),
     termoAdesao: normalizeRequestValue(record?.Termo_de_adesao),
     os: normalizeRequestValue(record?.OS),
     revisao: normalizeRequestValue(record?.revisao),
@@ -1379,7 +1389,7 @@ const parseCredenciamentoOsXml = (xmlContent) => {
     cpfCondutor: normalizeRequestValue(record?.CPF_condutor),
     crm: normalizeRequestValue(record?.CRM),
     cpfMonitor: normalizeRequestValue(record?.CPF_monitor),
-    anotacao: normalizeRequestValue(record?.Anotação),
+    anotacao: normalizeRequestValue(record?.['Anota\u00e7\u00e3o']),
     situacao: normalizeRequestValue(record?.Situacao_de_OS),
     tipoTrocaDescricao: normalizeRequestValue(record?.Campo_de_Troca),
     prepostoInicio: normalizeXmlDateInput(record?.Preposto),
@@ -1403,7 +1413,7 @@ const parseTrocaXml = (xmlContent) => {
     .filter((record) => record && typeof record === 'object')
 
   return records.map((record) => ({
-    codigo: normalizeRequestValue(record?.Código),
+    codigo: normalizeRequestValue(record?.['C\u00f3digo']),
     controle: normalizeRequestValue(record?.Controle),
     lista: normalizeRequestValue(record?.Lista),
   }))
@@ -1420,7 +1430,7 @@ const parseSeguradoraXml = (xmlContent) => {
     .filter((record) => record && typeof record === 'object')
 
   return records.map((record) => ({
-    codigo: normalizeRequestValue(record?.Código),
+    codigo: normalizeRequestValue(record?.['C\u00f3digo']),
     controle: normalizeRequestValue(record?.Controle),
     lista: normalizeRequestValue(record?.Lista),
   }))
@@ -1579,7 +1589,7 @@ const normalizeImportedMarcaModeloRecord = (record, index) => {
   }
 }
 
-const importCredenciamentoOsXmlFile = async (fileName) => {
+const importOrdemServicoXmlFile = async (fileName) => {
   const sanitizedFileName = path.basename(normalizeRequestValue(fileName))
 
   if (!sanitizedFileName) {
@@ -1597,10 +1607,10 @@ const importCredenciamentoOsXmlFile = async (fileName) => {
   }
 
   const xmlContent = await readFile(resolvedPath, 'utf8')
-  const parsedRecords = parseCredenciamentoOsXml(xmlContent)
+  const parsedRecords = parseOrdemServicoXml(xmlContent)
 
   if (!parsedRecords.length) {
-    throw new Error('Nenhum registro de credenciamento OS foi encontrado no XML informado.')
+    throw new Error('Nenhum registro de OrdemServico foi encontrado no XML informado.')
   }
 
   const normalizedRecords = []
@@ -1613,7 +1623,7 @@ const importCredenciamentoOsXmlFile = async (fileName) => {
         descricao: record.dreDescricao,
       })
 
-      const validationResult = await validateCredenciamentoOsPayload({
+      const validationResult = await validateOrdemServicoPayload({
         codigo: record.codigo,
         termoAdesao: record.termoAdesao,
         os: record.os,
@@ -1662,13 +1672,13 @@ const importCredenciamentoOsXmlFile = async (fileName) => {
 
   try {
     await client.query('BEGIN')
-    await client.query('TRUNCATE TABLE credenciamento_os_import_recusa RESTART IDENTITY')
+    await client.query(`TRUNCATE TABLE ${ordemServicoImportRecusaTableName} RESTART IDENTITY`)
     let inserted = 0
     let updated = 0
 
     for (const skippedRecord of skippedRecords) {
       await client.query(
-        `INSERT INTO credenciamento_os_import_recusa (
+        `INSERT INTO ${ordemServicoImportRecusaTableName} (
            arquivo_xml,
            linha_xml,
            codigo_xml,
@@ -1698,11 +1708,11 @@ const importCredenciamentoOsXmlFile = async (fileName) => {
     }
 
     for (const record of normalizedRecords) {
-      const existingResult = await client.query('SELECT 1 FROM credenciamento_os WHERE codigo = $1 LIMIT 1', [record.codigo])
+      const existingResult = await client.query(`SELECT 1 FROM ${ordemServicoTableName} WHERE codigo = $1 LIMIT 1`, [record.codigo])
 
       if (existingResult.rowCount > 0) {
         await client.query(
-          `UPDATE credenciamento_os
+          `UPDATE ${ordemServicoTableName}
            SET termo_adesao = NULLIF($1, ''),
                os = $2,
                revisao = NULLIF($3, ''),
@@ -1767,8 +1777,8 @@ const importCredenciamentoOsXmlFile = async (fileName) => {
         continue
       }
 
-      await client.query(
-        `INSERT INTO credenciamento_os (
+       await client.query(
+        `INSERT INTO ${ordemServicoTableName} (
            codigo,
            termo_adesao,
            os,
@@ -1835,8 +1845,12 @@ const importCredenciamentoOsXmlFile = async (fileName) => {
       inserted += 1
     }
 
+    if (normalizedRecords.length > 0) {
+      await rebalanceOrdemServicoRevisions(client)
+    }
+
     if (normalizedRecords.length) {
-      await client.query('SELECT setval(\'credenciamento_os_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM credenciamento_os), 0), 1), true)')
+      await client.query(`SELECT setval('${ordemServicoCodigoSequenceName}', GREATEST(COALESCE((SELECT MAX(codigo) FROM ${ordemServicoTableName}), 0), 1), true)`)
     }
 
     await client.query('COMMIT')
@@ -1981,7 +1995,7 @@ const credenciadaImportRecusaSelectClause = `
   BTRIM(motivo_recusa) AS motivo_recusa,
   TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
 
-const credenciamentoOsSelectClause = `
+const ordemServicoSelectClause = `
   codigo::text AS codigo,
   COALESCE(BTRIM(termo_adesao), '') AS termo_adesao,
   BTRIM(os) AS os,
@@ -2013,7 +2027,75 @@ const credenciamentoOsSelectClause = `
   TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
   TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
 
-const credenciamentoOsImportRecusaSelectClause = `
+const buildRevisionSequenceLabel = (sequenceNumber) => {
+  if (!Number.isInteger(sequenceNumber) || sequenceNumber <= 0) {
+    return ''
+  }
+
+  let currentNumber = sequenceNumber
+  let label = ''
+
+  while (currentNumber > 0) {
+    currentNumber -= 1
+    label = String.fromCharCode(65 + (currentNumber % 26)) + label
+    currentNumber = Math.floor(currentNumber / 26)
+  }
+
+  return label
+}
+
+const fetchOrdemServicoItemByCodigo = async (executor, codigo) => {
+  const result = await executor.query(
+    `SELECT ${ordemServicoSelectClause}
+    FROM ${ordemServicoTableName}
+     WHERE codigo = $1
+     LIMIT 1`,
+    [codigo],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const rebalanceOrdemServicoRevisions = async (executor, osValues = null) => {
+  const normalizedOsValues = Array.isArray(osValues)
+    ? Array.from(
+      new Set(
+        osValues
+          .map((value) => normalizeRequestValue(value).toUpperCase())
+          .filter(Boolean),
+      ),
+    )
+    : []
+
+  const osResult = normalizedOsValues.length > 0
+    ? { rows: normalizedOsValues.map((os) => ({ os })) }
+    : await executor.query(
+      `SELECT DISTINCT UPPER(BTRIM(os)) AS os
+      FROM ${ordemServicoTableName}
+       WHERE COALESCE(BTRIM(os), '') <> ''`,
+    )
+
+  for (const { os } of osResult.rows) {
+    const groupResult = await executor.query(
+      `SELECT codigo
+      FROM ${ordemServicoTableName}
+       WHERE UPPER(BTRIM(os)) = $1
+       ORDER BY data_inclusao ASC, codigo ASC`,
+      [os],
+    )
+
+    for (const [index, row] of groupResult.rows.entries()) {
+      const revisao = index === 0 ? '' : buildRevisionSequenceLabel(index)
+
+      await executor.query(
+        `UPDATE ${ordemServicoTableName} SET revisao = NULLIF($1, '') WHERE codigo = $2`,
+        [revisao, row.codigo],
+      )
+    }
+  }
+}
+
+const ordemServicoImportRecusaSelectClause = `
   id::text AS id,
   BTRIM(arquivo_xml) AS arquivo_xml,
   linha_xml::text AS linha_xml,
@@ -3085,8 +3167,8 @@ const seedMarcaModeloTableFromXmlIfEmpty = async () => {
   return importMarcaModeloXmlFile('marca-modelo.xml')
 }
 
-const seedCredenciamentoOsTableFromXmlIfEmpty = async () => {
-  const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM credenciamento_os')
+const seedOrdemServicoTableFromXmlIfEmpty = async () => {
+  const countResult = await pool.query(`SELECT COUNT(*)::int AS total FROM ${ordemServicoTableName}`)
   const total = countResult.rows[0]?.total ?? 0
 
   if (total > 0) {
@@ -3107,7 +3189,7 @@ const seedCredenciamentoOsTableFromXmlIfEmpty = async () => {
     return null
   }
 
-  return importCredenciamentoOsXmlFile('Credenciamento_OS.xml')
+  return importOrdemServicoXmlFile('OrdemServico.xml')
 }
 
 const isDateInputValid = (value) => {
@@ -3736,7 +3818,7 @@ const validateCredenciadaPayload = async ({
   }
 }
 
-const validateCredenciamentoOsPayload = async ({
+const validateOrdemServicoPayload = async ({
   codigo,
   termoAdesao,
   os,
@@ -3779,7 +3861,7 @@ const validateCredenciamentoOsPayload = async ({
   const normalizedSituacao = normalizeCredenciamentoSituacao(situacao)
   const normalizedTipoTroca = normalizeTrocaText(tipoTroca, 255)
   const normalizedConexao = normalizeOperationalCode(conexao, 50)
-  let normalizedDataEncerramento = normalizeRequestValue(dataEncerramento)
+  const normalizedDataEncerramento = normalizeRequestValue(dataEncerramento)
   const normalizedAnotacao = normalizeCredenciamentoAnnotation(anotacao)
   const normalizedUniaoTermos = normalizeOperationalCode(uniaoTermos, 255)
   const hasValidCpfCondutor = normalizedCpfCondutor && isCpfValid(normalizedCpfCondutor)
@@ -3799,6 +3881,14 @@ const validateCredenciamentoOsPayload = async ({
 
   if (normalizedVigenciaOs && !isDateInputValid(normalizedVigenciaOs)) {
     return { status: 400, payload: { message: 'Vigencia da OS invalida.' } }
+  }
+
+  if (!importMode && !normalizedVigenciaOs) {
+    return { status: 400, payload: { message: 'Vigencia da OS e obrigatoria.' } }
+  }
+
+  if (!importMode && normalizedVigenciaOs && !isDateAfterToday(normalizedVigenciaOs)) {
+    return { status: 400, payload: { message: 'Vigencia da OS deve ser futura.' } }
   }
 
   if (!normalizedCredenciado && !normalizedCnpjCpf) {
@@ -3841,18 +3931,14 @@ const validateCredenciamentoOsPayload = async ({
     return { status: 400, payload: { message: 'Data de encerramento invalida.' } }
   }
 
-  if (normalizedVigenciaOs && normalizedDataEncerramento && normalizedDataEncerramento < normalizedVigenciaOs) {
-    if (!importMode) {
-      return { status: 400, payload: { message: 'Data de encerramento deve ser maior ou igual a vigencia da OS.' } }
-    }
-
-    normalizedDataEncerramento = ''
+  if (!importMode && normalizedVigenciaOs && normalizedDataEncerramento && normalizedDataEncerramento < normalizedVigenciaOs) {
+    return { status: 400, payload: { message: 'Data de encerramento deve ser maior ou igual a vigencia da OS.' } }
   }
 
   if (!importMode) {
     const duplicateCodeResult = await pool.query(
       `SELECT 1
-       FROM credenciamento_os
+      FROM ${ordemServicoTableName}
        WHERE codigo = $1
          AND ($2::int IS NULL OR codigo <> $2)
        LIMIT 1`,
@@ -3861,19 +3947,6 @@ const validateCredenciamentoOsPayload = async ({
 
     if (duplicateCodeResult.rowCount > 0) {
       return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
-    }
-
-    const duplicateOsResult = await pool.query(
-      `SELECT 1
-       FROM credenciamento_os
-       WHERE UPPER(BTRIM(os)) = $1
-         AND ($2::int IS NULL OR codigo <> $2)
-       LIMIT 1`,
-      [normalizedOs, originalCodigo],
-    )
-
-    if (duplicateOsResult.rowCount > 0) {
-      return { status: 409, payload: { message: 'OS ja cadastrada.' } }
     }
   }
 
@@ -4282,7 +4355,7 @@ const ensureDatabaseSchema = async () => {
         ctid,
         LEFT(
           CONCAT(
-            COALESCE(NULLIF(REGEXP_REPLACE(UPPER(SPLIT_PART(email, '@', 1)), '[^A-ZÀ-Ý ]', '', 'g'), ''), 'USUARIO'),
+            COALESCE(NULLIF(REGEXP_REPLACE(UPPER(SPLIT_PART(email, '@', 1)), '[^A-Z ]', '', 'g'), ''), 'USUARIO'),
             CASE WHEN sequence_number > 1 THEN CONCAT(' ', sequence_number::text) ELSE '' END
           ),
           50
@@ -4713,10 +4786,34 @@ const ensureDatabaseSchema = async () => {
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS credenciada_codigo_unique_idx ON credenciada (codigo)')
   await pool.query('CREATE INDEX IF NOT EXISTS credenciada_import_recusa_data_idx ON credenciada_import_recusa (data_importacao DESC)')
   await pool.query('CREATE INDEX IF NOT EXISTS credenciada_import_recusa_arquivo_idx ON credenciada_import_recusa (arquivo_xml)')
-  await pool.query('CREATE SEQUENCE IF NOT EXISTS credenciamento_os_codigo_seq START WITH 1 INCREMENT BY 1')
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS credenciamento_os (
-      codigo integer PRIMARY KEY DEFAULT nextval('credenciamento_os_codigo_seq'),
+    DO $$
+    BEGIN
+      IF to_regclass('public.${ordemServicoTableName}') IS NULL AND to_regclass('public.${legacyCredenciamentoOsTableName}') IS NOT NULL THEN
+        ALTER TABLE ${legacyCredenciamentoOsTableName} RENAME TO ${ordemServicoTableName};
+      END IF;
+    END $$
+  `)
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF to_regclass('public.${ordemServicoImportRecusaTableName}') IS NULL AND to_regclass('public.${legacyCredenciamentoOsImportRecusaTableName}') IS NOT NULL THEN
+        ALTER TABLE ${legacyCredenciamentoOsImportRecusaTableName} RENAME TO ${ordemServicoImportRecusaTableName};
+      END IF;
+    END $$
+  `)
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF to_regclass('public.${ordemServicoCodigoSequenceName}') IS NULL AND to_regclass('public.${legacyCredenciamentoOsCodigoSequenceName}') IS NOT NULL THEN
+        ALTER SEQUENCE ${legacyCredenciamentoOsCodigoSequenceName} RENAME TO ${ordemServicoCodigoSequenceName};
+      END IF;
+    END $$
+  `)
+  await pool.query(`CREATE SEQUENCE IF NOT EXISTS ${ordemServicoCodigoSequenceName} START WITH 1 INCREMENT BY 1`)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ${ordemServicoTableName} (
+      codigo integer PRIMARY KEY DEFAULT nextval('${ordemServicoCodigoSequenceName}'),
       termo_adesao varchar(255),
       os varchar(255) NOT NULL,
       revisao varchar(30),
@@ -4748,65 +4845,65 @@ const ensureDatabaseSchema = async () => {
       data_modificacao timestamp without time zone NOT NULL DEFAULT NOW()
     )
   `)
-  await pool.query('ALTER SEQUENCE credenciamento_os_codigo_seq OWNED BY credenciamento_os.codigo')
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN codigo SET DEFAULT nextval(\'credenciamento_os_codigo_seq\')')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS termo_adesao varchar(255)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS os varchar(255)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS revisao varchar(30)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS os_origem varchar(255)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS vigencia_os date')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS credenciada_codigo integer')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS credenciado varchar(255)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS cnpj_cpf varchar(18)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS dre_codigo varchar(30)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS dre_descricao varchar(255)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS cpf_condutor varchar(14)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS condutor varchar(255)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS cpf_preposto varchar(14)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS preposto_condutor varchar(255)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS preposto_inicio date')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS preposto_dias integer')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS crm varchar(20)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS veiculo_placas varchar(20)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS cpf_monitor varchar(14)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS monitor varchar(255)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS situacao varchar(20)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS tipo_troca_codigo integer')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS tipo_troca_descricao varchar(255)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS conexao varchar(50)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS data_encerramento date')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS anotacao text')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS uniao_termos varchar(255)')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone')
-  await pool.query('ALTER TABLE credenciamento_os ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone')
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN data_inclusao SET DEFAULT NOW()')
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN data_modificacao SET DEFAULT NOW()')
+  await pool.query(`ALTER SEQUENCE ${ordemServicoCodigoSequenceName} OWNED BY ${ordemServicoTableName}.codigo`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN codigo SET DEFAULT nextval('${ordemServicoCodigoSequenceName}')`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS termo_adesao varchar(255)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS os varchar(255)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS revisao varchar(30)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS os_origem varchar(255)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS vigencia_os date`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS credenciada_codigo integer`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS credenciado varchar(255)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS cnpj_cpf varchar(18)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS dre_codigo varchar(30)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS dre_descricao varchar(255)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS cpf_condutor varchar(14)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS condutor varchar(255)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS cpf_preposto varchar(14)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS preposto_condutor varchar(255)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS preposto_inicio date`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS preposto_dias integer`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS crm varchar(20)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS veiculo_placas varchar(20)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS cpf_monitor varchar(14)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS monitor varchar(255)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS situacao varchar(20)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS tipo_troca_codigo integer`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS tipo_troca_descricao varchar(255)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS conexao varchar(50)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS data_encerramento date`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS anotacao text`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS uniao_termos varchar(255)`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN data_inclusao SET DEFAULT NOW()`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN data_modificacao SET DEFAULT NOW()`)
   await pool.query(`
-    UPDATE credenciamento_os
+    UPDATE ${ordemServicoTableName}
     SET data_inclusao = COALESCE(data_inclusao, NOW()),
         data_modificacao = COALESCE(data_modificacao, COALESCE(data_inclusao, NOW()))
     WHERE data_inclusao IS NULL OR data_modificacao IS NULL
   `)
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN os SET NOT NULL')
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN credenciada_codigo SET NOT NULL')
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN credenciado SET NOT NULL')
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN cnpj_cpf SET NOT NULL')
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN dre_codigo SET NOT NULL')
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN dre_descricao SET NOT NULL')
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN cpf_condutor SET NOT NULL')
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN condutor SET NOT NULL')
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN crm SET NOT NULL')
-  await pool.query('ALTER TABLE credenciamento_os ALTER COLUMN situacao SET NOT NULL')
-  await pool.query('SELECT setval(\'credenciamento_os_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM credenciamento_os), 0), 1), true)')
-  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS credenciamento_os_codigo_unique_idx ON credenciamento_os (codigo)')
-  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS credenciamento_os_os_unique_idx ON credenciamento_os (UPPER(BTRIM(os)))')
-  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_credenciado_idx ON credenciamento_os (UPPER(BTRIM(credenciado)))')
-  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_dre_idx ON credenciamento_os (dre_codigo)')
-  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_condutor_idx ON credenciamento_os (cpf_condutor)')
-  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_monitor_idx ON credenciamento_os (cpf_monitor)')
-  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_veiculo_idx ON credenciamento_os (crm)')
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN os SET NOT NULL`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN credenciada_codigo SET NOT NULL`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN credenciado SET NOT NULL`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN cnpj_cpf SET NOT NULL`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN dre_codigo SET NOT NULL`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN dre_descricao SET NOT NULL`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN cpf_condutor SET NOT NULL`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN condutor SET NOT NULL`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN crm SET NOT NULL`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN situacao SET NOT NULL`)
+  await pool.query(`SELECT setval('${ordemServicoCodigoSequenceName}', GREATEST(COALESCE((SELECT MAX(codigo) FROM ${ordemServicoTableName}), 0), 1), true)`)
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS ordem_servico_codigo_unique_idx ON ${ordemServicoTableName} (codigo)`)
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS ordem_servico_os_unique_idx ON ${ordemServicoTableName} (UPPER(BTRIM(os)))`)
+  await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_credenciado_idx ON ${ordemServicoTableName} (UPPER(BTRIM(credenciado)))`)
+  await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_dre_idx ON ${ordemServicoTableName} (dre_codigo)`)
+  await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_condutor_idx ON ${ordemServicoTableName} (cpf_condutor)`)
+  await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_monitor_idx ON ${ordemServicoTableName} (cpf_monitor)`)
+  await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_veiculo_idx ON ${ordemServicoTableName} (crm)`)
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS credenciamento_os_import_recusa (
+    CREATE TABLE IF NOT EXISTS ${ordemServicoImportRecusaTableName} (
       id bigserial PRIMARY KEY,
       arquivo_xml varchar(255) NOT NULL,
       linha_xml integer NOT NULL,
@@ -4821,8 +4918,8 @@ const ensureDatabaseSchema = async () => {
       data_importacao timestamp without time zone NOT NULL DEFAULT NOW()
     )
   `)
-  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_import_recusa_data_idx ON credenciamento_os_import_recusa (data_importacao DESC)')
-  await pool.query('CREATE INDEX IF NOT EXISTS credenciamento_os_import_recusa_arquivo_idx ON credenciamento_os_import_recusa (arquivo_xml)')
+  await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_import_recusa_data_idx ON ${ordemServicoImportRecusaTableName} (data_importacao DESC)`)
+  await pool.query(`CREATE INDEX IF NOT EXISTS ordem_servico_import_recusa_arquivo_idx ON ${ordemServicoImportRecusaTableName} (arquivo_xml)`)
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_nome_unique_idx ON login (UPPER(BTRIM(nome)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_email_unique_idx ON login (LOWER(TRIM(email)))')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_dre_unique_idx ON login_dre (login_codigo, dre_codigo)')
@@ -5044,23 +5141,15 @@ const server = createServer(async (request, response) => {
     return
   }
 
-  if (request.method === 'GET' && pathname === '/api/credenciamento-os') {
+  if (request.method === 'GET' && pathname === ordemServicoCollectionPath) {
     try {
       const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
       const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
       const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
-      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
-      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
-        ? 'DESC'
-        : 'ASC'
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
-      const orderByClause = sortBy === 'os'
-        ? `UPPER(BTRIM(os)) ${sortDirection}, codigo ASC`
-        : sortBy === 'credenciado'
-          ? `UPPER(BTRIM(credenciado)) ${sortDirection}, codigo ASC`
-          : `codigo ${sortDirection}`
+      const orderByClause = `${ordemServicoTableName}.codigo ASC`
 
       if (search) {
         values.push(`%${search}%`)
@@ -5078,7 +5167,7 @@ const server = createServer(async (request, response) => {
 
       const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
       const countResult = await pool.query(
-        `SELECT COUNT(*)::int AS total FROM credenciamento_os ${whereClause}`,
+        `SELECT COUNT(*)::int AS total FROM ${ordemServicoTableName} ${whereClause}`,
         values,
       )
 
@@ -5086,8 +5175,8 @@ const server = createServer(async (request, response) => {
       values.push(offset)
       const result = await pool.query(
         `SELECT
-           ${credenciamentoOsSelectClause}
-         FROM credenciamento_os
+           ${ordemServicoSelectClause}
+         FROM ${ordemServicoTableName}
          ${whereClause}
          ORDER BY ${orderByClause}
          LIMIT $${values.length - 1}
@@ -5102,13 +5191,13 @@ const server = createServer(async (request, response) => {
         page,
         pageSize,
         totalPages: Math.max(Math.ceil(total / pageSize), 1),
-        sortBy: sortBy === 'os' || sortBy === 'credenciado' ? sortBy : 'codigo',
-        sortDirection: sortDirection.toLowerCase(),
+        sortBy: 'codigo',
+        sortDirection: 'asc',
       })
     } catch (error) {
       const message = error instanceof Error
         ? error.message
-        : 'Erro ao consultar credenciamentos OS.'
+        : 'Erro ao consultar OrdemServico.'
 
       sendJson(response, 500, { message })
     }
@@ -5116,7 +5205,7 @@ const server = createServer(async (request, response) => {
     return
   }
 
-  if (request.method === 'GET' && pathname === '/api/credenciamento-os/import-rejections') {
+  if (request.method === 'GET' && pathname === ordemServicoImportRejectionsPath) {
     try {
       const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
       const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
@@ -5142,7 +5231,7 @@ const server = createServer(async (request, response) => {
 
       const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
       const countResult = await pool.query(
-        `SELECT COUNT(*)::int AS total FROM credenciamento_os_import_recusa ${whereClause}`,
+        `SELECT COUNT(*)::int AS total FROM ${ordemServicoImportRecusaTableName} ${whereClause}`,
         values,
       )
 
@@ -5150,8 +5239,8 @@ const server = createServer(async (request, response) => {
       values.push(offset)
       const result = await pool.query(
         `SELECT
-           ${credenciamentoOsImportRecusaSelectClause}
-         FROM credenciamento_os_import_recusa
+           ${ordemServicoImportRecusaSelectClause}
+         FROM ${ordemServicoImportRecusaTableName}
          ${whereClause}
          ORDER BY data_importacao DESC, linha_xml ASC, id DESC
          LIMIT $${values.length - 1}
@@ -5170,7 +5259,7 @@ const server = createServer(async (request, response) => {
     } catch (error) {
       const message = error instanceof Error
         ? error.message
-        : 'Erro ao consultar recusas do credenciamento OS.'
+        : 'Erro ao consultar recusas de OrdemServico.'
 
       sendJson(response, 500, { message })
     }
@@ -6851,10 +6940,10 @@ const server = createServer(async (request, response) => {
     return
   }
 
-  if (request.method === 'POST' && pathname === '/api/credenciamento-os') {
+  if (request.method === 'POST' && pathname === ordemServicoCollectionPath) {
     try {
       const body = await readJsonBody(request)
-      const validationResult = await validateCredenciamentoOsPayload({
+      const validationResult = await validateOrdemServicoPayload({
         codigo: body.codigo,
         termoAdesao: body.termoAdesao,
         os: body.os,
@@ -6883,93 +6972,108 @@ const server = createServer(async (request, response) => {
         return
       }
 
-      const insertResult = await pool.query(
-        `INSERT INTO credenciamento_os (
-           codigo,
-           termo_adesao,
-           os,
-           revisao,
-           os_origem,
-           vigencia_os,
-           credenciada_codigo,
-           credenciado,
-           cnpj_cpf,
-           dre_codigo,
-           dre_descricao,
-           cpf_condutor,
-           condutor,
-           cpf_preposto,
-           preposto_condutor,
-           preposto_inicio,
-           preposto_dias,
-           crm,
-           veiculo_placas,
-           cpf_monitor,
-           monitor,
-           situacao,
-           tipo_troca_codigo,
-           tipo_troca_descricao,
-           conexao,
-           data_encerramento,
-           anotacao,
-           uniao_termos,
-           data_inclusao,
-           data_modificacao
-         )
-         VALUES ($1, NULLIF($2, ''), $3, NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, '')::date, $7, $8, $9, $10, $11, $12, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, '')::date, $17, $18, NULLIF($19, ''), NULLIF($20, ''), NULLIF($21, ''), $22, $23, NULLIF($24, ''), NULLIF($25, ''), NULLIF($26, '')::date, NULLIF($27, ''), NULLIF($28, ''), NOW(), NOW())
-         RETURNING ${credenciamentoOsSelectClause}`,
-        [
-          validationResult.payload.codigo,
-          validationResult.payload.termoAdesao,
-          validationResult.payload.os,
-          validationResult.payload.revisao,
-          validationResult.payload.osOrigem,
-          validationResult.payload.vigenciaOs,
-          validationResult.payload.credenciadaCodigo,
-          validationResult.payload.credenciado,
-          validationResult.payload.cnpjCpf,
-          validationResult.payload.dreCodigo,
-          validationResult.payload.dreDescricao,
-          validationResult.payload.cpfCondutor,
-          validationResult.payload.condutor,
-          validationResult.payload.cpfPreposto,
-          validationResult.payload.prepostoCondutor,
-          validationResult.payload.prepostoInicio,
-          validationResult.payload.prepostoDias,
-          validationResult.payload.crm,
-          validationResult.payload.veiculoPlacas,
-          validationResult.payload.cpfMonitor,
-          validationResult.payload.monitor,
-          validationResult.payload.situacao,
-          validationResult.payload.tipoTrocaCodigo,
-          validationResult.payload.tipoTrocaDescricao,
-          validationResult.payload.conexao,
-          validationResult.payload.dataEncerramento,
-          validationResult.payload.anotacao,
-          validationResult.payload.uniaoTermos,
-        ],
-      )
+      const client = await pool.connect()
 
-      sendJson(response, 201, { item: insertResult.rows[0] })
+      try {
+        await client.query('BEGIN')
+
+        await client.query(
+          `INSERT INTO ${ordemServicoTableName} (
+             codigo,
+             termo_adesao,
+             os,
+             revisao,
+             os_origem,
+             vigencia_os,
+             credenciada_codigo,
+             credenciado,
+             cnpj_cpf,
+             dre_codigo,
+             dre_descricao,
+             cpf_condutor,
+             condutor,
+             cpf_preposto,
+             preposto_condutor,
+             preposto_inicio,
+             preposto_dias,
+             crm,
+             veiculo_placas,
+             cpf_monitor,
+             monitor,
+             situacao,
+             tipo_troca_codigo,
+             tipo_troca_descricao,
+             conexao,
+             data_encerramento,
+             anotacao,
+             uniao_termos,
+             data_inclusao,
+             data_modificacao
+           )
+           VALUES ($1, NULLIF($2, ''), $3, NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, '')::date, $7, $8, $9, $10, $11, $12, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, '')::date, $17, $18, NULLIF($19, ''), NULLIF($20, ''), NULLIF($21, ''), $22, $23, NULLIF($24, ''), NULLIF($25, ''), NULLIF($26, '')::date, NULLIF($27, ''), NULLIF($28, ''), NOW(), NOW())`,
+          [
+            validationResult.payload.codigo,
+            validationResult.payload.termoAdesao,
+            validationResult.payload.os,
+            '',
+            validationResult.payload.osOrigem,
+            validationResult.payload.vigenciaOs,
+            validationResult.payload.credenciadaCodigo,
+            validationResult.payload.credenciado,
+            validationResult.payload.cnpjCpf,
+            validationResult.payload.dreCodigo,
+            validationResult.payload.dreDescricao,
+            validationResult.payload.cpfCondutor,
+            validationResult.payload.condutor,
+            validationResult.payload.cpfPreposto,
+            validationResult.payload.prepostoCondutor,
+            validationResult.payload.prepostoInicio,
+            validationResult.payload.prepostoDias,
+            validationResult.payload.crm,
+            validationResult.payload.veiculoPlacas,
+            validationResult.payload.cpfMonitor,
+            validationResult.payload.monitor,
+            validationResult.payload.situacao,
+            validationResult.payload.tipoTrocaCodigo,
+            validationResult.payload.tipoTrocaDescricao,
+            validationResult.payload.conexao,
+            validationResult.payload.dataEncerramento,
+            validationResult.payload.anotacao,
+            validationResult.payload.uniaoTermos,
+          ],
+        )
+
+        await rebalanceOrdemServicoRevisions(client, [validationResult.payload.os])
+
+        const item = await fetchOrdemServicoItemByCodigo(client, validationResult.payload.codigo)
+
+        await client.query('COMMIT')
+        sendJson(response, 201, { item })
+      } catch (error) {
+        await client.query('ROLLBACK')
+        throw error
+      } finally {
+        client.release()
+      }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro ao cadastrar credenciamento OS.'
+      const message = error instanceof Error ? error.message : 'Erro ao cadastrar OrdemServico.'
       sendJson(response, 500, { message })
     }
 
     return
   }
 
-  if (request.method === 'POST' && pathname === '/api/credenciamento-os/import-xml') {
+  if (request.method === 'POST' && pathname === ordemServicoImportXmlPath) {
     try {
       const body = await readJsonBody(request)
-      const result = await importCredenciamentoOsXmlFile(body.fileName)
+      const result = await importOrdemServicoXmlFile(body.fileName)
 
       sendJson(response, 200, {
-        message: 'Importacao de credenciamentos OS concluida com sucesso.',
+        message: 'Importacao de OrdemServico concluida com sucesso.',
         ...result,
       })
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro ao importar credenciamentos OS do XML.'
+      const message = error instanceof Error ? error.message : 'Erro ao importar OrdemServico do XML.'
       sendJson(response, 500, { message })
     }
 
@@ -7968,9 +8072,9 @@ const server = createServer(async (request, response) => {
     return
   }
 
-  if (request.method === 'PUT' && getCredenciamentoOsCodigoFromUrl(pathname)) {
+  if (request.method === 'PUT' && getOrdemServicoCodigoFromUrl(pathname)) {
     try {
-      const originalCodigo = Number(getCredenciamentoOsCodigoFromUrl(pathname))
+      const originalCodigo = Number(getOrdemServicoCodigoFromUrl(pathname))
       const body = await readJsonBody(request)
 
       if (!Number.isInteger(originalCodigo) || originalCodigo <= 0) {
@@ -7979,16 +8083,20 @@ const server = createServer(async (request, response) => {
       }
 
       const existingResult = await pool.query(
-        'SELECT 1 FROM credenciamento_os WHERE codigo = $1 LIMIT 1',
+        `SELECT TO_CHAR(data_inclusao::date, 'YYYY-MM-DD') AS data_inclusao,
+                COALESCE(BTRIM(os), '') AS os
+         FROM ${ordemServicoTableName}
+         WHERE codigo = $1
+         LIMIT 1`,
         [originalCodigo],
       )
 
       if (existingResult.rowCount === 0) {
-        sendJson(response, 404, { message: 'Credenciamento OS nao encontrado.' })
+        sendJson(response, 404, { message: 'OrdemServico nao encontrada.' })
         return
       }
 
-      const validationResult = await validateCredenciamentoOsPayload({
+      const validationResult = await validateOrdemServicoPayload({
         codigo: body.codigo,
         termoAdesao: body.termoAdesao,
         os: body.os,
@@ -8018,75 +8126,96 @@ const server = createServer(async (request, response) => {
         return
       }
 
-      const updateResult = await pool.query(
-        `UPDATE credenciamento_os
-         SET codigo = $1,
-             termo_adesao = NULLIF($2, ''),
-             os = $3,
-             revisao = NULLIF($4, ''),
-             os_origem = NULLIF($5, ''),
-             vigencia_os = NULLIF($6, '')::date,
-             credenciada_codigo = $7,
-             credenciado = $8,
-             cnpj_cpf = $9,
-             dre_codigo = $10,
-             dre_descricao = $11,
-             cpf_condutor = $12,
-             condutor = $13,
-             cpf_preposto = NULLIF($14, ''),
-             preposto_condutor = NULLIF($15, ''),
-             preposto_inicio = NULLIF($16, '')::date,
-             preposto_dias = $17,
-             crm = $18,
-             veiculo_placas = NULLIF($19, ''),
-             cpf_monitor = NULLIF($20, ''),
-             monitor = NULLIF($21, ''),
-             situacao = $22,
-             tipo_troca_codigo = $23,
-             tipo_troca_descricao = NULLIF($24, ''),
-             conexao = NULLIF($25, ''),
-             data_encerramento = NULLIF($26, '')::date,
-             anotacao = NULLIF($27, ''),
-             uniao_termos = NULLIF($28, ''),
-             data_modificacao = NOW()
-         WHERE codigo = $29
-         RETURNING ${credenciamentoOsSelectClause}`,
-        [
-          validationResult.payload.codigo,
-          validationResult.payload.termoAdesao,
-          validationResult.payload.os,
-          validationResult.payload.revisao,
-          validationResult.payload.osOrigem,
-          validationResult.payload.vigenciaOs,
-          validationResult.payload.credenciadaCodigo,
-          validationResult.payload.credenciado,
-          validationResult.payload.cnpjCpf,
-          validationResult.payload.dreCodigo,
-          validationResult.payload.dreDescricao,
-          validationResult.payload.cpfCondutor,
-          validationResult.payload.condutor,
-          validationResult.payload.cpfPreposto,
-          validationResult.payload.prepostoCondutor,
-          validationResult.payload.prepostoInicio,
-          validationResult.payload.prepostoDias,
-          validationResult.payload.crm,
-          validationResult.payload.veiculoPlacas,
-          validationResult.payload.cpfMonitor,
-          validationResult.payload.monitor,
-          validationResult.payload.situacao,
-          validationResult.payload.tipoTrocaCodigo,
-          validationResult.payload.tipoTrocaDescricao,
-          validationResult.payload.conexao,
-          validationResult.payload.dataEncerramento,
-          validationResult.payload.anotacao,
-          validationResult.payload.uniaoTermos,
-          originalCodigo,
-        ],
-      )
+      const client = await pool.connect()
 
-      sendJson(response, 200, { item: updateResult.rows[0] })
+      try {
+        await client.query('BEGIN')
+
+        const updateResult = await client.query(
+          `UPDATE ${ordemServicoTableName}
+           SET codigo = $1,
+               termo_adesao = NULLIF($2, ''),
+               os = $3,
+               revisao = NULLIF($4, ''),
+               os_origem = NULLIF($5, ''),
+               vigencia_os = NULLIF($6, '')::date,
+               credenciada_codigo = $7,
+               credenciado = $8,
+               cnpj_cpf = $9,
+               dre_codigo = $10,
+               dre_descricao = $11,
+               cpf_condutor = $12,
+               condutor = $13,
+               cpf_preposto = NULLIF($14, ''),
+               preposto_condutor = NULLIF($15, ''),
+               preposto_inicio = NULLIF($16, '')::date,
+               preposto_dias = $17,
+               crm = $18,
+               veiculo_placas = NULLIF($19, ''),
+               cpf_monitor = NULLIF($20, ''),
+               monitor = NULLIF($21, ''),
+               situacao = $22,
+               tipo_troca_codigo = $23,
+               tipo_troca_descricao = NULLIF($24, ''),
+               conexao = NULLIF($25, ''),
+               data_encerramento = NULLIF($26, '')::date,
+               anotacao = NULLIF($27, ''),
+               uniao_termos = NULLIF($28, ''),
+               data_modificacao = NOW()
+           WHERE codigo = $29`,
+          [
+            validationResult.payload.codigo,
+            validationResult.payload.termoAdesao,
+            validationResult.payload.os,
+            '',
+            validationResult.payload.osOrigem,
+            validationResult.payload.vigenciaOs,
+            validationResult.payload.credenciadaCodigo,
+            validationResult.payload.credenciado,
+            validationResult.payload.cnpjCpf,
+            validationResult.payload.dreCodigo,
+            validationResult.payload.dreDescricao,
+            validationResult.payload.cpfCondutor,
+            validationResult.payload.condutor,
+            validationResult.payload.cpfPreposto,
+            validationResult.payload.prepostoCondutor,
+            validationResult.payload.prepostoInicio,
+            validationResult.payload.prepostoDias,
+            validationResult.payload.crm,
+            validationResult.payload.veiculoPlacas,
+            validationResult.payload.cpfMonitor,
+            validationResult.payload.monitor,
+            validationResult.payload.situacao,
+            validationResult.payload.tipoTrocaCodigo,
+            validationResult.payload.tipoTrocaDescricao,
+            validationResult.payload.conexao,
+            validationResult.payload.dataEncerramento,
+            validationResult.payload.anotacao,
+            validationResult.payload.uniaoTermos,
+            originalCodigo,
+          ],
+        )
+
+        if (updateResult.rowCount === 0) {
+          await client.query('ROLLBACK')
+          sendJson(response, 404, { message: 'OrdemServico nao encontrada.' })
+          return
+        }
+
+        await rebalanceOrdemServicoRevisions(client, [existingResult.rows[0].os, validationResult.payload.os])
+
+        const item = await fetchOrdemServicoItemByCodigo(client, validationResult.payload.codigo)
+
+        await client.query('COMMIT')
+        sendJson(response, 200, { item })
+      } catch (error) {
+        await client.query('ROLLBACK')
+        throw error
+      } finally {
+        client.release()
+      }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro ao alterar credenciamento OS.'
+      const message = error instanceof Error ? error.message : 'Erro ao alterar OrdemServico.'
       sendJson(response, 500, { message })
     }
 
@@ -8462,28 +8591,45 @@ const server = createServer(async (request, response) => {
     return
   }
 
-  if (request.method === 'DELETE' && getCredenciamentoOsCodigoFromUrl(pathname)) {
+  if (request.method === 'DELETE' && getOrdemServicoCodigoFromUrl(pathname)) {
     try {
-      const codigo = Number(getCredenciamentoOsCodigoFromUrl(pathname))
+      const codigo = Number(getOrdemServicoCodigoFromUrl(pathname))
 
       if (!Number.isInteger(codigo) || codigo <= 0) {
         sendJson(response, 400, { message: 'Codigo invalido.' })
         return
       }
 
-      const deleteResult = await pool.query(
-        'DELETE FROM credenciamento_os WHERE codigo = $1 RETURNING codigo::text AS codigo',
-        [codigo],
-      )
+      const client = await pool.connect()
 
-      if (deleteResult.rowCount === 0) {
-        sendJson(response, 404, { message: 'Credenciamento OS nao encontrado.' })
-        return
+      try {
+        await client.query('BEGIN')
+
+        const deleteResult = await client.query(
+          `DELETE FROM ${ordemServicoTableName}
+           WHERE codigo = $1
+           RETURNING codigo::text AS codigo, COALESCE(BTRIM(os), '') AS os`,
+          [codigo],
+        )
+
+        if (deleteResult.rowCount === 0) {
+          await client.query('ROLLBACK')
+          sendJson(response, 404, { message: 'OrdemServico nao encontrada.' })
+          return
+        }
+
+        await rebalanceOrdemServicoRevisions(client, [deleteResult.rows[0].os])
+
+        await client.query('COMMIT')
+        sendJson(response, 200, { deletedCodigo: deleteResult.rows[0].codigo })
+      } catch (error) {
+        await client.query('ROLLBACK')
+        throw error
+      } finally {
+        client.release()
       }
-
-      sendJson(response, 200, { deletedCodigo: deleteResult.rows[0].codigo })
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro ao excluir credenciamento OS.'
+      const message = error instanceof Error ? error.message : 'Erro ao excluir OrdemServico.'
       sendJson(response, 500, { message })
     }
 
@@ -8518,6 +8664,9 @@ ensureDatabaseSchema()
     return seedTitularTableFromXmlIfEmpty()
   })
   .then(() => {
+    return rebalanceOrdemServicoRevisions(pool)
+  })
+  .then(() => {
     server.listen(port, () => {
       console.log(`Auth API escutando na porta ${port}`)
     })
@@ -8527,3 +8676,5 @@ ensureDatabaseSchema()
     await pool.end()
     process.exit(1)
   })
+
+

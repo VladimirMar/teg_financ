@@ -1,3 +1,66 @@
+## OrdemServico
+
+Validar o XML offline antes do POST:
+
+```bash
+npm run validate:ordem-servico:xml
+```
+
+O script lê `importXML/OrdemServico.xml` e grava o resumo em `importXML/ordem_servico_validation_summary.json`.
+
+Para incluir checagem opcional de integridade referencial com PostgreSQL antes do POST:
+
+```bash
+CHECK_DB_REFERENCES=true npm run validate:ordem-servico:xml
+```
+
+Nesse modo, o validador também antecipa ausências em `credenciada`, `dre`, `condutor`, `veiculo` e `monitor`.
+
+Importar com saída em arquivo, sem depender da janela interativa:
+
+```bash
+npm run import:ordem-servico
+```
+
+O script chama `POST /api/ordem-servico/import-xml` e grava o retorno completo em `importXML/ordem_servico_import_summary.json`.
+
+Importar em background com log incremental local:
+
+```bash
+npm run import:ordem-servico:background
+```
+
+Esse runner grava o resumo JSON em `importXML/ordem_servico_import_summary.json` e escreve batidas de andamento em `importXML/ordem_servico_import.log` enquanto aguarda a resposta do endpoint.
+
+Pipeline unico de validacao + importacao:
+
+```bash
+npm run pipeline:ordem-servico
+```
+
+O pipeline roda a validacao primeiro e so dispara a importacao quando o XML passa. O consolidado final fica em `importXML/ordem_servico_pipeline_summary.json`.
+
+Para aceitar pendencias referenciais parciais ate um limite configuravel, mantendo bloqueio para erro estrutural:
+
+```bash
+CHECK_DB_REFERENCES=true PIPELINE_MAX_REFERENCE_ERRORS=10 npm run pipeline:ordem-servico
+```
+
+Nesse modo, o pipeline continua quando `structuralValid=true` e `referenceErrorCount <= PIPELINE_MAX_REFERENCE_ERRORS`.
+
+Variáveis opcionais:
+
+```bash
+API_BASE_URL=http://localhost:3001
+ORDEM_SERVICO_XML_FILE=OrdemServico.xml
+ORDEM_SERVICO_VALIDATION_REPORT_PATH=importXML/ordem_servico_validation_summary.json
+ORDEM_SERVICO_IMPORT_REPORT_PATH=importXML/ordem_servico_import_summary.json
+ORDEM_SERVICO_IMPORT_LOG_PATH=importXML/ordem_servico_import.log
+ORDEM_SERVICO_IMPORT_HEARTBEAT_SECONDS=15
+ORDEM_SERVICO_PIPELINE_REPORT_PATH=importXML/ordem_servico_pipeline_summary.json
+CHECK_DB_REFERENCES=true
+PIPELINE_MAX_REFERENCE_ERRORS=0
+```
 # TEG Financ
 
 Aplicacao React + Vite com API Node para operacoes administrativas, CRUD e importacao XML.

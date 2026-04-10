@@ -12,7 +12,7 @@ import { createSeguradoraItem, deleteSeguradoraItem, listSeguradoraItemsPaginate
 import type { SeguradoraItem } from './services/seguradora'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo' | 'credenciamentoOs'
+type ActiveView = 'inicio' | 'dre' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo' | 'ordemServico'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
 type TitularSortField = 'codigo' | 'cnpj_cpf' | 'titular'
@@ -1352,10 +1352,10 @@ function App() {
               Veiculo
             </li>
             <li
-              className={`menu-item ${activeView === 'credenciamentoOs' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('credenciamentoOs')}
+              className={`menu-item ${activeView === 'ordemServico' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('ordemServico')}
             >
-              Credenciamento OS
+              OrdemServico
             </li>
             <li className="menu-item">Relatorios</li>
           </ul>
@@ -2177,21 +2177,21 @@ function App() {
               />
             </div>
           </>
-        ) : activeView === 'credenciamentoOs' ? (
+        ) : activeView === 'ordemServico' ? (
           <>
             <div className="content-copy">
               <p className="content-kicker">Cadastro operacional</p>
-              <h2 id="content-title">Credenciamento de OS</h2>
+              <h2 id="content-title">OrdemServico</h2>
               <p className="content-description">
-                Consulte, inclua, altere e importe os credenciamentos de OS com busca relacional de credenciada, DRE, condutor, preposto, veiculo, monitor e tipo de troca.
+                Consulte, inclua, altere e importe Ordens de Servico com busca relacional de credenciada, DRE, condutor, preposto, veiculo, monitor e tipo de troca.
               </p>
             </div>
 
             <div className="access-embed-card">
               <iframe
                 className="access-embed-frame"
-                src="/src/credenciamentoOs.html"
-                title="Credenciamento de OS"
+                src="/src/ordemServico.html"
+                title="OrdemServico"
               />
             </div>
           </>
