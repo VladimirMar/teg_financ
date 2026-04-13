@@ -297,12 +297,45 @@ body:has(#credenciada-search) #credenciada-search {
   grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) minmax(280px, 1.2fr);
 }
 
-.dsc-form-row-ordem-servico-identificacao {
-  grid-template-columns: minmax(140px, 0.45fr) minmax(240px, 0.8fr) minmax(260px, 0.95fr) minmax(140px, 0.4fr);
+.dsc-form-row-ordem-servico-codigo {
+  grid-template-columns: minmax(160px, 220px) minmax(240px, 320px);
+  justify-content: center;
 }
 
-.dsc-form-row-ordem-servico-origem {
-  grid-template-columns: minmax(260px, 1fr) minmax(220px, 0.75fr) minmax(160px, 0.45fr) minmax(260px, 1fr);
+.dsc-form-row-ordem-servico-codigo .dsc-field-group {
+  width: 100%;
+  justify-self: center;
+}
+
+.dsc-form-control-os-concat {
+  background: #fff6bf;
+}
+
+.dsc-form-row-ordem-servico-identificacao {
+  grid-template-columns: minmax(220px, 0.85fr) minmax(140px, 0.4fr) minmax(160px, 0.45fr);
+}
+
+.dsc-inline-action-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 8px;
+  align-items: center;
+}
+
+.dsc-inline-action-button {
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.dsc-form-row-ordem-servico-vigencia {
+  grid-template-columns: minmax(220px, 280px);
 }
 
 .dsc-form-row-ordem-servico-vinculos-top,
@@ -338,7 +371,12 @@ body:has(#credenciada-search) #credenciada-search {
 }
 
 .dsc-form-row-ordem-servico-situacao {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  align-items: end;
+}
+
+.dsc-form-row-ordem-servico-situacao .dsc-radio-field-group {
+  align-self: stretch;
 }
 
 .dsc-form-column-stack {
@@ -778,7 +816,8 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
   .dsc-form-row-veiculo-seguradora,
   .dsc-form-row-veiculo-classificacao,
   .dsc-form-row-ordem-servico-identificacao,
-  .dsc-form-row-ordem-servico-origem,
+  .dsc-form-row-ordem-servico-codigo,
+  .dsc-form-row-ordem-servico-vigencia,
   .dsc-form-row-ordem-servico-vinculos-top,
   .dsc-form-row-ordem-servico-vinculos-dre,
   .dsc-form-row-ordem-servico-vinculos-middle,
@@ -788,6 +827,10 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
   .dsc-form-row-contact,
   .dsc-form-row-address {
     grid-template-columns: 1fr;
+  }
+
+  .dsc-form-row-ordem-servico-situacao {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 260px);
   }
 
   #credenciada-form .dsc-form-section-card,
@@ -847,6 +890,11 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
     gap: 14px;
   }
 
+  .dsc-form-row-ordem-servico-situacao {
+    grid-template-columns: minmax(0, 1fr) minmax(160px, 220px);
+    align-items: end;
+  }
+
   .dsc-form-row-credenciada-top,
   .dsc-form-row-condutor-top,
   .dsc-form-row-monitor-top,
@@ -897,6 +945,10 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
 }
 
 @media (max-width: 480px) {
+  .dsc-form-row-ordem-servico-situacao {
+    grid-template-columns: 1fr;
+  }
+
   main {
     padding: 12px;
   }

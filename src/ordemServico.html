@@ -19,7 +19,7 @@
                 <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-ordem-servico-button">Inserir registro</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-ordem-servico-import-button">Importar XML</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-ordem-servico-rejections-button">Recusas XML</button>
-                <input class="dsc-form-control dsc-access-filter-input" id="ordem-servico-search" type="text" placeholder="Filtrar por codigo, termo, OS, credenciado, DRE, condutor, monitor ou CRM" />
+                <input class="dsc-form-control dsc-access-filter-input" id="ordem-servico-search" type="text" placeholder="Filtrar por codigo, termo, num OS, revisao, OS, credenciado, DRE, condutor, monitor ou CRM" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-ordem-servico-filter-button">Limpar</button>
               </form>
@@ -45,7 +45,7 @@
                       <th>Data importacao</th>
                       <th>Arquivo XML</th>
                       <th>Linha XML</th>
-                      <th>Codigo XML</th>
+                      <th>Codigo Access</th>
                       <th>OS XML</th>
                       <th>Credenciado XML</th>
                       <th>DRE XML</th>
@@ -95,39 +95,44 @@
               <section class="dsc-form-section-card dsc-form-section-card-ordem-servico-identificacao">
                 <h3 class="dsc-form-section-title">Identificacao</h3>
 
-                <div class="dsc-form-row dsc-form-row-ordem-servico-identificacao">
+                <div class="dsc-form-row dsc-form-row-ordem-servico-codigo">
                   <label class="dsc-field-group" for="ordem-servico-codigo">
                     <span>Codigo</span>
                     <input class="dsc-form-control" id="ordem-servico-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
                     <div class="dsc-form-error" id="ordem-servico-codigo-error"></div>
                   </label>
 
+                  <label class="dsc-field-group" for="ordem-servico-os-concat">
+                    <span>OS</span>
+                    <input class="dsc-form-control dsc-form-control-os-concat" id="ordem-servico-os-concat" type="text" placeholder="OS" readonly />
+                    <div class="dsc-form-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row dsc-form-row-ordem-servico-identificacao">
                   <label class="dsc-field-group" for="ordem-servico-termo-adesao">
                     <span>Termo</span>
-                    <input class="dsc-form-control" id="ordem-servico-termo-adesao" type="text" inputmode="numeric" placeholder="2026-0011093" maxlength="12" />
+                    <input class="dsc-form-control" id="ordem-servico-termo-adesao" type="text" inputmode="numeric" placeholder="2026/0011093" maxlength="12" />
                     <div class="dsc-form-error" id="ordem-servico-termo-adesao-error"></div>
                   </label>
 
-                  <label class="dsc-field-group" for="ordem-servico-os">
-                    <span>Numero da OS</span>
-                    <input class="dsc-form-control" id="ordem-servico-os" type="text" inputmode="numeric" placeholder="2026-0011093-001" maxlength="16" />
-                    <div class="dsc-form-error" id="ordem-servico-os-error"></div>
+                  <label class="dsc-field-group" for="ordem-servico-num-os">
+                    <span>Num OS</span>
+                    <input class="dsc-form-control" id="ordem-servico-num-os" type="text" inputmode="numeric" placeholder="001" maxlength="10" />
+                    <div class="dsc-form-error" id="ordem-servico-num-os-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="ordem-servico-revisao">
                     <span>Revisao</span>
-                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-revisao" type="text" placeholder="Gerada automaticamente" maxlength="30" readonly />
+                    <div class="dsc-inline-action-field">
+                      <input class="dsc-form-control" id="ordem-servico-revisao" type="text" placeholder="-S/R" maxlength="30" />
+                      <button type="button" class="dsc-btn dsc-btn-white dsc-inline-action-button" id="ordem-servico-add-revisao-button" aria-label="Acrescentar revisao" title="Acrescentar revisao">+</button>
+                    </div>
                     <div class="dsc-form-error" id="ordem-servico-revisao-error"></div>
                   </label>
                 </div>
 
-                <div class="dsc-form-row dsc-form-row-ordem-servico-origem">
-                  <label class="dsc-field-group" for="ordem-servico-os-origem">
-                    <span>OS origem</span>
-                    <input class="dsc-form-control" id="ordem-servico-os-origem" type="text" inputmode="numeric" placeholder="2026-0011093-001" maxlength="16" />
-                    <div class="dsc-form-error" id="ordem-servico-os-origem-error"></div>
-                  </label>
-
+                <div class="dsc-form-row dsc-form-row-ordem-servico-vigencia">
                   <label class="dsc-field-group" for="ordem-servico-vigencia-os">
                     <span>Vigencia da OS</span>
                     <input class="dsc-form-control" id="ordem-servico-vigencia-os" type="date" />
@@ -299,6 +304,12 @@
                       </label>
                     </div>
                   </fieldset>
+
+                  <label class="dsc-field-group" for="ordem-servico-codigo-access">
+                    <span>Codigo Access</span>
+                    <input class="dsc-form-control" id="ordem-servico-codigo-access" type="text" placeholder="CODIGO ACCESS" maxlength="50" readonly />
+                    <div class="dsc-form-error" id="ordem-servico-codigo-access-error"></div>
+                  </label>
                 </div>
 
                 <label class="dsc-field-group" for="ordem-servico-anotacao">
@@ -333,10 +344,11 @@
                       </th>
                       <th>Termo</th>
                       <th>
-                        <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-os-button">
-                          OS <span id="sort-ordem-servico-os-indicator">v</span>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-num-os-button">
+                          Num OS <span id="sort-ordem-servico-num-os-indicator">v</span>
                         </button>
                       </th>
+                      <th>OS</th>
                       <th>
                         <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-credenciado-button">
                           Credenciado <span id="sort-ordem-servico-credenciado-indicator">v</span>
@@ -374,10 +386,11 @@
       const importForm = document.getElementById('ordem-servico-import-form');
       const rejectionPanel = document.getElementById('ordem-servico-rejection-panel');
       const codigoInput = document.getElementById('ordem-servico-codigo');
+      const osConcatInput = document.getElementById('ordem-servico-os-concat');
       const termoAdesaoInput = document.getElementById('ordem-servico-termo-adesao');
-      const osInput = document.getElementById('ordem-servico-os');
+      const numOsInput = document.getElementById('ordem-servico-num-os');
       const revisaoInput = document.getElementById('ordem-servico-revisao');
-      const osOrigemInput = document.getElementById('ordem-servico-os-origem');
+      const addRevisaoButton = document.getElementById('ordem-servico-add-revisao-button');
       const vigenciaOsInput = document.getElementById('ordem-servico-vigencia-os');
       const cnpjCpfInput = document.getElementById('ordem-servico-cnpj-cpf');
       const cnpjCpfOptionsList = document.getElementById('ordem-servico-cnpj-cpf-options');
@@ -404,12 +417,13 @@
       const tipoTrocaOptionsList = document.getElementById('ordem-servico-tipo-troca-options');
       const dataEncerramentoInput = document.getElementById('ordem-servico-data-encerramento');
       const anotacaoInput = document.getElementById('ordem-servico-anotacao');
+      const codigoAccessInput = document.getElementById('ordem-servico-codigo-access');
       const situacaoRadios = Array.from(document.querySelectorAll('input[name="ordem-servico-situacao"]'));
       const codigoError = document.getElementById('ordem-servico-codigo-error');
+      const codigoAccessError = document.getElementById('ordem-servico-codigo-access-error');
       const termoAdesaoError = document.getElementById('ordem-servico-termo-adesao-error');
-      const osError = document.getElementById('ordem-servico-os-error');
+      const numOsError = document.getElementById('ordem-servico-num-os-error');
       const revisaoError = document.getElementById('ordem-servico-revisao-error');
-      const osOrigemError = document.getElementById('ordem-servico-os-origem-error');
       const vigenciaOsError = document.getElementById('ordem-servico-vigencia-os-error');
       const cnpjCpfError = document.getElementById('ordem-servico-cnpj-cpf-error');
       const credenciadoError = document.getElementById('ordem-servico-credenciado-error');
@@ -443,10 +457,10 @@
       const nextPageButton = document.getElementById('next-ordem-servico-page-button');
       const paginationInfo = document.getElementById('ordem-servico-pagination-info');
       const sortCodigoButton = document.getElementById('sort-ordem-servico-codigo-button');
-      const sortOsButton = document.getElementById('sort-ordem-servico-os-button');
+      const sortNumOsButton = document.getElementById('sort-ordem-servico-num-os-button');
       const sortCredenciadoButton = document.getElementById('sort-ordem-servico-credenciado-button');
       const sortCodigoIndicator = document.getElementById('sort-ordem-servico-codigo-indicator');
-      const sortOsIndicator = document.getElementById('sort-ordem-servico-os-indicator');
+      const sortNumOsIndicator = document.getElementById('sort-ordem-servico-num-os-indicator');
       const sortCredenciadoIndicator = document.getElementById('sort-ordem-servico-credenciado-indicator');
       const formTitle = document.getElementById('ordem-servico-form-title');
       const saveButton = document.getElementById('save-ordem-servico-button');
@@ -475,7 +489,7 @@
       let currentPage = 1;
       let totalPages = 1;
       let currentSearch = '';
-      let currentSortBy = 'codigo';
+      let currentSortBy = 'chave';
       let currentSortDirection = 'asc';
       let currentRejectionPage = 1;
       let totalRejectionPages = 1;
@@ -586,21 +600,30 @@
           return digits;
         }
 
-        return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+        return `${digits.slice(0, 4)}/${digits.slice(4)}`;
       };
 
-      const normalizeOsNumber = (value) => {
-        const digits = value.replace(/\D/g, '').slice(0, 14);
+      const normalizeNumOs = (value) => value.replace(/\D/g, '').slice(0, 10);
 
-        if (digits.length <= 4) {
-          return digits;
+      const normalizeRevisao = (value) => normalizeText(String(value || '').replace(/\s+/g, ''), 30) || '-S/R';
+
+      const buildOsConcat = ({ termoAdesao, numOs, revisao }) => {
+        const normalizedTermoAdesao = normalizeTermoAdesao(String(termoAdesao || ''));
+        const normalizedNumOs = normalizeNumOs(String(numOs || ''));
+
+        if (!normalizedTermoAdesao && !normalizedNumOs && !String(revisao || '').trim()) {
+          return '';
         }
 
-        if (digits.length <= 11) {
-          return `${digits.slice(0, 4)}-${digits.slice(4)}`;
-        }
+        return `${normalizedTermoAdesao}-${normalizedNumOs}${normalizeRevisao(revisao || '')}`;
+      };
 
-        return `${digits.slice(0, 4)}-${digits.slice(4, 11)}-${digits.slice(11)}`;
+      const syncOsConcatInput = () => {
+        osConcatInput.value = buildOsConcat({
+          termoAdesao: termoAdesaoInput.value,
+          numOs: numOsInput.value,
+          revisao: revisaoInput.value,
+        });
       };
 
       const normalizeCpf = (value) => {
@@ -702,9 +725,8 @@
       const resetMessages = () => {
         codigoError.textContent = '';
         termoAdesaoError.textContent = '';
-        osError.textContent = '';
+        numOsError.textContent = '';
         revisaoError.textContent = '';
-        osOrigemError.textContent = '';
         vigenciaOsError.textContent = '';
         cnpjCpfError.textContent = '';
         credenciadoError.textContent = '';
@@ -771,6 +793,7 @@
       const hideForm = () => {
         form.classList.add('dsc-hidden');
         form.reset();
+        osConcatInput.value = '';
         editingCodigo = null;
         clearLookupFields();
         renderDreOptions('');
@@ -806,8 +829,8 @@
         const params = new URLSearchParams({
           page: String(currentPage),
           pageSize: String(pageSize),
-          sortBy: 'codigo',
-          sortDirection: 'asc',
+          sortBy: currentSortBy,
+          sortDirection: currentSortDirection,
         });
 
         if (currentSearch) {
@@ -831,11 +854,9 @@
       };
 
       const updateSortIndicators = () => {
-        currentSortBy = 'codigo';
-        currentSortDirection = 'asc';
-        sortCodigoIndicator.textContent = '^';
-        sortOsIndicator.textContent = 'v';
-        sortCredenciadoIndicator.textContent = 'v';
+        sortCodigoIndicator.textContent = currentSortBy === 'codigo' ? (currentSortDirection === 'asc' ? '^' : 'v') : 'v';
+        sortNumOsIndicator.textContent = currentSortBy === 'num_os' ? (currentSortDirection === 'asc' ? '^' : 'v') : 'v';
+        sortCredenciadoIndicator.textContent = currentSortBy === 'credenciado' ? (currentSortDirection === 'asc' ? '^' : 'v') : 'v';
       };
 
       const updatePagination = (totalItems) => {
@@ -1172,7 +1193,8 @@
           row.innerHTML = `
             <td>${item.codigo || ''}</td>
             <td>${item.termo_adesao || ''}</td>
-            <td>${item.os || ''}</td>
+            <td>${item.num_os || ''}</td>
+            <td>${item.os_concat || ''}</td>
             <td>${item.credenciado || ''}</td>
             <td>${item.dre_codigo || ''}</td>
             <td>${item.condutor || ''}</td>
@@ -1207,7 +1229,7 @@
             <td>${item.data_importacao || ''}</td>
             <td>${item.arquivo_xml || ''}</td>
             <td>${item.linha_xml || ''}</td>
-            <td>${item.codigo_xml || ''}</td>
+            <td>${item.codigo_access || item.codigo_xml || ''}</td>
             <td>${item.os_xml || ''}</td>
             <td>${item.credenciado_xml || ''}</td>
             <td>${item.dre_xml || ''}</td>
@@ -1275,6 +1297,38 @@
         }
 
         return payload.item;
+      };
+
+      const fetchNextNumOsByTermo = async (termoAdesao) => {
+        const response = await fetch(`/api/ordem-servico/next-num-os?termoAdesao=${encodeURIComponent(termoAdesao)}`, {
+          headers: { Accept: 'application/json' },
+        });
+        const payload = await readJsonResponse(response);
+
+        if (!response.ok) {
+          throw new Error(payload.message || 'Falha ao obter o proximo Num OS.');
+        }
+
+        return {
+          termoAdesao: normalizeTermoAdesao(String(payload.termoAdesao || termoAdesao)),
+          nextNumOs: normalizeNumOs(String(payload.nextNumOs || '')),
+        };
+      };
+
+      const fetchNextRevisao = async ({ termoAdesao, numOs }) => {
+        const response = await fetch(`/api/ordem-servico/next-revisao?termoAdesao=${encodeURIComponent(termoAdesao)}&numOs=${encodeURIComponent(numOs)}`, {
+          headers: { Accept: 'application/json' },
+        });
+        const payload = await readJsonResponse(response);
+
+        if (!response.ok) {
+          throw new Error(payload.message || 'Falha ao obter a proxima revisao.');
+        }
+
+        return {
+          revisaoAtual: normalizeRevisao(String(payload.revisaoAtual || '')),
+          nextRevisao: normalizeRevisao(String(payload.nextRevisao || '')),
+        };
       };
 
       const syncCredenciadaByDocument = async () => {
@@ -1411,17 +1465,83 @@
         }
       };
 
-      const startInsert = () => {
+      const startInsert = ({ termoAdesao = '', numOs = '' } = {}) => {
         form.reset();
         clearLookupFields();
         tipoTrocaInput.value = '';
+        termoAdesaoInput.value = normalizeTermoAdesao(String(termoAdesao || ''));
+        numOsInput.value = normalizeNumOs(String(numOs || ''));
+        revisaoInput.value = normalizeRevisao('');
+        osConcatInput.value = buildOsConcat({ termoAdesao: termoAdesaoInput.value, numOs: numOsInput.value, revisao: revisaoInput.value });
         editingCodigo = null;
         vigenciaOsInput.min = getTomorrowDateInputValue();
         setSelectedSituacao('Ativo');
         resetMessages();
+        setGridMessage('');
         renderModalidadeOptions('');
         showForm(false);
         void ensureModalidadeOptionsLoaded('');
+      };
+
+      const handleStartInsert = async () => {
+        const termoAdesao = normalizeTermoAdesao(searchInput.value);
+
+        if (!termoAdesao) {
+          const message = 'Informe o Termo no filtro antes de inserir o registro.';
+          setGridMessage(message, 'error');
+          showBanner(message, 'error');
+          searchInput.focus();
+          return;
+        }
+
+        searchInput.value = termoAdesao;
+        setGridMessage('Consultando o proximo Num OS...', 'info');
+
+        try {
+          const nextOs = await fetchNextNumOsByTermo(termoAdesao);
+          startInsert({ termoAdesao: nextOs.termoAdesao, numOs: nextOs.nextNumOs });
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao obter o proximo Num OS.');
+          setGridMessage(message, 'error');
+          showBanner(message, 'error');
+        }
+      };
+
+      const handleAddRevisao = async () => {
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+        const numOs = normalizeNumOs(numOsInput.value);
+
+        termoAdesaoInput.value = termoAdesao;
+        numOsInput.value = numOs;
+        revisaoError.textContent = '';
+
+        if (!termoAdesao) {
+          termoAdesaoError.textContent = 'Informe o Termo.';
+          termoAdesaoInput.focus();
+          return;
+        }
+
+        if (!numOs) {
+          numOsError.textContent = 'Informe o Num OS.';
+          numOsInput.focus();
+          return;
+        }
+
+        feedback.textContent = 'Consultando a proxima revisao...';
+        feedback.className = 'dsc-feedback';
+
+        try {
+          const revisaoInfo = await fetchNextRevisao({ termoAdesao, numOs });
+          revisaoInput.value = revisaoInfo.nextRevisao;
+          revisaoError.textContent = '';
+          feedback.textContent = '';
+          syncOsConcatInput();
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao obter a proxima revisao.');
+          revisaoError.textContent = message;
+          feedback.textContent = '';
+          feedback.className = 'dsc-feedback';
+        }
       };
 
       const startEdit = (item) => {
@@ -1429,9 +1549,8 @@
         editingCodigo = item.codigo;
         codigoInput.value = item.codigo || '';
         termoAdesaoInput.value = normalizeTermoAdesao(String(item.termo_adesao || ''));
-        osInput.value = normalizeOsNumber(String(item.os || ''));
-        revisaoInput.value = item.revisao || '';
-        osOrigemInput.value = normalizeOsNumber(String(item.os_origem || ''));
+        numOsInput.value = normalizeNumOs(String(item.num_os || ''));
+        revisaoInput.value = normalizeRevisao(item.revisao || '');
         vigenciaOsInput.value = item.vigencia_os || '';
         cnpjCpfInput.value = item.cnpj_cpf || '';
         credenciadoInput.value = item.credenciado || '';
@@ -1453,16 +1572,18 @@
         dataEncerramentoInput.value = item.data_encerramento || '';
         anotacaoInput.value = item.anotacao || '';
         setSelectedSituacao(item.situacao || 'Ativo');
+        codigoAccessInput.value = item.codigo_access || '';
         renderDreOptions(dreCodigoInput.value);
         renderModalidadeOptions(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
         renderTipoTrocaOptions(tipoTrocaInput.value);
+        syncOsConcatInput();
         resetMessages();
         showForm(true);
         void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
       };
 
       const handleDelete = async (item) => {
-        if (!window.confirm(`Excluir a OrdemServico ${item.codigo} - ${item.os}?`)) {
+        if (!window.confirm(`Excluir a OrdemServico ${item.codigo} - ${item.termo_adesao}/${item.num_os}?`)) {
           return;
         }
 
@@ -1525,18 +1646,21 @@
 
       termoAdesaoInput.addEventListener('input', () => {
         termoAdesaoInput.value = normalizeTermoAdesao(termoAdesaoInput.value);
+        syncOsConcatInput();
       });
 
-      osInput.addEventListener('input', () => {
-        osInput.value = normalizeOsNumber(osInput.value);
+      numOsInput.addEventListener('input', () => {
+        numOsInput.value = normalizeNumOs(numOsInput.value);
+        syncOsConcatInput();
       });
 
       revisaoInput.addEventListener('input', () => {
-        revisaoInput.value = normalizeText(revisaoInput.value, 30);
+        revisaoInput.value = normalizeRevisao(revisaoInput.value);
+        syncOsConcatInput();
       });
 
-      osOrigemInput.addEventListener('input', () => {
-        osOrigemInput.value = normalizeOsNumber(osOrigemInput.value);
+      addRevisaoButton.addEventListener('click', () => {
+        void handleAddRevisao();
       });
 
       cnpjCpfInput.addEventListener('input', () => {
@@ -1626,15 +1750,20 @@
         anotacaoInput.value = normalizeAnnotation(anotacaoInput.value);
       });
 
+      codigoAccessInput.addEventListener('input', () => {
+        codigoAccessInput.value = normalizeText(codigoAccessInput.value, 50);
+        codigoAccessError.textContent = '';
+      });
+
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         const payload = {
           codigo: normalizeCodigo(codigoInput.value),
+          codigoAccess: normalizeText(codigoAccessInput.value, 50),
           termoAdesao: normalizeTermoAdesao(termoAdesaoInput.value),
-          os: normalizeOsNumber(osInput.value),
-          revisao: normalizeText(revisaoInput.value, 30),
-          osOrigem: normalizeOsNumber(osOrigemInput.value),
+          numOs: normalizeNumOs(numOsInput.value),
+          revisao: normalizeRevisao(revisaoInput.value),
           vigenciaOs: vigenciaOsInput.value,
           credenciado: normalizeText(credenciadoInput.value, 255),
           cnpjCpf: normalizeCnpjCpf(cnpjCpfInput.value),
@@ -1656,10 +1785,11 @@
         resetMessages();
 
         codigoInput.value = payload.codigo;
+  codigoAccessInput.value = payload.codigoAccess;
         termoAdesaoInput.value = payload.termoAdesao;
-        osInput.value = payload.os;
+        numOsInput.value = payload.numOs;
         revisaoInput.value = payload.revisao;
-        osOrigemInput.value = payload.osOrigem;
+        osConcatInput.value = buildOsConcat(payload);
         cnpjCpfInput.value = payload.cnpjCpf;
         dreCodigoInput.value = payload.dreCodigo;
         modalidadeDescricaoInput.value = payload.modalidadeDescricao;
@@ -1677,8 +1807,8 @@
           hasError = true;
         }
 
-        if (!payload.os) {
-          osError.textContent = 'Informe o numero da OS.';
+        if (!payload.numOs) {
+          numOsError.textContent = 'Informe o Num OS.';
           hasError = true;
         }
 
@@ -1863,21 +1993,23 @@
       });
 
       const toggleSort = (field) => {
-        if (field !== 'codigo') {
-          return;
+        if (currentSortBy === field) {
+          currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          currentSortBy = field;
+          currentSortDirection = 'asc';
         }
-
-        currentSortBy = 'codigo';
-        currentSortDirection = 'asc';
 
         currentPage = 1;
         void loadItems();
       };
 
       sortCodigoButton.addEventListener('click', () => toggleSort('codigo'));
-      sortOsButton.addEventListener('click', () => toggleSort('os'));
+      sortNumOsButton.addEventListener('click', () => toggleSort('num_os'));
       sortCredenciadoButton.addEventListener('click', () => toggleSort('credenciado'));
-      insertButton.addEventListener('click', startInsert);
+      insertButton.addEventListener('click', () => {
+        void handleStartInsert();
+      });
       cancelButton.addEventListener('click', hideForm);
       importButton.addEventListener('click', () => {
         hideForm();
