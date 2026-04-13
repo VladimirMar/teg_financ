@@ -526,8 +526,8 @@
         }
 
         return normalizedDescricao
-          .replace(/\s+TEG\s+CRECHE$/i, '')
-          .replace(/\s+TEG\s+ESPECIAL$/i, '')
+          .replace(/[\s_]+TEG[\s_]+CRECHE$/i, '')
+          .replace(/[\s_]+TEG[\s_]+ESPECIAL$/i, '')
           .trim();
       };
 

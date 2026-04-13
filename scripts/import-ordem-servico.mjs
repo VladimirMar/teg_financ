@@ -4,9 +4,46 @@ import { fileURLToPath } from 'node:url'
 
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const importXmlDirectory = path.join(workspaceRoot, 'importXML')
-const baseUrl = process.env.API_BASE_URL ?? 'http://localhost:3001'
-const defaultFileName = process.env.ORDEM_SERVICO_XML_FILE ?? 'OrdemServico.xml'
-const requestedFileName = String(process.argv[2] ?? defaultFileName).trim()
+const defaultBaseUrl = 'http://localhost:3001'
+const defaultFileName = 'OrdemServico.xml'
+const rawArgs = process.argv.slice(2)
+
+let requestedBaseUrl = defaultBaseUrl
+let requestedFileName = defaultFileName
+
+for (let index = 0; index < rawArgs.length; index += 1) {
+  const currentArg = String(rawArgs[index] ?? '').trim()
+
+  if (!currentArg) {
+    continue
+  }
+
+  if (currentArg === '--base-url') {
+    requestedBaseUrl = String(rawArgs[index + 1] ?? defaultBaseUrl).trim() || defaultBaseUrl
+    index += 1
+    continue
+  }
+
+  if (currentArg.startsWith('--base-url=')) {
+    requestedBaseUrl = currentArg.slice('--base-url='.length).trim() || defaultBaseUrl
+    continue
+  }
+
+  if (currentArg === '--file') {
+    requestedFileName = String(rawArgs[index + 1] ?? defaultFileName).trim() || defaultFileName
+    index += 1
+    continue
+  }
+
+  if (currentArg.startsWith('--file=')) {
+    requestedFileName = currentArg.slice('--file='.length).trim() || defaultFileName
+    continue
+  }
+
+  requestedFileName = currentArg
+}
+
+const baseUrl = requestedBaseUrl
 const reportPath = process.env.ORDEM_SERVICO_IMPORT_REPORT_PATH
   ?? path.join(importXmlDirectory, 'ordem_servico_import_summary.json')
 const endpoint = `${baseUrl}/api/ordem-servico/import-xml`

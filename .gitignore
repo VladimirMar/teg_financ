@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Generated import reports
+importXML/ordem_servico_import_summary.json
+importXML/ordem_servico_validation_summary.json

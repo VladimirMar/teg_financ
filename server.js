@@ -337,6 +337,19 @@ const normalizeTrocaText = (value, maxLength = 255) => {
     .slice(0, maxLength)
 }
 
+const normalizeTrocaLookupKey = (value) => {
+  return normalizeTrocaText(value, 255)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/SUBSTITUI[^A-Z0-9]*FO/g, 'SUBSTITUICAO')
+    .replace(/ALTERA[^A-Z0-9]*FO/g, 'ALTERACAO')
+    .replace(/ATUALIZA[^A-Z0-9]*AO/g, 'ATUALIZACAO')
+    .replace(/REVISA[^A-Z0-9]*AO/g, 'REVISAO')
+    .replace(/INCLUSA[^A-Z0-9]*AO/g, 'INCLUSAO')
+    .replace(/CORRE[^A-Z0-9]*AO/g, 'CORRECAO')
+    .replace(/[^A-Z0-9]/g, '')
+}
+
 const normalizeOperationalCode = (value, maxLength = 255) => {
   return normalizeRequestValue(value)
     .replace(/\s+/g, ' ')
@@ -560,9 +573,15 @@ const modalidadeSelectClause = `
   CAST(codigo AS text) AS codigo,
   BTRIM(CAST(descricao AS text)) AS descricao`
 
+const normalizeModalidadeDescriptionKey = (value) => normalizeRequestValue(value)
+  .toUpperCase()
+  .replace(/\s+/g, '_')
+  .replace(/[^A-Z0-9_]/g, '')
+  .slice(0, 255)
+
 const findModalidadeByCodigoOrDescription = async ({ codigo, descricao }) => {
   const normalizedCodigo = normalizeRequestValue(codigo)
-  const normalizedDescricao = normalizeRequestValue(descricao).toUpperCase().slice(0, 255)
+  const normalizedDescricao = normalizeModalidadeDescriptionKey(descricao)
 
   if (!normalizedCodigo && !normalizedDescricao) {
     return null
@@ -578,7 +597,7 @@ const findModalidadeByCodigoOrDescription = async ({ codigo, descricao }) => {
 
   if (normalizedDescricao) {
     values.push(normalizedDescricao)
-    filters.push(`UPPER(BTRIM(CAST(descricao AS text))) = $${values.length}`)
+    filters.push(`REGEXP_REPLACE(UPPER(BTRIM(CAST(descricao AS text))), '[^A-Z0-9]+', '_', 'g') = $${values.length}`)
   }
 
   const result = await pool.query(
@@ -623,8 +642,8 @@ const getCanonicalDreDescription = (dreDescricao) => {
   }
 
   return normalizedDescricao
-    .replace(/\s+TEG\s+CRECHE$/i, '')
-    .replace(/\s+TEG\s+ESPECIAL$/i, '')
+    .replace(/[\s_]+TEG[\s_]+CRECHE$/i, '')
+    .replace(/[\s_]+TEG[\s_]+ESPECIAL$/i, '')
     .trim()
 }
 
@@ -671,7 +690,7 @@ const ensureDefaultModalidadeEntries = async () => {
 const backfillOrdemServicoModalidadesFromDre = async () => {
   const modalidadeResult = await pool.query(`SELECT ${modalidadeSelectClause} FROM modalidade`)
   const modalidadeByDescricao = new Map(
-    modalidadeResult.rows.map((item) => [normalizeRequestValue(item.descricao).toUpperCase().slice(0, 255), item]),
+    modalidadeResult.rows.map((item) => [normalizeModalidadeDescriptionKey(item.descricao), item]),
   )
 
   const ordemServicoResult = await pool.query(
@@ -709,7 +728,7 @@ const backfillOrdemServicoModalidadesFromDre = async () => {
       }
 
       const currentCodigo = normalizeRequestValue(row.modalidade_codigo)
-      const currentDescricao = normalizeRequestValue(row.modalidade_descricao).toUpperCase().slice(0, 255)
+      const currentDescricao = normalizeModalidadeDescriptionKey(row.modalidade_descricao)
       const nextDreCodigo = canonicalDreItem
         ? normalizeRequestValue(canonicalDreItem.codigo_operacional || canonicalDreItem.codigo)
         : normalizeRequestValue(row.dre_codigo)
@@ -738,7 +757,7 @@ const backfillOrdemServicoModalidadesFromDre = async () => {
           normalizeOperationalCode(nextDreCodigo, 30),
           normalizeOperationalCode(nextDreDescricao, 255),
           Number(modalidadeItem.codigo),
-          normalizeOperationalCode(modalidadeItem.descricao, 255),
+          normalizeOperationalCode(derivedDescricao, 255),
           Number(row.codigo),
         ],
       )
@@ -999,34 +1018,38 @@ const findVeiculoByCrm = async (crm) => {
 const findTrocaByCodigoOrDescricao = async ({ codigo, descricao }) => {
   const normalizedCodigo = normalizeRequestValue(codigo)
   const normalizedDescricao = normalizeTrocaText(descricao, 255)
+  const normalizedDescricaoKey = normalizeTrocaLookupKey(descricao)
 
-  if (!normalizedCodigo && !normalizedDescricao) {
+  if (!normalizedCodigo && !normalizedDescricaoKey) {
     return null
   }
 
-  const values = []
-  const filters = []
-
   if (normalizedCodigo) {
-    values.push(normalizedCodigo)
-    filters.push(`CAST(codigo AS text) = $${values.length}`)
+    const result = await pool.query(
+      `SELECT ${trocaSelectClause}
+       FROM tipo_troca
+       WHERE CAST(codigo AS text) = $1
+       ORDER BY codigo ASC
+       LIMIT 1`,
+      [normalizedCodigo],
+    )
+
+    if (result.rows[0]) {
+      return result.rows[0]
+    }
   }
 
-  if (normalizedDescricao) {
-    values.push(normalizedDescricao)
-    filters.push(`BTRIM(lista) = $${values.length}`)
+  if (!normalizedDescricaoKey) {
+    return null
   }
 
   const result = await pool.query(
     `SELECT ${trocaSelectClause}
      FROM tipo_troca
-     WHERE ${filters.join(' OR ')}
-     ORDER BY codigo ASC
-     LIMIT 1`,
-    values,
+     ORDER BY codigo ASC`,
   )
 
-  return result.rows[0] ?? null
+  return result.rows.find((item) => normalizeTrocaLookupKey(item.lista) === normalizedDescricaoKey) ?? null
 }
 
 const buildCredenciadaLegacyFields = ({ codigo, credenciado, representante, cnpjCpf }) => {
@@ -1684,7 +1707,7 @@ const parseOrdemServicoXml = (xmlContent) => {
     codigo: normalizeRequestValue(record?.['C\u00f3digo']),
     termoAdesao: normalizeRequestValue(record?.Termo_de_adesao),
     os: normalizeRequestValue(record?.OS),
-    revisao: normalizeRequestValue(record?.revisao),
+    revisao: extractOrdemServicoRevisionFromOs(record?.OS),
     osOrigem: normalizeRequestValue(record?.OS_origem),
     vigenciaOs: normalizeXmlDateInput(record?.Vigencia_da_OS),
     credenciado: normalizeRequestValue(record?.Credenciado),
@@ -2358,6 +2381,13 @@ const buildRevisionSequenceLabel = (sequenceNumber) => {
   return label
 }
 
+const extractOrdemServicoRevisionFromOs = (value) => {
+  const normalizedValue = normalizeRequestValue(value).toUpperCase()
+  const match = normalizedValue.match(/[A-Z]+$/)
+
+  return match ? match[0] : ''
+}
+
 const fetchOrdemServicoItemByCodigo = async (executor, codigo) => {
   const result = await executor.query(
     `SELECT ${ordemServicoSelectClause}
@@ -2399,7 +2429,8 @@ const rebalanceOrdemServicoRevisions = async (executor, osValues = null) => {
     )
 
     for (const [index, row] of groupResult.rows.entries()) {
-      const revisao = index === 0 ? '' : buildRevisionSequenceLabel(index)
+      const explicitRevisao = extractOrdemServicoRevisionFromOs(os)
+      const revisao = explicitRevisao || (index === 0 ? '' : buildRevisionSequenceLabel(index))
 
       await executor.query(
         `UPDATE ${ordemServicoTableName} SET revisao = NULLIF($1, '') WHERE codigo = $2`,
@@ -4167,7 +4198,7 @@ const validateOrdemServicoPayload = async ({
   const normalizedCredenciado = normalizeCredenciadaText(credenciado, 255)
   const normalizedCnpjCpf = normalizeCnpjCpf(cnpjCpf)
   const normalizedDreCodigo = normalizeRequestValue(dreCodigo).toUpperCase().slice(0, 30)
-  const normalizedModalidadeDescricao = normalizeRequestValue(modalidadeDescricao).toUpperCase().slice(0, 255)
+  const normalizedModalidadeDescricao = normalizeModalidadeDescriptionKey(modalidadeDescricao)
   const normalizedCpfCondutor = normalizeCpf(cpfCondutor)
   const normalizedCpfPreposto = normalizeCpf(cpfPreposto)
   const normalizedPrepostoInicio = normalizeRequestValue(prepostoInicio)
@@ -4339,7 +4370,7 @@ const validateOrdemServicoPayload = async ({
       dreCodigo: normalizeDreOperationalCode(canonicalDreItem.codigo_operacional || canonicalDreItem.codigo),
       dreDescricao: normalizeOperationalCode(canonicalDreItem.descricao, 255),
       modalidadeCodigo: modalidadeItem ? Number(modalidadeItem.codigo) : null,
-      modalidadeDescricao: modalidadeItem ? normalizeOperationalCode(modalidadeItem.descricao, 255) : '',
+      modalidadeDescricao: modalidadeItem ? normalizeOperationalCode(derivedModalidadeDescricao, 255) : normalizedModalidadeDescricao,
       cpfCondutor: condutorItem ? normalizeCpf(condutorItem.cpf_condutor) : hasValidCpfCondutor ? normalizedCpfCondutor : '',
       condutor: condutorItem ? normalizeCondutorName(condutorItem.condutor) : '',
       cpfPreposto: prepostoItem ? normalizeCpf(prepostoItem.cpf_condutor) : '',
