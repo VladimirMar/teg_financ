@@ -19,7 +19,7 @@
                 <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-ordem-servico-button">Inserir registro</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-ordem-servico-import-button">Importar XML</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-ordem-servico-rejections-button">Recusas XML</button>
-                <input class="dsc-form-control dsc-access-filter-input" id="ordem-servico-search" type="text" placeholder="Filtrar por codigo, termo, num OS, revisao, OS, credenciado, DRE, condutor, monitor ou CRM" />
+                <input class="dsc-form-control dsc-access-filter-input" id="ordem-servico-search" type="text" placeholder="Filtrar por termo, num OS, revisao, OS, credenciado, DRE, condutor, monitor ou CRM" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-ordem-servico-filter-button">Limpar</button>
               </form>
@@ -95,20 +95,6 @@
               <section class="dsc-form-section-card dsc-form-section-card-ordem-servico-identificacao">
                 <h3 class="dsc-form-section-title">Identificacao</h3>
 
-                <div class="dsc-form-row dsc-form-row-ordem-servico-codigo">
-                  <label class="dsc-field-group" for="ordem-servico-codigo">
-                    <span>Codigo</span>
-                    <input class="dsc-form-control" id="ordem-servico-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
-                    <div class="dsc-form-error" id="ordem-servico-codigo-error"></div>
-                  </label>
-
-                  <label class="dsc-field-group" for="ordem-servico-os-concat">
-                    <span>OS</span>
-                    <input class="dsc-form-control dsc-form-control-os-concat" id="ordem-servico-os-concat" type="text" placeholder="OS" readonly />
-                    <div class="dsc-form-error"></div>
-                  </label>
-                </div>
-
                 <div class="dsc-form-row dsc-form-row-ordem-servico-identificacao">
                   <label class="dsc-field-group" for="ordem-servico-termo-adesao">
                     <span>Termo</span>
@@ -118,7 +104,10 @@
 
                   <label class="dsc-field-group" for="ordem-servico-num-os">
                     <span>Num OS</span>
-                    <input class="dsc-form-control" id="ordem-servico-num-os" type="text" inputmode="numeric" placeholder="001" maxlength="10" />
+                    <div class="dsc-inline-action-field">
+                      <input class="dsc-form-control" id="ordem-servico-num-os" type="text" inputmode="numeric" placeholder="001" maxlength="10" />
+                      <button type="button" class="dsc-btn dsc-btn-white dsc-inline-action-button" id="ordem-servico-add-num-os-button" aria-label="Acrescentar num os" title="Acrescentar num os">+</button>
+                    </div>
                     <div class="dsc-form-error" id="ordem-servico-num-os-error"></div>
                   </label>
 
@@ -132,11 +121,17 @@
                   </label>
                 </div>
 
-                <div class="dsc-form-row dsc-form-row-ordem-servico-vigencia">
+                <div class="dsc-form-row dsc-form-row-ordem-servico-codigo">
                   <label class="dsc-field-group" for="ordem-servico-vigencia-os">
                     <span>Vigencia da OS</span>
                     <input class="dsc-form-control" id="ordem-servico-vigencia-os" type="date" />
                     <div class="dsc-form-error" id="ordem-servico-vigencia-os-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-os-concat">
+                    <span>OS</span>
+                    <input class="dsc-form-control dsc-form-control-os-concat" id="ordem-servico-os-concat" type="text" placeholder="OS" readonly />
+                    <div class="dsc-form-error"></div>
                   </label>
                 </div>
               </section>
@@ -337,11 +332,6 @@
                 <table class="dsc-access-grid">
                   <thead>
                     <tr>
-                      <th>
-                        <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-codigo-button">
-                          Codigo <span id="sort-ordem-servico-codigo-indicator">^</span>
-                        </button>
-                      </th>
                       <th>Termo</th>
                       <th>
                         <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-num-os-button">
@@ -385,10 +375,10 @@
       const form = document.getElementById('ordem-servico-form');
       const importForm = document.getElementById('ordem-servico-import-form');
       const rejectionPanel = document.getElementById('ordem-servico-rejection-panel');
-      const codigoInput = document.getElementById('ordem-servico-codigo');
       const osConcatInput = document.getElementById('ordem-servico-os-concat');
       const termoAdesaoInput = document.getElementById('ordem-servico-termo-adesao');
       const numOsInput = document.getElementById('ordem-servico-num-os');
+      const addNumOsButton = document.getElementById('ordem-servico-add-num-os-button');
       const revisaoInput = document.getElementById('ordem-servico-revisao');
       const addRevisaoButton = document.getElementById('ordem-servico-add-revisao-button');
       const vigenciaOsInput = document.getElementById('ordem-servico-vigencia-os');
@@ -419,7 +409,6 @@
       const anotacaoInput = document.getElementById('ordem-servico-anotacao');
       const codigoAccessInput = document.getElementById('ordem-servico-codigo-access');
       const situacaoRadios = Array.from(document.querySelectorAll('input[name="ordem-servico-situacao"]'));
-      const codigoError = document.getElementById('ordem-servico-codigo-error');
       const codigoAccessError = document.getElementById('ordem-servico-codigo-access-error');
       const termoAdesaoError = document.getElementById('ordem-servico-termo-adesao-error');
       const numOsError = document.getElementById('ordem-servico-num-os-error');
@@ -456,10 +445,8 @@
       const previousPageButton = document.getElementById('previous-ordem-servico-page-button');
       const nextPageButton = document.getElementById('next-ordem-servico-page-button');
       const paginationInfo = document.getElementById('ordem-servico-pagination-info');
-      const sortCodigoButton = document.getElementById('sort-ordem-servico-codigo-button');
       const sortNumOsButton = document.getElementById('sort-ordem-servico-num-os-button');
       const sortCredenciadoButton = document.getElementById('sort-ordem-servico-credenciado-button');
-      const sortCodigoIndicator = document.getElementById('sort-ordem-servico-codigo-indicator');
       const sortNumOsIndicator = document.getElementById('sort-ordem-servico-num-os-indicator');
       const sortCredenciadoIndicator = document.getElementById('sort-ordem-servico-credenciado-indicator');
       const formTitle = document.getElementById('ordem-servico-form-title');
@@ -495,6 +482,9 @@
       let totalRejectionPages = 1;
       let currentRejectionSearch = '';
       let editingCodigo = null;
+      let formMode = 'hidden';
+      let isInsertNewTerm = false;
+      let isRevisionInsertion = false;
       let bannerTimeoutId = null;
       let credenciadaSuggestionRequestId = 0;
       let credenciadaSuggestionTimeoutId = null;
@@ -723,7 +713,6 @@
       };
 
       const resetMessages = () => {
-        codigoError.textContent = '';
         termoAdesaoError.textContent = '';
         numOsError.textContent = '';
         revisaoError.textContent = '';
@@ -772,12 +761,79 @@
         }
       };
 
-      const showForm = (isEditing = false) => {
+      const getFormControls = () => Array.from(form.querySelectorAll('input, button, select, textarea'));
+
+      const clearViewOnlyLock = () => {
+        getFormControls().forEach((element) => {
+          if (element !== cancelButton) {
+            element.disabled = false;
+          }
+        });
+        cancelButton.disabled = false;
+        saveButton.classList.remove('dsc-hidden');
+      };
+
+      const applyViewOnlyLock = () => {
+        getFormControls().forEach((element) => {
+          element.disabled = element !== cancelButton;
+        });
+        cancelButton.disabled = false;
+        saveButton.classList.add('dsc-hidden');
+      };
+
+      const getInsertGuardControls = () => getFormControls()
+        .filter((element) => element !== termoAdesaoInput && element !== cancelButton);
+
+      const updateInsertTermGuard = ({ focusIfMissing = false, showMissingError = true } = {}) => {
+        if (formMode === 'view') {
+          termoAdesaoError.textContent = '';
+          return true;
+        }
+
+        if (editingCodigo !== null) {
+          getInsertGuardControls().forEach((element) => {
+            element.disabled = false;
+          });
+          termoAdesaoError.textContent = '';
+          return true;
+        }
+
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+        const hasTermoAdesao = Boolean(termoAdesao);
+        termoAdesaoInput.value = termoAdesao;
+        termoAdesaoError.textContent = hasTermoAdesao || !showMissingError ? '' : 'Informe o Termo.';
+
+        getInsertGuardControls().forEach((element) => {
+          element.disabled = !hasTermoAdesao;
+        });
+
+        applyInsertSpecificRules();
+
+        if (!hasTermoAdesao && focusIfMissing) {
+          termoAdesaoInput.focus();
+        }
+
+        return hasTermoAdesao;
+      };
+
+      const showForm = (mode = 'insert') => {
         rejectionPanel.classList.add('dsc-hidden');
         importForm.classList.add('dsc-hidden');
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isEditing ? 'Alteracao de OrdemServico' : 'Nova OrdemServico';
-        saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar OrdemServico';
+        formMode = mode;
+        clearViewOnlyLock();
+
+        if (mode === 'edit') {
+          formTitle.textContent = 'Alteracao de OrdemServico';
+          saveButton.textContent = 'Salvar alteracao';
+        } else if (mode === 'view') {
+          formTitle.textContent = 'Consulta de OrdemServico';
+          saveButton.textContent = 'Salvar alteracao';
+          applyViewOnlyLock();
+        } else {
+          formTitle.textContent = 'Nova OrdemServico';
+          saveButton.textContent = 'Salvar OrdemServico';
+        }
       };
 
       const clearLookupFields = () => {
@@ -795,7 +851,9 @@
         form.reset();
         osConcatInput.value = '';
         editingCodigo = null;
+        formMode = 'hidden';
         clearLookupFields();
+        clearViewOnlyLock();
         renderDreOptions('');
         renderModalidadeOptions('');
         tipoTrocaInput.value = '';
@@ -854,7 +912,6 @@
       };
 
       const updateSortIndicators = () => {
-        sortCodigoIndicator.textContent = currentSortBy === 'codigo' ? (currentSortDirection === 'asc' ? '^' : 'v') : 'v';
         sortNumOsIndicator.textContent = currentSortBy === 'num_os' ? (currentSortDirection === 'asc' ? '^' : 'v') : 'v';
         sortCredenciadoIndicator.textContent = currentSortBy === 'credenciado' ? (currentSortDirection === 'asc' ? '^' : 'v') : 'v';
       };
@@ -977,12 +1034,24 @@
         }
 
         renderModalidadeOptions(selectedValue);
+
+        if (formMode === 'view') {
+          applyViewOnlyLock();
+          return;
+        }
+
         modalidadeDescricaoInput.disabled = false;
       };
 
       const ensureModalidadeOptionsLoaded = async (selectedValue = modalidadeDescricaoInput.value || '') => {
         if (modalidadeOptions.length > 0) {
           renderModalidadeOptions(selectedValue);
+
+          if (formMode === 'view') {
+            applyViewOnlyLock();
+            return;
+          }
+
           modalidadeDescricaoInput.disabled = false;
           return;
         }
@@ -1143,12 +1212,73 @@
         }, 180));
       };
 
+      const getTipoTrocaInclusaoOption = () => tipoTrocaOptions.find((item) => normalizeKey(String(item.lista || '')) === 'inclusaodeveiculo');
+
+      const applyIdentityFieldLock = () => {
+        if (formMode === 'view') {
+          return;
+        }
+
+        const isEditing = editingCodigo !== null;
+
+        termoAdesaoInput.readOnly = isEditing;
+        numOsInput.readOnly = isEditing;
+        revisaoInput.readOnly = isEditing;
+        addNumOsButton.disabled = isEditing;
+        addRevisaoButton.disabled = isEditing;
+      };
+
+      const applyInsertSpecificRules = () => {
+        if (formMode === 'view') {
+          applyViewOnlyLock();
+          return;
+        }
+
+        const mustForceTipoTrocaInclusao = editingCodigo === null || isRevisionInsertion;
+
+        if (editingCodigo !== null) {
+          applyIdentityFieldLock();
+        }
+
+        const hasTermoAdesao = Boolean(normalizeTermoAdesao(termoAdesaoInput.value));
+        const hasNumOs = Boolean(normalizeNumOs(numOsInput.value));
+        if (editingCodigo === null) {
+          applyIdentityFieldLock();
+          addRevisaoButton.disabled = !hasTermoAdesao || !hasNumOs || isInsertNewTerm;
+        }
+
+        tipoTrocaInput.readOnly = mustForceTipoTrocaInclusao;
+
+        if (!mustForceTipoTrocaInclusao) {
+          renderTipoTrocaOptions(tipoTrocaInput.value);
+          return;
+        }
+
+        const tipoTrocaInclusaoOption = getTipoTrocaInclusaoOption();
+
+        if (tipoTrocaInclusaoOption) {
+          tipoTrocaInput.value = normalizeText(String(tipoTrocaInclusaoOption.lista || ''), 255);
+          tipoTrocaError.textContent = '';
+        } else if (hasTermoAdesao) {
+          tipoTrocaError.textContent = 'Tipo de troca INCLUSAO DE VEICULO nao encontrado.';
+        }
+
+        renderTipoTrocaOptions(tipoTrocaInput.value);
+      };
+
       const renderTipoTrocaOptions = (selectedValue = '') => {
         tipoTrocaOptionsList.innerHTML = '<option value=""></option>';
 
-        const filteredOptions = normalizeKey(selectedValue)
-          ? tipoTrocaOptions.filter((item) => normalizeKey(item.lista).includes(normalizeKey(selectedValue)) || String(item.codigo).includes(selectedValue.trim()))
+        const sourceOptions = (editingCodigo === null || isRevisionInsertion)
+          ? (() => {
+              const tipoTrocaInclusaoOption = getTipoTrocaInclusaoOption();
+              return tipoTrocaInclusaoOption ? [tipoTrocaInclusaoOption] : [];
+            })()
           : tipoTrocaOptions;
+
+        const filteredOptions = normalizeKey(selectedValue)
+          ? sourceOptions.filter((item) => normalizeKey(item.lista).includes(normalizeKey(selectedValue)) || String(item.codigo).includes(selectedValue.trim()))
+          : sourceOptions;
 
         filteredOptions.forEach((item) => {
           const option = document.createElement('option');
@@ -1172,6 +1302,7 @@
 
           tipoTrocaOptions = payload.items || [];
           renderTipoTrocaOptions(tipoTrocaInput.value);
+          applyInsertSpecificRules();
         } catch {
           tipoTrocaOptions = [];
           renderTipoTrocaOptions('');
@@ -1191,7 +1322,6 @@
         items.forEach((item) => {
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td>${item.codigo || ''}</td>
             <td>${item.termo_adesao || ''}</td>
             <td>${item.num_os || ''}</td>
             <td>${item.os_concat || ''}</td>
@@ -1203,6 +1333,7 @@
             <td>${item.situacao || ''}</td>
             <td>
               <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button" data-action="view" data-codigo="${item.codigo}">Consulta</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}">Excluir</button>
               </div>
@@ -1312,6 +1443,7 @@
         return {
           termoAdesao: normalizeTermoAdesao(String(payload.termoAdesao || termoAdesao)),
           nextNumOs: normalizeNumOs(String(payload.nextNumOs || '')),
+          isNewTerm: Boolean(payload.isNewTerm),
         };
       };
 
@@ -1349,6 +1481,46 @@
         } catch (error) {
           credenciadoInput.value = '';
           cnpjCpfError.textContent = getRequestErrorMessage(error, 'Falha ao localizar credenciado.');
+        }
+      };
+
+      const syncNextNumOsByTermo = async () => {
+        if (editingCodigo !== null) {
+          return;
+        }
+
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+        termoAdesaoInput.value = termoAdesao;
+
+        if (!termoAdesao) {
+          isInsertNewTerm = false;
+          numOsInput.value = '';
+          revisaoInput.value = normalizeRevisao('');
+          syncOsConcatInput();
+          applyInsertSpecificRules();
+          return;
+        }
+
+        feedback.textContent = 'Consultando o proximo Num OS...';
+        feedback.className = 'dsc-feedback';
+
+        try {
+          const nextOs = await fetchNextNumOsByTermo(termoAdesao);
+          isInsertNewTerm = nextOs.isNewTerm;
+          termoAdesaoInput.value = nextOs.termoAdesao;
+          numOsInput.value = nextOs.nextNumOs;
+          revisaoInput.value = normalizeRevisao(revisaoInput.value);
+          numOsError.textContent = '';
+          feedback.textContent = '';
+          syncOsConcatInput();
+          applyInsertSpecificRules();
+        } catch (error) {
+          isInsertNewTerm = false;
+          numOsInput.value = '';
+          syncOsConcatInput();
+          feedback.textContent = '';
+          numOsError.textContent = getRequestErrorMessage(error, 'Falha ao obter o proximo Num OS.');
+          applyInsertSpecificRules();
         }
       };
 
@@ -1468,6 +1640,8 @@
       const startInsert = ({ termoAdesao = '', numOs = '' } = {}) => {
         form.reset();
         clearLookupFields();
+        isInsertNewTerm = false;
+        isRevisionInsertion = false;
         tipoTrocaInput.value = '';
         termoAdesaoInput.value = normalizeTermoAdesao(String(termoAdesao || ''));
         numOsInput.value = normalizeNumOs(String(numOs || ''));
@@ -1479,7 +1653,11 @@
         resetMessages();
         setGridMessage('');
         renderModalidadeOptions('');
-        showForm(false);
+        showForm('insert');
+        updateInsertTermGuard({ showMissingError: false });
+        applyInsertSpecificRules();
+        applyIdentityFieldLock();
+        termoAdesaoInput.focus();
         void ensureModalidadeOptionsLoaded('');
       };
 
@@ -1487,24 +1665,27 @@
         const termoAdesao = normalizeTermoAdesao(searchInput.value);
 
         if (!termoAdesao) {
-          const message = 'Informe o Termo no filtro antes de inserir o registro.';
-          setGridMessage(message, 'error');
-          showBanner(message, 'error');
-          searchInput.focus();
+          startInsert();
           return;
         }
 
         searchInput.value = termoAdesao;
-        setGridMessage('Consultando o proximo Num OS...', 'info');
+        startInsert({ termoAdesao });
+      };
 
-        try {
-          const nextOs = await fetchNextNumOsByTermo(termoAdesao);
-          startInsert({ termoAdesao: nextOs.termoAdesao, numOs: nextOs.nextNumOs });
-        } catch (error) {
-          const message = getRequestErrorMessage(error, 'Falha ao obter o proximo Num OS.');
-          setGridMessage(message, 'error');
-          showBanner(message, 'error');
+      const handleAddNumOs = async () => {
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+        termoAdesaoInput.value = termoAdesao;
+        termoAdesaoError.textContent = '';
+        numOsError.textContent = '';
+
+        if (!termoAdesao) {
+          termoAdesaoError.textContent = 'Informe o Termo.';
+          termoAdesaoInput.focus();
+          return;
         }
+
+        await syncNextNumOsByTermo();
       };
 
       const handleAddRevisao = async () => {
@@ -1532,10 +1713,12 @@
 
         try {
           const revisaoInfo = await fetchNextRevisao({ termoAdesao, numOs });
+          isRevisionInsertion = true;
           revisaoInput.value = revisaoInfo.nextRevisao;
           revisaoError.textContent = '';
           feedback.textContent = '';
           syncOsConcatInput();
+          applyInsertSpecificRules();
         } catch (error) {
           const message = getRequestErrorMessage(error, 'Falha ao obter a proxima revisao.');
           revisaoError.textContent = message;
@@ -1544,10 +1727,11 @@
         }
       };
 
-      const startEdit = (item) => {
+      const populateFormFromItem = (item, mode = 'edit') => {
         const normalizedDre = normalizeOrdemServicoDre(item.dre_codigo || '', item.dre_descricao || '');
         editingCodigo = item.codigo;
-        codigoInput.value = item.codigo || '';
+        isInsertNewTerm = false;
+        isRevisionInsertion = false;
         termoAdesaoInput.value = normalizeTermoAdesao(String(item.termo_adesao || ''));
         numOsInput.value = normalizeNumOs(String(item.num_os || ''));
         revisaoInput.value = normalizeRevisao(item.revisao || '');
@@ -1578,8 +1762,19 @@
         renderTipoTrocaOptions(tipoTrocaInput.value);
         syncOsConcatInput();
         resetMessages();
-        showForm(true);
+        showForm(mode);
+        updateInsertTermGuard();
+        applyInsertSpecificRules();
+        applyIdentityFieldLock();
         void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
+      };
+
+      const startEdit = (item) => {
+        populateFormFromItem(item, 'edit');
+      };
+
+      const startView = (item) => {
+        populateFormFromItem(item, 'view');
       };
 
       const handleDelete = async (item) => {
@@ -1630,6 +1825,11 @@
 
         const item = JSON.parse(rawItem);
 
+        if (action === 'view') {
+          startView(item);
+          return;
+        }
+
         if (action === 'edit') {
           startEdit(item);
           return;
@@ -1640,18 +1840,24 @@
         }
       });
 
-      codigoInput.addEventListener('input', () => {
-        codigoInput.value = normalizeCodigo(codigoInput.value);
-      });
-
       termoAdesaoInput.addEventListener('input', () => {
         termoAdesaoInput.value = normalizeTermoAdesao(termoAdesaoInput.value);
         syncOsConcatInput();
+        updateInsertTermGuard();
+      });
+
+      termoAdesaoInput.addEventListener('blur', () => {
+        updateInsertTermGuard({ focusIfMissing: true });
       });
 
       numOsInput.addEventListener('input', () => {
         numOsInput.value = normalizeNumOs(numOsInput.value);
         syncOsConcatInput();
+        applyInsertSpecificRules();
+      });
+
+      addNumOsButton.addEventListener('click', () => {
+        void handleAddNumOs();
       });
 
       revisaoInput.addEventListener('input', () => {
@@ -1758,8 +1964,11 @@
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
+        if (formMode === 'view') {
+          return;
+        }
+
         const payload = {
-          codigo: normalizeCodigo(codigoInput.value),
           codigoAccess: normalizeText(codigoAccessInput.value, 50),
           termoAdesao: normalizeTermoAdesao(termoAdesaoInput.value),
           numOs: normalizeNumOs(numOsInput.value),
@@ -1784,8 +1993,7 @@
 
         resetMessages();
 
-        codigoInput.value = payload.codigo;
-  codigoAccessInput.value = payload.codigoAccess;
+          codigoAccessInput.value = payload.codigoAccess;
         termoAdesaoInput.value = payload.termoAdesao;
         numOsInput.value = payload.numOs;
         revisaoInput.value = payload.revisao;
@@ -1801,11 +2009,6 @@
         tipoTrocaInput.value = payload.tipoTroca;
         anotacaoInput.value = payload.anotacao;
         dataEncerramentoInput.value = payload.dataEncerramento;
-
-        if (!payload.codigo) {
-          codigoError.textContent = 'Informe o codigo.';
-          hasError = true;
-        }
 
         if (!payload.numOs) {
           numOsError.textContent = 'Informe o Num OS.';
@@ -2004,7 +2207,6 @@
         void loadItems();
       };
 
-      sortCodigoButton.addEventListener('click', () => toggleSort('codigo'));
       sortNumOsButton.addEventListener('click', () => toggleSort('num_os'));
       sortCredenciadoButton.addEventListener('click', () => toggleSort('credenciado'));
       insertButton.addEventListener('click', () => {

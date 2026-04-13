@@ -298,13 +298,19 @@ body:has(#credenciada-search) #credenciada-search {
 }
 
 .dsc-form-row-ordem-servico-codigo {
-  grid-template-columns: minmax(160px, 220px) minmax(240px, 320px);
-  justify-content: center;
+  grid-template-columns: minmax(160px, 220px) minmax(240px, 1fr);
+  width: 100%;
+  justify-content: start;
 }
 
 .dsc-form-row-ordem-servico-codigo .dsc-field-group {
   width: 100%;
-  justify-self: center;
+  justify-self: start;
+}
+
+.dsc-form-row-ordem-servico-codigo .dsc-field-group:last-child {
+  width: min(100%, 320px);
+  justify-self: end;
 }
 
 .dsc-form-control-os-concat {
