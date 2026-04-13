@@ -101,6 +101,13 @@ const normalizeOperationalCode = (value, maxLength) => {
     .slice(0, maxLength)
 }
 
+const extractNumOs = (value) => {
+  const normalizedValue = normalizeValue(value).toUpperCase()
+  const match = normalizedValue.match(/-(\d+)[A-Z]*$/)
+
+  return match ? match[1].slice(0, 10) : ''
+}
+
 const normalizeSituacao = (value) => {
   const normalizedKey = normalizeValue(value)
     .toLowerCase()
@@ -269,10 +276,11 @@ const findVeiculoByCrm = async (crm) => {
   return result.rows[0] ?? null
 }
 
-const createError = ({ rowNumber, codigo, os, field, message, category }) => ({
+const createError = ({ rowNumber, codigo, os, num_os, field, message, category }) => ({
   rowNumber,
   codigo,
   os,
+  num_os,
   field,
   message,
   category,
@@ -291,6 +299,7 @@ for (const [index, record] of records.entries()) {
   const rowNumber = index + 1
   const codigo = normalizeValue(record?.['Código'])
   const os = normalizeOperationalCode(record?.OS, 255)
+  const num_os = extractNumOs(os)
   const vigenciaOs = normalizeXmlDateInput(record?.Vigencia_da_OS)
   const credenciado = normalizeOperationalCode(record?.Credenciado, 255)
   const cnpjCpf = normalizeCnpjCpf(record?.CNPJ_CPF)
@@ -303,57 +312,57 @@ for (const [index, record] of records.entries()) {
   const anotacao = normalizeValue(record?.['Anotação'])
 
   if (!codigo) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'Código', message: 'Codigo e obrigatorio.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'Código', message: 'Codigo e obrigatorio.', category: 'structural' }))
   } else if (!isPositiveIntegerString(codigo)) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'Código', message: 'Codigo deve ser um numero inteiro positivo.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'Código', message: 'Codigo deve ser um numero inteiro positivo.', category: 'structural' }))
   } else if (seenCodes.has(codigo)) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'Código', message: `Codigo duplicado no XML. Primeira ocorrencia na linha ${seenCodes.get(codigo)}.`, category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'Código', message: `Codigo duplicado no XML. Primeira ocorrencia na linha ${seenCodes.get(codigo)}.`, category: 'structural' }))
   } else {
     seenCodes.set(codigo, rowNumber)
   }
 
   if (!os) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'OS', message: 'Numero da OS e obrigatorio.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'OS', message: 'Numero da OS e obrigatorio.', category: 'structural' }))
   }
 
   if (vigenciaOs && !isDateInputValid(vigenciaOs)) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'Vigencia_da_OS', message: 'Vigencia da OS invalida.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'Vigencia_da_OS', message: 'Vigencia da OS invalida.', category: 'structural' }))
   }
 
   if (!credenciado && !cnpjCpf) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'Credenciado/CNPJ_CPF', message: 'Credenciado ou CNPJ/CPF e obrigatorio.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'Credenciado/CNPJ_CPF', message: 'Credenciado ou CNPJ/CPF e obrigatorio.', category: 'structural' }))
   }
 
   if (cnpjCpf && !isCnpjCpfValid(cnpjCpf)) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'CNPJ_CPF', message: 'CNPJ/CPF invalido.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'CNPJ_CPF', message: 'CNPJ/CPF invalido.', category: 'structural' }))
   }
 
   if (!dreCodigo) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'DRE', message: 'DRE e obrigatoria.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'DRE', message: 'DRE e obrigatoria.', category: 'structural' }))
   }
 
   if (cpfCondutor && !isCpfValid(cpfCondutor)) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'CPF_condutor', message: 'CPF do condutor invalido.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'CPF_condutor', message: 'CPF do condutor invalido.', category: 'structural' }))
   }
 
   if (crm && !isVehicleCrmValid(crm)) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'CRM', message: 'CRM do veiculo invalido.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'CRM', message: 'CRM do veiculo invalido.', category: 'structural' }))
   }
 
   if (cpfMonitor && !isCpfValid(cpfMonitor)) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'CPF_monitor', message: 'CPF do monitor invalido.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'CPF_monitor', message: 'CPF do monitor invalido.', category: 'structural' }))
   }
 
   if (!situacao) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'Situacao_de_OS', message: 'Situacao da OS invalida.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'Situacao_de_OS', message: 'Situacao da OS invalida.', category: 'structural' }))
   }
 
   if (dataEncerramento && !isDateInputValid(dataEncerramento)) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'Data_de_encerramento', message: 'Data de encerramento invalida.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'Data_de_encerramento', message: 'Data de encerramento invalida.', category: 'structural' }))
   }
 
   if (anotacao.length > 1000) {
-    errors.push(createError({ rowNumber, codigo, os, field: 'Anotação', message: 'Anotacao excede o limite de 1000 caracteres.', category: 'structural' }))
+    errors.push(createError({ rowNumber, codigo, os, num_os, field: 'Anotação', message: 'Anotacao excede o limite de 1000 caracteres.', category: 'structural' }))
   }
 
   if (shouldCheckDbReferences) {
@@ -362,23 +371,23 @@ for (const [index, record] of records.entries()) {
       : await findCredenciadaByName(credenciado)
 
     if (!credenciadaItem) {
-      errors.push(createError({ rowNumber, codigo, os, field: 'Credenciado/CNPJ_CPF', message: 'Credenciado nao encontrado na tabela credenciada.', category: 'reference' }))
+      errors.push(createError({ rowNumber, codigo, os, num_os, field: 'Credenciado/CNPJ_CPF', message: 'Credenciado nao encontrado na tabela credenciada.', category: 'reference' }))
     }
 
     if (!await findDreByCodigo(dreCodigo)) {
-      errors.push(createError({ rowNumber, codigo, os, field: 'DRE', message: 'DRE nao encontrada.', category: 'reference' }))
+      errors.push(createError({ rowNumber, codigo, os, num_os, field: 'DRE', message: 'DRE nao encontrada.', category: 'reference' }))
     }
 
     if (cpfCondutor && !await findCondutorByCpf(cpfCondutor)) {
-      errors.push(createError({ rowNumber, codigo, os, field: 'CPF_condutor', message: 'CPF do condutor nao encontrado na tabela condutor.', category: 'reference' }))
+      errors.push(createError({ rowNumber, codigo, os, num_os, field: 'CPF_condutor', message: 'CPF do condutor nao encontrado na tabela condutor.', category: 'reference' }))
     }
 
     if (crm && !await findVeiculoByCrm(crm)) {
-      errors.push(createError({ rowNumber, codigo, os, field: 'CRM', message: 'CRM nao encontrado na tabela veiculo.', category: 'reference' }))
+      errors.push(createError({ rowNumber, codigo, os, num_os, field: 'CRM', message: 'CRM nao encontrado na tabela veiculo.', category: 'reference' }))
     }
 
     if (cpfMonitor && !await findMonitorByCpf(cpfMonitor)) {
-      errors.push(createError({ rowNumber, codigo, os, field: 'CPF_monitor', message: 'CPF do monitor nao encontrado na tabela monitor.', category: 'reference' }))
+      errors.push(createError({ rowNumber, codigo, os, num_os, field: 'CPF_monitor', message: 'CPF do monitor nao encontrado na tabela monitor.', category: 'reference' }))
     }
   }
 }
