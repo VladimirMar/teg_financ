@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro de vinculo do condutor</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
+
+    <main class="dsc-access-page">
+      <section class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-management-layout">
+            <div class="dsc-access-toolbar">
+              <form class="dsc-access-filter-form" id="vinculo-filter-form">
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-vinculo-button">Inserir registro</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-vinculo-import-button">Importar XML</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-vinculo-rejections-button">Recusas XML</button>
+                <input class="dsc-form-control dsc-access-filter-input" id="vinculo-search" type="text" placeholder="Filtrar por credenciado, CPF, condutor ou data" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-vinculo-filter-button">Limpar</button>
+              </form>
+            </div>
+
+            <section class="dsc-card dsc-hidden" id="vinculo-rejection-panel">
+              <div class="dsc-access-grid-header">
+                <h2>Registros nao importados</h2>
+                <span id="vinculo-rejection-total"></span>
+              </div>
+
+              <form class="dsc-access-filter-form" id="vinculo-rejection-filter-form">
+                <input class="dsc-form-control dsc-access-filter-input" id="vinculo-rejection-search" type="text" placeholder="Filtrar por arquivo, empregador, CPF ou motivo" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-vinculo-rejection-filter-button">Limpar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="close-vinculo-rejection-panel-button">Fechar</button>
+              </form>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Data importacao</th>
+                      <th>Arquivo XML</th>
+                      <th>Linha XML</th>
+                      <th>Codigo XML</th>
+                      <th>Empregador XML</th>
+                      <th>CPF condutor XML</th>
+                      <th>data_OS XML</th>
+                      <th>Admissao XML</th>
+                      <th>Motivo da recusa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="vinculo-rejection-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="vinculo-rejection-empty-state">Nenhum registro recusado encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="vinculo-rejection-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-vinculo-rejection-page-button">Anterior</button>
+                <span id="vinculo-rejection-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-vinculo-rejection-page-button">Proxima</button>
+              </div>
+            </section>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="vinculo-import-form">
+              <h2>Importacao de vinculo do condutor por XML</h2>
+
+              <label class="dsc-field-group" for="vinculo-import-file-name">
+                <span>Nome do arquivo XML</span>
+                <input class="dsc-form-control" id="vinculo-import-file-name" type="text" placeholder="Vinculos_condutor.xml" value="Vinculos_condutor.xml" />
+                <div class="dsc-form-error" id="vinculo-import-file-name-error"></div>
+              </label>
+
+              <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue">Executar importacao</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-vinculo-import-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="vinculo-import-feedback"></p>
+            </form>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="vinculo-form">
+              <h2 id="vinculo-form-title">Novo registro</h2>
+
+              <section class="dsc-form-section-card">
+                <h3 class="dsc-form-section-title">Dados do vinculo</h3>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="vinculo-termo-adesao">
+                    <span>Termo de adesao</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="vinculo-termo-adesao" type="text" readonly placeholder="NULL" />
+                    <div class="dsc-form-error" id="vinculo-termo-adesao-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="vinculo-num-os">
+                    <span>Num OS</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="vinculo-num-os" type="text" readonly placeholder="NULL" />
+                    <div class="dsc-form-error" id="vinculo-num-os-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="vinculo-revisao">
+                    <span>Revisao</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="vinculo-revisao" type="text" readonly placeholder="NULL" />
+                    <div class="dsc-form-error" id="vinculo-revisao-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="vinculo-credenciado">
+                    <span>Credenciado</span>
+                    <input class="dsc-form-control" id="vinculo-credenciado" type="text" list="vinculo-credenciada-options" placeholder="DIGITE PARA LOCALIZAR A CREDENCIADA" maxlength="255" />
+                    <datalist id="vinculo-credenciada-options">
+                      <option value=""></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="vinculo-credenciado-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="vinculo-cpf-condutor">
+                    <span>CPF do condutor</span>
+                    <input class="dsc-form-control" id="vinculo-cpf-condutor" type="text" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" />
+                    <div class="dsc-form-error" id="vinculo-cpf-condutor-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="vinculo-data-os">
+                    <span>data_OS</span>
+                    <input class="dsc-form-control" id="vinculo-data-os" type="date" />
+                    <div class="dsc-form-error" id="vinculo-data-os-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="vinculo-data-admissao-condutor">
+                    <span>Data admissao do condutor</span>
+                    <input class="dsc-form-control" id="vinculo-data-admissao-condutor" type="date" />
+                    <div class="dsc-form-error" id="vinculo-data-admissao-condutor-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="vinculo-condutor">
+                    <span>Condutor localizado</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="vinculo-condutor" type="text" readonly placeholder="CONDUTOR" />
+                    <div class="dsc-form-error" id="vinculo-condutor-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-vinculo-button">Salvar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-vinculo-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="vinculo-form-feedback"></p>
+            </form>
+
+            <section class="dsc-card">
+              <div class="dsc-access-grid-header">
+                <h2>Tabela Vinculo de Condutor</h2>
+                <span id="vinculo-total"></span>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Credenciado</th>
+                      <th>CPF condutor</th>
+                      <th>Condutor</th>
+                      <th>data_OS</th>
+                      <th>Data admissao</th>
+                      <th>Termo</th>
+                      <th>Num OS</th>
+                      <th>Revisao</th>
+                      <th>Data inclusao</th>
+                      <th>Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="vinculo-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="vinculo-empty-state">Nenhum vinculo encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="vinculo-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-vinculo-page-button">Anterior</button>
+                <span id="vinculo-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-vinculo-page-button">Proxima</button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const statusBanner = document.getElementById('status-banner');
+        const filterForm = document.getElementById('vinculo-filter-form');
+        const searchInput = document.getElementById('vinculo-search');
+        const clearFilterButton = document.getElementById('clear-vinculo-filter-button');
+        const insertButton = document.getElementById('insert-vinculo-button');
+        const form = document.getElementById('vinculo-form');
+        const formTitle = document.getElementById('vinculo-form-title');
+        const formFeedback = document.getElementById('vinculo-form-feedback');
+        const saveButton = document.getElementById('save-vinculo-button');
+        const cancelButton = document.getElementById('cancel-vinculo-button');
+        const termoInput = document.getElementById('vinculo-termo-adesao');
+        const numOsInput = document.getElementById('vinculo-num-os');
+        const revisaoInput = document.getElementById('vinculo-revisao');
+        const credenciadoInput = document.getElementById('vinculo-credenciado');
+        const cpfCondutorInput = document.getElementById('vinculo-cpf-condutor');
+        const dataOsInput = document.getElementById('vinculo-data-os');
+        const dataAdmissaoInput = document.getElementById('vinculo-data-admissao-condutor');
+        const condutorInput = document.getElementById('vinculo-condutor');
+        const credenciadaOptions = document.getElementById('vinculo-credenciada-options');
+        const gridBody = document.getElementById('vinculo-grid-body');
+        const emptyState = document.getElementById('vinculo-empty-state');
+        const gridFeedback = document.getElementById('vinculo-grid-feedback');
+        const totalLabel = document.getElementById('vinculo-total');
+        const paginationInfo = document.getElementById('vinculo-pagination-info');
+        const previousPageButton = document.getElementById('previous-vinculo-page-button');
+        const nextPageButton = document.getElementById('next-vinculo-page-button');
+        const importForm = document.getElementById('vinculo-import-form');
+        const importFileNameInput = document.getElementById('vinculo-import-file-name');
+        const importFileNameError = document.getElementById('vinculo-import-file-name-error');
+        const importFeedback = document.getElementById('vinculo-import-feedback');
+        const openImportButton = document.getElementById('open-vinculo-import-button');
+        const cancelImportButton = document.getElementById('cancel-vinculo-import-button');
+        const openRejectionsButton = document.getElementById('open-vinculo-rejections-button');
+        const rejectionPanel = document.getElementById('vinculo-rejection-panel');
+        const rejectionFilterForm = document.getElementById('vinculo-rejection-filter-form');
+        const rejectionSearchInput = document.getElementById('vinculo-rejection-search');
+        const clearRejectionFilterButton = document.getElementById('clear-vinculo-rejection-filter-button');
+        const closeRejectionPanelButton = document.getElementById('close-vinculo-rejection-panel-button');
+        const rejectionGridBody = document.getElementById('vinculo-rejection-grid-body');
+        const rejectionEmptyState = document.getElementById('vinculo-rejection-empty-state');
+        const rejectionFeedback = document.getElementById('vinculo-rejection-grid-feedback');
+        const rejectionTotalLabel = document.getElementById('vinculo-rejection-total');
+        const rejectionPaginationInfo = document.getElementById('vinculo-rejection-pagination-info');
+        const previousRejectionPageButton = document.getElementById('previous-vinculo-rejection-page-button');
+        const nextRejectionPageButton = document.getElementById('next-vinculo-rejection-page-button');
+
+        const formErrors = {
+          credenciado: document.getElementById('vinculo-credenciado-error'),
+          cpfCondutor: document.getElementById('vinculo-cpf-condutor-error'),
+          dataOs: document.getElementById('vinculo-data-os-error'),
+          dataAdmissaoCondutor: document.getElementById('vinculo-data-admissao-condutor-error'),
+        };
+
+        const state = {
+          items: [],
+          page: 1,
+          pageSize: 10,
+          totalPages: 1,
+          search: '',
+          editingId: null,
+          formMode: 'create',
+          rejections: [],
+          rejectionPage: 1,
+          rejectionPageSize: 10,
+          rejectionTotalPages: 1,
+          rejectionSearch: '',
+        };
+
+        const readJsonResponse = async (response) => {
+          const text = await response.text();
+          if (!text) {
+            return {};
+          }
+
+          try {
+            return JSON.parse(text);
+          } catch {
+            return { message: text };
+          }
+        };
+
+        const clearFeedbackState = (element) => {
+          element.textContent = '';
+          element.classList.remove('dsc-feedback-error', 'dsc-feedback-success');
+        };
+
+        const setFeedback = (element, message, type = '') => {
+          element.textContent = message || '';
+          element.classList.remove('dsc-feedback-error', 'dsc-feedback-success');
+          if (type === 'error') {
+            element.classList.add('dsc-feedback-error');
+          }
+          if (type === 'success') {
+            element.classList.add('dsc-feedback-success');
+          }
+        };
+
+        const showBanner = (message, type = 'success') => {
+          statusBanner.textContent = message;
+          statusBanner.classList.remove('dsc-hidden', 'dsc-status-banner-error', 'dsc-status-banner-success');
+          statusBanner.classList.add(type === 'error' ? 'dsc-status-banner-error' : 'dsc-status-banner-success');
+          window.clearTimeout(showBanner.timeoutId);
+          showBanner.timeoutId = window.setTimeout(() => {
+            statusBanner.classList.add('dsc-hidden');
+          }, 4000);
+        };
+
+        const resetFormErrors = () => {
+          Object.values(formErrors).forEach((element) => {
+            element.textContent = '';
+          });
+        };
+
+        const setFormReadOnly = (isReadOnly) => {
+          [credenciadoInput, cpfCondutorInput, dataOsInput, dataAdmissaoInput].forEach((field) => {
+            field.disabled = isReadOnly;
+          });
+
+          saveButton.disabled = isReadOnly;
+          saveButton.classList.toggle('dsc-hidden', isReadOnly);
+        };
+
+        const fillFormFromItem = (item) => {
+          termoInput.value = item.termo_adesao || '';
+          numOsInput.value = item.num_os || '';
+          revisaoInput.value = item.revisao || '';
+          credenciadoInput.value = item.credenciado || '';
+          credenciadoInput.dataset.codigo = item.credenciada_codigo || '';
+          cpfCondutorInput.value = item.cpf_condutor || '';
+          cpfCondutorInput.dataset.codigo = item.condutor_codigo || '';
+          condutorInput.value = item.condutor || '';
+          dataOsInput.value = item.data_os || '';
+          dataAdmissaoInput.value = item.data_admissao_condutor || '';
+        };
+
+        const hideForm = () => {
+          form.classList.add('dsc-hidden');
+          state.editingId = null;
+          state.formMode = 'create';
+          form.reset();
+          termoInput.value = '';
+          numOsInput.value = '';
+          revisaoInput.value = '';
+          dataOsInput.value = '';
+          condutorInput.value = '';
+          credenciadoInput.dataset.codigo = '';
+          cpfCondutorInput.dataset.codigo = '';
+          setFormReadOnly(false);
+          resetFormErrors();
+          clearFeedbackState(formFeedback);
+        };
+
+        const showForm = (mode = 'create') => {
+          state.formMode = mode;
+          const isViewing = mode === 'view';
+          const isEditing = mode === 'edit';
+          formTitle.textContent = isViewing ? 'Consulta de registro' : isEditing ? 'Alterar registro' : 'Novo registro';
+          form.classList.remove('dsc-hidden');
+          importForm.classList.add('dsc-hidden');
+          rejectionPanel.classList.add('dsc-hidden');
+          setFormReadOnly(isViewing);
+          if (isViewing) {
+            setFeedback(formFeedback, 'Modo consulta. Alteracoes nao sao permitidas.');
+          }
+          form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        const hideImportForm = () => {
+          importForm.classList.add('dsc-hidden');
+          clearFeedbackState(importFeedback);
+          importFileNameError.textContent = '';
+        };
+
+        const showImportForm = () => {
+          hideForm();
+          rejectionPanel.classList.add('dsc-hidden');
+          importForm.classList.remove('dsc-hidden');
+          importForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        const showRejectionPanel = async () => {
+          hideForm();
+          hideImportForm();
+          rejectionPanel.classList.remove('dsc-hidden');
+          rejectionPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          await loadRejections();
+        };
+
+        const populateCredenciadaOptions = async (search = '') => {
+          try {
+            const response = await fetch(`/api/credenciada?page=1&pageSize=30&search=${encodeURIComponent(search)}`, {
+              headers: { Accept: 'application/json' },
+            });
+            const payload = await readJsonResponse(response);
+            if (!response.ok) {
+              throw new Error(payload.message || 'Falha ao carregar credenciadas.');
+            }
+
+            const options = (payload.items || []).map((item) => `<option value="${item.credenciado}"></option>`).join('');
+            credenciadaOptions.innerHTML = '<option value=""></option>' + options;
+          } catch {
+            credenciadaOptions.innerHTML = '<option value=""></option>';
+          }
+        };
+
+        const resolveCredenciada = async () => {
+          const credenciado = credenciadoInput.value.trim();
+          if (!credenciado) {
+            formErrors.credenciado.textContent = 'Informe o credenciado.';
+            return null;
+          }
+
+          const response = await fetch(`/api/credenciada/lookup?credenciado=${encodeURIComponent(credenciado)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok || !payload.item) {
+            formErrors.credenciado.textContent = payload.message || 'Credenciado nao encontrado.';
+            return null;
+          }
+
+          credenciadoInput.value = payload.item.credenciado || credenciado;
+          credenciadoInput.dataset.codigo = payload.item.codigo || '';
+          formErrors.credenciado.textContent = '';
+          return payload.item;
+        };
+
+        const resolveCondutor = async () => {
+          const cpf = cpfCondutorInput.value.trim();
+          condutorInput.value = '';
+          cpfCondutorInput.dataset.codigo = '';
+
+          if (!cpf) {
+            formErrors.cpfCondutor.textContent = 'Informe o CPF do condutor.';
+            return null;
+          }
+
+          const response = await fetch(`/api/condutor/lookup?cpf=${encodeURIComponent(cpf)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok || !payload.item) {
+            formErrors.cpfCondutor.textContent = payload.message || 'Condutor nao encontrado.';
+            return null;
+          }
+
+          cpfCondutorInput.value = payload.item.cpf_condutor || cpf;
+          cpfCondutorInput.dataset.codigo = payload.item.codigo || '';
+          condutorInput.value = payload.item.condutor || '';
+          formErrors.cpfCondutor.textContent = '';
+          return payload.item;
+        };
+
+        const buildListUrl = () => {
+          const params = new URLSearchParams({
+            page: String(state.page),
+            pageSize: String(state.pageSize),
+            sortBy: 'id',
+            sortDirection: 'desc',
+          });
+
+          if (state.search) {
+            params.set('search', state.search);
+          }
+
+          return `/api/vinculo-condutor?${params.toString()}`;
+        };
+
+        const buildRejectionListUrl = () => {
+          const params = new URLSearchParams({
+            page: String(state.rejectionPage),
+            pageSize: String(state.rejectionPageSize),
+          });
+
+          if (state.rejectionSearch) {
+            params.set('search', state.rejectionSearch);
+          }
+
+          return `/api/vinculo-condutor/import-rejections?${params.toString()}`;
+        };
+
+        const renderGrid = (items) => {
+          gridBody.innerHTML = '';
+          emptyState.classList.toggle('dsc-hidden', items.length > 0);
+
+          items.forEach((item) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${item.id || ''}</td>
+              <td>${item.credenciado || ''}</td>
+              <td>${item.cpf_condutor || ''}</td>
+              <td>${item.condutor || ''}</td>
+              <td>${item.data_os || ''}</td>
+              <td>${item.data_admissao_condutor || ''}</td>
+              <td>${item.termo_adesao || ''}</td>
+              <td>${item.num_os || ''}</td>
+              <td>${item.revisao || ''}</td>
+              <td>${item.data_inclusao || ''}</td>
+              <td>
+                <div class="dsc-access-grid-actions">
+                  <button type="button" class="dsc-btn dsc-btn-white dsc-btn-small" data-action="view">Consulta</button>
+                  <button type="button" class="dsc-btn dsc-btn-white dsc-btn-small" data-action="edit">Alterar</button>
+                  <button type="button" class="dsc-btn dsc-btn-danger dsc-btn-small" data-action="delete">Excluir</button>
+                </div>
+              </td>
+            `;
+
+            row.querySelector('[data-action="view"]').addEventListener('click', () => {
+              state.editingId = item.id;
+              fillFormFromItem(item);
+              resetFormErrors();
+              clearFeedbackState(formFeedback);
+              showForm('view');
+            });
+
+            row.querySelector('[data-action="edit"]').addEventListener('click', () => {
+              state.editingId = item.id;
+              fillFormFromItem(item);
+              resetFormErrors();
+              clearFeedbackState(formFeedback);
+              showForm('edit');
+            });
+
+            row.querySelector('[data-action="delete"]').addEventListener('click', async () => {
+              const confirmed = window.confirm(`Excluir o vinculo ${item.id}?`);
+              if (!confirmed) {
+                return;
+              }
+
+              try {
+                const response = await fetch(`/api/vinculo-condutor/${encodeURIComponent(item.id)}`, {
+                  method: 'DELETE',
+                  headers: { Accept: 'application/json' },
+                });
+                const payload = await readJsonResponse(response);
+                if (!response.ok) {
+                  throw new Error(payload.message || 'Falha ao excluir vinculo do condutor.');
+                }
+
+                setFeedback(gridFeedback, 'Registro excluido com sucesso.', 'success');
+                showBanner('Vinculo excluido com sucesso.', 'success');
+                await loadItems();
+              } catch (error) {
+                setFeedback(gridFeedback, error.message || 'Falha ao excluir vinculo do condutor.', 'error');
+                showBanner(error.message || 'Falha ao excluir vinculo do condutor.', 'error');
+              }
+            });
+
+            gridBody.appendChild(row);
+          });
+        };
+
+        const renderRejectionGrid = (items) => {
+          rejectionGridBody.innerHTML = '';
+          rejectionEmptyState.classList.toggle('dsc-hidden', items.length > 0);
+
+          items.forEach((item) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${item.data_importacao || ''}</td>
+              <td>${item.arquivo_xml || ''}</td>
+              <td>${item.linha_xml || ''}</td>
+              <td>${item.codigo_xml || ''}</td>
+              <td>${item.empregador_xml || ''}</td>
+              <td>${item.cpf_condutor_xml || ''}</td>
+              <td>${item.data_os_xml || ''}</td>
+              <td>${item.admissao_xml || ''}</td>
+              <td>${item.motivo_recusa || ''}</td>
+            `;
+            rejectionGridBody.appendChild(row);
+          });
+        };
+
+        const loadItems = async () => {
+          setFeedback(gridFeedback, 'Carregando vinculos do condutor...');
+
+          try {
+            const response = await fetch(buildListUrl(), {
+              headers: { Accept: 'application/json' },
+            });
+            const payload = await readJsonResponse(response);
+            if (!response.ok) {
+              throw new Error(payload.message || 'Falha ao carregar vinculos do condutor.');
+            }
+
+            state.items = payload.items || [];
+            state.totalPages = payload.totalPages || 1;
+            totalLabel.textContent = `${payload.total || 0} registro(s)`;
+            paginationInfo.textContent = `Pagina ${payload.page || 1} de ${payload.totalPages || 1}`;
+            previousPageButton.disabled = (payload.page || 1) <= 1;
+            nextPageButton.disabled = (payload.page || 1) >= (payload.totalPages || 1);
+            renderGrid(state.items);
+            setFeedback(gridFeedback, state.items.length ? '' : 'Nenhum vinculo encontrado.');
+          } catch (error) {
+            renderGrid([]);
+            setFeedback(gridFeedback, error.message || 'Falha ao carregar vinculos do condutor.', 'error');
+          }
+        };
+
+        const loadRejections = async () => {
+          setFeedback(rejectionFeedback, 'Carregando recusas da importacao...');
+
+          try {
+            const response = await fetch(buildRejectionListUrl(), {
+              headers: { Accept: 'application/json' },
+            });
+            const payload = await readJsonResponse(response);
+            if (!response.ok) {
+              throw new Error(payload.message || 'Falha ao carregar recusas da importacao.');
+            }
+
+            state.rejections = payload.items || [];
+            state.rejectionTotalPages = payload.totalPages || 1;
+            rejectionTotalLabel.textContent = `${payload.total || 0} registro(s)`;
+            rejectionPaginationInfo.textContent = `Pagina ${payload.page || 1} de ${payload.totalPages || 1}`;
+            previousRejectionPageButton.disabled = (payload.page || 1) <= 1;
+            nextRejectionPageButton.disabled = (payload.page || 1) >= (payload.totalPages || 1);
+            renderRejectionGrid(state.rejections);
+            setFeedback(rejectionFeedback, state.rejections.length ? '' : 'Nenhuma recusa encontrada.');
+          } catch (error) {
+            renderRejectionGrid([]);
+            setFeedback(rejectionFeedback, error.message || 'Falha ao carregar recusas da importacao.', 'error');
+          }
+        };
+
+        filterForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          state.page = 1;
+          state.search = searchInput.value.trim();
+          await loadItems();
+        });
+
+        clearFilterButton.addEventListener('click', async () => {
+          searchInput.value = '';
+          state.search = '';
+          state.page = 1;
+          await loadItems();
+        });
+
+        previousPageButton.addEventListener('click', async () => {
+          if (state.page > 1) {
+            state.page -= 1;
+            await loadItems();
+          }
+        });
+
+        nextPageButton.addEventListener('click', async () => {
+          if (state.page < state.totalPages) {
+            state.page += 1;
+            await loadItems();
+          }
+        });
+
+        previousRejectionPageButton.addEventListener('click', async () => {
+          if (state.rejectionPage > 1) {
+            state.rejectionPage -= 1;
+            await loadRejections();
+          }
+        });
+
+        nextRejectionPageButton.addEventListener('click', async () => {
+          if (state.rejectionPage < state.rejectionTotalPages) {
+            state.rejectionPage += 1;
+            await loadRejections();
+          }
+        });
+
+        rejectionFilterForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          state.rejectionPage = 1;
+          state.rejectionSearch = rejectionSearchInput.value.trim();
+          await loadRejections();
+        });
+
+        clearRejectionFilterButton.addEventListener('click', async () => {
+          rejectionSearchInput.value = '';
+          state.rejectionSearch = '';
+          state.rejectionPage = 1;
+          await loadRejections();
+        });
+
+        closeRejectionPanelButton.addEventListener('click', () => {
+          rejectionPanel.classList.add('dsc-hidden');
+        });
+
+        insertButton.addEventListener('click', () => {
+          hideForm();
+          showForm('create');
+        });
+
+        cancelButton.addEventListener('click', hideForm);
+        openImportButton.addEventListener('click', showImportForm);
+        cancelImportButton.addEventListener('click', hideImportForm);
+        openRejectionsButton.addEventListener('click', () => {
+          void showRejectionPanel();
+        });
+
+        credenciadoInput.addEventListener('focus', () => {
+          void populateCredenciadaOptions(credenciadoInput.value.trim());
+        });
+
+        credenciadoInput.addEventListener('input', () => {
+          credenciadoInput.dataset.codigo = '';
+          if (credenciadoInput.value.trim().length >= 2) {
+            void populateCredenciadaOptions(credenciadoInput.value.trim());
+          }
+        });
+
+        credenciadoInput.addEventListener('blur', () => {
+          if (credenciadoInput.value.trim()) {
+            void resolveCredenciada();
+          }
+        });
+
+        cpfCondutorInput.addEventListener('blur', () => {
+          if (cpfCondutorInput.value.trim()) {
+            void resolveCondutor();
+          }
+        });
+
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+
+          if (state.formMode === 'view') {
+            setFeedback(formFeedback, 'Modo consulta. Alteracoes nao sao permitidas.');
+            return;
+          }
+
+          resetFormErrors();
+          clearFeedbackState(formFeedback);
+
+          try {
+            const credenciadaItem = await resolveCredenciada();
+            const condutorItem = await resolveCondutor();
+
+            if (!credenciadaItem || !condutorItem) {
+              setFeedback(formFeedback, 'Corrija os campos para continuar.', 'error');
+              return;
+            }
+
+            const response = await fetch(
+              state.editingId ? `/api/vinculo-condutor/${encodeURIComponent(state.editingId)}` : '/api/vinculo-condutor',
+              {
+                method: state.editingId ? 'PUT' : 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                },
+                body: JSON.stringify({
+                  termoAdesao: termoInput.value,
+                  numOs: numOsInput.value,
+                  revisao: revisaoInput.value,
+                  dataOs: dataOsInput.value,
+                  credenciado: credenciadoInput.value,
+                  credenciadaCodigo: credenciadaItem.codigo,
+                  cpfCondutor: cpfCondutorInput.value,
+                  condutorCodigo: condutorItem.codigo,
+                  dataAdmissaoCondutor: dataAdmissaoInput.value,
+                }),
+              },
+            );
+
+            const payload = await readJsonResponse(response);
+            if (!response.ok) {
+              if (payload.errors) {
+                formErrors.credenciado.textContent = payload.errors.credenciado || '';
+                formErrors.cpfCondutor.textContent = payload.errors.cpfCondutor || '';
+                formErrors.dataOs.textContent = payload.errors.dataOs || '';
+                formErrors.dataAdmissaoCondutor.textContent = payload.errors.dataAdmissaoCondutor || '';
+              }
+              throw new Error(payload.message || 'Falha ao salvar vinculo do condutor.');
+            }
+
+            setFeedback(formFeedback, state.editingId ? 'Registro atualizado com sucesso.' : 'Registro incluido com sucesso.', 'success');
+            showBanner(state.editingId ? 'Vinculo alterado com sucesso.' : 'Vinculo cadastrado com sucesso.', 'success');
+            hideForm();
+            await loadItems();
+          } catch (error) {
+            setFeedback(formFeedback, error.message || 'Falha ao salvar vinculo do condutor.', 'error');
+            showBanner(error.message || 'Falha ao salvar vinculo do condutor.', 'error');
+          }
+        });
+
+        importForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          importFileNameError.textContent = '';
+          clearFeedbackState(importFeedback);
+          const fileName = importFileNameInput.value.trim();
+
+          if (!fileName) {
+            importFileNameError.textContent = 'Informe o nome do arquivo XML.';
+            setFeedback(importFeedback, 'Corrija os campos para continuar.', 'error');
+            return;
+          }
+
+          const confirmed = window.confirm(`Executar a importacao do arquivo ${fileName}?`);
+          if (!confirmed) {
+            return;
+          }
+
+          setFeedback(importFeedback, 'Importando vinculos do condutor...');
+
+          try {
+            const response = await fetch('/api/vinculo-condutor/import-xml', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              body: JSON.stringify({ fileName }),
+            });
+            const payload = await readJsonResponse(response);
+            if (!response.ok) {
+              throw new Error(payload.message || 'Falha ao importar vinculos do condutor do XML.');
+            }
+
+            const skippedMessage = payload.skipped ? ` ${payload.skipped} registro(s) invalido(s) foram ignorado(s).` : '';
+            const message = `Importacao concluida: ${payload.inserted} incluido(s) e ${payload.updated} alterado(s) a partir de ${payload.fileName}.${skippedMessage}`;
+            setFeedback(importFeedback, message, 'success');
+            setFeedback(gridFeedback, message, 'success');
+            showBanner(message, 'success');
+            hideImportForm();
+            await loadItems();
+          } catch (error) {
+            setFeedback(importFeedback, error.message || 'Falha ao importar vinculos do condutor do XML.', 'error');
+            showBanner(error.message || 'Falha ao importar vinculos do condutor do XML.', 'error');
+          }
+        });
+
+        void populateCredenciadaOptions('');
+        void loadItems();
+      });
+    </script>
+  </body>
+</html>

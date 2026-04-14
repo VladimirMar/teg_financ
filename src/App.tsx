@@ -14,7 +14,7 @@ import { createSeguradoraItem, deleteSeguradoraItem, listSeguradoraItemsPaginate
 import type { SeguradoraItem } from './services/seguradora'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'modalidade' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo' | 'ordemServico'
+type ActiveView = 'inicio' | 'dre' | 'modalidade' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo' | 'vinculoCondutor' | 'ordemServico'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
 type TitularSortField = 'codigo' | 'cnpj_cpf' | 'titular'
@@ -1588,6 +1588,12 @@ function App() {
               Veiculo
             </li>
             <li
+              className={`menu-item ${activeView === 'vinculoCondutor' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('vinculoCondutor')}
+            >
+              Vinculo Condutor
+            </li>
+            <li
               className={`menu-item ${activeView === 'ordemServico' ? 'menu-item-active' : ''}`}
               onClick={() => setActiveView('ordemServico')}
             >
@@ -2570,6 +2576,24 @@ function App() {
                 className="access-embed-frame"
                 src="/src/veiculo.html"
                 title="Cadastro de veiculo"
+              />
+            </div>
+          </>
+        ) : activeView === 'vinculoCondutor' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Cadastro operacional</p>
+              <h2 id="content-title">Tabela Vinculo de Condutor</h2>
+              <p className="content-description">
+                Consulte, inclua, altere e importe os vinculos de condutor a partir do XML no mesmo padrao operacional da tela de veiculo.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/vinculoCondutor.html"
+                title="Cadastro de vinculo do condutor"
               />
             </div>
           </>

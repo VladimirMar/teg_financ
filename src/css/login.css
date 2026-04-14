@@ -29,9 +29,11 @@ main {
 body:has(#condutor-grid-body) .dsc-container,
 body:has(#condutor-rejection-grid-body) .dsc-container,
 body:has(#ordem-servico-grid-body) .dsc-container,
-body:has(#ordem-servico-rejection-grid-body) .dsc-container {
-  width: min(100%, 1480px);
-  max-width: 1480px;
+body:has(#ordem-servico-rejection-grid-body) .dsc-container,
+body:has(#vinculo-grid-body) .dsc-container,
+body:has(#vinculo-rejection-grid-body) .dsc-container {
+  width: min(100%, 1620px);
+  max-width: 1620px;
 }
 
 .dsc-status-banner {
@@ -229,6 +231,26 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 #ordem-servico-import-form,
 #ordem-servico-rejection-panel {
   max-width: 1320px;
+}
+
+#vinculo-form,
+#vinculo-import-form,
+#vinculo-rejection-panel {
+  max-width: 1280px;
+}
+
+#vinculo-form .dsc-form-section-card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 24px 26px;
+}
+
+#vinculo-form .dsc-form-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#vinculo-form .dsc-form-row:last-child {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 #veiculo-seguradora,
@@ -565,6 +587,23 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   border: none;
   background: rgba(8, 24, 34, 0.08);
   color: #213139;
+}
+
+.dsc-access-grid-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.dsc-access-grid-actions .dsc-btn {
+  width: auto;
+  min-width: 96px;
+  min-height: 38px;
+  padding: 8px 12px;
+  font-size: 0.88rem;
 }
 
 .dsc-access-grid-card {
