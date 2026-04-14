@@ -130,7 +130,7 @@
       const validateEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
       const validateName = (value) => /^[A-ZÀ-Ý ]{1,50}$/.test(value);
       const normalizeName = (value) => value.toUpperCase().replace(/[^A-ZÀ-Ý\s]/g, '').replace(/\s+/g, ' ').trimStart().slice(0, 50);
-      const pageSize = 5;
+      const pageSize = 20;
 
       let currentPage = 1;
       let totalPages = 1;
@@ -138,6 +138,7 @@
       let currentSortBy = 'codigo';
       let currentSortDirection = 'asc';
       let editingCodigo = null;
+      let formMode = 'create';
       let bannerTimeoutId = null;
 
       const resetMessages = () => {
@@ -193,14 +194,29 @@
         return error instanceof Error ? error.message : fallbackMessage;
       };
 
-      const showForm = (isEditing = false) => {
+      const setFormReadOnly = (isReadOnly) => {
+        nomeInput.readOnly = isReadOnly;
+        emailInput.readOnly = isReadOnly;
+        passwordInput.readOnly = isReadOnly;
+        passwordInput.disabled = isReadOnly;
+        saveAccessButton.classList.toggle('dsc-hidden', isReadOnly);
+      };
+
+      const showForm = (mode = 'create') => {
+        const isEditing = mode === 'edit';
+        const isReadOnly = mode === 'view';
+
+        formMode = mode;
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isEditing ? 'Alteracao de acesso' : 'Cadastro de acesso';
+        formTitle.textContent = isReadOnly ? 'Consulta de acesso' : isEditing ? 'Alteracao de acesso' : 'Cadastro de acesso';
         saveAccessButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar acesso';
-        codigoInput.value = isEditing && editingCodigo ? editingCodigo : '';
-        passwordHint.textContent = isEditing
-          ? 'Deixe a senha em branco para manter a atual.'
-          : 'Informe email e senha para gravar um novo acesso.';
+        codigoInput.value = (isEditing || isReadOnly) && editingCodigo ? editingCodigo : '';
+        passwordHint.textContent = isReadOnly
+          ? 'Consulta em modo somente leitura.'
+          : isEditing
+            ? 'Deixe a senha em branco para manter a atual.'
+            : 'Informe email e senha para gravar um novo acesso.';
+        setFormReadOnly(isReadOnly);
       };
 
       const hideForm = () => {
@@ -208,6 +224,8 @@
         form.reset();
         codigoInput.value = '';
         editingCodigo = null;
+        formMode = 'create';
+        setFormReadOnly(false);
         resetMessages();
       };
 
@@ -252,6 +270,7 @@
             <td>${item.email}</td>
             <td>
               <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button" data-action="view" data-codigo="${item.codigo}" data-nome="${item.nome}" data-email="${item.email}">Consulta</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}" data-nome="${item.nome}" data-email="${item.email}">Alterar</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}" data-nome="${item.nome}" data-email="${item.email}">Excluir</button>
               </div>
@@ -302,7 +321,7 @@
         codigoInput.value = '';
         nomeInput.value = '';
         resetMessages();
-        showForm(false);
+        showForm('create');
       };
 
       const startEdit = (item) => {
@@ -312,7 +331,17 @@
         emailInput.value = item.email;
         passwordInput.value = '';
         resetMessages();
-        showForm(true);
+        showForm('edit');
+      };
+
+      const startView = (item) => {
+        editingCodigo = item.codigo;
+        codigoInput.value = item.codigo;
+        nomeInput.value = item.nome;
+        emailInput.value = item.email;
+        passwordInput.value = '';
+        resetMessages();
+        showForm('view');
       };
 
       const handleDelete = async (item) => {
@@ -361,6 +390,11 @@
 
         const item = { codigo, nome, email };
 
+        if (action === 'view') {
+          startView(item);
+          return;
+        }
+
         if (action === 'edit') {
           startEdit(item);
           return;
@@ -384,6 +418,11 @@
         let hasError = false;
 
         resetMessages();
+
+        if (formMode === 'view') {
+          feedback.textContent = 'Consulta em modo somente leitura.';
+          return;
+        }
 
         nomeInput.value = nome;
 

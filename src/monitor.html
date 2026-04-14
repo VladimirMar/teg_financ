@@ -264,8 +264,8 @@
       const clearRejectionFilterButton = document.getElementById('clear-monitor-rejection-filter-button');
       const closeRejectionPanelButton = document.getElementById('close-monitor-rejection-panel-button');
 
-      const pageSize = 5;
-      const rejectionPageSize = 10;
+      const pageSize = 20;
+      const rejectionPageSize = 20;
       const defaultImportFileName = 'Monitor.xml';
       let currentPage = 1;
       let totalPages = 1;
@@ -447,12 +447,27 @@
         }, 3500);
       };
 
-      const showForm = (isEditing = false) => {
+      const setFormReadOnly = (isReadOnly) => {
+        [codigoInput, nomeInput, cpfInput, rgInput, cursoInput, validadeCursoInput, nascimentoInput].forEach((input) => {
+          input.readOnly = isReadOnly;
+        });
+        form.querySelectorAll('input[type="radio"], input[type="checkbox"], input[type="date"], select').forEach((input) => {
+          input.disabled = isReadOnly;
+        });
+        saveButton.classList.toggle('dsc-hidden', isReadOnly);
+      };
+
+      const showForm = (mode = 'create') => {
+        const isEditing = mode === 'edit';
+        const isReadOnly = mode === 'view';
+
+        formMode = mode;
         importForm.classList.add('dsc-hidden');
         rejectionPanel.classList.add('dsc-hidden');
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isEditing ? 'Alteracao de monitor' : 'Cadastro de monitor';
+        formTitle.textContent = isReadOnly ? 'Consulta de monitor' : isEditing ? 'Alteracao de monitor' : 'Cadastro de monitor';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar monitor';
+        setFormReadOnly(isReadOnly);
       };
 
       const showImportForm = () => {
@@ -479,6 +494,8 @@
         codigoInput.value = '';
         setSelectedTipoVinculo('');
         editingCodigo = null;
+        formMode = 'create';
+        setFormReadOnly(false);
         resetMessages();
       };
 
@@ -545,6 +562,7 @@
             <td>${item.tipo_vinculo || ''}</td>
             <td>
               <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button" data-action="view" data-codigo="${item.codigo}">Consulta</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}" data-monitor="${item.monitor}">Excluir</button>
               </div>
@@ -649,7 +667,7 @@
         codigoInput.value = '';
         setSelectedTipoVinculo('');
         resetMessages();
-        showForm(false);
+        showForm('create');
       };
 
       const startEdit = (item) => {
@@ -663,7 +681,21 @@
         nascimentoInput.value = item.nascimento || '';
         setSelectedTipoVinculo(item.tipo_vinculo || '');
         resetMessages();
-        showForm(true);
+        showForm('edit');
+      };
+
+      const startView = (item) => {
+        editingCodigo = item.codigo;
+        codigoInput.value = item.codigo;
+        nomeInput.value = item.monitor;
+        cpfInput.value = item.cpf_monitor;
+        rgInput.value = item.rg_monitor || '';
+        cursoInput.value = item.curso_monitor || '';
+        validadeCursoInput.value = item.validade_curso || '';
+        nascimentoInput.value = item.nascimento || '';
+        setSelectedTipoVinculo(item.tipo_vinculo || '');
+        resetMessages();
+        showForm('view');
       };
 
       const handleDelete = async (item) => {
@@ -714,6 +746,11 @@
 
         const item = JSON.parse(rawItem);
 
+        if (action === 'view') {
+          startView(item);
+          return;
+        }
+
         if (action === 'edit') {
           startEdit(item);
           return;
@@ -762,6 +799,12 @@
         let hasError = false;
 
         resetMessages();
+
+        if (formMode === 'view') {
+          feedback.textContent = 'Consulta em modo somente leitura.';
+          return;
+        }
+
         codigoInput.value = codigo;
         nomeInput.value = monitor;
         cpfInput.value = cpfMonitor;

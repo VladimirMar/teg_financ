@@ -179,7 +179,7 @@
       const saveButton = document.getElementById('save-login-dre-button');
       const statusBanner = document.getElementById('status-banner');
 
-      const pageSize = 5;
+      const pageSize = 20;
       let currentPage = 1;
       let totalPages = 1;
       let currentSearch = '';
@@ -372,11 +372,24 @@
         syncDreDetails();
       };
 
-      const showForm = (isEditing = false) => {
+      const setFormReadOnly = (isReadOnly) => {
+        loginCodigoSelect.readOnly = isReadOnly;
+        dreCodigoSelect.readOnly = isReadOnly;
+        loginCodigoSelect.disabled = isReadOnly;
+        dreCodigoSelect.disabled = isReadOnly;
+        saveButton.classList.toggle('dsc-hidden', isReadOnly);
+      };
+
+      const showForm = (mode = 'create') => {
+        const isEditing = mode === 'edit';
+        const isReadOnly = mode === 'view';
+
+        formMode = mode;
         bulkForm.classList.add('dsc-hidden');
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isEditing ? 'Alterar relacionamento' : 'Novo relacionamento';
+        formTitle.textContent = isReadOnly ? 'Consulta de relacionamento' : isEditing ? 'Alterar relacionamento' : 'Novo relacionamento';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar relacionamento';
+        setFormReadOnly(isReadOnly);
       };
 
       const showBulkForm = () => {
@@ -388,10 +401,12 @@
         form.classList.add('dsc-hidden');
         form.reset();
         editingPair = null;
+        formMode = 'create';
         selectedLoginCodigo = '';
         selectedDreCodigo = '';
         loginCodigoSelect.value = '';
         dreCodigoSelect.value = '';
+        setFormReadOnly(false);
         syncLoginDetails();
         syncDreDetails();
         resetMessages();
@@ -440,6 +455,7 @@
             <td>${item.dre_descricao}</td>
             <td>
               <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button" data-action="view" data-login-codigo="${item.login_codigo}" data-dre-codigo="${item.dre_codigo}">Consulta</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-login-codigo="${item.login_codigo}" data-dre-codigo="${item.dre_codigo}">Alterar</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-login-codigo="${item.login_codigo}" data-dre-codigo="${item.dre_codigo}" data-login-nome="${item.login_nome}" data-dre-descricao="${item.dre_descricao}">Excluir</button>
               </div>
@@ -492,7 +508,7 @@
         syncLoginDetails();
         syncDreDetails();
         resetMessages();
-        showForm(false);
+        showForm('create');
       };
 
       const startBulkInsert = () => {
@@ -514,7 +530,19 @@
         syncLoginDetails();
         syncDreDetails();
         resetMessages();
-        showForm(true);
+        showForm('edit');
+      };
+
+      const startView = (item) => {
+        editingPair = { loginCodigo: item.loginCodigo, dreCodigo: item.dreCodigo };
+        selectedLoginCodigo = item.loginCodigo;
+        selectedDreCodigo = item.dreCodigo;
+        loginCodigoSelect.value = item.loginCodigo;
+        dreCodigoSelect.value = item.dreCodigo;
+        syncLoginDetails();
+        syncDreDetails();
+        resetMessages();
+        showForm('view');
       };
 
       const handleDelete = async (item) => {
@@ -563,6 +591,11 @@
           return;
         }
 
+        if (action === 'view') {
+          startView({ loginCodigo, dreCodigo });
+          return;
+        }
+
         if (action === 'edit') {
           startEdit({ loginCodigo, dreCodigo });
           return;
@@ -597,6 +630,11 @@
         let hasError = false;
 
         resetMessages();
+
+        if (formMode === 'view') {
+          formFeedback.textContent = 'Consulta em modo somente leitura.';
+          return;
+        }
 
         if (!loginCodigo) {
           loginCodigoError.textContent = 'Selecione o usuario.';

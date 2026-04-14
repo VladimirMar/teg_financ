@@ -20,6 +20,7 @@ type DreSortDirection = 'asc' | 'desc'
 type TitularSortField = 'codigo' | 'cnpj_cpf' | 'titular'
 type MarcaModeloSortField = 'codigo' | 'descricao'
 type SeguradoraSortField = 'codigo' | 'controle' | 'descricao'
+type FormMode = 'create' | 'edit' | 'view'
 
 type StoredSession = {
   email: string
@@ -31,7 +32,7 @@ type StoredSession = {
 }
 
 const SESSION_STORAGE_KEY = 'tegfinanc.auth'
-const DRE_PAGE_SIZE = 5
+const DRE_PAGE_SIZE = 20
 
 function SchoolBusArt() {
   return (
@@ -162,6 +163,7 @@ function App() {
   const [isDeletingDre, setIsDeletingDre] = useState(false)
   const [isDreFormVisible, setIsDreFormVisible] = useState(false)
   const [editingDreCodigo, setEditingDreCodigo] = useState<string | null>(null)
+  const [dreFormMode, setDreFormMode] = useState<FormMode>('create')
   const [dreSearch, setDreSearch] = useState('')
   const [drePage, setDrePage] = useState(1)
   const [dreTotalItems, setDreTotalItems] = useState(0)
@@ -181,6 +183,7 @@ function App() {
   const [isDeletingModalidade, setIsDeletingModalidade] = useState(false)
   const [isModalidadeFormVisible, setIsModalidadeFormVisible] = useState(false)
   const [editingModalidadeCodigo, setEditingModalidadeCodigo] = useState<string | null>(null)
+  const [modalidadeFormMode, setModalidadeFormMode] = useState<FormMode>('create')
   const [modalidadeSearch, setModalidadeSearch] = useState('')
   const [modalidadePage, setModalidadePage] = useState(1)
   const [modalidadeTotalItems, setModalidadeTotalItems] = useState(0)
@@ -202,6 +205,7 @@ function App() {
   const [isDeletingTitular, setIsDeletingTitular] = useState(false)
   const [isTitularFormVisible, setIsTitularFormVisible] = useState(false)
   const [editingTitularCodigo, setEditingTitularCodigo] = useState<string | null>(null)
+  const [titularFormMode, setTitularFormMode] = useState<FormMode>('create')
   const [titularSearch, setTitularSearch] = useState('')
   const [titularPage, setTitularPage] = useState(1)
   const [titularTotalItems, setTitularTotalItems] = useState(0)
@@ -221,6 +225,7 @@ function App() {
   const [isDeletingMarcaModelo, setIsDeletingMarcaModelo] = useState(false)
   const [isMarcaModeloFormVisible, setIsMarcaModeloFormVisible] = useState(false)
   const [editingMarcaModeloCodigo, setEditingMarcaModeloCodigo] = useState<string | null>(null)
+  const [marcaModeloFormMode, setMarcaModeloFormMode] = useState<FormMode>('create')
   const [marcaModeloSearch, setMarcaModeloSearch] = useState('')
   const [marcaModeloPage, setMarcaModeloPage] = useState(1)
   const [marcaModeloTotalItems, setMarcaModeloTotalItems] = useState(0)
@@ -242,6 +247,7 @@ function App() {
   const [isDeletingSeguradora, setIsDeletingSeguradora] = useState(false)
   const [isSeguradoraFormVisible, setIsSeguradoraFormVisible] = useState(false)
   const [editingSeguradoraCodigo, setEditingSeguradoraCodigo] = useState<string | null>(null)
+  const [seguradoraFormMode, setSeguradoraFormMode] = useState<FormMode>('create')
   const [seguradoraSearch, setSeguradoraSearch] = useState('')
   const [seguradoraPage, setSeguradoraPage] = useState(1)
   const [seguradoraTotalItems, setSeguradoraTotalItems] = useState(0)
@@ -578,6 +584,7 @@ function App() {
     setDreCodigoError('')
     setDreDescricaoError('')
     setEditingDreCodigo(null)
+    setDreFormMode('create')
   }
 
   const resetModalidadeForm = () => {
@@ -586,10 +593,12 @@ function App() {
     setModalidadeCodigoError('')
     setModalidadeDescricaoError('')
     setEditingModalidadeCodigo(null)
+    setModalidadeFormMode('create')
   }
 
   const handleStartInsertDre = () => {
     resetDreForm()
+    setDreFormMode('create')
     setDreStatusTone('idle')
     setDreStatusMessage('')
     setIsDreFormVisible(true)
@@ -597,6 +606,7 @@ function App() {
 
   const handleStartInsertModalidade = () => {
     resetModalidadeForm()
+    setModalidadeFormMode('create')
     setModalidadeStatusTone('idle')
     setModalidadeStatusMessage('')
     setIsModalidadeFormVisible(true)
@@ -670,12 +680,25 @@ function App() {
 
   const handleStartEditDre = (item: DreItem) => {
     setEditingDreCodigo(item.codigo)
+    setDreFormMode('edit')
     setDreCodigo(item.codigo)
     setDreDescricao(item.descricao)
     setDreCodigoError('')
     setDreDescricaoError('')
     setDreStatusTone('idle')
     setDreStatusMessage(`Alterando registro ${item.codigo}.`)
+    setIsDreFormVisible(true)
+  }
+
+  const handleStartViewDre = (item: DreItem) => {
+    setEditingDreCodigo(item.codigo)
+    setDreFormMode('view')
+    setDreCodigo(item.codigo)
+    setDreDescricao(item.descricao)
+    setDreCodigoError('')
+    setDreDescricaoError('')
+    setDreStatusTone('idle')
+    setDreStatusMessage(`Consulta do registro ${item.codigo}.`)
     setIsDreFormVisible(true)
   }
 
@@ -688,12 +711,25 @@ function App() {
 
   const handleStartEditModalidade = (item: ModalidadeItem) => {
     setEditingModalidadeCodigo(item.codigo)
+    setModalidadeFormMode('edit')
     setModalidadeCodigo(item.codigo)
     setModalidadeDescricao(item.descricao)
     setModalidadeCodigoError('')
     setModalidadeDescricaoError('')
     setModalidadeStatusTone('idle')
     setModalidadeStatusMessage(`Alterando registro ${item.codigo}.`)
+    setIsModalidadeFormVisible(true)
+  }
+
+  const handleStartViewModalidade = (item: ModalidadeItem) => {
+    setEditingModalidadeCodigo(item.codigo)
+    setModalidadeFormMode('view')
+    setModalidadeCodigo(item.codigo)
+    setModalidadeDescricao(item.descricao)
+    setModalidadeCodigoError('')
+    setModalidadeDescricaoError('')
+    setModalidadeStatusTone('idle')
+    setModalidadeStatusMessage(`Consulta do registro ${item.codigo}.`)
     setIsModalidadeFormVisible(true)
   }
 
@@ -706,6 +742,12 @@ function App() {
 
   const handleCreateDre = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (dreFormMode === 'view') {
+      setDreStatusTone('idle')
+      setDreStatusMessage('Consulta em modo somente leitura.')
+      return
+    }
 
     const normalizedCodigo = dreCodigo.trim()
     const normalizedDescricao = dreDescricao.trim()
@@ -766,6 +808,12 @@ function App() {
 
   const handleCreateModalidade = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (modalidadeFormMode === 'view') {
+      setModalidadeStatusTone('idle')
+      setModalidadeStatusMessage('Consulta em modo somente leitura.')
+      return
+    }
 
     const normalizedCodigo = modalidadeCodigo.trim()
     const normalizedDescricao = modalidadeDescricao.trim()
@@ -904,10 +952,12 @@ function App() {
     setTitularCnpjCpfError('')
     setTitularNomeError('')
     setEditingTitularCodigo(null)
+    setTitularFormMode('create')
   }
 
   const handleStartInsertTitular = () => {
     resetTitularForm()
+    setTitularFormMode('create')
     setTitularStatusTone('idle')
     setTitularStatusMessage('')
     setIsTitularFormVisible(true)
@@ -948,6 +998,7 @@ function App() {
 
   const handleStartEditTitular = (item: TitularItem) => {
     setEditingTitularCodigo(item.codigo)
+    setTitularFormMode('edit')
     setTitularCodigo(item.codigo)
     setTitularCnpjCpf(formatCpfOrCnpj(item.cnpj_cpf))
     setTitularNome(item.titular)
@@ -956,6 +1007,20 @@ function App() {
     setTitularNomeError('')
     setTitularStatusTone('idle')
     setTitularStatusMessage(`Alterando registro ${item.codigo}.`)
+    setIsTitularFormVisible(true)
+  }
+
+  const handleStartViewTitular = (item: TitularItem) => {
+    setEditingTitularCodigo(item.codigo)
+    setTitularFormMode('view')
+    setTitularCodigo(item.codigo)
+    setTitularCnpjCpf(formatCpfOrCnpj(item.cnpj_cpf))
+    setTitularNome(item.titular)
+    setTitularCodigoError('')
+    setTitularCnpjCpfError('')
+    setTitularNomeError('')
+    setTitularStatusTone('idle')
+    setTitularStatusMessage(`Consulta do registro ${item.codigo}.`)
     setIsTitularFormVisible(true)
   }
 
@@ -968,6 +1033,12 @@ function App() {
 
   const handleCreateTitular = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (titularFormMode === 'view') {
+      setTitularStatusTone('idle')
+      setTitularStatusMessage('Consulta em modo somente leitura.')
+      return
+    }
 
     const normalizedCodigo = titularCodigo.trim()
     const normalizedCnpjCpf = titularCnpjCpf.trim()
@@ -1077,10 +1148,12 @@ function App() {
     setMarcaModeloCodigoError('')
     setMarcaModeloDescricaoError('')
     setEditingMarcaModeloCodigo(null)
+    setMarcaModeloFormMode('create')
   }
 
   const handleStartInsertMarcaModelo = () => {
     resetMarcaModeloForm()
+    setMarcaModeloFormMode('create')
     setMarcaModeloStatusTone('idle')
     setMarcaModeloStatusMessage('')
     setIsMarcaModeloFormVisible(true)
@@ -1121,12 +1194,25 @@ function App() {
 
   const handleStartEditMarcaModelo = (item: MarcaModeloItem) => {
     setEditingMarcaModeloCodigo(item.codigo)
+    setMarcaModeloFormMode('edit')
     setMarcaModeloCodigo(item.codigo)
     setMarcaModeloDescricao(item.descricao)
     setMarcaModeloCodigoError('')
     setMarcaModeloDescricaoError('')
     setMarcaModeloStatusTone('idle')
     setMarcaModeloStatusMessage(`Alterando registro ${item.codigo}.`)
+    setIsMarcaModeloFormVisible(true)
+  }
+
+  const handleStartViewMarcaModelo = (item: MarcaModeloItem) => {
+    setEditingMarcaModeloCodigo(item.codigo)
+    setMarcaModeloFormMode('view')
+    setMarcaModeloCodigo(item.codigo)
+    setMarcaModeloDescricao(item.descricao)
+    setMarcaModeloCodigoError('')
+    setMarcaModeloDescricaoError('')
+    setMarcaModeloStatusTone('idle')
+    setMarcaModeloStatusMessage(`Consulta do registro ${item.codigo}.`)
     setIsMarcaModeloFormVisible(true)
   }
 
@@ -1139,6 +1225,12 @@ function App() {
 
   const handleCreateMarcaModelo = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (marcaModeloFormMode === 'view') {
+      setMarcaModeloStatusTone('idle')
+      setMarcaModeloStatusMessage('Consulta em modo somente leitura.')
+      return
+    }
 
     const normalizedCodigo = marcaModeloCodigo.trim()
     const normalizedDescricao = marcaModeloDescricao.trim()
@@ -1241,10 +1333,12 @@ function App() {
     setSeguradoraControleError('')
     setSeguradoraListaError('')
     setEditingSeguradoraCodigo(null)
+    setSeguradoraFormMode('create')
   }
 
   const handleStartInsertSeguradora = () => {
     resetSeguradoraForm()
+    setSeguradoraFormMode('create')
     setSeguradoraStatusTone('idle')
     setSeguradoraStatusMessage('')
     setIsSeguradoraFormVisible(true)
@@ -1285,6 +1379,7 @@ function App() {
 
   const handleStartEditSeguradora = (item: SeguradoraItem) => {
     setEditingSeguradoraCodigo(item.codigo)
+    setSeguradoraFormMode('edit')
     setSeguradoraCodigo(item.codigo)
     setSeguradoraControle(item.controle)
     setSeguradoraLista(item.descricao)
@@ -1293,6 +1388,20 @@ function App() {
     setSeguradoraListaError('')
     setSeguradoraStatusTone('idle')
     setSeguradoraStatusMessage(`Alterando registro ${item.codigo}.`)
+    setIsSeguradoraFormVisible(true)
+  }
+
+  const handleStartViewSeguradora = (item: SeguradoraItem) => {
+    setEditingSeguradoraCodigo(item.codigo)
+    setSeguradoraFormMode('view')
+    setSeguradoraCodigo(item.codigo)
+    setSeguradoraControle(item.controle)
+    setSeguradoraLista(item.descricao)
+    setSeguradoraCodigoError('')
+    setSeguradoraControleError('')
+    setSeguradoraListaError('')
+    setSeguradoraStatusTone('idle')
+    setSeguradoraStatusMessage(`Consulta do registro ${item.codigo}.`)
     setIsSeguradoraFormVisible(true)
   }
 
@@ -1305,6 +1414,12 @@ function App() {
 
   const handleCreateSeguradora = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (seguradoraFormMode === 'view') {
+      setSeguradoraStatusTone('idle')
+      setSeguradoraStatusMessage('Consulta em modo somente leitura.')
+      return
+    }
 
     const editingCodigo = editingSeguradoraCodigo
     const normalizedCodigo = editingCodigo ?? seguradoraCodigo.trim()
@@ -1669,7 +1784,7 @@ function App() {
 
               {isDreFormVisible ? (
                 <form className="management-card management-form dre-form" onSubmit={handleCreateDre} noValidate>
-                  <h2>{editingDreCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+                  <h2>{dreFormMode === 'view' ? 'Consulta de registro' : editingDreCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
 
                   <label className="field-group" htmlFor="dre-codigo">
                     <span>Codigo</span>
@@ -1679,7 +1794,7 @@ function App() {
                       type="text"
                       value={dreCodigo}
                       onChange={(event) => setDreCodigo(event.target.value)}
-                      disabled={isSavingDre}
+                      disabled={isSavingDre || dreFormMode === 'view'}
                       aria-invalid={Boolean(dreCodigoError)}
                     />
                     {dreCodigoError ? <strong className="field-error">{dreCodigoError}</strong> : null}
@@ -1693,18 +1808,20 @@ function App() {
                       type="text"
                       value={dreDescricao}
                       onChange={(event) => setDreDescricao(event.target.value)}
-                      disabled={isSavingDre}
+                      disabled={isSavingDre || dreFormMode === 'view'}
                       aria-invalid={Boolean(dreDescricaoError)}
                     />
                     {dreDescricaoError ? <strong className="field-error">{dreDescricaoError}</strong> : null}
                   </label>
 
                   <div className="button-row dre-button-row">
-                    <button type="submit" className="primary-button" disabled={isSavingDre}>
-                      {isSavingDre ? 'Salvando...' : editingDreCodigo ? 'Salvar alteracao' : 'Salvar DRE'}
-                    </button>
+                    {dreFormMode !== 'view' ? (
+                      <button type="submit" className="primary-button" disabled={isSavingDre}>
+                        {isSavingDre ? 'Salvando...' : editingDreCodigo ? 'Salvar alteracao' : 'Salvar DRE'}
+                      </button>
+                    ) : null}
                     <button type="button" className="secondary-button" onClick={handleCancelDreForm} disabled={isSavingDre}>
-                      Cancelar
+                      {dreFormMode === 'view' ? 'Fechar' : 'Cancelar'}
                     </button>
                   </div>
                 </form>
@@ -1742,6 +1859,9 @@ function App() {
                           <td>{item.descricao}</td>
                           <td>
                             <div className="dre-row-actions">
+                              <button type="button" className="row-action-button" onClick={() => handleStartViewDre(item)}>
+                                Consulta
+                              </button>
                               <button type="button" className="row-action-button row-action-edit" onClick={() => handleStartEditDre(item)}>
                                 Alterar
                               </button>
@@ -1829,7 +1949,7 @@ function App() {
 
               {isModalidadeFormVisible ? (
                 <form className="management-card management-form dre-form" onSubmit={handleCreateModalidade} noValidate>
-                  <h2>{editingModalidadeCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+                  <h2>{modalidadeFormMode === 'view' ? 'Consulta de registro' : editingModalidadeCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
 
                   <label className="field-group" htmlFor="modalidade-codigo">
                     <span>Codigo</span>
@@ -1839,7 +1959,7 @@ function App() {
                       type="text"
                       value={modalidadeCodigo}
                       onChange={(event) => setModalidadeCodigo(event.target.value)}
-                      disabled={isSavingModalidade}
+                      disabled={isSavingModalidade || modalidadeFormMode === 'view'}
                       aria-invalid={Boolean(modalidadeCodigoError)}
                     />
                     {modalidadeCodigoError ? <strong className="field-error">{modalidadeCodigoError}</strong> : null}
@@ -1853,18 +1973,20 @@ function App() {
                       type="text"
                       value={modalidadeDescricao}
                       onChange={(event) => setModalidadeDescricao(event.target.value)}
-                      disabled={isSavingModalidade}
+                      disabled={isSavingModalidade || modalidadeFormMode === 'view'}
                       aria-invalid={Boolean(modalidadeDescricaoError)}
                     />
                     {modalidadeDescricaoError ? <strong className="field-error">{modalidadeDescricaoError}</strong> : null}
                   </label>
 
                   <div className="button-row dre-button-row">
-                    <button type="submit" className="primary-button" disabled={isSavingModalidade}>
-                      {isSavingModalidade ? 'Salvando...' : editingModalidadeCodigo ? 'Salvar alteracao' : 'Salvar Modalidade'}
-                    </button>
+                    {modalidadeFormMode !== 'view' ? (
+                      <button type="submit" className="primary-button" disabled={isSavingModalidade}>
+                        {isSavingModalidade ? 'Salvando...' : editingModalidadeCodigo ? 'Salvar alteracao' : 'Salvar Modalidade'}
+                      </button>
+                    ) : null}
                     <button type="button" className="secondary-button" onClick={handleCancelModalidadeForm} disabled={isSavingModalidade}>
-                      Cancelar
+                      {modalidadeFormMode === 'view' ? 'Fechar' : 'Cancelar'}
                     </button>
                   </div>
                 </form>
@@ -1902,6 +2024,9 @@ function App() {
                           <td>{item.descricao}</td>
                           <td>
                             <div className="dre-row-actions">
+                              <button type="button" className="row-action-button" onClick={() => handleStartViewModalidade(item)}>
+                                Consulta
+                              </button>
                               <button type="button" className="row-action-button row-action-edit" onClick={() => handleStartEditModalidade(item)}>
                                 Alterar
                               </button>
@@ -1988,7 +2113,7 @@ function App() {
 
               {isTitularFormVisible ? (
                 <form className="management-card management-form dre-form" onSubmit={handleCreateTitular} noValidate>
-                  <h2>{editingTitularCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+                  <h2>{titularFormMode === 'view' ? 'Consulta de registro' : editingTitularCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
 
                   <label className="field-group" htmlFor="titular-codigo">
                     <span>Codigo</span>
@@ -1998,8 +2123,8 @@ function App() {
                       type="text"
                       value={titularCodigo}
                       onChange={(event) => setTitularCodigo(event.target.value)}
-                      disabled={isSavingTitular || Boolean(editingTitularCodigo)}
-                      readOnly={Boolean(editingTitularCodigo)}
+                      disabled={isSavingTitular || titularFormMode === 'view' || Boolean(editingTitularCodigo)}
+                      readOnly={Boolean(editingTitularCodigo) || titularFormMode === 'view'}
                       aria-invalid={Boolean(titularCodigoError)}
                     />
                     {titularCodigoError ? <strong className="field-error">{titularCodigoError}</strong> : null}
@@ -2016,7 +2141,7 @@ function App() {
                       maxLength={18}
                       value={titularCnpjCpf}
                       onChange={(event) => setTitularCnpjCpf(formatCpfOrCnpj(event.target.value))}
-                      disabled={isSavingTitular}
+                      disabled={isSavingTitular || titularFormMode === 'view'}
                       aria-invalid={Boolean(titularCnpjCpfError)}
                     />
                     {titularCnpjCpfError ? <strong className="field-error">{titularCnpjCpfError}</strong> : null}
@@ -2030,18 +2155,20 @@ function App() {
                       type="text"
                       value={titularNome}
                       onChange={(event) => setTitularNome(event.target.value)}
-                      disabled={isSavingTitular}
+                      disabled={isSavingTitular || titularFormMode === 'view'}
                       aria-invalid={Boolean(titularNomeError)}
                     />
                     {titularNomeError ? <strong className="field-error">{titularNomeError}</strong> : null}
                   </label>
 
                   <div className="button-row dre-button-row">
-                    <button type="submit" className="primary-button" disabled={isSavingTitular}>
-                      {isSavingTitular ? 'Salvando...' : editingTitularCodigo ? 'Salvar alteracao' : 'Salvar titular do CRM'}
-                    </button>
+                    {titularFormMode !== 'view' ? (
+                      <button type="submit" className="primary-button" disabled={isSavingTitular}>
+                        {isSavingTitular ? 'Salvando...' : editingTitularCodigo ? 'Salvar alteracao' : 'Salvar titular do CRM'}
+                      </button>
+                    ) : null}
                     <button type="button" className="secondary-button" onClick={handleCancelTitularForm} disabled={isSavingTitular}>
-                      Cancelar
+                      {titularFormMode === 'view' ? 'Fechar' : 'Cancelar'}
                     </button>
                   </div>
                 </form>
@@ -2085,6 +2212,9 @@ function App() {
                           <td>{item.titular}</td>
                           <td>
                             <div className="dre-row-actions">
+                              <button type="button" className="row-action-button" onClick={() => handleStartViewTitular(item)}>
+                                Consulta
+                              </button>
                               <button type="button" className="row-action-button row-action-edit" onClick={() => handleStartEditTitular(item)}>
                                 Alterar
                               </button>
@@ -2171,7 +2301,7 @@ function App() {
 
               {isMarcaModeloFormVisible ? (
                 <form className="management-card management-form dre-form" onSubmit={handleCreateMarcaModelo} noValidate>
-                  <h2>{editingMarcaModeloCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+                  <h2>{marcaModeloFormMode === 'view' ? 'Consulta de registro' : editingMarcaModeloCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
 
                   <label className="field-group" htmlFor="marca-modelo-codigo">
                     <span>Codigo</span>
@@ -2181,7 +2311,7 @@ function App() {
                       type="text"
                       value={marcaModeloCodigo}
                       onChange={(event) => setMarcaModeloCodigo(event.target.value)}
-                      disabled={isSavingMarcaModelo}
+                      disabled={isSavingMarcaModelo || marcaModeloFormMode === 'view'}
                       aria-invalid={Boolean(marcaModeloCodigoError)}
                     />
                     {marcaModeloCodigoError ? <strong className="field-error">{marcaModeloCodigoError}</strong> : null}
@@ -2195,18 +2325,20 @@ function App() {
                       type="text"
                       value={marcaModeloDescricao}
                       onChange={(event) => setMarcaModeloDescricao(event.target.value)}
-                      disabled={isSavingMarcaModelo}
+                      disabled={isSavingMarcaModelo || marcaModeloFormMode === 'view'}
                       aria-invalid={Boolean(marcaModeloDescricaoError)}
                     />
                     {marcaModeloDescricaoError ? <strong className="field-error">{marcaModeloDescricaoError}</strong> : null}
                   </label>
 
                   <div className="button-row dre-button-row">
-                    <button type="submit" className="primary-button" disabled={isSavingMarcaModelo}>
-                      {isSavingMarcaModelo ? 'Salvando...' : editingMarcaModeloCodigo ? 'Salvar alteracao' : 'Salvar marca/modelo'}
-                    </button>
+                    {marcaModeloFormMode !== 'view' ? (
+                      <button type="submit" className="primary-button" disabled={isSavingMarcaModelo}>
+                        {isSavingMarcaModelo ? 'Salvando...' : editingMarcaModeloCodigo ? 'Salvar alteracao' : 'Salvar marca/modelo'}
+                      </button>
+                    ) : null}
                     <button type="button" className="secondary-button" onClick={handleCancelMarcaModeloForm} disabled={isSavingMarcaModelo}>
-                      Cancelar
+                      {marcaModeloFormMode === 'view' ? 'Fechar' : 'Cancelar'}
                     </button>
                   </div>
                 </form>
@@ -2244,6 +2376,9 @@ function App() {
                           <td>{item.descricao}</td>
                           <td>
                             <div className="dre-row-actions">
+                              <button type="button" className="row-action-button" onClick={() => handleStartViewMarcaModelo(item)}>
+                                Consulta
+                              </button>
                               <button type="button" className="row-action-button row-action-edit" onClick={() => handleStartEditMarcaModelo(item)}>
                                 Alterar
                               </button>
@@ -2330,7 +2465,7 @@ function App() {
 
               {isSeguradoraFormVisible ? (
                 <form className="management-card management-form dre-form" onSubmit={handleCreateSeguradora} noValidate>
-                  <h2>{editingSeguradoraCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+                  <h2>{seguradoraFormMode === 'view' ? 'Consulta de registro' : editingSeguradoraCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
 
                   <label className="field-group" htmlFor="seguradora-codigo">
                     <span>Codigo</span>
@@ -2340,8 +2475,8 @@ function App() {
                       type="text"
                       value={seguradoraCodigo}
                       onChange={(event) => setSeguradoraCodigo(event.target.value)}
-                      disabled={isSavingSeguradora || Boolean(editingSeguradoraCodigo)}
-                      readOnly={Boolean(editingSeguradoraCodigo)}
+                      disabled={isSavingSeguradora || seguradoraFormMode === 'view' || Boolean(editingSeguradoraCodigo)}
+                      readOnly={Boolean(editingSeguradoraCodigo) || seguradoraFormMode === 'view'}
                       aria-invalid={Boolean(seguradoraCodigoError)}
                     />
                     {seguradoraCodigoError ? <strong className="field-error">{seguradoraCodigoError}</strong> : null}
@@ -2355,7 +2490,7 @@ function App() {
                       type="text"
                       value={seguradoraControle}
                       onChange={(event) => setSeguradoraControle(event.target.value)}
-                      disabled={isSavingSeguradora}
+                      disabled={isSavingSeguradora || seguradoraFormMode === 'view'}
                       aria-invalid={Boolean(seguradoraControleError)}
                     />
                     {seguradoraControleError ? <strong className="field-error">{seguradoraControleError}</strong> : null}
@@ -2369,18 +2504,20 @@ function App() {
                       type="text"
                       value={seguradoraLista}
                       onChange={(event) => setSeguradoraLista(event.target.value)}
-                      disabled={isSavingSeguradora}
+                      disabled={isSavingSeguradora || seguradoraFormMode === 'view'}
                       aria-invalid={Boolean(seguradoraListaError)}
                     />
                     {seguradoraListaError ? <strong className="field-error">{seguradoraListaError}</strong> : null}
                   </label>
 
                   <div className="button-row dre-button-row">
-                    <button type="submit" className="primary-button" disabled={isSavingSeguradora}>
-                      {isSavingSeguradora ? 'Salvando...' : editingSeguradoraCodigo ? 'Salvar alteracao' : 'Salvar seguradora'}
-                    </button>
+                    {seguradoraFormMode !== 'view' ? (
+                      <button type="submit" className="primary-button" disabled={isSavingSeguradora}>
+                        {isSavingSeguradora ? 'Salvando...' : editingSeguradoraCodigo ? 'Salvar alteracao' : 'Salvar seguradora'}
+                      </button>
+                    ) : null}
                     <button type="button" className="secondary-button" onClick={handleCancelSeguradoraForm} disabled={isSavingSeguradora}>
-                      Cancelar
+                      {seguradoraFormMode === 'view' ? 'Fechar' : 'Cancelar'}
                     </button>
                   </div>
                 </form>
@@ -2424,6 +2561,9 @@ function App() {
                           <td>{item.descricao}</td>
                           <td>
                             <div className="dre-row-actions">
+                              <button type="button" className="row-action-button" onClick={() => handleStartViewSeguradora(item)}>
+                                Consulta
+                              </button>
                               <button type="button" className="row-action-button row-action-edit" onClick={() => handleStartEditSeguradora(item)}>
                                 Alterar
                               </button>

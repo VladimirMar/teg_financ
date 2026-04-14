@@ -308,8 +308,8 @@
       const clearRejectionFilterButton = document.getElementById('clear-credenciada-rejection-filter-button');
       const closeRejectionPanelButton = document.getElementById('close-credenciada-rejection-panel-button');
 
-      const pageSize = 5;
-      const rejectionPageSize = 10;
+      const pageSize = 20;
+      const rejectionPageSize = 20;
       const defaultImportFileName = 'Credenciados.xml';
       let currentPage = 1;
       let totalPages = 1;
@@ -496,12 +496,24 @@
         }, 3500);
       };
 
-      const showForm = (isEditing = false) => {
+      const setFormReadOnly = (isReadOnly) => {
+        [codigoInput, nomeInput, cnpjCpfInput, logradouroInput, bairroInput, cepInput, municipioInput, emailInput, telefone1Input, telefone2Input, representanteInput, cpfRepresentanteInput, rgRepresentanteInput, statusInput].forEach((input) => {
+          input.readOnly = isReadOnly;
+        });
+        saveButton.classList.toggle('dsc-hidden', isReadOnly);
+      };
+
+      const showForm = (mode = 'create') => {
+        const isEditing = mode === 'edit';
+        const isReadOnly = mode === 'view';
+
+        formMode = mode;
         importForm.classList.add('dsc-hidden');
         rejectionPanel.classList.add('dsc-hidden');
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isEditing ? 'Alteracao de credenciada' : 'Cadastro de credenciada';
+        formTitle.textContent = isReadOnly ? 'Consulta de credenciada' : isEditing ? 'Alteracao de credenciada' : 'Cadastro de credenciada';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar credenciada';
+        setFormReadOnly(isReadOnly);
       };
 
       const showImportForm = () => {
@@ -527,6 +539,8 @@
         form.reset();
         codigoInput.value = '';
         editingCodigo = null;
+        formMode = 'create';
+        setFormReadOnly(false);
         resetMessages();
       };
 
@@ -590,6 +604,7 @@
             <td>${item.representante || ''}</td>
             <td>
               <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button" data-action="view" data-codigo="${item.codigo}">Consulta</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}" data-credenciada="${item.credenciado}">Excluir</button>
               </div>
@@ -693,7 +708,7 @@
         form.reset();
         codigoInput.value = '';
         resetMessages();
-        showForm(false);
+        showForm('create');
       };
 
       const startEdit = (item) => {
@@ -713,7 +728,27 @@
         rgRepresentanteInput.value = item.rg_representante || '';
         statusInput.value = item.status || '';
         resetMessages();
-        showForm(true);
+        showForm('edit');
+      };
+
+      const startView = (item) => {
+        editingCodigo = item.codigo;
+        codigoInput.value = item.codigo;
+        nomeInput.value = item.credenciado || '';
+        cnpjCpfInput.value = normalizeCnpjCpf(item.cnpj_cpf || '');
+        logradouroInput.value = item.logradouro || '';
+        bairroInput.value = item.bairro || '';
+        cepInput.value = item.cep || '';
+        municipioInput.value = item.municipio || '';
+        emailInput.value = item.email || '';
+        telefone1Input.value = item.telefone_01 || '';
+        telefone2Input.value = item.telefone_02 || '';
+        representanteInput.value = item.representante || '';
+        cpfRepresentanteInput.value = item.cpf_representante || '';
+        rgRepresentanteInput.value = item.rg_representante || '';
+        statusInput.value = item.status || '';
+        resetMessages();
+        showForm('view');
       };
 
       const handleDelete = async (item) => {
@@ -763,6 +798,11 @@
         }
 
         const item = JSON.parse(rawItem);
+
+        if (action === 'view') {
+          startView(item);
+          return;
+        }
 
         if (action === 'edit') {
           startEdit(item);
@@ -850,6 +890,12 @@
         let hasError = false;
 
         resetMessages();
+
+        if (formMode === 'view') {
+          feedback.textContent = 'Consulta em modo somente leitura.';
+          return;
+        }
+
         codigoInput.value = codigo;
         nomeInput.value = credenciado;
         cnpjCpfInput.value = cnpjCpf;

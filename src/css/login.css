@@ -607,8 +607,10 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 }
 
 .dsc-access-grid-card {
-  width: 100%;
+  width: min(100%, 1120px);
   min-height: 440px;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 body:has(#condutor-grid-body) .dsc-access-grid-card,
@@ -616,16 +618,20 @@ body:has(#condutor-rejection-grid-body) .dsc-access-grid-card,
 body:has(#credenciada-grid-body) .dsc-access-grid-card,
 body:has(#credenciada-rejection-grid-body) .dsc-access-grid-card,
 body:has(#ordem-servico-grid-body) .dsc-access-grid-card,
-body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid-card {
-  width: min(100%, 1440px);
+body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid-card,
+body:has(#vinculo-grid-body) .dsc-access-grid-card,
+body:has(#vinculo-rejection-grid-body) .dsc-access-grid-card {
+  width: min(100%, 1120px);
+  margin-left: 0;
+  margin-right: auto;
 }
 
 .dsc-access-grid-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .dsc-access-grid-header span,
@@ -729,7 +735,7 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid {
 
 .dsc-access-grid th,
 .dsc-access-grid td {
-  padding: 12px 10px;
+  padding: 8px 8px;
   text-align: left;
   border-bottom: 1px solid rgba(33, 49, 57, 0.12);
 }
@@ -762,15 +768,15 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
 
 .dsc-grid-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dsc-grid-action-button {
   border: none;
   border-radius: 999px;
-  padding: 8px 14px;
+  padding: 6px 12px;
   font: inherit;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
 }

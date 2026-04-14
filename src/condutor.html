@@ -261,8 +261,8 @@
       const clearRejectionFilterButton = document.getElementById('clear-condutor-rejection-filter-button');
       const closeRejectionPanelButton = document.getElementById('close-condutor-rejection-panel-button');
 
-      const pageSize = 5;
-      const rejectionPageSize = 10;
+      const pageSize = 20;
+      const rejectionPageSize = 20;
       const defaultImportFileName = 'Condutor.xml';
       let currentPage = 1;
       let totalPages = 1;
@@ -433,12 +433,27 @@
         }, 3500);
       };
 
-      const showForm = (isEditing = false) => {
+      const setFormReadOnly = (isReadOnly) => {
+        [codigoInput, nomeInput, cpfInput, crmcInput, validadeCrmcInput, validadeCursoInput, historicoInput].forEach((input) => {
+          input.readOnly = isReadOnly;
+        });
+        form.querySelectorAll('input[type="radio"], input[type="checkbox"], input[type="date"], select').forEach((input) => {
+          input.disabled = isReadOnly;
+        });
+        saveButton.classList.toggle('dsc-hidden', isReadOnly);
+      };
+
+      const showForm = (mode = 'create') => {
+        const isEditing = mode === 'edit';
+        const isReadOnly = mode === 'view';
+
+        formMode = mode;
         importForm.classList.add('dsc-hidden');
         rejectionPanel.classList.add('dsc-hidden');
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isEditing ? 'Alteracao de condutor' : 'Cadastro de condutor';
+        formTitle.textContent = isReadOnly ? 'Consulta de condutor' : isEditing ? 'Alteracao de condutor' : 'Cadastro de condutor';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar condutor';
+        setFormReadOnly(isReadOnly);
       };
 
       const showImportForm = () => {
@@ -465,6 +480,8 @@
         codigoInput.value = '';
         setSelectedTipoVinculo('');
         editingCodigo = null;
+        formMode = 'create';
+        setFormReadOnly(false);
         resetMessages();
       };
 
@@ -530,6 +547,7 @@
             <td>${formatDateLabel(item.validade_curso)}</td>
             <td>
               <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button" data-action="view" data-codigo="${item.codigo}">Consulta</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}" data-condutor="${item.condutor}">Excluir</button>
               </div>
@@ -634,7 +652,7 @@
         codigoInput.value = '';
         setSelectedTipoVinculo('');
         resetMessages();
-        showForm(false);
+        showForm('create');
       };
 
       const startEdit = (item) => {
@@ -648,7 +666,21 @@
         setSelectedTipoVinculo(item.tipo_vinculo || '');
         historicoInput.value = item.historico || '';
         resetMessages();
-        showForm(true);
+        showForm('edit');
+      };
+
+      const startView = (item) => {
+        editingCodigo = item.codigo;
+        codigoInput.value = item.codigo;
+        nomeInput.value = item.condutor;
+        cpfInput.value = item.cpf_condutor;
+        crmcInput.value = item.crmc;
+        validadeCrmcInput.value = item.validade_crmc;
+        validadeCursoInput.value = item.validade_curso;
+        setSelectedTipoVinculo(item.tipo_vinculo || '');
+        historicoInput.value = item.historico || '';
+        resetMessages();
+        showForm('view');
       };
 
       const handleDelete = async (item) => {
@@ -699,6 +731,11 @@
 
         const item = JSON.parse(rawItem);
 
+        if (action === 'view') {
+          startView(item);
+          return;
+        }
+
         if (action === 'edit') {
           startEdit(item);
           return;
@@ -742,6 +779,12 @@
         let hasError = false;
 
         resetMessages();
+
+        if (formMode === 'view') {
+          feedback.textContent = 'Consulta em modo somente leitura.';
+          return;
+        }
+
         codigoInput.value = codigo;
         nomeInput.value = condutor;
         cpfInput.value = cpfCondutor;

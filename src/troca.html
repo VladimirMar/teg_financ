@@ -132,13 +132,14 @@
       const saveButton = document.getElementById('save-troca-button');
       const statusBanner = document.getElementById('status-banner');
 
-      const pageSize = 5;
+      const pageSize = 20;
       let currentPage = 1;
       let totalPages = 1;
       let currentSearch = '';
       let currentSortBy = 'codigo';
       let currentSortDirection = 'asc';
       let editingCodigo = null;
+      let formMode = 'create';
       let bannerTimeoutId = null;
 
       const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
@@ -205,16 +206,30 @@
         return error instanceof Error ? error.message : fallbackMessage;
       };
 
-      const showForm = (isEditing = false) => {
+      const setFormReadOnly = (isReadOnly) => {
+        codigoInput.readOnly = isReadOnly;
+        controleInput.readOnly = isReadOnly;
+        listaInput.readOnly = isReadOnly;
+        saveButton.classList.toggle('dsc-hidden', isReadOnly);
+      };
+
+      const showForm = (mode = 'create') => {
+        const isEditing = mode === 'edit';
+        const isReadOnly = mode === 'view';
+
+        formMode = mode;
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isEditing ? 'Alteracao de tipo de troca' : 'Cadastro de tipo de troca';
+        formTitle.textContent = isReadOnly ? 'Consulta de tipo de troca' : isEditing ? 'Alteracao de tipo de troca' : 'Cadastro de tipo de troca';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar tipo de troca';
+        setFormReadOnly(isReadOnly);
       };
 
       const hideForm = () => {
         form.classList.add('dsc-hidden');
         form.reset();
         editingCodigo = null;
+        formMode = 'create';
+        setFormReadOnly(false);
         resetMessages();
       };
 
@@ -251,6 +266,7 @@
             <td>${item.lista}</td>
             <td>
               <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button" data-action="view" data-codigo="${item.codigo}">Consulta</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}">Excluir</button>
               </div>
@@ -302,7 +318,7 @@
         editingCodigo = null;
         form.reset();
         resetMessages();
-        showForm(false);
+        showForm('create');
       };
 
       const startEdit = (item) => {
@@ -311,7 +327,16 @@
         controleInput.value = item.controle || '';
         listaInput.value = item.lista || '';
         resetMessages();
-        showForm(true);
+        showForm('edit');
+      };
+
+      const startView = (item) => {
+        editingCodigo = item.codigo;
+        codigoInput.value = item.codigo || '';
+        controleInput.value = item.controle || '';
+        listaInput.value = item.lista || '';
+        resetMessages();
+        showForm('view');
       };
 
       const handleDelete = async (item) => {
@@ -362,6 +387,11 @@
 
         const item = JSON.parse(rawItem);
 
+        if (action === 'view') {
+          startView(item);
+          return;
+        }
+
         if (action === 'edit') {
           startEdit(item);
           return;
@@ -393,6 +423,11 @@
         let hasError = false;
 
         resetMessages();
+
+        if (formMode === 'view') {
+          feedback.textContent = 'Consulta em modo somente leitura.';
+          return;
+        }
         codigoInput.value = codigo;
         controleInput.value = controle;
         listaInput.value = lista;
