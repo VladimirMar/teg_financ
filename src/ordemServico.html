@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OrdemServico</title>
+    <title>ORDEM DE SERVICO</title>
 
     <link rel="stylesheet" href="css/login.css" />
   </head>
@@ -90,7 +90,7 @@
             </form>
 
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="ordem-servico-form">
-              <h2 id="ordem-servico-form-title">Novo registro</h2>
+              <h2 id="ordem-servico-form-title">ORDEM DE SERVICO</h2>
 
               <section class="dsc-form-section-card dsc-form-section-card-ordem-servico-identificacao">
                 <h3 class="dsc-form-section-title">Identificacao</h3>
@@ -200,6 +200,14 @@
                     <div class="dsc-form-error" id="ordem-servico-condutor-error"></div>
                   </label>
 
+                  <label class="dsc-field-group" for="ordem-servico-data-admissao-condutor">
+                    <span>Admissão condutor</span>
+                    <input class="dsc-form-control" id="ordem-servico-data-admissao-condutor" type="date" />
+                    <div class="dsc-form-error" id="ordem-servico-data-admissao-condutor-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-bottom">
                   <label class="dsc-field-group" for="ordem-servico-cpf-preposto">
                     <span>CPF preposto</span>
                     <input class="dsc-form-control" id="ordem-servico-cpf-preposto" type="text" inputmode="numeric" list="ordem-servico-cpf-preposto-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO PREPOSTO" maxlength="14" />
@@ -214,9 +222,7 @@
                     <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-preposto-condutor" type="text" placeholder="PREPOSTO" maxlength="255" readonly />
                     <div class="dsc-form-error" id="ordem-servico-preposto-condutor-error"></div>
                   </label>
-                </div>
 
-                <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-bottom">
                   <label class="dsc-field-group" for="ordem-servico-preposto-inicio">
                     <span>Inicio de preposto</span>
                     <input class="dsc-form-control" id="ordem-servico-preposto-inicio" type="date" />
@@ -227,21 +233,6 @@
                     <span id="span-preposto-dias">Dias</span>
                     <input class="dsc-form-control" id="ordem-servico-preposto-dias" type="text" inputmode="numeric" placeholder="0" maxlength="3" />
                     <div class="dsc-form-error" id="ordem-servico-preposto-dias-error"></div>
-                  </label>
-
-                  <label class="dsc-field-group" for="ordem-servico-crm">
-                    <span>CRM</span>
-                    <input class="dsc-form-control" id="ordem-servico-crm" type="text" list="ordem-servico-crm-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CRM DO VEICULO" maxlength="20" />
-                    <datalist id="ordem-servico-crm-options">
-                      <option value=""></option>
-                    </datalist>
-                    <div class="dsc-form-error" id="ordem-servico-crm-error"></div>
-                  </label>
-
-                  <label class="dsc-field-group" for="ordem-servico-veiculo-placas">
-                    <span>Veiculo</span>
-                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-veiculo-placas" type="text" placeholder="PLACAS DO VEICULO" maxlength="20" readonly />
-                    <div class="dsc-form-error" id="ordem-servico-veiculo-placas-error"></div>
                   </label>
                 </div>
 
@@ -259,6 +250,33 @@
                     <span>Monitor</span>
                     <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-monitor" type="text" placeholder="MONITOR" maxlength="255" readonly />
                     <div class="dsc-form-error" id="ordem-servico-monitor-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-data-admissao-monitor">
+                    <span>Admissão monitor</span>
+                    <input class="dsc-form-control" id="ordem-servico-data-admissao-monitor" type="date" />
+                    <div class="dsc-form-error" id="ordem-servico-data-admissao-monitor-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <section class="dsc-form-section-card dsc-form-section-card-ordem-servico-operacional">
+                <h3 class="dsc-form-section-title">Dados operacionais</h3>
+
+                <div class="dsc-form-row dsc-form-row-ordem-servico-operacional">
+                  <label class="dsc-field-group" for="ordem-servico-crm">
+                    <span>CRM</span>
+                    <input class="dsc-form-control" id="ordem-servico-crm" type="text" list="ordem-servico-crm-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CRM DO VEICULO" maxlength="20" />
+                    <datalist id="ordem-servico-crm-options">
+                      <option value=""></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="ordem-servico-crm-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="ordem-servico-veiculo-placas">
+                    <span>Veiculo</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-veiculo-placas" type="text" placeholder="PLACAS DO VEICULO" maxlength="20" readonly />
+                    <div class="dsc-form-error" id="ordem-servico-veiculo-placas-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="ordem-servico-tipo-troca">
@@ -297,6 +315,10 @@
                         <input id="ordem-servico-situacao-cancelado" type="radio" name="ordem-servico-situacao" value="Cancelado" />
                         <span>Cancelado</span>
                       </label>
+                      <label class="dsc-radio-option" for="ordem-servico-situacao-substituido">
+                        <input id="ordem-servico-situacao-substituido" type="radio" name="ordem-servico-situacao" value="Substituido" />
+                        <span>Substituido</span>
+                      </label>
                     </div>
                   </fieldset>
 
@@ -328,16 +350,14 @@
                 <span id="ordem-servico-total"></span>
               </div>
 
-              <div class="dsc-access-grid-wrapper">
-                <table class="dsc-access-grid">
+              <div class="dsc-access-grid-top-scroll" id="ordem-servico-grid-top-scroll" aria-hidden="true">
+                <div class="dsc-access-grid-top-scroll-content" id="ordem-servico-grid-top-scroll-content"></div>
+              </div>
+
+              <div class="dsc-access-grid-wrapper" id="ordem-servico-grid-wrapper">
+                <table class="dsc-access-grid" id="ordem-servico-grid-table">
                   <thead>
                     <tr>
-                      <th>Termo</th>
-                      <th>
-                        <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-num-os-button">
-                          Num OS <span id="sort-ordem-servico-num-os-indicator">v</span>
-                        </button>
-                      </th>
                       <th>OS</th>
                       <th>
                         <button type="button" class="dsc-grid-sort-button" id="sort-ordem-servico-credenciado-button">
@@ -346,7 +366,7 @@
                       </th>
                       <th>DRE</th>
                       <th>Condutor</th>
-                      <th>CRM</th>
+                      <th>Monitor</th>
                       <th>Placa</th>
                       <th>Situacao</th>
                       <th class="dsc-grid-actions-column">Acoes</th>
@@ -392,6 +412,7 @@
       const cpfCondutorInput = document.getElementById('ordem-servico-cpf-condutor');
       const cpfCondutorOptionsList = document.getElementById('ordem-servico-cpf-condutor-options');
       const condutorInput = document.getElementById('ordem-servico-condutor');
+      const dataAdmissaoCondutorInput = document.getElementById('ordem-servico-data-admissao-condutor');
       const cpfPrepostoInput = document.getElementById('ordem-servico-cpf-preposto');
       const cpfPrepostoOptionsList = document.getElementById('ordem-servico-cpf-preposto-options');
       const prepostoCondutorInput = document.getElementById('ordem-servico-preposto-condutor');
@@ -403,6 +424,7 @@
       const cpfMonitorInput = document.getElementById('ordem-servico-cpf-monitor');
       const cpfMonitorOptionsList = document.getElementById('ordem-servico-cpf-monitor-options');
       const monitorInput = document.getElementById('ordem-servico-monitor');
+      const dataAdmissaoMonitorInput = document.getElementById('ordem-servico-data-admissao-monitor');
       const tipoTrocaInput = document.getElementById('ordem-servico-tipo-troca');
       const tipoTrocaOptionsList = document.getElementById('ordem-servico-tipo-troca-options');
       const dataEncerramentoInput = document.getElementById('ordem-servico-data-encerramento');
@@ -421,6 +443,7 @@
       const modalidadeDescricaoError = document.getElementById('ordem-servico-modalidade-descricao-error');
       const cpfCondutorError = document.getElementById('ordem-servico-cpf-condutor-error');
       const condutorError = document.getElementById('ordem-servico-condutor-error');
+      const dataAdmissaoCondutorError = document.getElementById('ordem-servico-data-admissao-condutor-error');
       const cpfPrepostoError = document.getElementById('ordem-servico-cpf-preposto-error');
       const prepostoCondutorError = document.getElementById('ordem-servico-preposto-condutor-error');
       const prepostoInicioError = document.getElementById('ordem-servico-preposto-inicio-error');
@@ -429,6 +452,7 @@
       const veiculoPlacasError = document.getElementById('ordem-servico-veiculo-placas-error');
       const cpfMonitorError = document.getElementById('ordem-servico-cpf-monitor-error');
       const monitorError = document.getElementById('ordem-servico-monitor-error');
+      const dataAdmissaoMonitorError = document.getElementById('ordem-servico-data-admissao-monitor-error');
       const tipoTrocaError = document.getElementById('ordem-servico-tipo-troca-error');
       const dataEncerramentoError = document.getElementById('ordem-servico-data-encerramento-error');
       const anotacaoError = document.getElementById('ordem-servico-anotacao-error');
@@ -440,6 +464,10 @@
       const clearFilterButton = document.getElementById('clear-ordem-servico-filter-button');
       const searchInput = document.getElementById('ordem-servico-search');
       const gridBody = document.getElementById('ordem-servico-grid-body');
+      const gridWrapper = document.getElementById('ordem-servico-grid-wrapper');
+      const gridTable = document.getElementById('ordem-servico-grid-table');
+      const topGridScroll = document.getElementById('ordem-servico-grid-top-scroll');
+      const topGridScrollContent = document.getElementById('ordem-servico-grid-top-scroll-content');
       const emptyState = document.getElementById('ordem-servico-empty-state');
       const totalLabel = document.getElementById('ordem-servico-total');
       const previousPageButton = document.getElementById('previous-ordem-servico-page-button');
@@ -470,7 +498,7 @@
       const clearRejectionFilterButton = document.getElementById('clear-ordem-servico-rejection-filter-button');
       const closeRejectionPanelButton = document.getElementById('close-ordem-servico-rejection-panel-button');
 
-      const pageSize = 5;
+      const pageSize = 20;
       const rejectionPageSize = 10;
       const defaultImportFileName = 'OrdemServico.xml';
       let currentPage = 1;
@@ -485,6 +513,9 @@
       let formMode = 'hidden';
       let isInsertNewTerm = false;
       let isRevisionInsertion = false;
+      let isSubstitutionInsertion = false;
+      let substitutionSourceCodigo = null;
+      let suppressTermoBlurValidation = false;
       let bannerTimeoutId = null;
       let credenciadaSuggestionRequestId = 0;
       let credenciadaSuggestionTimeoutId = null;
@@ -724,6 +755,7 @@
         modalidadeDescricaoError.textContent = '';
         cpfCondutorError.textContent = '';
         condutorError.textContent = '';
+        dataAdmissaoCondutorError.textContent = '';
         cpfPrepostoError.textContent = '';
         prepostoCondutorError.textContent = '';
         prepostoInicioError.textContent = '';
@@ -732,6 +764,7 @@
         veiculoPlacasError.textContent = '';
         cpfMonitorError.textContent = '';
         monitorError.textContent = '';
+        dataAdmissaoMonitorError.textContent = '';
         tipoTrocaError.textContent = '';
         dataEncerramentoError.textContent = '';
         anotacaoError.textContent = '';
@@ -759,6 +792,17 @@
         if (tone) {
           rejectionGridFeedback.classList.add(`dsc-feedback-${tone}`);
         }
+      };
+
+      const syncTopGridScrollbar = () => {
+        if (!gridWrapper || !gridTable || !topGridScroll || !topGridScrollContent) {
+          return;
+        }
+
+        const tableWidth = gridTable.scrollWidth;
+        const wrapperWidth = gridWrapper.clientWidth;
+        topGridScrollContent.style.width = `${tableWidth}px`;
+        topGridScroll.style.display = tableWidth > wrapperWidth ? 'block' : 'none';
       };
 
       const getFormControls = () => Array.from(form.querySelectorAll('input, button, select, textarea'));
@@ -816,24 +860,53 @@
         return hasTermoAdesao;
       };
 
+      const focusFormForMode = (mode = 'insert') => {
+        const preferredElement = mode === 'view'
+          ? cancelButton
+          : mode === 'substitute'
+            ? revisaoInput
+            : mode === 'edit'
+              ? vigenciaOsInput
+              : termoAdesaoInput;
+
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        window.requestAnimationFrame(() => {
+          if (!preferredElement || typeof preferredElement.focus !== 'function') {
+            return;
+          }
+
+          preferredElement.focus({ preventScroll: true });
+
+          if (preferredElement instanceof HTMLInputElement && !preferredElement.disabled && typeof preferredElement.select === 'function') {
+            preferredElement.select();
+          }
+        });
+      };
+
       const showForm = (mode = 'insert') => {
         rejectionPanel.classList.add('dsc-hidden');
         importForm.classList.add('dsc-hidden');
         form.classList.remove('dsc-hidden');
         formMode = mode;
         clearViewOnlyLock();
+        dataAdmissaoCondutorInput.max = getCurrentDateInputValue();
+        dataAdmissaoMonitorInput.max = getCurrentDateInputValue();
+
+        formTitle.textContent = 'ORDEM DE SERVICO';
 
         if (mode === 'edit') {
-          formTitle.textContent = 'Alteracao de OrdemServico';
           saveButton.textContent = 'Salvar alteracao';
+        } else if (mode === 'substitute') {
+          saveButton.textContent = 'Salvar substituicao';
         } else if (mode === 'view') {
-          formTitle.textContent = 'Consulta de OrdemServico';
           saveButton.textContent = 'Salvar alteracao';
           applyViewOnlyLock();
         } else {
-          formTitle.textContent = 'Nova OrdemServico';
           saveButton.textContent = 'Salvar OrdemServico';
         }
+
+        focusFormForMode(mode);
       };
 
       const clearLookupFields = () => {
@@ -852,6 +925,9 @@
         osConcatInput.value = '';
         editingCodigo = null;
         formMode = 'hidden';
+        isSubstitutionInsertion = false;
+        substitutionSourceCodigo = null;
+        suppressTermoBlurValidation = false;
         clearLookupFields();
         clearViewOnlyLock();
         renderDreOptions('');
@@ -912,8 +988,13 @@
       };
 
       const updateSortIndicators = () => {
-        sortNumOsIndicator.textContent = currentSortBy === 'num_os' ? (currentSortDirection === 'asc' ? '^' : 'v') : 'v';
-        sortCredenciadoIndicator.textContent = currentSortBy === 'credenciado' ? (currentSortDirection === 'asc' ? '^' : 'v') : 'v';
+        if (sortNumOsIndicator) {
+          sortNumOsIndicator.textContent = currentSortBy === 'num_os' ? (currentSortDirection === 'asc' ? '^' : 'v') : 'v';
+        }
+
+        if (sortCredenciadoIndicator) {
+          sortCredenciadoIndicator.textContent = currentSortBy === 'credenciado' ? (currentSortDirection === 'asc' ? '^' : 'v') : 'v';
+        }
       };
 
       const updatePagination = (totalItems) => {
@@ -1220,12 +1301,13 @@
         }
 
         const isEditing = editingCodigo !== null;
+        const isStandardInsert = formMode === 'insert';
 
-        termoAdesaoInput.readOnly = isEditing;
-        numOsInput.readOnly = isEditing;
-        revisaoInput.readOnly = isEditing;
-        addNumOsButton.disabled = isEditing;
-        addRevisaoButton.disabled = isEditing;
+        termoAdesaoInput.readOnly = isEditing || isSubstitutionInsertion;
+        numOsInput.readOnly = isEditing || isSubstitutionInsertion || isStandardInsert;
+        revisaoInput.readOnly = isEditing || isStandardInsert;
+        addNumOsButton.disabled = isEditing || isSubstitutionInsertion || isStandardInsert;
+        addRevisaoButton.disabled = isEditing || isStandardInsert;
       };
 
       const applyInsertSpecificRules = () => {
@@ -1244,7 +1326,9 @@
         const hasNumOs = Boolean(normalizeNumOs(numOsInput.value));
         if (editingCodigo === null) {
           applyIdentityFieldLock();
-          addRevisaoButton.disabled = !hasTermoAdesao || !hasNumOs || isInsertNewTerm;
+          addRevisaoButton.disabled = isSubstitutionInsertion
+            ? !hasTermoAdesao || !hasNumOs || isInsertNewTerm
+            : true;
         }
 
         tipoTrocaInput.readOnly = mustForceTipoTrocaInclusao;
@@ -1322,19 +1406,18 @@
         items.forEach((item) => {
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td>${item.termo_adesao || ''}</td>
-            <td>${item.num_os || ''}</td>
             <td>${item.os_concat || ''}</td>
             <td>${item.credenciado || ''}</td>
             <td>${item.dre_codigo || ''}</td>
             <td>${item.condutor || ''}</td>
-            <td>${item.crm || ''}</td>
+            <td>${item.monitor || ''}</td>
             <td>${item.veiculo_placas || ''}</td>
             <td>${item.situacao || ''}</td>
             <td>
               <div class="dsc-grid-actions">
                 <button type="button" class="dsc-grid-action-button" data-action="view" data-codigo="${item.codigo}">Consulta</button>
-                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Corrigir</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="substitute" data-codigo="${item.codigo}">Substituir</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}">Excluir</button>
               </div>
             </td>
@@ -1375,6 +1458,7 @@
 
       const loadItems = async () => {
         setGridMessage('Carregando Ordens de Servico...');
+        syncTopGridScrollbar();
 
         try {
           const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
@@ -1388,6 +1472,7 @@
           currentPage = payload.page || 1;
           renderGrid(payload.items || []);
           updatePagination(payload.total || 0);
+          syncTopGridScrollbar();
           setGridMessage(payload.items && payload.items.length ? '' : 'Nenhuma OrdemServico encontrada.');
         } catch (error) {
           gridBody.innerHTML = '';
@@ -1637,18 +1722,22 @@
         }
       };
 
-      const startInsert = ({ termoAdesao = '', numOs = '' } = {}) => {
+      const startInsert = ({ termoAdesao = '' } = {}) => {
         form.reset();
         clearLookupFields();
         isInsertNewTerm = false;
         isRevisionInsertion = false;
+        isSubstitutionInsertion = false;
+        substitutionSourceCodigo = null;
         tipoTrocaInput.value = '';
         termoAdesaoInput.value = normalizeTermoAdesao(String(termoAdesao || ''));
-        numOsInput.value = normalizeNumOs(String(numOs || ''));
-        revisaoInput.value = normalizeRevisao('');
+        numOsInput.value = '001';
+        revisaoInput.value = '-S/R';
         osConcatInput.value = buildOsConcat({ termoAdesao: termoAdesaoInput.value, numOs: numOsInput.value, revisao: revisaoInput.value });
         editingCodigo = null;
         vigenciaOsInput.min = getTomorrowDateInputValue();
+        dataAdmissaoCondutorInput.max = getCurrentDateInputValue();
+        dataAdmissaoMonitorInput.max = getCurrentDateInputValue();
         setSelectedSituacao('Ativo');
         resetMessages();
         setGridMessage('');
@@ -1727,11 +1816,66 @@
         }
       };
 
+      const startSubstitution = async (item) => {
+        const normalizedDre = normalizeOrdemServicoDre(item.dre_codigo || '', item.dre_descricao || '');
+
+        form.reset();
+        clearLookupFields();
+        editingCodigo = null;
+        isInsertNewTerm = false;
+        isRevisionInsertion = false;
+        isSubstitutionInsertion = true;
+        substitutionSourceCodigo = Number(item.codigo) || null;
+        termoAdesaoInput.value = normalizeTermoAdesao(String(item.termo_adesao || ''));
+        numOsInput.value = normalizeNumOs(String(item.num_os || ''));
+        revisaoInput.value = normalizeRevisao(String(item.revisao || ''));
+        vigenciaOsInput.value = item.vigencia_os || '';
+        cnpjCpfInput.value = item.cnpj_cpf || '';
+        credenciadoInput.value = item.credenciado || '';
+        dreCodigoInput.value = normalizedDre.dreCodigo;
+        dreDescricaoInput.value = normalizedDre.dreDescricao;
+        modalidadeDescricaoInput.value = item.modalidade_descricao || normalizedDre.modalidadeDescricao;
+        cpfCondutorInput.value = item.cpf_condutor || '';
+        condutorInput.value = item.condutor || '';
+        dataAdmissaoCondutorInput.value = item.data_admissao_condutor || '';
+        cpfPrepostoInput.value = item.cpf_preposto || '';
+        prepostoCondutorInput.value = item.preposto_condutor || '';
+        prepostoInicioInput.value = item.preposto_inicio || '';
+        prepostoDiasInput.value = item.preposto_dias || '';
+        crmInput.value = item.crm || '';
+        veiculoPlacasInput.value = item.veiculo_placas || '';
+        cpfMonitorInput.value = item.cpf_monitor || '';
+        monitorInput.value = item.monitor || '';
+        dataAdmissaoMonitorInput.value = item.data_admissao_monitor || '';
+        tipoTrocaInput.value = item.tipo_troca_descricao || '';
+        vigenciaOsInput.min = getTomorrowDateInputValue();
+        dataEncerramentoInput.value = '';
+        anotacaoInput.value = item.anotacao || '';
+        setSelectedSituacao(item.situacao || 'Ativo');
+        codigoAccessInput.value = item.codigo_access || '';
+        renderDreOptions(dreCodigoInput.value);
+        renderModalidadeOptions(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
+        renderTipoTrocaOptions(tipoTrocaInput.value);
+        syncOsConcatInput();
+        resetMessages();
+        setGridMessage('');
+        showForm('substitute');
+        updateInsertTermGuard({ showMissingError: false });
+        applyInsertSpecificRules();
+        applyIdentityFieldLock();
+        void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
+        await handleAddRevisao();
+        revisaoInput.focus();
+        revisaoInput.select();
+      };
+
       const populateFormFromItem = (item, mode = 'edit') => {
         const normalizedDre = normalizeOrdemServicoDre(item.dre_codigo || '', item.dre_descricao || '');
         editingCodigo = item.codigo;
         isInsertNewTerm = false;
         isRevisionInsertion = false;
+        isSubstitutionInsertion = false;
+        substitutionSourceCodigo = null;
         termoAdesaoInput.value = normalizeTermoAdesao(String(item.termo_adesao || ''));
         numOsInput.value = normalizeNumOs(String(item.num_os || ''));
         revisaoInput.value = normalizeRevisao(item.revisao || '');
@@ -1743,6 +1887,7 @@
         modalidadeDescricaoInput.value = item.modalidade_descricao || normalizedDre.modalidadeDescricao;
         cpfCondutorInput.value = item.cpf_condutor || '';
         condutorInput.value = item.condutor || '';
+        dataAdmissaoCondutorInput.value = item.data_admissao_condutor || '';
         cpfPrepostoInput.value = item.cpf_preposto || '';
         prepostoCondutorInput.value = item.preposto_condutor || '';
         prepostoInicioInput.value = item.preposto_inicio || '';
@@ -1751,6 +1896,7 @@
         veiculoPlacasInput.value = item.veiculo_placas || '';
         cpfMonitorInput.value = item.cpf_monitor || '';
         monitorInput.value = item.monitor || '';
+        dataAdmissaoMonitorInput.value = item.data_admissao_monitor || '';
         tipoTrocaInput.value = item.tipo_troca_descricao || '';
         vigenciaOsInput.min = getTomorrowDateInputValue();
         dataEncerramentoInput.value = item.data_encerramento || '';
@@ -1835,6 +1981,11 @@
           return;
         }
 
+        if (action === 'substitute') {
+          void startSubstitution(item);
+          return;
+        }
+
         if (action === 'delete') {
           void handleDelete(item);
         }
@@ -1847,6 +1998,11 @@
       });
 
       termoAdesaoInput.addEventListener('blur', () => {
+        if (suppressTermoBlurValidation) {
+          suppressTermoBlurValidation = false;
+          return;
+        }
+
         updateInsertTermGuard({ focusIfMissing: true });
       });
 
@@ -1979,14 +2135,17 @@
           dreCodigo: normalizeText(dreCodigoInput.value, 30),
           modalidadeDescricao: normalizeText(modalidadeDescricaoInput.value, 255),
           cpfCondutor: normalizeCpf(cpfCondutorInput.value),
+          dataAdmissaoCondutor: dataAdmissaoCondutorInput.value,
           cpfPreposto: normalizeCpf(cpfPrepostoInput.value),
           prepostoInicio: prepostoInicioInput.value,
           prepostoDias: normalizeIntegerInput(prepostoDiasInput.value, 3),
           crm: normalizeCrm(crmInput.value),
           cpfMonitor: normalizeCpf(cpfMonitorInput.value),
+          dataAdmissaoMonitor: dataAdmissaoMonitorInput.value,
           situacao: getSelectedSituacao(),
           tipoTroca: normalizeText(tipoTrocaInput.value, 255),
           dataEncerramento: dataEncerramentoInput.value,
+          substitutionSourceCodigo: isSubstitutionInsertion ? substitutionSourceCodigo : null,
           anotacao: normalizeAnnotation(anotacaoInput.value),
         };
         let hasError = false;
@@ -2002,10 +2161,12 @@
         dreCodigoInput.value = payload.dreCodigo;
         modalidadeDescricaoInput.value = payload.modalidadeDescricao;
         cpfCondutorInput.value = payload.cpfCondutor;
+        dataAdmissaoCondutorInput.value = payload.dataAdmissaoCondutor;
         cpfPrepostoInput.value = payload.cpfPreposto;
         prepostoDiasInput.value = payload.prepostoDias;
         crmInput.value = payload.crm;
         cpfMonitorInput.value = payload.cpfMonitor;
+        dataAdmissaoMonitorInput.value = payload.dataAdmissaoMonitor;
         tipoTrocaInput.value = payload.tipoTroca;
         anotacaoInput.value = payload.anotacao;
         dataEncerramentoInput.value = payload.dataEncerramento;
@@ -2033,6 +2194,22 @@
           hasError = true;
         }
 
+
+        if (!payload.dataAdmissaoCondutor) {
+          dataAdmissaoCondutorError.textContent = 'Informe a admissão do condutor.';
+          hasError = true;
+        } else if (payload.dataAdmissaoCondutor > getCurrentDateInputValue()) {
+          dataAdmissaoCondutorError.textContent = 'A admissão do condutor não pode ser futura.';
+          hasError = true;
+        }
+
+        if (!payload.dataAdmissaoMonitor) {
+          dataAdmissaoMonitorError.textContent = 'Informe a admissão do monitor.';
+          hasError = true;
+        } else if (payload.dataAdmissaoMonitor > getCurrentDateInputValue()) {
+          dataAdmissaoMonitorError.textContent = 'A admissão do monitor não pode ser futura.';
+          hasError = true;
+        }
 
         // Validação: CPF do preposto não pode ser igual ao do condutor
         if (payload.cpfCondutor && payload.cpfPreposto && payload.cpfCondutor === payload.cpfPreposto) {
@@ -2068,11 +2245,18 @@
           return;
         }
 
-        feedback.textContent = editingCodigo ? 'Salvando alteracao...' : 'Salvando OrdemServico...';
+        const isEditingRequest = editingCodigo !== null;
+        const isSubstitutionRequest = isSubstitutionInsertion;
+
+        feedback.textContent = isEditingRequest
+          ? 'Salvando alteracao...'
+          : isSubstitutionRequest
+            ? 'Salvando substituicao...'
+            : 'Salvando OrdemServico...';
 
         try {
-          const response = await fetch(editingCodigo ? `/api/ordem-servico/${encodeURIComponent(editingCodigo)}` : '/api/ordem-servico', {
-            method: editingCodigo ? 'PUT' : 'POST',
+          const response = await fetch(isEditingRequest ? `/api/ordem-servico/${encodeURIComponent(editingCodigo)}` : '/api/ordem-servico', {
+            method: isEditingRequest ? 'PUT' : 'POST',
             headers: {
               'Content-Type': 'application/json',
               Accept: 'application/json',
@@ -2085,10 +2269,16 @@
             throw new Error(responsePayload.message || 'Falha ao salvar OrdemServico.');
           }
 
+          const successMessage = isEditingRequest
+            ? 'OrdemServico alterada com sucesso.'
+            : isSubstitutionRequest
+              ? 'Nova OrdemServico criada com sucesso.'
+              : 'OrdemServico cadastrada com sucesso.';
+
           hideForm();
           await loadItems();
-          showBanner(editingCodigo ? 'OrdemServico alterada com sucesso.' : 'OrdemServico cadastrada com sucesso.', 'success');
-          setGridMessage(editingCodigo ? 'OrdemServico alterada com sucesso.' : 'OrdemServico cadastrada com sucesso.', 'success');
+          showBanner(successMessage, 'success');
+          setGridMessage(successMessage, 'success');
         } catch (error) {
           const message = getRequestErrorMessage(error, 'Falha ao salvar OrdemServico.');
           feedback.textContent = message;
@@ -2207,12 +2397,47 @@
         void loadItems();
       };
 
-      sortNumOsButton.addEventListener('click', () => toggleSort('num_os'));
-      sortCredenciadoButton.addEventListener('click', () => toggleSort('credenciado'));
+      if (sortNumOsButton) {
+        sortNumOsButton.addEventListener('click', () => toggleSort('num_os'));
+      }
+
+      if (sortCredenciadoButton) {
+        sortCredenciadoButton.addEventListener('click', () => toggleSort('credenciado'));
+      }
       insertButton.addEventListener('click', () => {
         void handleStartInsert();
       });
+      cancelButton.addEventListener('pointerdown', () => {
+        suppressTermoBlurValidation = true;
+      });
+
       cancelButton.addEventListener('click', hideForm);
+
+      if (topGridScroll && gridWrapper) {
+        let syncingGridScroll = false;
+
+        topGridScroll.addEventListener('scroll', () => {
+          if (syncingGridScroll) {
+            return;
+          }
+
+          syncingGridScroll = true;
+          gridWrapper.scrollLeft = topGridScroll.scrollLeft;
+          syncingGridScroll = false;
+        });
+
+        gridWrapper.addEventListener('scroll', () => {
+          if (syncingGridScroll) {
+            return;
+          }
+
+          syncingGridScroll = true;
+          topGridScroll.scrollLeft = gridWrapper.scrollLeft;
+          syncingGridScroll = false;
+        });
+
+        window.addEventListener('resize', syncTopGridScrollbar);
+      }
       importButton.addEventListener('click', () => {
         hideForm();
         showImportForm();

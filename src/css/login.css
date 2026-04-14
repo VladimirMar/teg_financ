@@ -163,6 +163,12 @@ body:has(#credenciada-search) #credenciada-search {
   max-width: 360px;
 }
 
+body:has(#ordem-servico-search) #ordem-servico-search {
+  flex: 0 1 220px;
+  min-width: 220px;
+  max-width: 280px;
+}
+
 .dsc-access-filter-form .dsc-btn {
   width: auto;
   flex: 0 0 auto;
@@ -345,10 +351,23 @@ body:has(#credenciada-search) #credenciada-search {
 }
 
 .dsc-form-row-ordem-servico-vinculos-top,
-.dsc-form-row-ordem-servico-vinculos-dre,
-.dsc-form-row-ordem-servico-vinculos-middle,
-.dsc-form-row-ordem-servico-vinculos-bottom,
+.dsc-form-row-ordem-servico-vinculos-dre {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dsc-form-row-ordem-servico-vinculos-middle {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dsc-form-row-ordem-servico-vinculos-bottom {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .dsc-form-row-ordem-servico-vinculos-final {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dsc-form-row-ordem-servico-operacional {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -425,6 +444,7 @@ body:has(#credenciada-search) #credenciada-search {
 
 .dsc-form-section-card-ordem-servico-identificacao,
 .dsc-form-section-card-ordem-servico-vinculos,
+.dsc-form-section-card-ordem-servico-operacional,
 .dsc-form-section-card-ordem-servico-anotacao {
   width: 100%;
   box-sizing: border-box;
@@ -576,6 +596,20 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid-card {
   font-weight: 700;
 }
 
+.dsc-access-grid-top-scroll {
+  display: none;
+  height: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 8px;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dsc-access-grid-top-scroll-content {
+  height: 1px;
+}
+
 .dsc-access-grid-wrapper {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
@@ -602,6 +636,20 @@ body:has(#credenciada-grid-body) .dsc-access-grid {
 
 body:has(#ordem-servico-grid-body) .dsc-access-grid {
   min-width: 1640px;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-access-grid th,
+body:has(#ordem-servico-grid-body) .dsc-access-grid td {
+  padding: 8px 6px;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-grid-actions {
+  gap: 4px;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-grid-action-button {
+  padding: 6px 10px;
+  font-size: 0.84rem;
 }
 
 body:has(#credenciada-grid-body) .dsc-access-grid th:nth-child(2),
@@ -829,6 +877,7 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
   .dsc-form-row-ordem-servico-vinculos-middle,
   .dsc-form-row-ordem-servico-vinculos-bottom,
   .dsc-form-row-ordem-servico-vinculos-final,
+  .dsc-form-row-ordem-servico-operacional,
   .dsc-form-row-ordem-servico-situacao,
   .dsc-form-row-contact,
   .dsc-form-row-address {
@@ -848,6 +897,7 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
   .dsc-form-section-card-veiculo-classificacao,
   .dsc-form-section-card-ordem-servico-identificacao,
   .dsc-form-section-card-ordem-servico-vinculos,
+  .dsc-form-section-card-ordem-servico-operacional,
   .dsc-form-section-card-ordem-servico-anotacao {
     padding: 20px;
   }
@@ -926,6 +976,7 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
   .dsc-form-section-card-veiculo-classificacao,
   .dsc-form-section-card-ordem-servico-identificacao,
   .dsc-form-section-card-ordem-servico-vinculos,
+  .dsc-form-section-card-ordem-servico-operacional,
   .dsc-form-section-card-ordem-servico-anotacao {
     gap: 14px;
     padding: 18px;
