@@ -187,7 +187,10 @@
                 <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-middle">
                   <label class="dsc-field-group" for="ordem-servico-cpf-condutor">
                     <span>CPF condutor</span>
-                    <input class="dsc-form-control" id="ordem-servico-cpf-condutor" type="text" inputmode="numeric" list="ordem-servico-cpf-condutor-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO CONDUTOR" maxlength="14" />
+                    <div class="dsc-inline-action-field dsc-inline-action-field-vinculo">
+                      <input class="dsc-form-control" id="ordem-servico-cpf-condutor" type="text" inputmode="numeric" list="ordem-servico-cpf-condutor-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO CONDUTOR" maxlength="14" />
+                      <button type="button" class="dsc-btn dsc-btn-white dsc-inline-action-button" id="open-vinculo-condutor-popup-button" aria-label="Consultar vínculos do condutor" title="Consultar vínculos do condutor">🔗</button>
+                    </div>
                     <datalist id="ordem-servico-cpf-condutor-options">
                       <option value=""></option>
                     </datalist>
@@ -239,7 +242,10 @@
                 <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-final">
                   <label class="dsc-field-group" for="ordem-servico-cpf-monitor">
                     <span>CPF monitor</span>
-                    <input class="dsc-form-control" id="ordem-servico-cpf-monitor" type="text" inputmode="numeric" list="ordem-servico-cpf-monitor-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO MONITOR" maxlength="14" />
+                    <div class="dsc-inline-action-field dsc-inline-action-field-vinculo">
+                      <input class="dsc-form-control" id="ordem-servico-cpf-monitor" type="text" inputmode="numeric" list="ordem-servico-cpf-monitor-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO MONITOR" maxlength="14" />
+                      <button type="button" class="dsc-btn dsc-btn-white dsc-inline-action-button" id="open-vinculo-monitor-popup-button" aria-label="Consultar vínculos do monitor" title="Consultar vínculos do monitor">🔗</button>
+                    </div>
                     <datalist id="ordem-servico-cpf-monitor-options">
                       <option value=""></option>
                     </datalist>
@@ -364,9 +370,9 @@
                           Credenciado <span id="sort-ordem-servico-credenciado-indicator">v</span>
                         </button>
                       </th>
-                      <th>DRE</th>
                       <th>Condutor</th>
                       <th>Monitor</th>
+                      <th>DRE</th>
                       <th>Placa</th>
                       <th>Situacao</th>
                       <th class="dsc-grid-actions-column">Acoes</th>
@@ -412,6 +418,7 @@
       const cpfCondutorInput = document.getElementById('ordem-servico-cpf-condutor');
       const cpfCondutorOptionsList = document.getElementById('ordem-servico-cpf-condutor-options');
       const condutorInput = document.getElementById('ordem-servico-condutor');
+      const openVinculoCondutorPopupButton = document.getElementById('open-vinculo-condutor-popup-button');
       const dataAdmissaoCondutorInput = document.getElementById('ordem-servico-data-admissao-condutor');
       const cpfPrepostoInput = document.getElementById('ordem-servico-cpf-preposto');
       const cpfPrepostoOptionsList = document.getElementById('ordem-servico-cpf-preposto-options');
@@ -424,6 +431,7 @@
       const cpfMonitorInput = document.getElementById('ordem-servico-cpf-monitor');
       const cpfMonitorOptionsList = document.getElementById('ordem-servico-cpf-monitor-options');
       const monitorInput = document.getElementById('ordem-servico-monitor');
+      const openVinculoMonitorPopupButton = document.getElementById('open-vinculo-monitor-popup-button');
       const dataAdmissaoMonitorInput = document.getElementById('ordem-servico-data-admissao-monitor');
       const tipoTrocaInput = document.getElementById('ordem-servico-tipo-troca');
       const tipoTrocaOptionsList = document.getElementById('ordem-servico-tipo-troca-options');
@@ -819,14 +827,16 @@
 
       const applyViewOnlyLock = () => {
         getFormControls().forEach((element) => {
-          element.disabled = element !== cancelButton;
+          element.disabled = element !== cancelButton && element !== openVinculoCondutorPopupButton && element !== openVinculoMonitorPopupButton;
         });
         cancelButton.disabled = false;
+        openVinculoCondutorPopupButton.disabled = false;
+        openVinculoMonitorPopupButton.disabled = false;
         saveButton.classList.add('dsc-hidden');
       };
 
       const getInsertGuardControls = () => getFormControls()
-        .filter((element) => element !== termoAdesaoInput && element !== cancelButton);
+        .filter((element) => element !== termoAdesaoInput && element !== cancelButton && element !== openVinculoCondutorPopupButton && element !== openVinculoMonitorPopupButton);
 
       const updateInsertTermGuard = ({ focusIfMissing = false, showMissingError = true } = {}) => {
         if (formMode === 'view') {
@@ -1408,9 +1418,9 @@
           row.innerHTML = `
             <td>${item.os_concat || ''}</td>
             <td>${item.credenciado || ''}</td>
-            <td>${item.dre_codigo || ''}</td>
             <td>${item.condutor || ''}</td>
             <td>${item.monitor || ''}</td>
+            <td>${item.dre_codigo || ''}</td>
             <td>${item.veiculo_placas || ''}</td>
             <td>${item.situacao || ''}</td>
             <td>
@@ -1655,6 +1665,50 @@
           nameInputElement.value = '';
           errorElement.textContent = getRequestErrorMessage(error, emptyMessage);
         }
+      };
+
+      const openCondutorVinculoPopup = () => {
+        const cpfCondutor = normalizeCpf(cpfCondutorInput.value);
+        cpfCondutorInput.value = cpfCondutor;
+
+        if (!getDocumentDigits(cpfCondutor)) {
+          cpfCondutorError.textContent = 'Informe o CPF do condutor para consultar os vínculos.';
+          cpfCondutorInput.focus();
+          return;
+        }
+
+        const popupUrl = `/src/vinculoCondutorPopup.html?cpf_condutor=${encodeURIComponent(cpfCondutor)}`;
+        const popupWindow = window.open(popupUrl, 'vinculoCondutorPopup', 'width=980,height=700,resizable=yes,scrollbars=yes');
+
+        if (!popupWindow) {
+          showBanner('Não foi possível abrir a consulta de vínculos do condutor.', 'error');
+          return;
+        }
+
+        cpfCondutorError.textContent = '';
+        popupWindow.focus();
+      };
+
+      const openMonitorVinculoPopup = () => {
+        const cpfMonitor = normalizeCpf(cpfMonitorInput.value);
+        cpfMonitorInput.value = cpfMonitor;
+
+        if (!getDocumentDigits(cpfMonitor)) {
+          cpfMonitorError.textContent = 'Informe o CPF do monitor para consultar os vínculos.';
+          cpfMonitorInput.focus();
+          return;
+        }
+
+        const popupUrl = `/src/vinculoMonitorPopup.html?cpf_monitor=${encodeURIComponent(cpfMonitor)}`;
+        const popupWindow = window.open(popupUrl, 'vinculoMonitorPopup', 'width=980,height=700,resizable=yes,scrollbars=yes');
+
+        if (!popupWindow) {
+          showBanner('Não foi possível abrir a consulta de vínculos do monitor.', 'error');
+          return;
+        }
+
+        cpfMonitorError.textContent = '';
+        popupWindow.focus();
       };
 
       const syncMonitorByCpf = async () => {
@@ -2066,6 +2120,14 @@
 
       cpfCondutorInput.addEventListener('blur', () => {
         void syncCondutorByCpf(cpfCondutorInput, condutorInput, cpfCondutorError, 'Falha ao localizar condutor.');
+      });
+
+      openVinculoCondutorPopupButton.addEventListener('click', () => {
+        openCondutorVinculoPopup();
+      });
+
+      openVinculoMonitorPopupButton.addEventListener('click', () => {
+        openMonitorVinculoPopup();
       });
 
       cpfPrepostoInput.addEventListener('input', () => {

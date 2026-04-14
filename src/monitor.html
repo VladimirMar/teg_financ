@@ -90,6 +90,12 @@
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="monitor-form">
               <h2 id="monitor-form-title">Novo registro</h2>
 
+              <div class="dsc-form-tabs" id="monitor-form-tabs">
+                <button type="button" class="dsc-form-tab-button dsc-form-tab-button-active" data-tab-target="cadastro">Dados do monitor</button>
+                <button type="button" class="dsc-form-tab-button" data-tab-target="vinculos">Vínculos do monitor</button>
+              </div>
+
+              <div class="dsc-form-tab-panel dsc-form-tab-panel-active" id="monitor-tab-cadastro">
               <label class="dsc-field-group" for="monitor-codigo">
                 <span>Codigo</span>
                 <input class="dsc-form-control" id="monitor-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
@@ -157,6 +163,31 @@
                   </label>
                 </div>
               </fieldset>
+              </div>
+
+              <div class="dsc-form-tab-panel dsc-vinculo-tab-panel" id="monitor-tab-vinculos">
+                <section class="dsc-form-section-card dsc-vinculo-form-card">
+                  <h3 class="dsc-form-section-title">Vínculos do monitor</h3>
+
+                  <div class="dsc-access-grid-wrapper dsc-vinculo-grid-wrapper">
+                    <table class="dsc-access-grid dsc-vinculo-grid">
+                      <thead>
+                        <tr>
+                          <th>Data OS</th>
+                          <th>Termo de adesão</th>
+                          <th>Admissão do monitor</th>
+                          <th>CPF monitor</th>
+                        </tr>
+                      </thead>
+                      <tbody id="monitor-vinculo-grid-body"></tbody>
+                    </table>
+
+                    <p class="dsc-empty-state dsc-hidden" id="monitor-vinculo-empty-state">Nenhum vínculo encontrado para o CPF informado.</p>
+                  </div>
+
+                  <p class="dsc-feedback" id="monitor-vinculo-feedback"></p>
+                </section>
+              </div>
 
               <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-monitor-button">Salvar monitor</button>
@@ -263,6 +294,12 @@
       const rejectionPaginationInfo = document.getElementById('monitor-rejection-pagination-info');
       const clearRejectionFilterButton = document.getElementById('clear-monitor-rejection-filter-button');
       const closeRejectionPanelButton = document.getElementById('close-monitor-rejection-panel-button');
+      const formTabButtons = Array.from(document.querySelectorAll('#monitor-form-tabs .dsc-form-tab-button'));
+      const cadastroTabPanel = document.getElementById('monitor-tab-cadastro');
+      const vinculoTabPanel = document.getElementById('monitor-tab-vinculos');
+      const vinculoGridBody = document.getElementById('monitor-vinculo-grid-body');
+      const vinculoEmptyState = document.getElementById('monitor-vinculo-empty-state');
+      const vinculoFeedback = document.getElementById('monitor-vinculo-feedback');
 
       const pageSize = 20;
       const rejectionPageSize = 20;
@@ -373,6 +410,46 @@
         return timePart ? `${formattedDate} ${timePart.slice(0, 5)}` : formattedDate;
       };
 
+      const formatPopupDateTime = (value) => {
+        if (!value) {
+          return '';
+        }
+
+        const rawValue = String(value).trim();
+        if (!rawValue) {
+          return '';
+        }
+
+        const normalize = (day, month, year, hour = '00', minute = '00', second = '00') =>
+          `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+
+        let match = rawValue.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+        if (match) {
+          const [, day, month, year, hour = '00', minute = '00', second = '00'] = match;
+          return normalize(day, month, year, hour, minute, second);
+        }
+
+        match = rawValue.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+        if (match) {
+          const [, year, month, day, hour = '00', minute = '00', second = '00'] = match;
+          return normalize(day, month, year, hour, minute, second);
+        }
+
+        const parsed = new Date(rawValue);
+        if (Number.isNaN(parsed.getTime())) {
+          return rawValue;
+        }
+
+        return normalize(
+          parsed.getDate(),
+          parsed.getMonth() + 1,
+          parsed.getFullYear(),
+          parsed.getHours(),
+          parsed.getMinutes(),
+          parsed.getSeconds(),
+        );
+      };
+
       const readJsonResponse = async (response) => {
         const rawBody = await response.text();
 
@@ -433,6 +510,81 @@
         }
       };
 
+      const setActiveFormTab = (tabName = 'cadastro') => {
+        formTabButtons.forEach((button) => {
+          const isActive = button.dataset.tabTarget === tabName;
+          button.classList.toggle('dsc-form-tab-button-active', isActive);
+        });
+
+        cadastroTabPanel.classList.toggle('dsc-form-tab-panel-active', tabName === 'cadastro');
+        vinculoTabPanel.classList.toggle('dsc-form-tab-panel-active', tabName === 'vinculos');
+      };
+
+      const resetVinculoGrid = () => {
+        vinculoGridBody.innerHTML = '';
+        vinculoEmptyState.classList.add('dsc-hidden');
+        vinculoFeedback.textContent = '';
+        vinculoFeedback.className = 'dsc-feedback';
+      };
+
+      const renderVinculoGrid = (items) => {
+        vinculoGridBody.innerHTML = '';
+        vinculoEmptyState.classList.toggle('dsc-hidden', items.length > 0);
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${formatPopupDateTime(item.data_os)}</td>
+            <td>${item.termo_adesao || ''}</td>
+            <td>${formatPopupDateTime(item.data_admissao_monitor)}</td>
+            <td>${item.cpf_monitor || ''}</td>
+          `;
+          vinculoGridBody.appendChild(row);
+        });
+      };
+
+      const loadMonitorVinculosByCpf = async (cpfValue, showMissingMessage = false) => {
+        const cpfDigits = String(cpfValue || '').replace(/\D/g, '');
+
+        if (!cpfDigits) {
+          resetVinculoGrid();
+          if (showMissingMessage) {
+            vinculoFeedback.textContent = 'Informe o CPF do monitor para consultar os vínculos.';
+            vinculoFeedback.classList.add('dsc-feedback-error');
+          }
+          return;
+        }
+
+        vinculoFeedback.textContent = 'Carregando vínculos do monitor...';
+        vinculoFeedback.className = 'dsc-feedback';
+
+        try {
+          const response = await fetch(`/api/vinculo-monitor?page=1&pageSize=1000&search=${encodeURIComponent(cpfValue)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao consultar vínculos do monitor.');
+          }
+
+          const items = (payload.items || [])
+            .filter((item) => String(item.cpf_monitor || '').replace(/\D/g, '') === cpfDigits)
+            .sort((a, b) => {
+              const timeA = a?.data_os ? new Date(a.data_os).getTime() : 0;
+              const timeB = b?.data_os ? new Date(b.data_os).getTime() : 0;
+              return timeA - timeB;
+            });
+
+          renderVinculoGrid(items);
+          vinculoFeedback.textContent = items.length ? '' : 'Nenhum vínculo encontrado para o CPF informado.';
+        } catch (error) {
+          resetVinculoGrid();
+          vinculoFeedback.textContent = getRequestErrorMessage(error, 'Falha ao consultar vínculos do monitor.');
+          vinculoFeedback.classList.add('dsc-feedback-error');
+        }
+      };
+
       const showBanner = (message, tone = 'success') => {
         if (bannerTimeoutId) {
           window.clearTimeout(bannerTimeoutId);
@@ -468,6 +620,8 @@
         formTitle.textContent = isReadOnly ? 'Consulta de monitor' : isEditing ? 'Alteracao de monitor' : 'Cadastro de monitor';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar monitor';
         setFormReadOnly(isReadOnly);
+        setActiveFormTab('cadastro');
+        void loadMonitorVinculosByCpf(cpfInput.value);
       };
 
       const showImportForm = () => {
@@ -496,6 +650,8 @@
         editingCodigo = null;
         formMode = 'create';
         setFormReadOnly(false);
+        setActiveFormTab('cadastro');
+        resetVinculoGrid();
         resetMessages();
       };
 
@@ -771,6 +927,20 @@
 
       cpfInput.addEventListener('input', () => {
         cpfInput.value = normalizeCpf(cpfInput.value);
+      });
+
+      cpfInput.addEventListener('blur', () => {
+        void loadMonitorVinculosByCpf(cpfInput.value, vinculoTabPanel.classList.contains('dsc-form-tab-panel-active'));
+      });
+
+      formTabButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const targetTab = button.dataset.tabTarget || 'cadastro';
+          setActiveFormTab(targetTab);
+          if (targetTab === 'vinculos') {
+            void loadMonitorVinculosByCpf(cpfInput.value, true);
+          }
+        });
       });
 
       rgInput.addEventListener('input', () => {

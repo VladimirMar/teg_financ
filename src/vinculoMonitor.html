@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cadastro de vinculo do condutor</title>
+    <title>Cadastro de vinculo do monitor</title>
 
     <link rel="stylesheet" href="css/login.css" />
   </head>
@@ -20,7 +20,7 @@
                 <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-vinculo-button">Inserir registro</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-vinculo-import-button">Importar XML</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-vinculo-rejections-button">Recusas XML</button>
-                <input class="dsc-form-control dsc-access-filter-input" id="vinculo-search" type="text" placeholder="Filtrar por credenciado, CPF, condutor ou data" />
+                <input class="dsc-form-control dsc-access-filter-input" id="vinculo-search" type="text" placeholder="Filtrar por credenciado, CPF, monitor ou data" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-vinculo-filter-button">Limpar</button>
               </form>
@@ -48,7 +48,7 @@
                       <th>Linha XML</th>
                       <th>Codigo XML</th>
                       <th>Empregador XML</th>
-                      <th>CPF condutor XML</th>
+                      <th>CPF monitor XML</th>
                       <th>data_OS XML</th>
                       <th>Admissao XML</th>
                       <th>Motivo da recusa</th>
@@ -70,11 +70,11 @@
             </section>
 
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="vinculo-import-form">
-              <h2>Importacao de vinculo do condutor por XML</h2>
+              <h2>Importacao de vinculo do monitor por XML</h2>
 
               <label class="dsc-field-group" for="vinculo-import-file-name">
                 <span>Nome do arquivo XML</span>
-                <input class="dsc-form-control" id="vinculo-import-file-name" type="text" placeholder="Vinculos_condutor.xml" value="Vinculos_condutor.xml" />
+                <input class="dsc-form-control" id="vinculo-import-file-name" type="text" placeholder="Vinculos_monitor.xml" value="Vinculos_monitor.xml" />
                 <div class="dsc-form-error" id="vinculo-import-file-name-error"></div>
               </label>
 
@@ -125,7 +125,7 @@
                   </label>
 
                   <label class="dsc-field-group" for="vinculo-cpf-condutor">
-                    <span>CPF do condutor</span>
+                    <span>CPF do monitor</span>
                     <input class="dsc-form-control" id="vinculo-cpf-condutor" type="text" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" />
                     <div class="dsc-form-error" id="vinculo-cpf-condutor-error"></div>
                   </label>
@@ -137,7 +137,7 @@
                   </label>
 
                   <label class="dsc-field-group" for="vinculo-data-admissao-condutor">
-                    <span>Data admissao do condutor</span>
+                    <span>Data admissao do monitor</span>
                     <input class="dsc-form-control" id="vinculo-data-admissao-condutor" type="date" />
                     <div class="dsc-form-error" id="vinculo-data-admissao-condutor-error"></div>
                   </label>
@@ -145,8 +145,8 @@
 
                 <div class="dsc-form-row">
                   <label class="dsc-field-group" for="vinculo-condutor">
-                    <span>Condutor localizado</span>
-                    <input class="dsc-form-control dsc-form-control-auto-filled" id="vinculo-condutor" type="text" readonly placeholder="CONDUTOR" />
+                    <span>Monitor localizado</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="vinculo-condutor" type="text" readonly placeholder="MONITOR" />
                     <div class="dsc-form-error" id="vinculo-condutor-error"></div>
                   </label>
                 </div>
@@ -162,7 +162,7 @@
 
             <section class="dsc-card">
               <div class="dsc-access-grid-header">
-                <h2>Tabela Vinculo de Condutor</h2>
+                <h2>Tabela Vinculo de Monitor</h2>
                 <span id="vinculo-total"></span>
               </div>
 
@@ -172,8 +172,8 @@
                     <tr>
                       <th>ID</th>
                       <th>Credenciado</th>
-                      <th>CPF condutor</th>
-                      <th>Condutor</th>
+                      <th>CPF monitor</th>
+                      <th>Monitor</th>
                       <th>data_OS</th>
                       <th>Data admissao</th>
                       <th>Termo</th>
@@ -252,9 +252,9 @@
 
         const formErrors = {
           credenciado: document.getElementById('vinculo-credenciado-error'),
-          cpfCondutor: document.getElementById('vinculo-cpf-condutor-error'),
+          cpfMonitor: document.getElementById('vinculo-cpf-condutor-error'),
           dataOs: document.getElementById('vinculo-data-os-error'),
-          dataAdmissaoCondutor: document.getElementById('vinculo-data-admissao-condutor-error'),
+          dataAdmissaoMonitor: document.getElementById('vinculo-data-admissao-condutor-error'),
         };
 
         const state = {
@@ -372,11 +372,11 @@
           revisaoInput.value = item.revisao || '';
           credenciadoInput.value = item.credenciado || '';
           credenciadoInput.dataset.codigo = item.credenciada_codigo || '';
-          cpfCondutorInput.value = item.cpf_condutor || '';
-          cpfCondutorInput.dataset.codigo = item.condutor_codigo || '';
-          condutorInput.value = item.condutor || '';
+          cpfCondutorInput.value = item.cpf_monitor || '';
+          cpfCondutorInput.dataset.codigo = item.monitor_codigo || '';
+          condutorInput.value = item.monitor || '';
           dataOsInput.value = item.data_os || '';
-          dataAdmissaoInput.value = item.data_admissao_condutor || '';
+          dataAdmissaoInput.value = item.data_admissao_monitor || '';
         };
 
         const hideForm = () => {
@@ -472,30 +472,30 @@
           return payload.item;
         };
 
-        const resolveCondutor = async () => {
+        const resolveMonitor = async () => {
           const cpf = cpfCondutorInput.value.trim();
           condutorInput.value = '';
           cpfCondutorInput.dataset.codigo = '';
 
           if (!cpf) {
-            formErrors.cpfCondutor.textContent = 'Informe o CPF do condutor.';
+            formErrors.cpfMonitor.textContent = 'Informe o CPF do monitor.';
             return null;
           }
 
-          const response = await fetch(`/api/condutor/lookup?cpf=${encodeURIComponent(cpf)}`, {
+          const response = await fetch(`/api/monitor/lookup?cpf=${encodeURIComponent(cpf)}`, {
             headers: { Accept: 'application/json' },
           });
           const payload = await readJsonResponse(response);
 
           if (!response.ok || !payload.item) {
-            formErrors.cpfCondutor.textContent = payload.message || 'Condutor nao encontrado.';
+            formErrors.cpfMonitor.textContent = payload.message || 'Monitor nao encontrado.';
             return null;
           }
 
-          cpfCondutorInput.value = payload.item.cpf_condutor || cpf;
+          cpfCondutorInput.value = payload.item.cpf_monitor || cpf;
           cpfCondutorInput.dataset.codigo = payload.item.codigo || '';
-          condutorInput.value = payload.item.condutor || '';
-          formErrors.cpfCondutor.textContent = '';
+          condutorInput.value = payload.item.monitor || '';
+          formErrors.cpfMonitor.textContent = '';
           return payload.item;
         };
 
@@ -511,7 +511,7 @@
             params.set('search', state.search);
           }
 
-          return `/api/vinculo-condutor?${params.toString()}`;
+          return `/api/vinculo-monitor?${params.toString()}`;
         };
 
         const buildRejectionListUrl = () => {
@@ -524,7 +524,7 @@
             params.set('search', state.rejectionSearch);
           }
 
-          return `/api/vinculo-condutor/import-rejections?${params.toString()}`;
+          return `/api/vinculo-monitor/import-rejections?${params.toString()}`;
         };
 
         const renderGrid = (items) => {
@@ -536,10 +536,10 @@
             row.innerHTML = `
               <td>${item.id || ''}</td>
               <td>${item.credenciado || ''}</td>
-              <td>${item.cpf_condutor || ''}</td>
-              <td>${item.condutor || ''}</td>
+              <td>${item.cpf_monitor || ''}</td>
+              <td>${item.monitor || ''}</td>
               <td>${formatDateTime(item.data_os)}</td>
-              <td>${formatDateTime(item.data_admissao_condutor)}</td>
+              <td>${formatDateTime(item.data_admissao_monitor)}</td>
               <td>${item.termo_adesao || ''}</td>
               <td>${item.num_os || ''}</td>
               <td>${item.revisao || ''}</td>
@@ -576,21 +576,21 @@
               }
 
               try {
-                const response = await fetch(`/api/vinculo-condutor/${encodeURIComponent(item.id)}`, {
+                const response = await fetch(`/api/vinculo-monitor/${encodeURIComponent(item.id)}`, {
                   method: 'DELETE',
                   headers: { Accept: 'application/json' },
                 });
                 const payload = await readJsonResponse(response);
                 if (!response.ok) {
-                  throw new Error(payload.message || 'Falha ao excluir vinculo do condutor.');
+                  throw new Error(payload.message || 'Falha ao excluir vinculo do monitor.');
                 }
 
                 setFeedback(gridFeedback, 'Registro excluido com sucesso.', 'success');
                 showBanner('Vinculo excluido com sucesso.', 'success');
                 await loadItems();
               } catch (error) {
-                setFeedback(gridFeedback, error.message || 'Falha ao excluir vinculo do condutor.', 'error');
-                showBanner(error.message || 'Falha ao excluir vinculo do condutor.', 'error');
+                setFeedback(gridFeedback, error.message || 'Falha ao excluir vinculo do monitor.', 'error');
+                showBanner(error.message || 'Falha ao excluir vinculo do monitor.', 'error');
               }
             });
 
@@ -610,7 +610,7 @@
               <td>${item.linha_xml || ''}</td>
               <td>${item.codigo_xml || ''}</td>
               <td>${item.empregador_xml || ''}</td>
-              <td>${item.cpf_condutor_xml || ''}</td>
+              <td>${item.cpf_monitor_xml || ''}</td>
               <td>${formatDateTime(item.data_os_xml)}</td>
               <td>${formatDateTime(item.admissao_xml)}</td>
               <td>${item.motivo_recusa || ''}</td>
@@ -620,7 +620,7 @@
         };
 
         const loadItems = async () => {
-          setFeedback(gridFeedback, 'Carregando vinculos do condutor...');
+          setFeedback(gridFeedback, 'Carregando vinculos do monitor...');
 
           try {
             const response = await fetch(buildListUrl(), {
@@ -628,7 +628,7 @@
             });
             const payload = await readJsonResponse(response);
             if (!response.ok) {
-              throw new Error(payload.message || 'Falha ao carregar vinculos do condutor.');
+              throw new Error(payload.message || 'Falha ao carregar vinculos do monitor.');
             }
 
             state.items = payload.items || [];
@@ -641,7 +641,7 @@
             setFeedback(gridFeedback, state.items.length ? '' : 'Nenhum vinculo encontrado.');
           } catch (error) {
             renderGrid([]);
-            setFeedback(gridFeedback, error.message || 'Falha ao carregar vinculos do condutor.', 'error');
+            setFeedback(gridFeedback, error.message || 'Falha ao carregar vinculos do monitor.', 'error');
           }
         };
 
@@ -762,7 +762,7 @@
 
         cpfCondutorInput.addEventListener('blur', () => {
           if (cpfCondutorInput.value.trim()) {
-            void resolveCondutor();
+            void resolveMonitor();
           }
         });
 
@@ -779,15 +779,15 @@
 
           try {
             const credenciadaItem = await resolveCredenciada();
-            const condutorItem = await resolveCondutor();
+            const monitorItem = await resolveMonitor();
 
-            if (!credenciadaItem || !condutorItem) {
+            if (!credenciadaItem || !monitorItem) {
               setFeedback(formFeedback, 'Corrija os campos para continuar.', 'error');
               return;
             }
 
             const response = await fetch(
-              state.editingId ? `/api/vinculo-condutor/${encodeURIComponent(state.editingId)}` : '/api/vinculo-condutor',
+              state.editingId ? `/api/vinculo-monitor/${encodeURIComponent(state.editingId)}` : '/api/vinculo-monitor',
               {
                 method: state.editingId ? 'PUT' : 'POST',
                 headers: {
@@ -801,9 +801,9 @@
                   dataOs: dataOsInput.value,
                   credenciado: credenciadoInput.value,
                   credenciadaCodigo: credenciadaItem.codigo,
-                  cpfCondutor: cpfCondutorInput.value,
-                  condutorCodigo: condutorItem.codigo,
-                  dataAdmissaoCondutor: dataAdmissaoInput.value,
+                  cpfMonitor: cpfCondutorInput.value,
+                  monitorCodigo: monitorItem.codigo,
+                  dataAdmissaoMonitor: dataAdmissaoInput.value,
                 }),
               },
             );
@@ -812,11 +812,11 @@
             if (!response.ok) {
               if (payload.errors) {
                 formErrors.credenciado.textContent = payload.errors.credenciado || '';
-                formErrors.cpfCondutor.textContent = payload.errors.cpfCondutor || '';
+                formErrors.cpfMonitor.textContent = payload.errors.cpfMonitor || '';
                 formErrors.dataOs.textContent = payload.errors.dataOs || '';
-                formErrors.dataAdmissaoCondutor.textContent = payload.errors.dataAdmissaoCondutor || '';
+                formErrors.dataAdmissaoMonitor.textContent = payload.errors.dataAdmissaoMonitor || '';
               }
-              throw new Error(payload.message || 'Falha ao salvar vinculo do condutor.');
+              throw new Error(payload.message || 'Falha ao salvar vinculo do monitor.');
             }
 
             setFeedback(formFeedback, state.editingId ? 'Registro atualizado com sucesso.' : 'Registro incluido com sucesso.', 'success');
@@ -824,8 +824,8 @@
             hideForm();
             await loadItems();
           } catch (error) {
-            setFeedback(formFeedback, error.message || 'Falha ao salvar vinculo do condutor.', 'error');
-            showBanner(error.message || 'Falha ao salvar vinculo do condutor.', 'error');
+            setFeedback(formFeedback, error.message || 'Falha ao salvar vinculo do monitor.', 'error');
+            showBanner(error.message || 'Falha ao salvar vinculo do monitor.', 'error');
           }
         });
 
@@ -846,10 +846,10 @@
             return;
           }
 
-          setFeedback(importFeedback, 'Importando vinculos do condutor...');
+          setFeedback(importFeedback, 'Importando vinculos do monitor...');
 
           try {
-            const response = await fetch('/api/vinculo-condutor/import-xml', {
+            const response = await fetch('/api/vinculo-monitor/import-xml', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -859,7 +859,7 @@
             });
             const payload = await readJsonResponse(response);
             if (!response.ok) {
-              throw new Error(payload.message || 'Falha ao importar vinculos do condutor do XML.');
+              throw new Error(payload.message || 'Falha ao importar vinculos do monitor do XML.');
             }
 
             const skippedMessage = payload.skipped ? ` ${payload.skipped} registro(s) invalido(s) foram ignorado(s).` : '';
@@ -870,8 +870,8 @@
             hideImportForm();
             await loadItems();
           } catch (error) {
-            setFeedback(importFeedback, error.message || 'Falha ao importar vinculos do condutor do XML.', 'error');
-            showBanner(error.message || 'Falha ao importar vinculos do condutor do XML.', 'error');
+            setFeedback(importFeedback, error.message || 'Falha ao importar vinculos do monitor do XML.', 'error');
+            showBanner(error.message || 'Falha ao importar vinculos do monitor do XML.', 'error');
           }
         });
 

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Consulta de vínculo do monitor</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+
+    <style>
+      body {
+        color: #213139;
+      }
+
+      .dsc-container {
+        width: min(100%, 1180px);
+        max-width: 1180px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .dsc-access-copy {
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+      }
+
+      .dsc-popup-grid-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: nowrap;
+        align-items: center;
+      }
+
+      .dsc-popup-cpf-label {
+        margin: 6px 0 0;
+        color: #556761;
+        font-weight: 700;
+      }
+
+      .dsc-popup-person-name {
+        margin: 4px 0 0;
+        color: #4e635d;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="dsc-access-page">
+      <section class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-copy">
+            <p class="dsc-access-kicker">Consulta</p>
+            <h1>Vínculos do monitor</h1>
+            <p class="dsc-access-description">Tela somente leitura com os registros filtrados pelo CPF do monitor.</p>
+          </div>
+
+          <section class="dsc-card">
+            <div class="dsc-access-grid-header">
+              <div>
+                <h2>Consulta por CPF</h2>
+                <p class="dsc-popup-cpf-label">CPF monitor: <strong id="popup-cpf-value">-</strong></p>
+                <p class="dsc-popup-person-name">Monitor: <strong id="popup-person-name">-</strong></p>
+              </div>
+
+              <div class="dsc-popup-grid-actions">
+                <button type="button" class="dsc-btn dsc-btn-white" id="refresh-popup-button">Atualizar</button>
+                <button type="button" class="dsc-btn dsc-btn-blue" id="close-popup-button">Fechar</button>
+              </div>
+            </div>
+
+            <div class="dsc-access-grid-wrapper">
+              <table class="dsc-access-grid">
+                <thead>
+                  <tr>
+                    <th>Data OS</th>
+                    <th>Termo de adesão</th>
+                    <th>Admissão do monitor</th>
+                    <th>CPF monitor</th>
+                  </tr>
+                </thead>
+                <tbody id="popup-grid-body"></tbody>
+              </table>
+
+              <p class="dsc-empty-state dsc-hidden" id="popup-empty-state">Nenhum vínculo encontrado para o CPF informado.</p>
+            </div>
+
+            <p class="dsc-feedback" id="popup-feedback"></p>
+            <div class="dsc-access-pagination">
+              <span id="popup-total">0 registro(s)</span>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const cpfParam = params.get('cpf_monitor') || '';
+        const cpfValue = document.getElementById('popup-cpf-value');
+        const personName = document.getElementById('popup-person-name');
+        const gridBody = document.getElementById('popup-grid-body');
+        const emptyState = document.getElementById('popup-empty-state');
+        const feedback = document.getElementById('popup-feedback');
+        const totalLabel = document.getElementById('popup-total');
+        const refreshButton = document.getElementById('refresh-popup-button');
+        const closeButton = document.getElementById('close-popup-button');
+
+        const readJsonResponse = async (response) => {
+          const text = await response.text();
+          if (!text) {
+            return {};
+          }
+
+          try {
+            return JSON.parse(text);
+          } catch {
+            return { message: text };
+          }
+        };
+
+        const normalizeDigits = (value) => String(value || '').replace(/\D/g, '');
+
+        const formatDateTime = (value) => {
+          if (!value) {
+            return '';
+          }
+
+          const rawValue = String(value).trim();
+          if (!rawValue) {
+            return '';
+          }
+
+          const normalize = (day, month, year, hour = '00', minute = '00', second = '00') =>
+            `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+
+          let match = rawValue.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+          if (match) {
+            const [, day, month, year, hour = '00', minute = '00', second = '00'] = match;
+            return normalize(day, month, year, hour, minute, second);
+          }
+
+          match = rawValue.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+          if (match) {
+            const [, year, month, day, hour = '00', minute = '00', second = '00'] = match;
+            return normalize(day, month, year, hour, minute, second);
+          }
+
+          const parsed = new Date(rawValue);
+          if (Number.isNaN(parsed.getTime())) {
+            return rawValue;
+          }
+
+          return normalize(
+            parsed.getDate(),
+            parsed.getMonth() + 1,
+            parsed.getFullYear(),
+            parsed.getHours(),
+            parsed.getMinutes(),
+            parsed.getSeconds(),
+          );
+        };
+
+        const setFeedback = (message, type = '') => {
+          feedback.textContent = message || '';
+          feedback.classList.remove('dsc-feedback-error', 'dsc-feedback-success');
+          if (type === 'error') {
+            feedback.classList.add('dsc-feedback-error');
+          }
+        };
+
+        const renderGrid = (items) => {
+          gridBody.innerHTML = '';
+          emptyState.classList.toggle('dsc-hidden', items.length > 0);
+          totalLabel.textContent = `${items.length} registro(s)`;
+
+          items.forEach((item) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${formatDateTime(item.data_os)}</td>
+              <td>${item.termo_adesao || ''}</td>
+              <td>${formatDateTime(item.data_admissao_monitor)}</td>
+              <td>${item.cpf_monitor || ''}</td>
+            `;
+            gridBody.appendChild(row);
+          });
+        };
+
+        const loadItems = async () => {
+          cpfValue.textContent = cpfParam || 'não informado';
+          personName.textContent = '-';
+
+          if (!normalizeDigits(cpfParam)) {
+            renderGrid([]);
+            setFeedback('Informe um CPF de monitor válido para consultar os vínculos.', 'error');
+            return;
+          }
+
+          setFeedback('Carregando vínculos do monitor...');
+
+          try {
+            const response = await fetch(`/api/vinculo-monitor?page=1&pageSize=1000&search=${encodeURIComponent(cpfParam)}`, {
+              headers: { Accept: 'application/json' },
+            });
+
+            const payload = await readJsonResponse(response);
+            if (!response.ok) {
+              throw new Error(payload.message || 'Falha ao consultar vínculos do monitor.');
+            }
+
+            const cpfDigits = normalizeDigits(cpfParam);
+            const items = (payload.items || [])
+              .filter((item) => normalizeDigits(item.cpf_monitor) === cpfDigits)
+              .sort((a, b) => {
+                const timeA = a?.data_os ? new Date(a.data_os).getTime() : 0;
+                const timeB = b?.data_os ? new Date(b.data_os).getTime() : 0;
+                return timeA - timeB;
+              });
+            renderGrid(items);
+            personName.textContent = items[0]?.monitor || '-';
+            setFeedback(items.length ? '' : 'Nenhum vínculo encontrado para o CPF informado.');
+          } catch (error) {
+            renderGrid([]);
+            setFeedback(error.message || 'Falha ao consultar vínculos do monitor.', 'error');
+          }
+        };
+
+        refreshButton.addEventListener('click', () => {
+          void loadItems();
+        });
+
+        closeButton.addEventListener('click', () => {
+          window.close();
+        });
+
+        void loadItems();
+      });
+    </script>
+  </body>
+</html>
