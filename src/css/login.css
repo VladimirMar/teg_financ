@@ -23,17 +23,33 @@ main {
 .dsc-container {
   width: min(100%, 1120px);
   max-width: 1120px;
-  margin-inline: auto;
+  margin-left: 0;
+  margin-right: auto;
 }
 
+body:has(#access-grid-body) .dsc-container,
+body:has(#troca-grid-body) .dsc-container,
+body:has(#login-dre-grid-body) .dsc-container,
+body:has(#monitor-grid-body) .dsc-container,
+body:has(#monitor-rejection-grid-body) .dsc-container,
 body:has(#condutor-grid-body) .dsc-container,
 body:has(#condutor-rejection-grid-body) .dsc-container,
+body:has(#credenciada-grid-body) .dsc-container,
+body:has(#credenciada-rejection-grid-body) .dsc-container,
+body:has(#veiculo-grid-body) .dsc-container,
+body:has(#veiculo-rejection-grid-body) .dsc-container,
 body:has(#ordem-servico-grid-body) .dsc-container,
 body:has(#ordem-servico-rejection-grid-body) .dsc-container,
 body:has(#vinculo-grid-body) .dsc-container,
 body:has(#vinculo-rejection-grid-body) .dsc-container {
   width: min(100%, 1620px);
   max-width: 1620px;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-container,
+body:has(#ordem-servico-rejection-grid-body) .dsc-container {
+  width: min(100%, 1820px);
+  max-width: 1820px;
 }
 
 .dsc-status-banner {
@@ -69,10 +85,14 @@ body:has(#vinculo-rejection-grid-body) .dsc-container {
   display: grid;
   gap: 20px;
   min-width: 0;
+  justify-items: start;
 }
 
 .dsc-access-copy {
-  padding: 10px 6px;
+  width: min(100%, 1120px);
+  margin-left: 0;
+  margin-right: auto;
+  padding: 6px 0 2px;
 }
 
 .dsc-access-kicker {
@@ -84,17 +104,18 @@ body:has(#vinculo-rejection-grid-body) .dsc-container {
 }
 
 .dsc-access-copy h1 {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   font-size: clamp(2rem, 4vw, 3.5rem);
   line-height: 1;
   color: #213139;
 }
 
 .dsc-access-description {
-  margin-top: 14px;
+  margin: 10px 0 0;
   max-width: 44rem;
   color: #556761;
   font-size: 1.05rem;
+  line-height: 1.45;
 }
 
 .dsc-login-form-buttons {
@@ -105,8 +126,11 @@ body:has(#vinculo-rejection-grid-body) .dsc-container {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 16px;
+  gap: 14px;
   flex-wrap: wrap;
+  width: min(100%, 1120px);
+  margin-left: 0;
+  margin-right: auto;
 }
 
 .dsc-access-insert-button {
@@ -209,13 +233,15 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 #condutor-form,
 #condutor-import-form,
 #condutor-rejection-panel,
 #login-dre-form {
-  max-width: 900px;
+  max-width: 1120px;
 }
 
 #monitor-form {
@@ -230,7 +256,7 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 #ordem-servico-form,
 #ordem-servico-import-form,
 #ordem-servico-rejection-panel {
-  max-width: 1320px;
+  max-width: 1760px;
 }
 
 #vinculo-form,
@@ -621,17 +647,23 @@ body:has(#ordem-servico-grid-body) .dsc-access-grid-card,
 body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid-card,
 body:has(#vinculo-grid-body) .dsc-access-grid-card,
 body:has(#vinculo-rejection-grid-body) .dsc-access-grid-card {
-  width: min(100%, 1120px);
+  width: min(100%, 1760px);
   margin-left: 0;
   margin-right: auto;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-access-grid-card,
+body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid-card {
+  min-height: 1080px;
 }
 
 .dsc-access-grid-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .dsc-access-grid-header span,
@@ -656,12 +688,14 @@ body:has(#vinculo-rejection-grid-body) .dsc-access-grid-card {
 }
 
 .dsc-access-grid-wrapper {
-  overflow: auto;
+  overflow: visible;
+  width: 100%;
   -webkit-overflow-scrolling: touch;
 }
 
 .dsc-access-grid {
-  width: 100%;
+  width: auto;
+  min-width: 100%;
   border-collapse: collapse;
 }
 
@@ -680,21 +714,66 @@ body:has(#credenciada-grid-body) .dsc-access-grid {
 }
 
 body:has(#ordem-servico-grid-body) .dsc-access-grid {
-  min-width: 1640px;
+  min-width: 1360px;
+  font-size: 0.74rem;
 }
 
 body:has(#ordem-servico-grid-body) .dsc-access-grid th,
 body:has(#ordem-servico-grid-body) .dsc-access-grid td {
-  padding: 8px 6px;
+  padding: 4px 3px;
+  font-size: 0.74rem;
+  line-height: 1.15;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-access-grid th {
+  font-size: 0.7rem;
 }
 
 body:has(#ordem-servico-grid-body) .dsc-grid-actions {
-  gap: 4px;
+  gap: 2px;
 }
 
 body:has(#ordem-servico-grid-body) .dsc-grid-action-button {
-  padding: 6px 10px;
-  font-size: 0.84rem;
+  padding: 4px 6px;
+  font-size: 0.68rem;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-grid-actions-column {
+  width: 156px;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-access-grid th:nth-child(1),
+body:has(#ordem-servico-grid-body) .dsc-access-grid td:nth-child(1) {
+  width: 18ch;
+  max-width: 18ch;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-access-grid th:nth-child(2),
+body:has(#ordem-servico-grid-body) .dsc-access-grid td:nth-child(2) {
+  width: 26ch;
+  max-width: 26ch;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-access-grid th:nth-child(3),
+body:has(#ordem-servico-grid-body) .dsc-access-grid td:nth-child(3) {
+  width: 8ch;
+  max-width: 8ch;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-access-grid th:nth-child(4),
+body:has(#ordem-servico-grid-body) .dsc-access-grid td:nth-child(4),
+body:has(#ordem-servico-grid-body) .dsc-access-grid th:nth-child(5),
+body:has(#ordem-servico-grid-body) .dsc-access-grid td:nth-child(5) {
+  width: 16ch;
+  max-width: 16ch;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-access-grid th:nth-child(6),
+body:has(#ordem-servico-grid-body) .dsc-access-grid td:nth-child(6),
+body:has(#ordem-servico-grid-body) .dsc-access-grid th:nth-child(7),
+body:has(#ordem-servico-grid-body) .dsc-access-grid td:nth-child(7) {
+  width: 10ch;
+  max-width: 10ch;
 }
 
 body:has(#credenciada-grid-body) .dsc-access-grid th:nth-child(2),
@@ -730,7 +809,7 @@ body:has(#credenciada-rejection-grid-body) .dsc-access-grid {
 }
 
 body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid {
-  min-width: 1880px;
+  min-width: 1840px;
 }
 
 .dsc-access-grid th,
