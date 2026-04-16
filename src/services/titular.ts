@@ -4,6 +4,12 @@ export type TitularItem = {
   titular: string
 }
 
+export type TitularSaveItem = {
+  codigo?: string
+  cnpj_cpf: string
+  titular: string
+}
+
 type TitularListResponse = {
   items: TitularItem[]
   total: number
@@ -116,7 +122,7 @@ export async function listTitularItemsPaginated(params: TitularListParams): Prom
   }
 }
 
-export async function createTitularItem(item: TitularItem): Promise<TitularItem> {
+export async function createTitularItem(item: TitularSaveItem): Promise<TitularItem> {
   const response = await fetch(getTitularUrl(), {
     method: 'POST',
     headers: {
@@ -140,7 +146,7 @@ export async function createTitularItem(item: TitularItem): Promise<TitularItem>
   return (payload as TitularCreateResponse).item
 }
 
-export async function updateTitularItem(originalCodigo: string, item: TitularItem): Promise<TitularItem> {
+export async function updateTitularItem(originalCodigo: string, item: TitularSaveItem): Promise<TitularItem> {
   const response = await fetch(getTitularItemUrl(originalCodigo), {
     method: 'PUT',
     headers: {

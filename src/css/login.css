@@ -308,6 +308,16 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   align-items: start;
 }
 
+#troca-form .dsc-form-row {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+}
+
+#troca-form .dsc-field-group {
+  width: 100%;
+  text-align: left;
+}
+
 .dsc-form-row-credenciada-top {
   grid-template-columns: minmax(520px, 1.35fr) minmax(260px, 0.65fr);
 }

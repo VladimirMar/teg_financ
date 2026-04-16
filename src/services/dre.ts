@@ -1,5 +1,12 @@
 export type DreItem = {
   codigo: string
+  sigla: string
+  descricao: string
+}
+
+export type DreSaveItem = {
+  codigo?: string
+  sigla: string
   descricao: string
 }
 
@@ -133,7 +140,7 @@ export async function listDreItemsPaginated(params: DreListParams): Promise<DreL
   }
 }
 
-export async function createDreItem(item: DreItem): Promise<DreItem> {
+export async function createDreItem(item: DreSaveItem): Promise<DreItem> {
   const response = await fetch(getDreUrl(), {
     method: 'POST',
     headers: {
@@ -153,7 +160,7 @@ export async function createDreItem(item: DreItem): Promise<DreItem> {
   return (payload as DreCreateResponse).item
 }
 
-export async function updateDreItem(originalCodigo: string, item: DreItem): Promise<DreItem> {
+export async function updateDreItem(originalCodigo: string, item: DreSaveItem): Promise<DreItem> {
   const response = await fetch(getDreItemUrl(originalCodigo), {
     method: 'PUT',
     headers: {

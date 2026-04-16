@@ -33,6 +33,7 @@ type StoredSession = {
 
 const SESSION_STORAGE_KEY = 'tegfinanc.auth'
 const DRE_PAGE_SIZE = 20
+const normalizeDreSiglaInput = (value: string) => value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2)
 
 function SchoolBusArt() {
   return (
@@ -152,9 +153,9 @@ function App() {
   const [session, setSession] = useState<StoredSession | null>(null)
   const [activeView, setActiveView] = useState<ActiveView>('inicio')
   const [dreItems, setDreItems] = useState<DreItem[]>([])
-  const [dreCodigo, setDreCodigo] = useState('')
+  const [dreSigla, setDreSigla] = useState('')
+  const [dreSiglaError, setDreSiglaError] = useState('')
   const [dreDescricao, setDreDescricao] = useState('')
-  const [dreCodigoError, setDreCodigoError] = useState('')
   const [dreDescricaoError, setDreDescricaoError] = useState('')
   const [dreStatusMessage, setDreStatusMessage] = useState('')
   const [dreStatusTone, setDreStatusTone] = useState<StatusTone>('idle')
@@ -172,9 +173,7 @@ function App() {
   const [dreSortDirection, setDreSortDirection] = useState<DreSortDirection>('asc')
   const deferredDreSearch = useDeferredValue(dreSearch)
   const [modalidadeItems, setModalidadeItems] = useState<ModalidadeItem[]>([])
-  const [modalidadeCodigo, setModalidadeCodigo] = useState('')
   const [modalidadeDescricao, setModalidadeDescricao] = useState('')
-  const [modalidadeCodigoError, setModalidadeCodigoError] = useState('')
   const [modalidadeDescricaoError, setModalidadeDescricaoError] = useState('')
   const [modalidadeStatusMessage, setModalidadeStatusMessage] = useState('')
   const [modalidadeStatusTone, setModalidadeStatusTone] = useState<StatusTone>('idle')
@@ -192,10 +191,8 @@ function App() {
   const [modalidadeSortDirection, setModalidadeSortDirection] = useState<DreSortDirection>('asc')
   const deferredModalidadeSearch = useDeferredValue(modalidadeSearch)
   const [titularItems, setTitularItems] = useState<TitularItem[]>([])
-  const [titularCodigo, setTitularCodigo] = useState('')
   const [titularCnpjCpf, setTitularCnpjCpf] = useState('')
   const [titularNome, setTitularNome] = useState('')
-  const [titularCodigoError, setTitularCodigoError] = useState('')
   const [titularCnpjCpfError, setTitularCnpjCpfError] = useState('')
   const [titularNomeError, setTitularNomeError] = useState('')
   const [titularStatusMessage, setTitularStatusMessage] = useState('')
@@ -214,9 +211,7 @@ function App() {
   const [titularSortDirection, setTitularSortDirection] = useState<DreSortDirection>('asc')
   const deferredTitularSearch = useDeferredValue(titularSearch)
   const [marcaModeloItems, setMarcaModeloItems] = useState<MarcaModeloItem[]>([])
-  const [marcaModeloCodigo, setMarcaModeloCodigo] = useState('')
   const [marcaModeloDescricao, setMarcaModeloDescricao] = useState('')
-  const [marcaModeloCodigoError, setMarcaModeloCodigoError] = useState('')
   const [marcaModeloDescricaoError, setMarcaModeloDescricaoError] = useState('')
   const [marcaModeloStatusMessage, setMarcaModeloStatusMessage] = useState('')
   const [marcaModeloStatusTone, setMarcaModeloStatusTone] = useState<StatusTone>('idle')
@@ -234,10 +229,8 @@ function App() {
   const [marcaModeloSortDirection, setMarcaModeloSortDirection] = useState<DreSortDirection>('asc')
   const deferredMarcaModeloSearch = useDeferredValue(marcaModeloSearch)
   const [seguradoraItems, setSeguradoraItems] = useState<SeguradoraItem[]>([])
-  const [seguradoraCodigo, setSeguradoraCodigo] = useState('')
   const [seguradoraControle, setSeguradoraControle] = useState('')
   const [seguradoraLista, setSeguradoraLista] = useState('')
-  const [seguradoraCodigoError, setSeguradoraCodigoError] = useState('')
   const [seguradoraControleError, setSeguradoraControleError] = useState('')
   const [seguradoraListaError, setSeguradoraListaError] = useState('')
   const [seguradoraStatusMessage, setSeguradoraStatusMessage] = useState('')
@@ -579,18 +572,16 @@ function App() {
   }
 
   const resetDreForm = () => {
-    setDreCodigo('')
+    setDreSigla('')
+    setDreSiglaError('')
     setDreDescricao('')
-    setDreCodigoError('')
     setDreDescricaoError('')
     setEditingDreCodigo(null)
     setDreFormMode('create')
   }
 
   const resetModalidadeForm = () => {
-    setModalidadeCodigo('')
     setModalidadeDescricao('')
-    setModalidadeCodigoError('')
     setModalidadeDescricaoError('')
     setEditingModalidadeCodigo(null)
     setModalidadeFormMode('create')
@@ -681,9 +672,9 @@ function App() {
   const handleStartEditDre = (item: DreItem) => {
     setEditingDreCodigo(item.codigo)
     setDreFormMode('edit')
-    setDreCodigo(item.codigo)
+    setDreSigla(item.sigla)
+    setDreSiglaError('')
     setDreDescricao(item.descricao)
-    setDreCodigoError('')
     setDreDescricaoError('')
     setDreStatusTone('idle')
     setDreStatusMessage(`Alterando registro ${item.codigo}.`)
@@ -693,9 +684,9 @@ function App() {
   const handleStartViewDre = (item: DreItem) => {
     setEditingDreCodigo(item.codigo)
     setDreFormMode('view')
-    setDreCodigo(item.codigo)
+    setDreSigla(item.sigla)
+    setDreSiglaError('')
     setDreDescricao(item.descricao)
-    setDreCodigoError('')
     setDreDescricaoError('')
     setDreStatusTone('idle')
     setDreStatusMessage(`Consulta do registro ${item.codigo}.`)
@@ -712,9 +703,7 @@ function App() {
   const handleStartEditModalidade = (item: ModalidadeItem) => {
     setEditingModalidadeCodigo(item.codigo)
     setModalidadeFormMode('edit')
-    setModalidadeCodigo(item.codigo)
     setModalidadeDescricao(item.descricao)
-    setModalidadeCodigoError('')
     setModalidadeDescricaoError('')
     setModalidadeStatusTone('idle')
     setModalidadeStatusMessage(`Alterando registro ${item.codigo}.`)
@@ -724,9 +713,7 @@ function App() {
   const handleStartViewModalidade = (item: ModalidadeItem) => {
     setEditingModalidadeCodigo(item.codigo)
     setModalidadeFormMode('view')
-    setModalidadeCodigo(item.codigo)
     setModalidadeDescricao(item.descricao)
-    setModalidadeCodigoError('')
     setModalidadeDescricaoError('')
     setModalidadeStatusTone('idle')
     setModalidadeStatusMessage(`Consulta do registro ${item.codigo}.`)
@@ -749,16 +736,16 @@ function App() {
       return
     }
 
-    const normalizedCodigo = dreCodigo.trim()
+    const normalizedSigla = normalizeDreSiglaInput(dreSigla)
     const normalizedDescricao = dreDescricao.trim()
     const editingCodigo = editingDreCodigo
     let hasError = false
 
-    setDreCodigoError('')
+    setDreSiglaError('')
     setDreDescricaoError('')
 
-    if (!normalizedCodigo) {
-      setDreCodigoError('Codigo e obrigatorio.')
+    if (normalizedSigla.length !== 2) {
+      setDreSiglaError('Sigla deve conter 2 letras maiusculas.')
       hasError = true
     }
 
@@ -780,11 +767,11 @@ function App() {
     try {
       const savedItem = editingCodigo
         ? await updateDreItem(editingCodigo, {
-            codigo: normalizedCodigo,
+            sigla: normalizedSigla,
             descricao: normalizedDescricao,
           })
         : await createDreItem({
-            codigo: normalizedCodigo,
+            sigla: normalizedSigla,
             descricao: normalizedDescricao,
           })
 
@@ -815,18 +802,11 @@ function App() {
       return
     }
 
-    const normalizedCodigo = modalidadeCodigo.trim()
     const normalizedDescricao = modalidadeDescricao.trim()
     const editingCodigo = editingModalidadeCodigo
     let hasError = false
 
-    setModalidadeCodigoError('')
     setModalidadeDescricaoError('')
-
-    if (!normalizedCodigo) {
-      setModalidadeCodigoError('Codigo e obrigatorio.')
-      hasError = true
-    }
 
     if (!normalizedDescricao) {
       setModalidadeDescricaoError('Descricao e obrigatoria.')
@@ -846,11 +826,9 @@ function App() {
     try {
       const savedItem = editingCodigo
         ? await updateModalidadeItem(editingCodigo, {
-            codigo: normalizedCodigo,
             descricao: normalizedDescricao,
           })
         : await createModalidadeItem({
-            codigo: normalizedCodigo,
             descricao: normalizedDescricao,
           })
 
@@ -945,10 +923,8 @@ function App() {
   }
 
   const resetTitularForm = () => {
-    setTitularCodigo('')
     setTitularCnpjCpf('')
     setTitularNome('')
-    setTitularCodigoError('')
     setTitularCnpjCpfError('')
     setTitularNomeError('')
     setEditingTitularCodigo(null)
@@ -999,10 +975,8 @@ function App() {
   const handleStartEditTitular = (item: TitularItem) => {
     setEditingTitularCodigo(item.codigo)
     setTitularFormMode('edit')
-    setTitularCodigo(item.codigo)
     setTitularCnpjCpf(formatCpfOrCnpj(item.cnpj_cpf))
     setTitularNome(item.titular)
-    setTitularCodigoError('')
     setTitularCnpjCpfError('')
     setTitularNomeError('')
     setTitularStatusTone('idle')
@@ -1013,10 +987,8 @@ function App() {
   const handleStartViewTitular = (item: TitularItem) => {
     setEditingTitularCodigo(item.codigo)
     setTitularFormMode('view')
-    setTitularCodigo(item.codigo)
     setTitularCnpjCpf(formatCpfOrCnpj(item.cnpj_cpf))
     setTitularNome(item.titular)
-    setTitularCodigoError('')
     setTitularCnpjCpfError('')
     setTitularNomeError('')
     setTitularStatusTone('idle')
@@ -1040,20 +1012,13 @@ function App() {
       return
     }
 
-    const normalizedCodigo = titularCodigo.trim()
     const normalizedCnpjCpf = titularCnpjCpf.trim()
     const normalizedTitular = titularNome.trim()
     const editingCodigo = editingTitularCodigo
     let hasError = false
 
-    setTitularCodigoError('')
     setTitularCnpjCpfError('')
     setTitularNomeError('')
-
-    if (!normalizedCodigo) {
-      setTitularCodigoError('Codigo e obrigatorio.')
-      hasError = true
-    }
 
     if (!normalizedCnpjCpf) {
       setTitularCnpjCpfError('CNPJ/CPF e obrigatorio.')
@@ -1078,12 +1043,10 @@ function App() {
     try {
       const savedItem = editingCodigo
         ? await updateTitularItem(editingCodigo, {
-            codigo: normalizedCodigo,
             cnpj_cpf: normalizedCnpjCpf,
             titular: normalizedTitular,
           })
         : await createTitularItem({
-            codigo: normalizedCodigo,
             cnpj_cpf: normalizedCnpjCpf,
             titular: normalizedTitular,
           })
@@ -1143,9 +1106,7 @@ function App() {
   }
 
   const resetMarcaModeloForm = () => {
-    setMarcaModeloCodigo('')
     setMarcaModeloDescricao('')
-    setMarcaModeloCodigoError('')
     setMarcaModeloDescricaoError('')
     setEditingMarcaModeloCodigo(null)
     setMarcaModeloFormMode('create')
@@ -1195,9 +1156,7 @@ function App() {
   const handleStartEditMarcaModelo = (item: MarcaModeloItem) => {
     setEditingMarcaModeloCodigo(item.codigo)
     setMarcaModeloFormMode('edit')
-    setMarcaModeloCodigo(item.codigo)
     setMarcaModeloDescricao(item.descricao)
-    setMarcaModeloCodigoError('')
     setMarcaModeloDescricaoError('')
     setMarcaModeloStatusTone('idle')
     setMarcaModeloStatusMessage(`Alterando registro ${item.codigo}.`)
@@ -1207,9 +1166,7 @@ function App() {
   const handleStartViewMarcaModelo = (item: MarcaModeloItem) => {
     setEditingMarcaModeloCodigo(item.codigo)
     setMarcaModeloFormMode('view')
-    setMarcaModeloCodigo(item.codigo)
     setMarcaModeloDescricao(item.descricao)
-    setMarcaModeloCodigoError('')
     setMarcaModeloDescricaoError('')
     setMarcaModeloStatusTone('idle')
     setMarcaModeloStatusMessage(`Consulta do registro ${item.codigo}.`)
@@ -1232,18 +1189,11 @@ function App() {
       return
     }
 
-    const normalizedCodigo = marcaModeloCodigo.trim()
     const normalizedDescricao = marcaModeloDescricao.trim()
     const editingCodigo = editingMarcaModeloCodigo
     let hasError = false
 
-    setMarcaModeloCodigoError('')
     setMarcaModeloDescricaoError('')
-
-    if (!normalizedCodigo) {
-      setMarcaModeloCodigoError('Codigo e obrigatorio.')
-      hasError = true
-    }
 
     if (!normalizedDescricao) {
       setMarcaModeloDescricaoError('Descricao e obrigatoria.')
@@ -1263,11 +1213,9 @@ function App() {
     try {
       const savedItem = editingCodigo
         ? await updateMarcaModeloItem(editingCodigo, {
-            codigo: normalizedCodigo,
             descricao: normalizedDescricao,
           })
         : await createMarcaModeloItem({
-            codigo: normalizedCodigo,
             descricao: normalizedDescricao,
           })
 
@@ -1326,10 +1274,8 @@ function App() {
   }
 
   const resetSeguradoraForm = () => {
-    setSeguradoraCodigo('')
     setSeguradoraControle('')
     setSeguradoraLista('')
-    setSeguradoraCodigoError('')
     setSeguradoraControleError('')
     setSeguradoraListaError('')
     setEditingSeguradoraCodigo(null)
@@ -1380,10 +1326,8 @@ function App() {
   const handleStartEditSeguradora = (item: SeguradoraItem) => {
     setEditingSeguradoraCodigo(item.codigo)
     setSeguradoraFormMode('edit')
-    setSeguradoraCodigo(item.codigo)
     setSeguradoraControle(item.controle)
     setSeguradoraLista(item.descricao)
-    setSeguradoraCodigoError('')
     setSeguradoraControleError('')
     setSeguradoraListaError('')
     setSeguradoraStatusTone('idle')
@@ -1394,10 +1338,8 @@ function App() {
   const handleStartViewSeguradora = (item: SeguradoraItem) => {
     setEditingSeguradoraCodigo(item.codigo)
     setSeguradoraFormMode('view')
-    setSeguradoraCodigo(item.codigo)
     setSeguradoraControle(item.controle)
     setSeguradoraLista(item.descricao)
-    setSeguradoraCodigoError('')
     setSeguradoraControleError('')
     setSeguradoraListaError('')
     setSeguradoraStatusTone('idle')
@@ -1422,19 +1364,12 @@ function App() {
     }
 
     const editingCodigo = editingSeguradoraCodigo
-    const normalizedCodigo = editingCodigo ?? seguradoraCodigo.trim()
     const normalizedControle = seguradoraControle.trim()
     const normalizedLista = seguradoraLista.trim()
     let hasError = false
 
-    setSeguradoraCodigoError('')
     setSeguradoraControleError('')
     setSeguradoraListaError('')
-
-    if (!normalizedCodigo) {
-      setSeguradoraCodigoError('Codigo e obrigatorio.')
-      hasError = true
-    }
 
     if (!normalizedControle) {
       setSeguradoraControleError('Controle e obrigatorio.')
@@ -1459,12 +1394,10 @@ function App() {
     try {
       const savedItem = editingCodigo
         ? await updateSeguradoraItem(editingCodigo, {
-            codigo: normalizedCodigo,
             controle: normalizedControle,
             descricao: normalizedLista,
           })
         : await createSeguradoraItem({
-            codigo: normalizedCodigo,
             controle: normalizedControle,
             descricao: normalizedLista,
           })
@@ -1755,8 +1688,8 @@ function App() {
               <p className="content-kicker">Cadastro administrativo</p>
               <h2 id="content-title">Tabela DRE</h2>
               <p className="content-description">
-                Cadastre e consulte os registros da tabela DRE. Os campos codigo e
-                descricao sao obrigatorios e nao podem se repetir.
+                Cadastre e consulte os registros da tabela DRE. O codigo e gerado
+                automaticamente, a sigla deve ter 2 letras maiusculas e a descricao nao pode se repetir.
               </p>
             </div>
 
@@ -1775,7 +1708,7 @@ function App() {
                   <input
                     className="management-filter-input"
                     type="text"
-                    placeholder="Filtrar por codigo ou descricao"
+                    placeholder="Filtrar por codigo, sigla ou descricao"
                     value={dreSearch}
                     onChange={(event) => setDreSearch(event.target.value)}
                   />
@@ -1792,18 +1725,19 @@ function App() {
                 <form className="management-card management-form dre-form" onSubmit={handleCreateDre} noValidate>
                   <h2>{dreFormMode === 'view' ? 'Consulta de registro' : editingDreCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
 
-                  <label className="field-group" htmlFor="dre-codigo">
-                    <span>Codigo</span>
+                  <label className="field-group" htmlFor="dre-sigla">
+                    <span>Sigla</span>
                     <input
-                      id="dre-codigo"
-                      name="codigo"
+                      id="dre-sigla"
+                      name="sigla"
                       type="text"
-                      value={dreCodigo}
-                      onChange={(event) => setDreCodigo(event.target.value)}
+                      value={dreSigla}
+                      onChange={(event) => setDreSigla(normalizeDreSiglaInput(event.target.value))}
+                      maxLength={2}
                       disabled={isSavingDre || dreFormMode === 'view'}
-                      aria-invalid={Boolean(dreCodigoError)}
+                      aria-invalid={Boolean(dreSiglaError)}
                     />
-                    {dreCodigoError ? <strong className="field-error">{dreCodigoError}</strong> : null}
+                    {dreSiglaError ? <strong className="field-error">{dreSiglaError}</strong> : null}
                   </label>
 
                   <label className="field-group" htmlFor="dre-descricao">
@@ -1851,6 +1785,9 @@ function App() {
                           </button>
                         </th>
                         <th>
+                          Sigla
+                        </th>
+                        <th>
                           <button type="button" className="dre-sort-button" onClick={() => handleSortDre('descricao')}>
                             Descricao <span>{getSortIndicator('descricao')}</span>
                           </button>
@@ -1862,6 +1799,7 @@ function App() {
                       {dreItems.map((item) => (
                         <tr key={item.codigo}>
                           <td>{item.codigo}</td>
+                          <td>{item.sigla}</td>
                           <td>{item.descricao}</td>
                           <td>
                             <div className="dre-row-actions">
@@ -1920,8 +1858,8 @@ function App() {
               <p className="content-kicker">Cadastro administrativo</p>
               <h2 id="content-title">Tabela Modalidade</h2>
               <p className="content-description">
-                Cadastre e consulte os registros da tabela Modalidade. Os campos codigo e
-                descricao sao obrigatorios e nao podem se repetir.
+                Cadastre e consulte os registros da tabela Modalidade. O codigo e gerado
+                automaticamente e a descricao nao pode se repetir.
               </p>
             </div>
 
@@ -1956,20 +1894,6 @@ function App() {
               {isModalidadeFormVisible ? (
                 <form className="management-card management-form dre-form" onSubmit={handleCreateModalidade} noValidate>
                   <h2>{modalidadeFormMode === 'view' ? 'Consulta de registro' : editingModalidadeCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
-
-                  <label className="field-group" htmlFor="modalidade-codigo">
-                    <span>Codigo</span>
-                    <input
-                      id="modalidade-codigo"
-                      name="codigo"
-                      type="text"
-                      value={modalidadeCodigo}
-                      onChange={(event) => setModalidadeCodigo(event.target.value)}
-                      disabled={isSavingModalidade || modalidadeFormMode === 'view'}
-                      aria-invalid={Boolean(modalidadeCodigoError)}
-                    />
-                    {modalidadeCodigoError ? <strong className="field-error">{modalidadeCodigoError}</strong> : null}
-                  </label>
 
                   <label className="field-group" htmlFor="modalidade-descricao">
                     <span>Descricao</span>
@@ -2085,7 +2009,7 @@ function App() {
               <p className="content-kicker">Cadastro administrativo</p>
               <h2 id="content-title">Tabela Titular do CRM</h2>
               <p className="content-description">
-                Cadastre e consulte os registros de titulares do CRM carregados inicialmente a partir do XML. A tela segue o mesmo layout e funcionalidades da DRE, com filtro, ordenacao, paginacao e CRUD completo.
+                Cadastre e consulte os registros de titulares do CRM carregados inicialmente a partir do XML. O codigo e gerado automaticamente, com filtro, ordenacao, paginacao e CRUD completo.
               </p>
             </div>
 
@@ -2120,21 +2044,6 @@ function App() {
               {isTitularFormVisible ? (
                 <form className="management-card management-form dre-form" onSubmit={handleCreateTitular} noValidate>
                   <h2>{titularFormMode === 'view' ? 'Consulta de registro' : editingTitularCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
-
-                  <label className="field-group" htmlFor="titular-codigo">
-                    <span>Codigo</span>
-                    <input
-                      id="titular-codigo"
-                      name="codigo"
-                      type="text"
-                      value={titularCodigo}
-                      onChange={(event) => setTitularCodigo(event.target.value)}
-                      disabled={isSavingTitular || titularFormMode === 'view' || Boolean(editingTitularCodigo)}
-                      readOnly={Boolean(editingTitularCodigo) || titularFormMode === 'view'}
-                      aria-invalid={Boolean(titularCodigoError)}
-                    />
-                    {titularCodigoError ? <strong className="field-error">{titularCodigoError}</strong> : null}
-                  </label>
 
                   <label className="field-group" htmlFor="titular-cnpj-cpf">
                     <span>CNPJ/CPF</span>
@@ -2273,7 +2182,7 @@ function App() {
               <p className="content-kicker">Cadastro administrativo</p>
               <h2 id="content-title">Tabela Marca/Modelo</h2>
               <p className="content-description">
-                Cadastre e consulte os registros da tabela de marca/modelo importada do XML. Os campos codigo e descricao sao obrigatorios e nao podem se repetir.
+                Cadastre e consulte os registros da tabela de marca/modelo importada do XML. O codigo e gerado automaticamente e a descricao permanece obrigatoria e unica.
               </p>
             </div>
 
@@ -2308,20 +2217,6 @@ function App() {
               {isMarcaModeloFormVisible ? (
                 <form className="management-card management-form dre-form" onSubmit={handleCreateMarcaModelo} noValidate>
                   <h2>{marcaModeloFormMode === 'view' ? 'Consulta de registro' : editingMarcaModeloCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
-
-                  <label className="field-group" htmlFor="marca-modelo-codigo">
-                    <span>Codigo</span>
-                    <input
-                      id="marca-modelo-codigo"
-                      name="codigo"
-                      type="text"
-                      value={marcaModeloCodigo}
-                      onChange={(event) => setMarcaModeloCodigo(event.target.value)}
-                      disabled={isSavingMarcaModelo || marcaModeloFormMode === 'view'}
-                      aria-invalid={Boolean(marcaModeloCodigoError)}
-                    />
-                    {marcaModeloCodigoError ? <strong className="field-error">{marcaModeloCodigoError}</strong> : null}
-                  </label>
 
                   <label className="field-group" htmlFor="marca-modelo-descricao">
                     <span>Descricao</span>
@@ -2437,7 +2332,7 @@ function App() {
               <p className="content-kicker">Cadastro administrativo</p>
               <h2 id="content-title">Tabela Seguradoras</h2>
               <p className="content-description">
-                Cadastre e consulte os registros da tabela de seguradoras carregada inicialmente a partir do XML. Os campos codigo, controle e descricao sao obrigatorios, e apenas o codigo e tratado como chave unica.
+                Cadastre e consulte os registros da tabela de seguradoras carregada inicialmente a partir do XML. O codigo e gerado automaticamente, enquanto controle e descricao permanecem obrigatorios.
               </p>
             </div>
 
@@ -2472,21 +2367,6 @@ function App() {
               {isSeguradoraFormVisible ? (
                 <form className="management-card management-form dre-form" onSubmit={handleCreateSeguradora} noValidate>
                   <h2>{seguradoraFormMode === 'view' ? 'Consulta de registro' : editingSeguradoraCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
-
-                  <label className="field-group" htmlFor="seguradora-codigo">
-                    <span>Codigo</span>
-                    <input
-                      id="seguradora-codigo"
-                      name="codigo"
-                      type="text"
-                      value={seguradoraCodigo}
-                      onChange={(event) => setSeguradoraCodigo(event.target.value)}
-                      disabled={isSavingSeguradora || seguradoraFormMode === 'view' || Boolean(editingSeguradoraCodigo)}
-                      readOnly={Boolean(editingSeguradoraCodigo) || seguradoraFormMode === 'view'}
-                      aria-invalid={Boolean(seguradoraCodigoError)}
-                    />
-                    {seguradoraCodigoError ? <strong className="field-error">{seguradoraCodigoError}</strong> : null}
-                  </label>
 
                   <label className="field-group" htmlFor="seguradora-controle">
                     <span>Controle</span>

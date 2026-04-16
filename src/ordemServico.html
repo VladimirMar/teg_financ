@@ -1584,7 +1584,7 @@
         return payload.item;
       };
 
-      const getActiveCpfExcludeCodigo = () => {
+      const getActiveOrdemServicoExcludeCodigo = () => {
         if (Number.isInteger(editingCodigo) && editingCodigo > 0) {
           return editingCodigo;
         }
@@ -1626,7 +1626,7 @@
           return true;
         }
 
-        const activeItem = await fetchActiveOrdemServicoByCpf(cpf, getActiveCpfExcludeCodigo());
+        const activeItem = await fetchActiveOrdemServicoByCpf(cpf, getActiveOrdemServicoExcludeCodigo());
 
         if (!activeItem) {
           errorElement.textContent = '';
@@ -1634,6 +1634,54 @@
         }
 
         errorElement.textContent = `CPF do ${roleLabel} ja utilizado na OrdemServico ativa ${activeItem.codigo} como ${activeItem.papel}.`;
+        return false;
+      };
+
+      const fetchActiveOrdemServicoByPlaca = async (placa, excludeCodigo = null) => {
+        const params = new URLSearchParams({ placa });
+
+        if (Number.isInteger(excludeCodigo) && excludeCodigo > 0) {
+          params.set('excludeCodigo', String(excludeCodigo));
+        }
+
+        const response = await fetch(`/api/ordem-servico/active-placa?${params.toString()}`, {
+          headers: { Accept: 'application/json' },
+        });
+        const payload = await readJsonResponse(response);
+
+        if (!response.ok) {
+          throw new Error(payload.message || 'Falha ao validar placa em OrdemServico ativa.');
+        }
+
+        return payload.item || null;
+      };
+
+      const validateActiveOrdemServicoPlaca = async ({ placa, errorElement }) => {
+        if (!placa) {
+          errorElement.textContent = '';
+          return true;
+        }
+
+        if (getSelectedSituacao() !== 'Ativo') {
+          errorElement.textContent = '';
+          return true;
+        }
+
+        const activeItem = await fetchActiveOrdemServicoByPlaca(placa, getActiveOrdemServicoExcludeCodigo());
+
+        if (!activeItem) {
+          errorElement.textContent = '';
+          return true;
+        }
+
+        const activeOsLabel = [activeItem.termo_adesao, activeItem.num_os, activeItem.revisao]
+          .filter(Boolean)
+          .join('-');
+        const activePlaca = String(activeItem.veiculo_placas || placa || '').trim();
+        const codigoLabel = String(activeItem.codigo || '').trim();
+        errorElement.textContent = activeOsLabel
+          ? `Placa ${activePlaca} ja utilizada na OrdemServico ativa ${codigoLabel} (${activeOsLabel}).`
+          : `Placa ${activePlaca} ja utilizada na OrdemServico ativa ${codigoLabel}.`;
         return false;
       };
 
@@ -1859,8 +1907,10 @@
           crmInput.value = normalizeCrm(String(item.crm || crm));
           veiculoPlacasInput.value = normalizeText(String(item.placas || ''), 20);
           crmError.textContent = '';
+          await validateActiveOrdemServicoPlaca({ placa: veiculoPlacasInput.value, errorElement: veiculoPlacasError });
         } catch (error) {
           veiculoPlacasInput.value = '';
+          veiculoPlacasError.textContent = '';
           crmError.textContent = getRequestErrorMessage(error, 'Falha ao localizar veiculo.');
         }
       };

@@ -89,19 +89,13 @@
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="veiculo-form">
               <h2 id="veiculo-form-title">Novo registro</h2>
 
-              <label class="dsc-field-group" for="veiculo-codigo">
-                <span>Codigo</span>
-                <input class="dsc-form-control" id="veiculo-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
-                <div class="dsc-form-error" id="veiculo-codigo-error"></div>
-              </label>
-
               <section class="dsc-form-section-card dsc-form-section-card-veiculo-identificacao">
                 <h3 class="dsc-form-section-title">Identificacao</h3>
 
                 <div class="dsc-form-row dsc-form-row-veiculo-identificacao">
                   <label class="dsc-field-group" for="veiculo-crm">
                     <span>CRM</span>
-                    <input class="dsc-form-control" id="veiculo-crm" type="text" placeholder="000.000-00" maxlength="20" />
+                    <input class="dsc-form-control" id="veiculo-crm" type="text" inputmode="numeric" placeholder="000.000-00" maxlength="10" />
                     <div class="dsc-form-error" id="veiculo-crm-error"></div>
                   </label>
 
@@ -324,7 +318,6 @@
 
     <script>
       const form = document.getElementById('veiculo-form');
-      const codigoInput = document.getElementById('veiculo-codigo');
       const crmInput = document.getElementById('veiculo-crm');
       const placasInput = document.getElementById('veiculo-placas');
       const anoInput = document.getElementById('veiculo-ano');
@@ -348,7 +341,6 @@
       const cnpjCpfOptionsList = document.getElementById('veiculo-cnpj-cpf-options');
       const valorInput = document.getElementById('veiculo-valor');
       const osEspecialRadios = Array.from(document.querySelectorAll('input[name="veiculo-os-especial"]'));
-      const codigoError = document.getElementById('veiculo-codigo-error');
       const crmError = document.getElementById('veiculo-crm-error');
       const placasError = document.getElementById('veiculo-placas-error');
       const anoError = document.getElementById('veiculo-ano-error');
@@ -439,7 +431,26 @@
         .slice(0, maxLength);
 
       const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
-      const normalizeCrm = (value) => value.toUpperCase().replace(/[^0-9A-Z.\-/]/g, '').slice(0, 20);
+      const normalizeCrm = (value) => {
+        const normalizedValue = value.toUpperCase().replace(/[^0-9A-Z.\-/]/g, '').slice(0, 20);
+        const compactValue = normalizedValue.replace(/[.\-/]/g, '');
+
+        if (/^\d+$/.test(compactValue)) {
+          const digits = compactValue.slice(0, 8);
+
+          if (digits.length <= 3) {
+            return digits;
+          }
+
+          if (digits.length <= 6) {
+            return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+          }
+
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}-${digits.slice(6)}`;
+        }
+
+        return normalizedValue;
+      };
       const normalizePlaca = (value) => value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
       const isValidPlaca = (value) => /^[A-Z]{3}-?\d{4}$/.test(value) || /^[A-Z]{3}-?\d[A-Z]\d{2}$/.test(value);
       const formatPlacaDisplay = (value) => {
@@ -791,7 +802,6 @@
       };
 
       const resetMessages = () => {
-        codigoError.textContent = '';
         crmError.textContent = '';
         placasError.textContent = '';
         anoError.textContent = '';
@@ -904,7 +914,7 @@
       };
 
       const setFormReadOnly = (isReadOnly) => {
-        [codigoInput, crmInput, placasInput, anoInput, capDetranInput, capTegInput, capTegCrecheInput, capAcessivelInput, valCrmInput, seguradoraInput, seguroInicioInput, seguroTerminoInput, tipoDeBancadaInput, tipoDeVeiculoInput, marcaModeloInput, titularInput, cnpjCpfInput, valorInput].forEach((input) => {
+        [crmInput, placasInput, anoInput, capDetranInput, capTegInput, capTegCrecheInput, capAcessivelInput, valCrmInput, seguradoraInput, seguroInicioInput, seguroTerminoInput, tipoDeBancadaInput, tipoDeVeiculoInput, marcaModeloInput, titularInput, cnpjCpfInput, valorInput].forEach((input) => {
           input.readOnly = isReadOnly;
         });
         form.querySelectorAll('input[type="radio"], input[type="checkbox"], input[type="date"], select').forEach((input) => {
@@ -947,7 +957,6 @@
       const hideForm = () => {
         form.classList.add('dsc-hidden');
         form.reset();
-        codigoInput.value = '';
         renderSeguradoraOptions('');
         renderMarcaModeloOptions('');
         renderTipoDeVeiculoOptions('');
@@ -1123,7 +1132,6 @@
       const startInsert = () => {
         editingCodigo = null;
         form.reset();
-        codigoInput.value = '';
         renderSeguradoraOptions('');
         renderMarcaModeloOptions('');
         renderTipoDeVeiculoOptions('');
@@ -1137,8 +1145,7 @@
 
       const startEdit = (item) => {
         editingCodigo = item.codigo;
-        codigoInput.value = item.codigo;
-        crmInput.value = item.crm || '';
+        crmInput.value = normalizeCrm(item.crm || '');
         placasInput.value = formatPlacaDisplay(item.placas || '');
         anoInput.value = item.ano || '';
         capDetranInput.value = item.cap_detran || '';
@@ -1163,8 +1170,7 @@
 
       const startView = (item) => {
         editingCodigo = item.codigo;
-        codigoInput.value = item.codigo;
-        crmInput.value = item.crm || '';
+        crmInput.value = normalizeCrm(item.crm || '');
         placasInput.value = formatPlacaDisplay(item.placas || '');
         anoInput.value = item.ano || '';
         capDetranInput.value = item.cap_detran || '';
@@ -1250,10 +1256,6 @@
         }
       });
 
-      codigoInput.addEventListener('input', () => {
-        codigoInput.value = normalizeCodigo(codigoInput.value);
-      });
-
       crmInput.addEventListener('input', () => {
         crmInput.value = normalizeCrm(crmInput.value);
       });
@@ -1330,7 +1332,6 @@
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const codigo = normalizeCodigo(codigoInput.value);
         const crm = normalizeCrm(crmInput.value);
         const placas = normalizePlaca(placasInput.value);
         const ano = normalizeIntegerInput(anoInput.value, 4);
@@ -1358,7 +1359,6 @@
           return;
         }
 
-        codigoInput.value = codigo;
         crmInput.value = crm;
         placasInput.value = formatPlacaDisplay(placas);
         anoInput.value = ano;
@@ -1373,11 +1373,6 @@
         titularInput.value = titular;
         cnpjCpfInput.value = cnpjCpf;
         valorInput.value = formatMoneyDisplay(valorVeiculo);
-
-        if (!codigo) {
-          codigoError.textContent = 'Informe o codigo.';
-          hasError = true;
-        }
 
         if (crm && !/^[0-9A-Z.\-/]{1,20}$/.test(crm)) {
           crmError.textContent = 'CRM invalido.';
@@ -1450,7 +1445,7 @@
               Accept: 'application/json',
             },
             body: JSON.stringify({
-              codigo,
+              codigo: editingCodigo,
               crm,
               placas,
               ano,

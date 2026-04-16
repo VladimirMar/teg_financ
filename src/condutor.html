@@ -96,12 +96,6 @@
               </div>
 
               <div class="dsc-form-tab-panel dsc-form-tab-panel-active" id="condutor-tab-cadastro">
-              <label class="dsc-field-group" for="condutor-codigo">
-                <span>Codigo</span>
-                <input class="dsc-form-control" id="condutor-codigo" type="text" inputmode="numeric" placeholder="Gerado automaticamente" />
-                <div class="dsc-form-error" id="condutor-codigo-error"></div>
-              </label>
-
               <div class="dsc-form-row dsc-form-row-condutor-top">
                 <label class="dsc-field-group" for="condutor-nome">
                   <span>Condutor</span>
@@ -240,8 +234,6 @@
 
     <script>
       const form = document.getElementById('condutor-form');
-      const codigoInput = document.getElementById('condutor-codigo');
-      const codigoError = document.getElementById('condutor-codigo-error');
       const nomeInput = document.getElementById('condutor-nome');
       const cpfInput = document.getElementById('condutor-cpf');
       const crmcInput = document.getElementById('condutor-crmc');
@@ -464,7 +456,6 @@
       };
 
       const resetMessages = () => {
-        codigoError.textContent = '';
         nomeError.textContent = '';
         cpfError.textContent = '';
         crmcError.textContent = '';
@@ -613,7 +604,6 @@
         [nomeInput, cpfInput, crmcInput, validadeCrmcInput, validadeCursoInput, historicoInput].forEach((input) => {
           input.readOnly = isReadOnly;
         });
-        codigoInput.readOnly = true;
         form.querySelectorAll('input[type="radio"], input[type="checkbox"], input[type="date"], select').forEach((input) => {
           input.disabled = isReadOnly;
         });
@@ -656,7 +646,6 @@
       const hideForm = () => {
         form.classList.add('dsc-hidden');
         form.reset();
-        codigoInput.value = '';
         setSelectedTipoVinculo('');
         editingCodigo = null;
         formMode = 'create';
@@ -830,7 +819,6 @@
       const startInsert = () => {
         editingCodigo = null;
         form.reset();
-        codigoInput.value = '';
         setSelectedTipoVinculo('');
         resetMessages();
         showForm('create');
@@ -838,7 +826,6 @@
 
       const startEdit = (item) => {
         editingCodigo = item.codigo;
-        codigoInput.value = item.codigo;
         nomeInput.value = item.condutor;
         cpfInput.value = item.cpf_condutor;
         crmcInput.value = item.crmc;
@@ -852,7 +839,6 @@
 
       const startView = (item) => {
         editingCodigo = item.codigo;
-        codigoInput.value = item.codigo;
         nomeInput.value = item.condutor;
         cpfInput.value = item.cpf_condutor;
         crmcInput.value = item.crmc;
@@ -927,10 +913,6 @@
         }
       });
 
-      codigoInput.addEventListener('input', () => {
-        codigoInput.value = normalizeCodigo(codigoInput.value);
-      });
-
       nomeInput.addEventListener('input', () => {
         nomeInput.value = normalizeName(nomeInput.value);
       });
@@ -963,7 +945,6 @@
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const codigo = editingCodigo ? normalizeCodigo(codigoInput.value) : '';
         const condutor = normalizeName(nomeInput.value);
         const cpfCondutor = normalizeCpf(cpfInput.value);
         const crmc = normalizeCrmc(crmcInput.value);
@@ -980,15 +961,9 @@
           return;
         }
 
-        codigoInput.value = codigo;
         nomeInput.value = condutor;
         cpfInput.value = cpfCondutor;
         crmcInput.value = crmc;
-
-        if (editingCodigo && !codigo) {
-          codigoError.textContent = 'Informe o codigo.';
-          hasError = true;
-        }
 
         if (!condutor) {
           nomeError.textContent = 'Informe o condutor.';
@@ -1035,7 +1010,7 @@
               Accept: 'application/json',
             },
             body: JSON.stringify({
-              codigo: editingCodigo ? codigo : null,
+              codigo: editingCodigo,
               condutor,
               cpfCondutor,
               crmc,

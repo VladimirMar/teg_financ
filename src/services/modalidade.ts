@@ -3,6 +3,11 @@ export type ModalidadeItem = {
   descricao: string
 }
 
+export type ModalidadeSaveItem = {
+  codigo?: string
+  descricao: string
+}
+
 type ModalidadeListResponse = {
   items: ModalidadeItem[]
   total: number
@@ -115,7 +120,7 @@ export async function listModalidadeItemsPaginated(params: ModalidadeListParams)
   }
 }
 
-export async function createModalidadeItem(item: ModalidadeItem): Promise<ModalidadeItem> {
+export async function createModalidadeItem(item: ModalidadeSaveItem): Promise<ModalidadeItem> {
   const response = await fetch(getModalidadeUrl(), {
     method: 'POST',
     headers: {
@@ -135,7 +140,7 @@ export async function createModalidadeItem(item: ModalidadeItem): Promise<Modali
   return (payload as ModalidadeCreateResponse).item
 }
 
-export async function updateModalidadeItem(originalCodigo: string, item: ModalidadeItem): Promise<ModalidadeItem> {
+export async function updateModalidadeItem(originalCodigo: string, item: ModalidadeSaveItem): Promise<ModalidadeItem> {
   const response = await fetch(getModalidadeItemUrl(originalCodigo), {
     method: 'PUT',
     headers: {

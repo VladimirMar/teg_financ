@@ -27,12 +27,6 @@
               <h2 id="troca-form-title">Novo registro</h2>
 
               <div class="dsc-form-row">
-                <label class="dsc-field-group" for="troca-codigo">
-                  <span>Codigo</span>
-                  <input class="dsc-form-control" id="troca-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
-                  <div class="dsc-form-error" id="troca-codigo-error"></div>
-                </label>
-
                 <label class="dsc-field-group" for="troca-controle">
                   <span>Controle</span>
                   <input class="dsc-form-control" id="troca-controle" type="text" inputmode="numeric" placeholder="Digite o controle" />
@@ -103,10 +97,8 @@
 
     <script>
       const form = document.getElementById('troca-form');
-      const codigoInput = document.getElementById('troca-codigo');
       const controleInput = document.getElementById('troca-controle');
       const listaInput = document.getElementById('troca-lista');
-      const codigoError = document.getElementById('troca-codigo-error');
       const controleError = document.getElementById('troca-controle-error');
       const listaError = document.getElementById('troca-lista-error');
       const feedback = document.getElementById('troca-form-feedback');
@@ -151,7 +143,6 @@
         .slice(0, 255);
 
       const resetMessages = () => {
-        codigoError.textContent = '';
         controleError.textContent = '';
         listaError.textContent = '';
         feedback.textContent = '';
@@ -207,7 +198,6 @@
       };
 
       const setFormReadOnly = (isReadOnly) => {
-        codigoInput.readOnly = isReadOnly;
         controleInput.readOnly = isReadOnly;
         listaInput.readOnly = isReadOnly;
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
@@ -323,7 +313,6 @@
 
       const startEdit = (item) => {
         editingCodigo = item.codigo;
-        codigoInput.value = item.codigo || '';
         controleInput.value = item.controle || '';
         listaInput.value = item.lista || '';
         resetMessages();
@@ -332,7 +321,6 @@
 
       const startView = (item) => {
         editingCodigo = item.codigo;
-        codigoInput.value = item.codigo || '';
         controleInput.value = item.controle || '';
         listaInput.value = item.lista || '';
         resetMessages();
@@ -402,10 +390,6 @@
         }
       });
 
-      codigoInput.addEventListener('input', () => {
-        codigoInput.value = normalizeCodigo(codigoInput.value);
-      });
-
       controleInput.addEventListener('input', () => {
         controleInput.value = normalizeCodigo(controleInput.value);
       });
@@ -417,7 +401,6 @@
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const codigo = normalizeCodigo(codigoInput.value);
         const controle = normalizeCodigo(controleInput.value);
         const lista = normalizeLista(listaInput.value);
         let hasError = false;
@@ -428,14 +411,8 @@
           feedback.textContent = 'Consulta em modo somente leitura.';
           return;
         }
-        codigoInput.value = codigo;
         controleInput.value = controle;
         listaInput.value = lista;
-
-        if (!codigo) {
-          codigoError.textContent = 'Informe o codigo.';
-          hasError = true;
-        }
 
         if (!controle) {
           controleError.textContent = 'Informe o controle.';
@@ -460,7 +437,7 @@
               'Content-Type': 'application/json',
               Accept: 'application/json',
             },
-            body: JSON.stringify({ codigo, controle, lista }),
+            body: JSON.stringify({ controle, lista }),
           });
 
           const payload = await readJsonResponse(response);

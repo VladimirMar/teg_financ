@@ -26,11 +26,6 @@
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="register-form">
               <h2 id="form-title">Novo registro</h2>
 
-              <label class="dsc-field-group" for="codigo">
-                <span>Codigo</span>
-                <input class="dsc-form-control" id="codigo" type="text" placeholder="Gerado automaticamente" readonly disabled />
-              </label>
-
               <label class="dsc-field-group" for="nome">
                 <span>Nome</span>
                 <input class="dsc-form-control" id="nome" type="text" placeholder="NOME DO USUARIO" maxlength="50" />
@@ -100,7 +95,6 @@
 
     <script>
       const form = document.getElementById('register-form');
-      const codigoInput = document.getElementById('codigo');
       const nomeInput = document.getElementById('nome');
       const emailInput = document.getElementById('email');
       const passwordInput = document.getElementById('password');
@@ -210,7 +204,6 @@
         form.classList.remove('dsc-hidden');
         formTitle.textContent = isReadOnly ? 'Consulta de acesso' : isEditing ? 'Alteracao de acesso' : 'Cadastro de acesso';
         saveAccessButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar acesso';
-        codigoInput.value = (isEditing || isReadOnly) && editingCodigo ? editingCodigo : '';
         passwordHint.textContent = isReadOnly
           ? 'Consulta em modo somente leitura.'
           : isEditing
@@ -222,7 +215,6 @@
       const hideForm = () => {
         form.classList.add('dsc-hidden');
         form.reset();
-        codigoInput.value = '';
         editingCodigo = null;
         formMode = 'create';
         setFormReadOnly(false);
@@ -318,7 +310,6 @@
       const startInsert = () => {
         editingCodigo = null;
         form.reset();
-        codigoInput.value = '';
         nomeInput.value = '';
         resetMessages();
         showForm('create');
@@ -326,7 +317,6 @@
 
       const startEdit = (item) => {
         editingCodigo = item.codigo;
-        codigoInput.value = item.codigo;
         nomeInput.value = item.nome;
         emailInput.value = item.email;
         passwordInput.value = '';
@@ -336,7 +326,6 @@
 
       const startView = (item) => {
         editingCodigo = item.codigo;
-        codigoInput.value = item.codigo;
         nomeInput.value = item.nome;
         emailInput.value = item.email;
         passwordInput.value = '';

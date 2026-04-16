@@ -3,6 +3,11 @@ export type MarcaModeloItem = {
   descricao: string
 }
 
+export type MarcaModeloSaveItem = {
+  codigo?: string
+  descricao: string
+}
+
 type MarcaModeloListResponse = {
   items: MarcaModeloItem[]
   total: number
@@ -115,7 +120,7 @@ export async function listMarcaModeloItemsPaginated(params: MarcaModeloListParam
   }
 }
 
-export async function createMarcaModeloItem(item: MarcaModeloItem): Promise<MarcaModeloItem> {
+export async function createMarcaModeloItem(item: MarcaModeloSaveItem): Promise<MarcaModeloItem> {
   const response = await fetch(getMarcaModeloUrl(), {
     method: 'POST',
     headers: {
@@ -135,7 +140,7 @@ export async function createMarcaModeloItem(item: MarcaModeloItem): Promise<Marc
   return (payload as MarcaModeloCreateResponse).item
 }
 
-export async function updateMarcaModeloItem(originalCodigo: string, item: MarcaModeloItem): Promise<MarcaModeloItem> {
+export async function updateMarcaModeloItem(originalCodigo: string, item: MarcaModeloSaveItem): Promise<MarcaModeloItem> {
   const response = await fetch(getMarcaModeloItemUrl(originalCodigo), {
     method: 'PUT',
     headers: {

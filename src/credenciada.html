@@ -90,12 +90,6 @@
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciada-form">
               <h2 id="credenciada-form-title">Novo registro</h2>
 
-              <label class="dsc-field-group" for="credenciada-codigo">
-                <span>Codigo</span>
-                <input class="dsc-form-control" id="credenciada-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
-                <div class="dsc-form-error" id="credenciada-codigo-error"></div>
-              </label>
-
               <div class="dsc-form-row dsc-form-row-credenciada-top">
                 <label class="dsc-field-group" for="credenciada-nome">
                   <span>Credenciada</span>
@@ -242,7 +236,6 @@
 
     <script>
       const form = document.getElementById('credenciada-form');
-      const codigoInput = document.getElementById('credenciada-codigo');
       const nomeInput = document.getElementById('credenciada-nome');
       const cnpjCpfInput = document.getElementById('credenciada-cnpj-cpf');
       const logradouroInput = document.getElementById('credenciada-logradouro');
@@ -256,7 +249,6 @@
       const cpfRepresentanteInput = document.getElementById('credenciada-cpf-representante');
       const rgRepresentanteInput = document.getElementById('credenciada-rg-representante');
       const statusInput = document.getElementById('credenciada-status');
-      const codigoError = document.getElementById('credenciada-codigo-error');
       const nomeError = document.getElementById('credenciada-nome-error');
       const cnpjCpfError = document.getElementById('credenciada-cnpj-cpf-error');
       const logradouroError = document.getElementById('credenciada-logradouro-error');
@@ -442,7 +434,6 @@
       };
 
       const resetMessages = () => {
-        codigoError.textContent = '';
         nomeError.textContent = '';
         cnpjCpfError.textContent = '';
         logradouroError.textContent = '';
@@ -497,7 +488,7 @@
       };
 
       const setFormReadOnly = (isReadOnly) => {
-        [codigoInput, nomeInput, cnpjCpfInput, logradouroInput, bairroInput, cepInput, municipioInput, emailInput, telefone1Input, telefone2Input, representanteInput, cpfRepresentanteInput, rgRepresentanteInput, statusInput].forEach((input) => {
+        [nomeInput, cnpjCpfInput, logradouroInput, bairroInput, cepInput, municipioInput, emailInput, telefone1Input, telefone2Input, representanteInput, cpfRepresentanteInput, rgRepresentanteInput, statusInput].forEach((input) => {
           input.readOnly = isReadOnly;
         });
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
@@ -537,7 +528,6 @@
       const hideForm = () => {
         form.classList.add('dsc-hidden');
         form.reset();
-        codigoInput.value = '';
         editingCodigo = null;
         formMode = 'create';
         setFormReadOnly(false);
@@ -706,14 +696,12 @@
       const startInsert = () => {
         editingCodigo = null;
         form.reset();
-        codigoInput.value = '';
         resetMessages();
         showForm('create');
       };
 
       const startEdit = (item) => {
         editingCodigo = item.codigo;
-        codigoInput.value = item.codigo;
         nomeInput.value = item.credenciado || '';
         cnpjCpfInput.value = normalizeCnpjCpf(item.cnpj_cpf || '');
         logradouroInput.value = item.logradouro || '';
@@ -733,7 +721,6 @@
 
       const startView = (item) => {
         editingCodigo = item.codigo;
-        codigoInput.value = item.codigo;
         nomeInput.value = item.credenciado || '';
         cnpjCpfInput.value = normalizeCnpjCpf(item.cnpj_cpf || '');
         logradouroInput.value = item.logradouro || '';
@@ -814,10 +801,6 @@
         }
       });
 
-      codigoInput.addEventListener('input', () => {
-        codigoInput.value = normalizeCodigo(codigoInput.value);
-      });
-
       nomeInput.addEventListener('input', () => {
         nomeInput.value = normalizeText(nomeInput.value, 255);
       });
@@ -873,7 +856,6 @@
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const codigo = normalizeCodigo(codigoInput.value);
         const credenciado = normalizeText(nomeInput.value, 255);
         const cnpjCpf = normalizeCnpjCpf(cnpjCpfInput.value);
         const logradouro = normalizeText(logradouroInput.value, 255);
@@ -896,7 +878,6 @@
           return;
         }
 
-        codigoInput.value = codigo;
         nomeInput.value = credenciado;
         cnpjCpfInput.value = cnpjCpf;
         logradouroInput.value = logradouro;
@@ -910,11 +891,6 @@
         cpfRepresentanteInput.value = cpfRepresentante;
         rgRepresentanteInput.value = rgRepresentante;
         statusInput.value = status;
-
-        if (!codigo) {
-          codigoError.textContent = 'Informe o codigo.';
-          hasError = true;
-        }
 
         if (!credenciado) {
           nomeError.textContent = 'Informe a credenciada.';
@@ -965,7 +941,6 @@
               Accept: 'application/json',
             },
             body: JSON.stringify({
-              codigo,
               credenciado,
               cnpjCpf,
               logradouro,

@@ -4,6 +4,12 @@ export type SeguradoraItem = {
   descricao: string
 }
 
+export type SeguradoraSaveItem = {
+  codigo?: string
+  controle: string
+  descricao: string
+}
+
 type SeguradoraListResponse = {
   items: SeguradoraItem[]
   total: number
@@ -116,7 +122,7 @@ export async function listSeguradoraItemsPaginated(params: SeguradoraListParams)
   }
 }
 
-export async function createSeguradoraItem(item: SeguradoraItem): Promise<SeguradoraItem> {
+export async function createSeguradoraItem(item: SeguradoraSaveItem): Promise<SeguradoraItem> {
   const response = await fetch(getSeguradoraUrl(), {
     method: 'POST',
     headers: {
@@ -136,7 +142,7 @@ export async function createSeguradoraItem(item: SeguradoraItem): Promise<Segura
   return (payload as SeguradoraCreateResponse).item
 }
 
-export async function updateSeguradoraItem(originalCodigo: string, item: SeguradoraItem): Promise<SeguradoraItem> {
+export async function updateSeguradoraItem(originalCodigo: string, item: SeguradoraSaveItem): Promise<SeguradoraItem> {
   const response = await fetch(getSeguradoraItemUrl(originalCodigo), {
     method: 'PUT',
     headers: {
