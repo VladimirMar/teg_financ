@@ -14,7 +14,7 @@ import { createSeguradoraItem, deleteSeguradoraItem, listSeguradoraItemsPaginate
 import type { SeguradoraItem } from './services/seguradora'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'modalidade' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'veiculo' | 'vinculoCondutor' | 'vinculoMonitor' | 'ordemServico'
+type ActiveView = 'inicio' | 'dre' | 'modalidade' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'credenciamentoTermo' | 'veiculo' | 'vinculoCondutor' | 'vinculoMonitor' | 'ordemServico'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
 type TitularSortField = 'codigo' | 'cnpj_cpf' | 'titular'
@@ -1630,6 +1630,12 @@ function App() {
               Credenciada
             </li>
             <li
+              className={`menu-item ${activeView === 'credenciamentoTermo' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('credenciamentoTermo')}
+            >
+              Credenciamento Termo
+            </li>
+            <li
               className={`menu-item ${activeView === 'veiculo' ? 'menu-item-active' : ''}`}
               onClick={() => setActiveView('veiculo')}
             >
@@ -2584,6 +2590,24 @@ function App() {
                 className="access-embed-frame"
                 src="/src/monitor.html"
                 title="Cadastro de monitor"
+              />
+            </div>
+          </>
+        ) : activeView === 'credenciamentoTermo' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Cadastro operacional</p>
+              <h2 id="content-title">Tabela Credenciamento Termo</h2>
+              <p className="content-description">
+                Consulte, inclua, altere e importe credenciamentos termo a partir do XML com relacao automatica da credenciada e desdobramento por aditivo.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/credenciamentoTermo.html"
+                title="Cadastro de credenciamento termo"
               />
             </div>
           </>

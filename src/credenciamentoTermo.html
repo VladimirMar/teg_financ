@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro de credenciamento termo</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
+    <main class="dsc-access-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-management-layout">
+            <div class="dsc-access-toolbar">
+              <form class="dsc-access-filter-form" id="credenciamento-termo-filter-form">
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-credenciamento-termo-button">Inserir registro</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-credenciamento-termo-import-button">Importar XML</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-credenciamento-termo-rejections-button">Recusas XML</button>
+                <input class="dsc-form-control dsc-access-filter-input" id="credenciamento-termo-search" type="text" placeholder="Filtrar por codigo, codigo XML, termo, credenciado, SEI ou aditivo" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-credenciamento-termo-filter-button">Limpar</button>
+              </form>
+            </div>
+
+            <section class="dsc-card dsc-hidden" id="credenciamento-termo-rejection-panel">
+              <div class="dsc-access-grid-header">
+                <h2>Registros nao importados</h2>
+                <span id="credenciamento-termo-rejection-total"></span>
+              </div>
+
+              <form class="dsc-access-filter-form" id="credenciamento-termo-rejection-filter-form">
+                <input class="dsc-form-control dsc-access-filter-input" id="credenciamento-termo-rejection-search" type="text" placeholder="Filtrar por arquivo, codigo XML, credenciado, aditivo ou motivo" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-credenciamento-termo-rejection-filter-button">Limpar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="close-credenciamento-termo-rejection-panel-button">Fechar</button>
+              </form>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Data importacao</th>
+                      <th>Arquivo XML</th>
+                      <th>Linha XML</th>
+                      <th>Codigo XML</th>
+                      <th>Credenciado XML</th>
+                      <th>Aditivo XML</th>
+                      <th>Motivo da recusa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="credenciamento-termo-rejection-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="credenciamento-termo-rejection-empty-state">Nenhum registro recusado encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="credenciamento-termo-rejection-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-credenciamento-termo-rejection-page-button">Anterior</button>
+                <span id="credenciamento-termo-rejection-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-credenciamento-termo-rejection-page-button">Proxima</button>
+              </div>
+            </section>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciamento-termo-import-form">
+              <h2>Importacao de credenciamento termo por XML</h2>
+
+              <label class="dsc-field-group" for="credenciamento-termo-import-file-name">
+                <span>Nome do arquivo XML</span>
+                <input class="dsc-form-control" id="credenciamento-termo-import-file-name" type="text" placeholder="Credenciamento_Termo.xml" />
+                <div class="dsc-form-error" id="credenciamento-termo-import-file-name-error"></div>
+              </label>
+
+              <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-credenciamento-termo-import-button">Executar importacao</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-credenciamento-termo-import-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="credenciamento-termo-import-feedback"></p>
+            </form>
+
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciamento-termo-form">
+              <h2 id="credenciamento-termo-form-title">Novo registro</h2>
+
+              <section class="dsc-form-section-card">
+                <h3 class="dsc-form-section-title">Identificacao</h3>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciamento-termo-codigo-xml">
+                    <span>Codigo XML</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-codigo-xml" type="text" inputmode="numeric" maxlength="10" />
+                    <div class="dsc-form-error" id="credenciamento-termo-codigo-xml-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-aditivo">
+                    <span>Aditivo</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-aditivo" type="text" inputmode="numeric" maxlength="2" />
+                    <div class="dsc-form-error" id="credenciamento-termo-aditivo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-termo-adesao">
+                    <span>Termo de adesao</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-termo-adesao" type="text" maxlength="255" />
+                    <div class="dsc-form-error" id="credenciamento-termo-termo-adesao-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-sei">
+                    <span>SEI</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-sei" type="text" maxlength="255" />
+                    <div class="dsc-form-error" id="credenciamento-termo-sei-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <section class="dsc-form-section-card">
+                <h3 class="dsc-form-section-title">Credenciada</h3>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciamento-termo-credenciado">
+                    <span>Credenciado</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-credenciado" type="text" maxlength="255" />
+                    <p class="dsc-form-hint">Ao sair do campo, a tela localiza o codigo da credenciada pelo nome.</p>
+                    <div class="dsc-form-error" id="credenciamento-termo-credenciado-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-credenciada-codigo">
+                    <span>Codigo credenciada</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-credenciada-codigo" type="text" readonly />
+                    <div class="dsc-form-error" id="credenciamento-termo-credenciada-codigo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-cnpj-cpf">
+                    <span>CNPJ/CPF</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-cnpj-cpf" type="text" readonly />
+                    <div class="dsc-form-error" id="credenciamento-termo-cnpj-cpf-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <section class="dsc-form-section-card">
+                <h3 class="dsc-form-section-title">Vigencia e status</h3>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciamento-termo-situacao-publicacao">
+                    <span>Situacao de publicacao</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-situacao-publicacao" type="text" maxlength="100" />
+                    <div class="dsc-form-error" id="credenciamento-termo-situacao-publicacao-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-situacao-emissao">
+                    <span>Situacao de emissao</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-situacao-emissao" type="text" maxlength="100" />
+                    <div class="dsc-form-error" id="credenciamento-termo-situacao-emissao-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-status-termo">
+                    <span>Status termo</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-status-termo" type="text" maxlength="100" />
+                    <div class="dsc-form-error" id="credenciamento-termo-status-termo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-status-aditivo">
+                    <span>Status aditivo</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-status-aditivo" type="text" maxlength="100" />
+                    <div class="dsc-form-error" id="credenciamento-termo-status-aditivo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-check-aditivo">
+                    <span>Check aditivo</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-check-aditivo" type="text" inputmode="numeric" maxlength="2" />
+                    <div class="dsc-form-error" id="credenciamento-termo-check-aditivo-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciamento-termo-inicio-vigencia">
+                    <span>Inicio de vigencia</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-inicio-vigencia" type="date" />
+                    <div class="dsc-form-error" id="credenciamento-termo-inicio-vigencia-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-termino-vigencia">
+                    <span>Termino de vigencia</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-termino-vigencia" type="date" />
+                    <div class="dsc-form-error" id="credenciamento-termo-termino-vigencia-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-comp-data-aditivo">
+                    <span>Comp data aditivo</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-comp-data-aditivo" type="date" />
+                    <div class="dsc-form-error" id="credenciamento-termo-comp-data-aditivo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-data-pub-aditivo">
+                    <span>Data pub aditivo</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-data-pub-aditivo" type="date" />
+                    <div class="dsc-form-error" id="credenciamento-termo-data-pub-aditivo-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <section class="dsc-form-section-card">
+                <h3 class="dsc-form-section-title">Representacao e endereco</h3>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciamento-termo-tipo-termo">
+                    <span>Tipo de termo</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-tipo-termo" type="text" maxlength="100" />
+                    <div class="dsc-form-error" id="credenciamento-termo-tipo-termo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-representante">
+                    <span>Representante</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-representante" type="text" maxlength="255" />
+                    <div class="dsc-form-error" id="credenciamento-termo-representante-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-cpf-representante">
+                    <span>CPF representante</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-cpf-representante" type="text" maxlength="14" />
+                    <div class="dsc-form-error" id="credenciamento-termo-cpf-representante-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-rg-representante">
+                    <span>RG representante</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-rg-representante" type="text" maxlength="30" />
+                    <div class="dsc-form-error" id="credenciamento-termo-rg-representante-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciamento-termo-logradouro">
+                    <span>Logradouro</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-logradouro" type="text" maxlength="255" />
+                    <div class="dsc-form-error" id="credenciamento-termo-logradouro-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-bairro">
+                    <span>Bairro</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-bairro" type="text" maxlength="120" />
+                    <div class="dsc-form-error" id="credenciamento-termo-bairro-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-municipio">
+                    <span>Municipio</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-municipio" type="text" maxlength="120" />
+                    <div class="dsc-form-error" id="credenciamento-termo-municipio-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <section class="dsc-form-section-card">
+                <h3 class="dsc-form-section-title">Complementos</h3>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciamento-termo-especificacao-sei">
+                    <span>Especificacao SEI</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-especificacao-sei" type="text" maxlength="255" />
+                    <div class="dsc-form-error" id="credenciamento-termo-especificacao-sei-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-valor-contrato">
+                    <span>Valor contrato</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-valor-contrato" type="text" inputmode="decimal" maxlength="20" />
+                    <div class="dsc-form-error" id="credenciamento-termo-valor-contrato-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-valor-contrato-atualizado">
+                    <span>Valor contrato atualizado</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-valor-contrato-atualizado" type="text" inputmode="decimal" maxlength="20" />
+                    <div class="dsc-form-error" id="credenciamento-termo-valor-contrato-atualizado-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-folhas">
+                    <span>Folhas</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-folhas" type="text" maxlength="50" />
+                    <div class="dsc-form-error" id="credenciamento-termo-folhas-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciamento-termo-data-publicacao">
+                    <span>Data de publicacao</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-data-publicacao" type="date" />
+                    <div class="dsc-form-error" id="credenciamento-termo-data-publicacao-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-vencimento-geral">
+                    <span>Vencimento geral</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-vencimento-geral" type="date" />
+                    <div class="dsc-form-error" id="credenciamento-termo-vencimento-geral-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-mes-renovacao">
+                    <span>Mes renovacao</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-mes-renovacao" type="text" maxlength="50" />
+                    <div class="dsc-form-error" id="credenciamento-termo-mes-renovacao-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-tp-optante">
+                    <span>Tp optante</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-tp-optante" type="text" maxlength="20" />
+                    <div class="dsc-form-error" id="credenciamento-termo-tp-optante-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciamento-termo-info-sei">
+                    <span>Info SEI</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-info-sei" type="text" maxlength="100" />
+                    <div class="dsc-form-error" id="credenciamento-termo-info-sei-error"></div>
+                  </label>
+                </div>
+
+                <label class="dsc-field-group" for="credenciamento-termo-objeto">
+                  <span>Objeto</span>
+                  <textarea class="dsc-form-control" id="credenciamento-termo-objeto" rows="3" maxlength="1000"></textarea>
+                  <div class="dsc-form-error" id="credenciamento-termo-objeto-error"></div>
+                </label>
+              </section>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-credenciamento-termo-button">Salvar credenciamento termo</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-credenciamento-termo-button">Cancelar</button>
+              </div>
+
+              <p class="dsc-feedback" id="credenciamento-termo-form-feedback"></p>
+            </form>
+
+            <div class="dsc-card dsc-access-grid-card">
+              <div class="dsc-access-grid-header">
+                <h2>Registros cadastrados</h2>
+                <span id="credenciamento-termo-total"></span>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Codigo</th>
+                      <th>Codigo XML</th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-credenciamento-termo-button">
+                          Termo <span id="sort-credenciamento-termo-indicator">↑</span>
+                        </button>
+                      </th>
+                      <th>Credenciado</th>
+                      <th>Aditivo</th>
+                      <th>Inicio</th>
+                      <th>Termino</th>
+                      <th>Status</th>
+                      <th class="dsc-grid-actions-column">Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="credenciamento-termo-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="credenciamento-termo-empty-state">Nenhum credenciamento termo encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="credenciamento-termo-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-credenciamento-termo-page-button">Anterior</button>
+                <span id="credenciamento-termo-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-credenciamento-termo-page-button">Proxima</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('credenciamento-termo-form');
+      const importForm = document.getElementById('credenciamento-termo-import-form');
+      const filterForm = document.getElementById('credenciamento-termo-filter-form');
+      const rejectionFilterForm = document.getElementById('credenciamento-termo-rejection-filter-form');
+      const statusBanner = document.getElementById('status-banner');
+      const formTitle = document.getElementById('credenciamento-termo-form-title');
+      const feedback = document.getElementById('credenciamento-termo-form-feedback');
+      const gridFeedback = document.getElementById('credenciamento-termo-grid-feedback');
+      const importFeedback = document.getElementById('credenciamento-termo-import-feedback');
+      const rejectionGridFeedback = document.getElementById('credenciamento-termo-rejection-grid-feedback');
+      const searchInput = document.getElementById('credenciamento-termo-search');
+      const clearFilterButton = document.getElementById('clear-credenciamento-termo-filter-button');
+      const insertButton = document.getElementById('insert-credenciamento-termo-button');
+      const cancelButton = document.getElementById('cancel-credenciamento-termo-button');
+      const importButton = document.getElementById('open-credenciamento-termo-import-button');
+      const rejectionButton = document.getElementById('open-credenciamento-termo-rejections-button');
+      const cancelImportButton = document.getElementById('cancel-credenciamento-termo-import-button');
+      const gridBody = document.getElementById('credenciamento-termo-grid-body');
+      const rejectionGridBody = document.getElementById('credenciamento-termo-rejection-grid-body');
+      const emptyState = document.getElementById('credenciamento-termo-empty-state');
+      const rejectionEmptyState = document.getElementById('credenciamento-termo-rejection-empty-state');
+      const totalLabel = document.getElementById('credenciamento-termo-total');
+      const rejectionTotalLabel = document.getElementById('credenciamento-termo-rejection-total');
+      const paginationInfo = document.getElementById('credenciamento-termo-pagination-info');
+      const rejectionPaginationInfo = document.getElementById('credenciamento-termo-rejection-pagination-info');
+      const previousPageButton = document.getElementById('previous-credenciamento-termo-page-button');
+      const nextPageButton = document.getElementById('next-credenciamento-termo-page-button');
+      const previousRejectionPageButton = document.getElementById('previous-credenciamento-termo-rejection-page-button');
+      const nextRejectionPageButton = document.getElementById('next-credenciamento-termo-rejection-page-button');
+      const rejectionPanel = document.getElementById('credenciamento-termo-rejection-panel');
+      const rejectionSearchInput = document.getElementById('credenciamento-termo-rejection-search');
+      const clearRejectionFilterButton = document.getElementById('clear-credenciamento-termo-rejection-filter-button');
+      const closeRejectionPanelButton = document.getElementById('close-credenciamento-termo-rejection-panel-button');
+      const sortButton = document.getElementById('sort-credenciamento-termo-button');
+      const sortIndicator = document.getElementById('sort-credenciamento-termo-indicator');
+      const importFileNameInput = document.getElementById('credenciamento-termo-import-file-name');
+      const importFileNameError = document.getElementById('credenciamento-termo-import-file-name-error');
+
+      const codigoXmlInput = document.getElementById('credenciamento-termo-codigo-xml');
+      const aditivoInput = document.getElementById('credenciamento-termo-aditivo');
+      const termoAdesaoInput = document.getElementById('credenciamento-termo-termo-adesao');
+      const seiInput = document.getElementById('credenciamento-termo-sei');
+      const credenciadoInput = document.getElementById('credenciamento-termo-credenciado');
+      const credenciadaCodigoInput = document.getElementById('credenciamento-termo-credenciada-codigo');
+      const cnpjCpfInput = document.getElementById('credenciamento-termo-cnpj-cpf');
+      const situacaoPublicacaoInput = document.getElementById('credenciamento-termo-situacao-publicacao');
+      const situacaoEmissaoInput = document.getElementById('credenciamento-termo-situacao-emissao');
+      const statusTermoInput = document.getElementById('credenciamento-termo-status-termo');
+      const statusAditivoInput = document.getElementById('credenciamento-termo-status-aditivo');
+      const checkAditivoInput = document.getElementById('credenciamento-termo-check-aditivo');
+      const inicioVigenciaInput = document.getElementById('credenciamento-termo-inicio-vigencia');
+      const terminoVigenciaInput = document.getElementById('credenciamento-termo-termino-vigencia');
+      const compDataAditivoInput = document.getElementById('credenciamento-termo-comp-data-aditivo');
+      const dataPubAditivoInput = document.getElementById('credenciamento-termo-data-pub-aditivo');
+      const tipoTermoInput = document.getElementById('credenciamento-termo-tipo-termo');
+      const representanteInput = document.getElementById('credenciamento-termo-representante');
+      const cpfRepresentanteInput = document.getElementById('credenciamento-termo-cpf-representante');
+      const rgRepresentanteInput = document.getElementById('credenciamento-termo-rg-representante');
+      const logradouroInput = document.getElementById('credenciamento-termo-logradouro');
+      const bairroInput = document.getElementById('credenciamento-termo-bairro');
+      const municipioInput = document.getElementById('credenciamento-termo-municipio');
+      const especificacaoSeiInput = document.getElementById('credenciamento-termo-especificacao-sei');
+      const valorContratoInput = document.getElementById('credenciamento-termo-valor-contrato');
+      const valorContratoAtualizadoInput = document.getElementById('credenciamento-termo-valor-contrato-atualizado');
+      const folhasInput = document.getElementById('credenciamento-termo-folhas');
+      const dataPublicacaoInput = document.getElementById('credenciamento-termo-data-publicacao');
+      const vencimentoGeralInput = document.getElementById('credenciamento-termo-vencimento-geral');
+      const mesRenovacaoInput = document.getElementById('credenciamento-termo-mes-renovacao');
+      const tpOptanteInput = document.getElementById('credenciamento-termo-tp-optante');
+      const infoSeiInput = document.getElementById('credenciamento-termo-info-sei');
+      const objetoInput = document.getElementById('credenciamento-termo-objeto');
+
+      const errors = {
+        codigoXml: document.getElementById('credenciamento-termo-codigo-xml-error'),
+        aditivo: document.getElementById('credenciamento-termo-aditivo-error'),
+        termoAdesao: document.getElementById('credenciamento-termo-termo-adesao-error'),
+        sei: document.getElementById('credenciamento-termo-sei-error'),
+        credenciado: document.getElementById('credenciamento-termo-credenciado-error'),
+        credenciadaCodigo: document.getElementById('credenciamento-termo-credenciada-codigo-error'),
+        cnpjCpf: document.getElementById('credenciamento-termo-cnpj-cpf-error'),
+        situacaoPublicacao: document.getElementById('credenciamento-termo-situacao-publicacao-error'),
+        situacaoEmissao: document.getElementById('credenciamento-termo-situacao-emissao-error'),
+        statusTermo: document.getElementById('credenciamento-termo-status-termo-error'),
+        statusAditivo: document.getElementById('credenciamento-termo-status-aditivo-error'),
+        checkAditivo: document.getElementById('credenciamento-termo-check-aditivo-error'),
+        inicioVigencia: document.getElementById('credenciamento-termo-inicio-vigencia-error'),
+        terminoVigencia: document.getElementById('credenciamento-termo-termino-vigencia-error'),
+        compDataAditivo: document.getElementById('credenciamento-termo-comp-data-aditivo-error'),
+        dataPubAditivo: document.getElementById('credenciamento-termo-data-pub-aditivo-error'),
+        tipoTermo: document.getElementById('credenciamento-termo-tipo-termo-error'),
+        representante: document.getElementById('credenciamento-termo-representante-error'),
+        cpfRepresentante: document.getElementById('credenciamento-termo-cpf-representante-error'),
+        rgRepresentante: document.getElementById('credenciamento-termo-rg-representante-error'),
+        logradouro: document.getElementById('credenciamento-termo-logradouro-error'),
+        bairro: document.getElementById('credenciamento-termo-bairro-error'),
+        municipio: document.getElementById('credenciamento-termo-municipio-error'),
+        especificacaoSei: document.getElementById('credenciamento-termo-especificacao-sei-error'),
+        valorContrato: document.getElementById('credenciamento-termo-valor-contrato-error'),
+        valorContratoAtualizado: document.getElementById('credenciamento-termo-valor-contrato-atualizado-error'),
+        folhas: document.getElementById('credenciamento-termo-folhas-error'),
+        dataPublicacao: document.getElementById('credenciamento-termo-data-publicacao-error'),
+        vencimentoGeral: document.getElementById('credenciamento-termo-vencimento-geral-error'),
+        mesRenovacao: document.getElementById('credenciamento-termo-mes-renovacao-error'),
+        tpOptante: document.getElementById('credenciamento-termo-tp-optante-error'),
+        infoSei: document.getElementById('credenciamento-termo-info-sei-error'),
+        objeto: document.getElementById('credenciamento-termo-objeto-error'),
+      };
+
+      const pageSize = 20;
+      const rejectionPageSize = 20;
+      const defaultImportFileName = 'Credenciamento_Termo.xml';
+      let editingCodigo = null;
+      let currentPage = 1;
+      let totalPages = 1;
+      let currentSearch = '';
+      let currentSortBy = 'codigo';
+      let currentSortDirection = 'asc';
+      let currentRejectionPage = 1;
+      let totalRejectionPages = 1;
+      let currentRejectionSearch = '';
+      let bannerTimeoutId = null;
+
+      const normalizeText = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trim().toUpperCase().slice(0, maxLength);
+      const normalizeIntegerInput = (value, maxDigits = 10) => value.replace(/\D/g, '').slice(0, maxDigits);
+      const normalizeCpf = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+        if (digits.length <= 3) return digits;
+        if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+        if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+        return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+      };
+      const normalizeDecimalInput = (value) => value.replace(/[^0-9,.-]/g, '').replace(/(,.*),/g, '$1').slice(0, 20);
+
+      const resetMessages = () => {
+        Object.values(errors).forEach((element) => {
+          if (element) {
+            element.textContent = '';
+          }
+        });
+        feedback.textContent = '';
+      };
+
+      const getRequestErrorMessage = async (response, fallback) => {
+        try {
+          const payload = await response.json();
+          return payload.message || fallback;
+        } catch (_) {
+          return fallback;
+        }
+      };
+
+      const showBanner = (message, tone = 'success') => {
+        statusBanner.textContent = message;
+        statusBanner.classList.remove('dsc-hidden');
+        statusBanner.dataset.tone = tone;
+
+        if (bannerTimeoutId) {
+          window.clearTimeout(bannerTimeoutId);
+        }
+
+        bannerTimeoutId = window.setTimeout(() => {
+          statusBanner.classList.add('dsc-hidden');
+          statusBanner.textContent = '';
+        }, 3500);
+      };
+
+      const hidePanels = () => {
+        form.classList.add('dsc-hidden');
+        importForm.classList.add('dsc-hidden');
+        rejectionPanel.classList.add('dsc-hidden');
+      };
+
+      const clearForm = () => {
+        editingCodigo = null;
+        formTitle.textContent = 'Novo registro';
+        form.reset();
+        credenciadaCodigoInput.value = '';
+        cnpjCpfInput.value = '';
+        checkAditivoInput.value = '1';
+        importFileNameInput.value = defaultImportFileName;
+        resetMessages();
+      };
+
+      const fillForm = (item) => {
+        editingCodigo = item.codigo;
+        formTitle.textContent = `Editar registro ${item.codigo}`;
+        codigoXmlInput.value = item.codigo_xml || '';
+        aditivoInput.value = item.aditivo || '';
+        termoAdesaoInput.value = item.termo_adesao || '';
+        seiInput.value = item.sei || '';
+        credenciadoInput.value = item.credenciado || '';
+        credenciadaCodigoInput.value = item.credenciada_codigo || '';
+        cnpjCpfInput.value = item.cnpj_cpf || '';
+        situacaoPublicacaoInput.value = item.situacao_publicacao || '';
+        situacaoEmissaoInput.value = item.situacao_emissao || '';
+        statusTermoInput.value = item.status_termo || '';
+        statusAditivoInput.value = item.status_aditivo || '';
+        checkAditivoInput.value = item.check_aditivo || '';
+        inicioVigenciaInput.value = item.inicio_vigencia || '';
+        terminoVigenciaInput.value = item.termino_vigencia || '';
+        compDataAditivoInput.value = item.comp_data_aditivo || '';
+        dataPubAditivoInput.value = item.data_pub_aditivo || '';
+        tipoTermoInput.value = item.tipo_termo || '';
+        representanteInput.value = item.representante || '';
+        cpfRepresentanteInput.value = item.cpf_representante || '';
+        rgRepresentanteInput.value = item.rg_representante || '';
+        logradouroInput.value = item.logradouro || '';
+        bairroInput.value = item.bairro || '';
+        municipioInput.value = item.municipio || '';
+        especificacaoSeiInput.value = item.especificacao_sei || '';
+        valorContratoInput.value = item.valor_contrato || '';
+        valorContratoAtualizadoInput.value = item.valor_contrato_atualizado || '';
+        folhasInput.value = item.folhas || '';
+        dataPublicacaoInput.value = item.data_publicacao || '';
+        vencimentoGeralInput.value = item.vencimento_geral || '';
+        mesRenovacaoInput.value = item.mes_renovacao || '';
+        tpOptanteInput.value = item.tp_optante || '';
+        infoSeiInput.value = item.info_sei || '';
+        objetoInput.value = item.objeto || '';
+      };
+
+      const buildUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          pageSize: String(pageSize),
+          sortBy: currentSortBy,
+          sortDirection: currentSortDirection,
+        });
+
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+
+        return `/api/credenciamento-termo?${params.toString()}`;
+      };
+
+      const buildRejectionUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentRejectionPage),
+          pageSize: String(rejectionPageSize),
+        });
+
+        if (currentRejectionSearch) {
+          params.set('search', currentRejectionSearch);
+        }
+
+        return `/api/credenciamento-termo/import-rejections?${params.toString()}`;
+      };
+
+      const renderGrid = (items) => {
+        if (!items.length) {
+          gridBody.innerHTML = '';
+          emptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        emptyState.classList.add('dsc-hidden');
+        gridBody.innerHTML = items.map((item) => `
+          <tr>
+            <td>${item.codigo}</td>
+            <td>${item.codigo_xml || ''}</td>
+            <td>${item.termo_adesao || ''}</td>
+            <td>${item.credenciado || ''}</td>
+            <td>${item.aditivo || ''}</td>
+            <td>${item.inicio_vigencia || ''}</td>
+            <td>${item.termino_vigencia || ''}</td>
+            <td>${item.status_aditivo || ''}</td>
+            <td class="dsc-grid-actions-cell">
+              <button type="button" class="dsc-btn dsc-btn-white dsc-btn-small" data-action="edit" data-codigo="${item.codigo}">Editar</button>
+              <button type="button" class="dsc-btn dsc-btn-white dsc-btn-small" data-action="delete" data-codigo="${item.codigo}">Excluir</button>
+            </td>
+          </tr>
+        `).join('');
+
+        Array.from(gridBody.querySelectorAll('button[data-action="edit"]')).forEach((button) => {
+          button.addEventListener('click', () => {
+            const item = items.find((current) => current.codigo === button.dataset.codigo);
+            if (!item) {
+              return;
+            }
+            hidePanels();
+            fillForm(item);
+            form.classList.remove('dsc-hidden');
+          });
+        });
+
+        Array.from(gridBody.querySelectorAll('button[data-action="delete"]')).forEach((button) => {
+          button.addEventListener('click', async () => {
+            const codigo = button.dataset.codigo;
+            if (!codigo || !window.confirm('Confirma a exclusao do registro?')) {
+              return;
+            }
+
+            try {
+              const response = await fetch(`/api/credenciamento-termo/${encodeURIComponent(codigo)}`, { method: 'DELETE' });
+              if (!response.ok) {
+                throw new Error(await getRequestErrorMessage(response, 'Falha ao excluir o registro.'));
+              }
+
+              showBanner('Registro excluido com sucesso.');
+              await loadItems();
+            } catch (error) {
+              showBanner(error instanceof Error ? error.message : 'Falha ao excluir o registro.', 'error');
+            }
+          });
+        });
+      };
+
+      const renderRejectionGrid = (items) => {
+        if (!items.length) {
+          rejectionGridBody.innerHTML = '';
+          rejectionEmptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        rejectionEmptyState.classList.add('dsc-hidden');
+        rejectionGridBody.innerHTML = items.map((item) => `
+          <tr>
+            <td>${item.data_importacao || ''}</td>
+            <td>${item.arquivo_xml || ''}</td>
+            <td>${item.linha_xml || ''}</td>
+            <td>${item.codigo_xml || ''}</td>
+            <td>${item.credenciado_xml || ''}</td>
+            <td>${item.aditivo_xml || ''}</td>
+            <td>${item.motivo_recusa || ''}</td>
+          </tr>
+        `).join('');
+      };
+
+      const loadItems = async () => {
+        gridFeedback.textContent = 'Carregando registros...';
+
+        try {
+          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          if (!response.ok) {
+            throw new Error(await getRequestErrorMessage(response, 'Falha ao consultar registros.'));
+          }
+
+          const payload = await response.json();
+          renderGrid(payload.items || []);
+          totalLabel.textContent = `${payload.total || 0} registro(s)`;
+          totalPages = payload.totalPages || 1;
+          paginationInfo.textContent = `Pagina ${payload.page || 1} de ${totalPages}`;
+          currentSortBy = payload.sortBy || 'codigo';
+          currentSortDirection = payload.sortDirection || 'asc';
+          sortIndicator.textContent = currentSortDirection === 'desc' ? '↓' : '↑';
+          previousPageButton.disabled = currentPage <= 1;
+          nextPageButton.disabled = currentPage >= totalPages;
+          gridFeedback.textContent = '';
+        } catch (error) {
+          gridBody.innerHTML = '';
+          emptyState.classList.remove('dsc-hidden');
+          gridFeedback.textContent = error instanceof Error ? error.message : 'Falha ao consultar registros.';
+        }
+      };
+
+      const loadRejections = async () => {
+        rejectionGridFeedback.textContent = 'Carregando recusas...';
+
+        try {
+          const response = await fetch(buildRejectionUrl(), { headers: { Accept: 'application/json' } });
+          if (!response.ok) {
+            throw new Error(await getRequestErrorMessage(response, 'Falha ao consultar recusas.'));
+          }
+
+          const payload = await response.json();
+          renderRejectionGrid(payload.items || []);
+          rejectionTotalLabel.textContent = `${payload.total || 0} recusa(s)`;
+          totalRejectionPages = payload.totalPages || 1;
+          rejectionPaginationInfo.textContent = `Pagina ${payload.page || 1} de ${totalRejectionPages}`;
+          previousRejectionPageButton.disabled = currentRejectionPage <= 1;
+          nextRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
+          rejectionGridFeedback.textContent = '';
+        } catch (error) {
+          rejectionGridBody.innerHTML = '';
+          rejectionEmptyState.classList.remove('dsc-hidden');
+          rejectionGridFeedback.textContent = error instanceof Error ? error.message : 'Falha ao consultar recusas.';
+        }
+      };
+
+      const syncCredenciadaByName = async () => {
+        const credenciado = normalizeText(credenciadoInput.value, 255);
+        credenciadoInput.value = credenciado;
+
+        if (!credenciado) {
+          credenciadaCodigoInput.value = '';
+          cnpjCpfInput.value = '';
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/credenciada/lookup?credenciado=${encodeURIComponent(credenciado)}`);
+          if (!response.ok) {
+            throw new Error(await getRequestErrorMessage(response, 'Falha ao localizar credenciada.'));
+          }
+
+          const payload = await response.json();
+          credenciadoInput.value = payload.item.credenciado || credenciado;
+          credenciadaCodigoInput.value = payload.item.codigo || '';
+          cnpjCpfInput.value = payload.item.cnpj_cpf || '';
+          errors.credenciado.textContent = '';
+        } catch (error) {
+          credenciadaCodigoInput.value = '';
+          cnpjCpfInput.value = '';
+          errors.credenciado.textContent = error instanceof Error ? error.message : 'Falha ao localizar credenciada.';
+        }
+      };
+
+      const collectPayload = () => ({
+        codigoXml: normalizeIntegerInput(codigoXmlInput.value, 10),
+        aditivo: normalizeIntegerInput(aditivoInput.value, 2),
+        termoAdesao: normalizeText(termoAdesaoInput.value, 255),
+        sei: normalizeText(seiInput.value, 255),
+        credenciado: normalizeText(credenciadoInput.value, 255),
+        credenciadaCodigo: normalizeIntegerInput(credenciadaCodigoInput.value, 10),
+        situacaoPublicacao: normalizeText(situacaoPublicacaoInput.value, 100),
+        situacaoEmissao: normalizeText(situacaoEmissaoInput.value, 100),
+        statusTermo: normalizeText(statusTermoInput.value, 100),
+        statusAditivo: normalizeText(statusAditivoInput.value, 100),
+        checkAditivo: normalizeIntegerInput(checkAditivoInput.value, 2),
+        inicioVigencia: inicioVigenciaInput.value,
+        terminoVigencia: terminoVigenciaInput.value,
+        compDataAditivo: compDataAditivoInput.value,
+        dataPubAditivo: dataPubAditivoInput.value,
+        tipoTermo: normalizeText(tipoTermoInput.value, 100),
+        representante: normalizeText(representanteInput.value, 255),
+        cpfRepresentante: normalizeCpf(cpfRepresentanteInput.value),
+        rgRepresentante: normalizeText(rgRepresentanteInput.value, 30),
+        logradouro: normalizeText(logradouroInput.value, 255),
+        bairro: normalizeText(bairroInput.value, 120),
+        municipio: normalizeText(municipioInput.value, 120),
+        especificacaoSei: normalizeText(especificacaoSeiInput.value, 255),
+        valorContrato: normalizeDecimalInput(valorContratoInput.value),
+        valorContratoAtualizado: normalizeDecimalInput(valorContratoAtualizadoInput.value),
+        folhas: normalizeText(folhasInput.value, 50),
+        dataPublicacao: dataPublicacaoInput.value,
+        vencimentoGeral: vencimentoGeralInput.value,
+        mesRenovacao: normalizeText(mesRenovacaoInput.value, 50),
+        tpOptante: normalizeText(tpOptanteInput.value, 20),
+        infoSei: normalizeText(infoSeiInput.value, 100),
+        objeto: normalizeText(objetoInput.value, 1000),
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        resetMessages();
+        const payload = collectPayload();
+
+        if (!payload.credenciado) {
+          errors.credenciado.textContent = 'Informe o credenciado.';
+          return;
+        }
+
+        feedback.textContent = 'Salvando registro...';
+
+        try {
+          const response = await fetch(editingCodigo ? `/api/credenciamento-termo/${encodeURIComponent(editingCodigo)}` : '/api/credenciamento-termo', {
+            method: editingCodigo ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const responsePayload = await response.json().catch(() => ({}));
+            if (responsePayload.errors) {
+              Object.entries(responsePayload.errors).forEach(([key, value]) => {
+                if (errors[key]) {
+                  errors[key].textContent = value;
+                }
+              });
+            }
+            throw new Error(responsePayload.message || 'Falha ao salvar o registro.');
+          }
+
+          hidePanels();
+          clearForm();
+          showBanner(editingCodigo ? 'Registro alterado com sucesso.' : 'Registro cadastrado com sucesso.');
+          await loadItems();
+        } catch (error) {
+          feedback.textContent = error instanceof Error ? error.message : 'Falha ao salvar o registro.';
+        }
+      });
+
+      importForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        importFileNameError.textContent = '';
+        importFeedback.textContent = '';
+        const fileName = importFileNameInput.value.trim() || defaultImportFileName;
+        importFileNameInput.value = fileName;
+
+        if (!fileName) {
+          importFileNameError.textContent = 'Informe o nome do arquivo XML.';
+          return;
+        }
+
+        importFeedback.textContent = 'Executando importacao...';
+
+        try {
+          const response = await fetch('/api/credenciamento-termo/import-xml', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ fileName }),
+          });
+
+          if (!response.ok) {
+            throw new Error(await getRequestErrorMessage(response, 'Falha ao importar XML.'));
+          }
+
+          const payload = await response.json();
+          importFeedback.textContent = `Importacao concluida: ${payload.processed || 0} processado(s), ${payload.inserted || 0} inserido(s), ${payload.updated || 0} atualizado(s), ${payload.skipped || 0} recusa(s).`;
+          showBanner(payload.message || 'Importacao concluida com sucesso.');
+          await loadItems();
+        } catch (error) {
+          importFeedback.textContent = error instanceof Error ? error.message : 'Falha ao importar XML.';
+        }
+      });
+
+      filterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentPage = 1;
+        currentSearch = searchInput.value.trim();
+        void loadItems();
+      });
+
+      rejectionFilterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentRejectionPage = 1;
+        currentRejectionSearch = rejectionSearchInput.value.trim();
+        void loadRejections();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      clearRejectionFilterButton.addEventListener('click', () => {
+        rejectionSearchInput.value = '';
+        currentRejectionSearch = '';
+        currentRejectionPage = 1;
+        void loadRejections();
+      });
+
+      insertButton.addEventListener('click', () => {
+        hidePanels();
+        clearForm();
+        form.classList.remove('dsc-hidden');
+      });
+
+      cancelButton.addEventListener('click', () => {
+        hidePanels();
+        clearForm();
+      });
+
+      importButton.addEventListener('click', () => {
+        hidePanels();
+        importFileNameInput.value = defaultImportFileName;
+        importFeedback.textContent = '';
+        importForm.classList.remove('dsc-hidden');
+      });
+
+      cancelImportButton.addEventListener('click', () => {
+        hidePanels();
+      });
+
+      rejectionButton.addEventListener('click', async () => {
+        hidePanels();
+        rejectionPanel.classList.remove('dsc-hidden');
+        await loadRejections();
+      });
+
+      closeRejectionPanelButton.addEventListener('click', () => {
+        rejectionPanel.classList.add('dsc-hidden');
+      });
+
+      previousPageButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage -= 1;
+          void loadItems();
+        }
+      });
+
+      nextPageButton.addEventListener('click', () => {
+        if (currentPage < totalPages) {
+          currentPage += 1;
+          void loadItems();
+        }
+      });
+
+      previousRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage > 1) {
+          currentRejectionPage -= 1;
+          void loadRejections();
+        }
+      });
+
+      nextRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage < totalRejectionPages) {
+          currentRejectionPage += 1;
+          void loadRejections();
+        }
+      });
+
+      sortButton.addEventListener('click', () => {
+        if (currentSortBy === 'termo_adesao') {
+          currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          currentSortBy = 'termo_adesao';
+          currentSortDirection = 'asc';
+        }
+        currentPage = 1;
+        void loadItems();
+      });
+
+      credenciadoInput.addEventListener('blur', () => {
+        void syncCredenciadaByName();
+      });
+
+      codigoXmlInput.addEventListener('input', () => { codigoXmlInput.value = normalizeIntegerInput(codigoXmlInput.value, 10); });
+      aditivoInput.addEventListener('input', () => { aditivoInput.value = normalizeIntegerInput(aditivoInput.value, 2); });
+      checkAditivoInput.addEventListener('input', () => { checkAditivoInput.value = normalizeIntegerInput(checkAditivoInput.value, 2); });
+      cpfRepresentanteInput.addEventListener('input', () => { cpfRepresentanteInput.value = normalizeCpf(cpfRepresentanteInput.value); });
+      valorContratoInput.addEventListener('input', () => { valorContratoInput.value = normalizeDecimalInput(valorContratoInput.value); });
+      valorContratoAtualizadoInput.addEventListener('input', () => { valorContratoAtualizadoInput.value = normalizeDecimalInput(valorContratoAtualizadoInput.value); });
+
+      clearForm();
+      void loadItems();
+    </script>
+  </body>
+</html>
