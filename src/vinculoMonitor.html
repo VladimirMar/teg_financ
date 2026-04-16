@@ -180,6 +180,8 @@
                       <th>Num OS</th>
                       <th>Revisao</th>
                       <th>Data inclusao</th>
+                      <th>ID Cred.</th>
+                      <th>ID Monitor</th>
                       <th>Acoes</th>
                     </tr>
                   </thead>
@@ -544,6 +546,8 @@
               <td>${item.num_os || ''}</td>
               <td>${item.revisao || ''}</td>
               <td>${formatDateTime(item.data_inclusao)}</td>
+              <td>${item.credenciada_codigo || ''}</td>
+              <td>${item.monitor_codigo || ''}</td>
               <td>
                 <div class="dsc-access-grid-actions">
                   <button type="button" class="dsc-btn dsc-btn-white dsc-btn-small" data-action="view">Consulta</button>

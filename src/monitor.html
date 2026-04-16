@@ -98,7 +98,7 @@
               <div class="dsc-form-tab-panel dsc-form-tab-panel-active" id="monitor-tab-cadastro">
               <label class="dsc-field-group" for="monitor-codigo">
                 <span>Codigo</span>
-                <input class="dsc-form-control" id="monitor-codigo" type="text" inputmode="numeric" placeholder="Digite o codigo" />
+                <input class="dsc-form-control" id="monitor-codigo" type="text" inputmode="numeric" placeholder="Gerado automaticamente" />
                 <div class="dsc-form-error" id="monitor-codigo-error"></div>
               </label>
 
@@ -167,16 +167,16 @@
 
               <div class="dsc-form-tab-panel dsc-vinculo-tab-panel" id="monitor-tab-vinculos">
                 <section class="dsc-form-section-card dsc-vinculo-form-card">
-                  <h3 class="dsc-form-section-title">Vínculos do monitor</h3>
+                  <h3 class="dsc-form-section-title" id="monitor-vinculo-title">Vínculos do monitor</h3>
 
                   <div class="dsc-access-grid-wrapper dsc-vinculo-grid-wrapper">
                     <table class="dsc-access-grid dsc-vinculo-grid">
                       <thead>
                         <tr>
                           <th>Data OS</th>
-                          <th>Termo de adesão</th>
-                          <th>Admissão do monitor</th>
-                          <th>CPF monitor</th>
+                          <th>Credenciada</th>
+                          <th>Admissão</th>
+                          <th>OS</th>
                         </tr>
                       </thead>
                       <tbody id="monitor-vinculo-grid-body"></tbody>
@@ -533,11 +533,13 @@
 
         items.forEach((item) => {
           const row = document.createElement('tr');
+          const osParts = [item.termo_adesao, item.num_os, item.revisao].filter(Boolean);
+          const osLabel = osParts.length ? osParts.join('-') : '';
           row.innerHTML = `
             <td>${formatPopupDateTime(item.data_os)}</td>
-            <td>${item.termo_adesao || ''}</td>
+            <td title="${item.credenciado || ''}">${(item.credenciado || '').substring(0, 30)}</td>
             <td>${formatPopupDateTime(item.data_admissao_monitor)}</td>
-            <td>${item.cpf_monitor || ''}</td>
+            <td>${osLabel}</td>
           `;
           vinculoGridBody.appendChild(row);
         });
@@ -557,6 +559,13 @@
 
         vinculoFeedback.textContent = 'Carregando vínculos do monitor...';
         vinculoFeedback.className = 'dsc-feedback';
+
+        const vinculoTitleEl = document.getElementById('monitor-vinculo-title');
+        if (vinculoTitleEl) {
+          const nomePart = nomeInput.value ? ` – ${nomeInput.value}` : '';
+          const cpfPart = cpfValue ? ` (${cpfValue})` : '';
+          vinculoTitleEl.textContent = `Vínculos do monitor${nomePart}${cpfPart}`;
+        }
 
         try {
           const response = await fetch(`/api/vinculo-monitor?page=1&pageSize=1000&search=${encodeURIComponent(cpfValue)}`, {
@@ -600,9 +609,10 @@
       };
 
       const setFormReadOnly = (isReadOnly) => {
-        [codigoInput, nomeInput, cpfInput, rgInput, cursoInput, validadeCursoInput, nascimentoInput].forEach((input) => {
+        [nomeInput, cpfInput, rgInput, cursoInput, validadeCursoInput, nascimentoInput].forEach((input) => {
           input.readOnly = isReadOnly;
         });
+        codigoInput.readOnly = true;
         form.querySelectorAll('input[type="radio"], input[type="checkbox"], input[type="date"], select').forEach((input) => {
           input.disabled = isReadOnly;
         });
@@ -958,7 +968,7 @@
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const codigo = normalizeCodigo(codigoInput.value);
+        const codigo = editingCodigo ? normalizeCodigo(codigoInput.value) : '';
         const monitor = normalizeName(nomeInput.value);
         const cpfMonitor = normalizeCpf(cpfInput.value);
         const rgMonitor = normalizeRg(rgInput.value);
@@ -980,7 +990,7 @@
         cpfInput.value = cpfMonitor;
         rgInput.value = rgMonitor;
 
-        if (!codigo) {
+        if (editingCodigo && !codigo) {
           codigoError.textContent = 'Informe o codigo.';
           hasError = true;
         }
@@ -1041,7 +1051,7 @@
               Accept: 'application/json',
             },
             body: JSON.stringify({
-              codigo,
+              codigo: editingCodigo ? codigo : null,
               monitor,
               rgMonitor,
               cpfMonitor,

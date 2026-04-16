@@ -522,7 +522,11 @@
       let isInsertNewTerm = false;
       let isRevisionInsertion = false;
       let isSubstitutionInsertion = false;
+      let isActivationInsertion = false;
       let substitutionSourceCodigo = null;
+      let activationSourceEncerramento = null;
+      let initialTrackedFormState = null;
+      let requireFormChangeToSave = false;
       let suppressTermoBlurValidation = false;
       let bannerTimeoutId = null;
       let credenciadaSuggestionRequestId = 0;
@@ -780,6 +784,54 @@
         feedback.className = 'dsc-feedback';
       };
 
+      const serializeTrackedFormState = () => {
+        const trackedState = {};
+
+        form.querySelectorAll('input:not([type="button"]):not([type="submit"]), textarea, select').forEach((element) => {
+          if (!element.id) {
+            return;
+          }
+
+          if (element instanceof HTMLInputElement && (element.type === 'radio' || element.type === 'checkbox')) {
+            trackedState[element.id] = element.checked;
+            return;
+          }
+
+          trackedState[element.id] = element.value;
+        });
+
+        return trackedState;
+      };
+
+      const hasTrackedFormChanges = () => {
+        if (!requireFormChangeToSave || !initialTrackedFormState) {
+          return true;
+        }
+
+        return JSON.stringify(serializeTrackedFormState()) !== JSON.stringify(initialTrackedFormState);
+      };
+
+      const updateSaveButtonAvailability = () => {
+        if (formMode === 'view' || formMode === 'hidden') {
+          saveButton.disabled = false;
+          return;
+        }
+
+        saveButton.disabled = requireFormChangeToSave && !hasTrackedFormChanges();
+      };
+
+      const clearSaveChangeRequirement = () => {
+        initialTrackedFormState = null;
+        requireFormChangeToSave = false;
+        updateSaveButtonAvailability();
+      };
+
+      const armSaveChangeRequirement = () => {
+        initialTrackedFormState = serializeTrackedFormState();
+        requireFormChangeToSave = true;
+        updateSaveButtonAvailability();
+      };
+
       const resetImportMessages = () => {
         importFileNameError.textContent = '';
         importFeedback.textContent = '';
@@ -916,6 +968,7 @@
           saveButton.textContent = 'Salvar OrdemServico';
         }
 
+        updateSaveButtonAvailability();
         focusFormForMode(mode);
       };
 
@@ -936,10 +989,13 @@
         editingCodigo = null;
         formMode = 'hidden';
         isSubstitutionInsertion = false;
+        isActivationInsertion = false;
         substitutionSourceCodigo = null;
+        activationSourceEncerramento = null;
         suppressTermoBlurValidation = false;
         clearLookupFields();
         clearViewOnlyLock();
+        clearSaveChangeRequirement();
         renderDreOptions('');
         renderModalidadeOptions('');
         tipoTrocaInput.value = '';
@@ -1312,11 +1368,13 @@
 
         const isEditing = editingCodigo !== null;
         const isStandardInsert = formMode === 'insert';
+        const hasDerivedOsIdentity = isSubstitutionInsertion || isActivationInsertion;
 
-        termoAdesaoInput.readOnly = isEditing || isSubstitutionInsertion;
-        numOsInput.readOnly = isEditing || isSubstitutionInsertion || isStandardInsert;
+        termoAdesaoInput.readOnly = isEditing || hasDerivedOsIdentity;
+        numOsInput.readOnly = isEditing || hasDerivedOsIdentity || isStandardInsert;
         revisaoInput.readOnly = isEditing || isStandardInsert;
-        addNumOsButton.disabled = isEditing || isSubstitutionInsertion || isStandardInsert;
+        vigenciaOsInput.disabled = isEditing || isSubstitutionInsertion;
+        addNumOsButton.disabled = isEditing || hasDerivedOsIdentity || isStandardInsert;
         addRevisaoButton.disabled = isEditing || isStandardInsert;
       };
 
@@ -1426,9 +1484,10 @@
             <td>
               <div class="dsc-grid-actions">
                 <button type="button" class="dsc-grid-action-button" data-action="view" data-codigo="${item.codigo}">Consulta</button>
-                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Corrigir</button>
-                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="substitute" data-codigo="${item.codigo}">Substituir</button>
-                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}">Excluir</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}"${item.situacao === 'Cancelado' ? ' disabled' : ''}>Corrigir</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="substitute" data-codigo="${item.codigo}"${item.situacao === 'Cancelado' ? ' disabled' : ''}>Substituir</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}"${item.situacao === 'Cancelado' ? ' disabled' : ''}>Cancelar</button>
+                <button type="button" class="dsc-grid-action-button" data-action="activate" data-codigo="${item.codigo}"${(item.situacao !== 'Cancelado' && item.situacao !== 'Inativo') ? ' disabled' : ''}>Ativar</button>
               </div>
             </td>
           `;
@@ -1523,6 +1582,59 @@
         }
 
         return payload.item;
+      };
+
+      const getActiveCpfExcludeCodigo = () => {
+        if (Number.isInteger(editingCodigo) && editingCodigo > 0) {
+          return editingCodigo;
+        }
+
+        if (Number.isInteger(substitutionSourceCodigo) && substitutionSourceCodigo > 0) {
+          return substitutionSourceCodigo;
+        }
+
+        return null;
+      };
+
+      const fetchActiveOrdemServicoByCpf = async (cpf, excludeCodigo = null) => {
+        const params = new URLSearchParams({ cpf });
+
+        if (Number.isInteger(excludeCodigo) && excludeCodigo > 0) {
+          params.set('excludeCodigo', String(excludeCodigo));
+        }
+
+        const response = await fetch(`/api/ordem-servico/active-cpf?${params.toString()}`, {
+          headers: { Accept: 'application/json' },
+        });
+        const payload = await readJsonResponse(response);
+
+        if (!response.ok) {
+          throw new Error(payload.message || 'Falha ao validar CPF em OrdemServico ativa.');
+        }
+
+        return payload.item || null;
+      };
+
+      const validateActiveOrdemServicoCpf = async ({ cpf, roleLabel, errorElement }) => {
+        if (!getDocumentDigits(cpf)) {
+          errorElement.textContent = '';
+          return true;
+        }
+
+        if (getSelectedSituacao() !== 'Ativo') {
+          errorElement.textContent = '';
+          return true;
+        }
+
+        const activeItem = await fetchActiveOrdemServicoByCpf(cpf, getActiveCpfExcludeCodigo());
+
+        if (!activeItem) {
+          errorElement.textContent = '';
+          return true;
+        }
+
+        errorElement.textContent = `CPF do ${roleLabel} ja utilizado na OrdemServico ativa ${activeItem.codigo} como ${activeItem.papel}.`;
+        return false;
       };
 
       const fetchNextNumOsByTermo = async (termoAdesao) => {
@@ -1646,7 +1758,7 @@
         }
       };
 
-      const syncCondutorByCpf = async (cpfInputElement, nameInputElement, errorElement, emptyMessage) => {
+      const syncCondutorByCpf = async (cpfInputElement, nameInputElement, errorElement, emptyMessage, roleLabel) => {
         const cpf = normalizeCpf(cpfInputElement.value);
         cpfInputElement.value = cpf;
 
@@ -1660,7 +1772,7 @@
           const item = await fetchLookupItem(`/api/condutor/lookup?cpf=${encodeURIComponent(cpf)}`, emptyMessage);
           cpfInputElement.value = normalizeCpf(String(item.cpf_condutor || cpf));
           nameInputElement.value = normalizeText(String(item.condutor || ''), 255);
-          errorElement.textContent = '';
+          await validateActiveOrdemServicoCpf({ cpf: cpfInputElement.value, roleLabel, errorElement });
         } catch (error) {
           nameInputElement.value = '';
           errorElement.textContent = getRequestErrorMessage(error, emptyMessage);
@@ -1725,7 +1837,7 @@
           const item = await fetchLookupItem(`/api/monitor/lookup?cpf=${encodeURIComponent(cpf)}`, 'Falha ao localizar monitor.');
           cpfMonitorInput.value = normalizeCpf(String(item.cpf_monitor || cpf));
           monitorInput.value = normalizeText(String(item.monitor || ''), 255);
-          cpfMonitorError.textContent = '';
+          await validateActiveOrdemServicoCpf({ cpf: cpfMonitorInput.value, roleLabel: 'monitor', errorElement: cpfMonitorError });
         } catch (error) {
           monitorInput.value = '';
           cpfMonitorError.textContent = getRequestErrorMessage(error, 'Falha ao localizar monitor.');
@@ -1779,23 +1891,27 @@
       const startInsert = ({ termoAdesao = '' } = {}) => {
         form.reset();
         clearLookupFields();
+        clearSaveChangeRequirement();
         isInsertNewTerm = false;
         isRevisionInsertion = false;
         isSubstitutionInsertion = false;
+        isActivationInsertion = false;
         substitutionSourceCodigo = null;
+        activationSourceEncerramento = null;
         tipoTrocaInput.value = '';
         termoAdesaoInput.value = normalizeTermoAdesao(String(termoAdesao || ''));
         numOsInput.value = '001';
         revisaoInput.value = '-S/R';
         osConcatInput.value = buildOsConcat({ termoAdesao: termoAdesaoInput.value, numOs: numOsInput.value, revisao: revisaoInput.value });
         editingCodigo = null;
-        vigenciaOsInput.min = getTomorrowDateInputValue();
+        vigenciaOsInput.min = getCurrentDateInputValue();
         dataAdmissaoCondutorInput.max = getCurrentDateInputValue();
         dataAdmissaoMonitorInput.max = getCurrentDateInputValue();
         setSelectedSituacao('Ativo');
         resetMessages();
         setGridMessage('');
         renderModalidadeOptions('');
+        situacaoRadios.forEach((radio) => { radio.disabled = false; });
         showForm('insert');
         updateInsertTermGuard({ showMissingError: false });
         applyInsertSpecificRules();
@@ -1814,6 +1930,7 @@
 
         searchInput.value = termoAdesao;
         startInsert({ termoAdesao });
+        await syncNextNumOsByTermo();
       };
 
       const handleAddNumOs = async () => {
@@ -1875,11 +1992,14 @@
 
         form.reset();
         clearLookupFields();
+        clearSaveChangeRequirement();
         editingCodigo = null;
         isInsertNewTerm = false;
         isRevisionInsertion = false;
         isSubstitutionInsertion = true;
+        isActivationInsertion = false;
         substitutionSourceCodigo = Number(item.codigo) || null;
+        activationSourceEncerramento = null;
         termoAdesaoInput.value = normalizeTermoAdesao(String(item.termo_adesao || ''));
         numOsInput.value = normalizeNumOs(String(item.num_os || ''));
         revisaoInput.value = normalizeRevisao(String(item.revisao || ''));
@@ -1902,7 +2022,7 @@
         monitorInput.value = item.monitor || '';
         dataAdmissaoMonitorInput.value = item.data_admissao_monitor || '';
         tipoTrocaInput.value = item.tipo_troca_descricao || '';
-        vigenciaOsInput.min = getTomorrowDateInputValue();
+        vigenciaOsInput.min = getCurrentDateInputValue();
         dataEncerramentoInput.value = '';
         anotacaoInput.value = item.anotacao || '';
         setSelectedSituacao(item.situacao || 'Ativo');
@@ -1917,19 +2037,24 @@
         updateInsertTermGuard({ showMissingError: false });
         applyInsertSpecificRules();
         applyIdentityFieldLock();
+        situacaoRadios.forEach((radio) => { radio.disabled = true; });
         void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
         await handleAddRevisao();
+        armSaveChangeRequirement();
         revisaoInput.focus();
         revisaoInput.select();
       };
 
       const populateFormFromItem = (item, mode = 'edit') => {
         const normalizedDre = normalizeOrdemServicoDre(item.dre_codigo || '', item.dre_descricao || '');
+        clearSaveChangeRequirement();
         editingCodigo = item.codigo;
         isInsertNewTerm = false;
         isRevisionInsertion = false;
         isSubstitutionInsertion = false;
+        isActivationInsertion = false;
         substitutionSourceCodigo = null;
+        activationSourceEncerramento = null;
         termoAdesaoInput.value = normalizeTermoAdesao(String(item.termo_adesao || ''));
         numOsInput.value = normalizeNumOs(String(item.num_os || ''));
         revisaoInput.value = normalizeRevisao(item.revisao || '');
@@ -1952,7 +2077,7 @@
         monitorInput.value = item.monitor || '';
         dataAdmissaoMonitorInput.value = item.data_admissao_monitor || '';
         tipoTrocaInput.value = item.tipo_troca_descricao || '';
-        vigenciaOsInput.min = getTomorrowDateInputValue();
+        vigenciaOsInput.min = '';
         dataEncerramentoInput.value = item.data_encerramento || '';
         anotacaoInput.value = item.anotacao || '';
         setSelectedSituacao(item.situacao || 'Ativo');
@@ -1962,6 +2087,7 @@
         renderTipoTrocaOptions(tipoTrocaInput.value);
         syncOsConcatInput();
         resetMessages();
+        situacaoRadios.forEach((radio) => { radio.disabled = false; });
         showForm(mode);
         updateInsertTermGuard();
         applyInsertSpecificRules();
@@ -1971,38 +2097,99 @@
 
       const startEdit = (item) => {
         populateFormFromItem(item, 'edit');
+        const substituidoRadio = document.getElementById('ordem-servico-situacao-substituido');
+        if (substituidoRadio) substituidoRadio.disabled = true;
+        armSaveChangeRequirement();
       };
 
       const startView = (item) => {
         populateFormFromItem(item, 'view');
       };
 
+      const startActivation = async (item) => {
+        const normalizedDre = normalizeOrdemServicoDre(item.dre_codigo || '', item.dre_descricao || '');
+
+        form.reset();
+        clearLookupFields();
+        clearSaveChangeRequirement();
+        editingCodigo = null;
+        isInsertNewTerm = false;
+        isRevisionInsertion = false;
+        isSubstitutionInsertion = false;
+        isActivationInsertion = true;
+        substitutionSourceCodigo = Number(item.codigo) || null;
+        activationSourceEncerramento = item.data_encerramento || null;
+        termoAdesaoInput.value = normalizeTermoAdesao(String(item.termo_adesao || ''));
+        numOsInput.value = normalizeNumOs(String(item.num_os || ''));
+        revisaoInput.value = normalizeRevisao(String(item.revisao || ''));
+        vigenciaOsInput.value = item.vigencia_os || '';
+        cnpjCpfInput.value = item.cnpj_cpf || '';
+        credenciadoInput.value = item.credenciado || '';
+        dreCodigoInput.value = normalizedDre.dreCodigo;
+        dreDescricaoInput.value = normalizedDre.dreDescricao;
+        modalidadeDescricaoInput.value = item.modalidade_descricao || normalizedDre.modalidadeDescricao;
+        cpfCondutorInput.value = item.cpf_condutor || '';
+        condutorInput.value = item.condutor || '';
+        dataAdmissaoCondutorInput.value = item.data_admissao_condutor || '';
+        cpfPrepostoInput.value = item.cpf_preposto || '';
+        prepostoCondutorInput.value = item.preposto_condutor || '';
+        prepostoInicioInput.value = item.preposto_inicio || '';
+        prepostoDiasInput.value = item.preposto_dias || '';
+        crmInput.value = item.crm || '';
+        veiculoPlacasInput.value = item.veiculo_placas || '';
+        cpfMonitorInput.value = item.cpf_monitor || '';
+        monitorInput.value = item.monitor || '';
+        dataAdmissaoMonitorInput.value = item.data_admissao_monitor || '';
+        tipoTrocaInput.value = item.tipo_troca_descricao || '';
+        vigenciaOsInput.min = getCurrentDateInputValue();
+        dataEncerramentoInput.value = '';
+        anotacaoInput.value = item.anotacao || '';
+        setSelectedSituacao('Ativo');
+        codigoAccessInput.value = item.codigo_access || '';
+        renderDreOptions(dreCodigoInput.value);
+        renderModalidadeOptions(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
+        renderTipoTrocaOptions(tipoTrocaInput.value);
+        syncOsConcatInput();
+        resetMessages();
+        setGridMessage('');
+        showForm('substitute');
+        updateInsertTermGuard({ showMissingError: false });
+        applyInsertSpecificRules();
+        applyIdentityFieldLock();
+        situacaoRadios.forEach((radio) => { radio.disabled = false; });
+        void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
+        await handleAddRevisao();
+        revisaoInput.focus();
+        revisaoInput.select();
+      };
+
       const handleDelete = async (item) => {
-        if (!window.confirm(`Excluir a OrdemServico ${item.codigo} - ${item.termo_adesao}/${item.num_os}?`)) {
+        if (!window.confirm(`Cancelar a OrdemServico ${item.codigo} - ${item.termo_adesao}/${item.num_os}?\n\nA situação será definida como "Cancelado" e a data de encerramento será hoje.`)) {
           return;
         }
 
-        setGridMessage(`Excluindo OrdemServico ${item.codigo}...`);
+        setGridMessage(`Cancelando OrdemServico ${item.codigo}...`);
 
         try {
           const response = await fetch(`/api/ordem-servico/${encodeURIComponent(item.codigo)}`, {
-            method: 'DELETE',
-            headers: { Accept: 'application/json' },
+            method: 'PATCH',
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ situacao: 'Cancelado', dataEncerramento: getCurrentDateInputValue() }),
           });
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
-            throw new Error(payload.message || 'Falha ao excluir OrdemServico.');
+            throw new Error(payload.message || 'Falha ao cancelar OrdemServico.');
           }
 
-          setGridMessage('OrdemServico excluida com sucesso.', 'success');
-          showBanner(`OrdemServico ${item.codigo} excluida com sucesso.`, 'success');
+          setGridMessage('OrdemServico cancelada com sucesso.', 'success');
+          showBanner(`OrdemServico ${item.codigo} cancelada com sucesso.`, 'success');
           if (editingCodigo === item.codigo) {
             hideForm();
           }
           await loadItems();
         } catch (error) {
-          const message = getRequestErrorMessage(error, 'Falha ao excluir OrdemServico.');
+          const message = getRequestErrorMessage(error, 'Falha ao cancelar OrdemServico.');
           setGridMessage(message, 'error');
           showBanner(message, 'error');
         }
@@ -2042,7 +2229,20 @@
 
         if (action === 'delete') {
           void handleDelete(item);
+          return;
         }
+
+        if (action === 'activate') {
+          void startActivation(item);
+        }
+      });
+
+      form.addEventListener('input', () => {
+        updateSaveButtonAvailability();
+      });
+
+      form.addEventListener('change', () => {
+        updateSaveButtonAvailability();
       });
 
       termoAdesaoInput.addEventListener('input', () => {
@@ -2057,7 +2257,10 @@
           return;
         }
 
-        updateInsertTermGuard({ focusIfMissing: true });
+        const hasTermo = updateInsertTermGuard({ focusIfMissing: true });
+        if (hasTermo && editingCodigo === null) {
+          void syncNextNumOsByTermo();
+        }
       });
 
       numOsInput.addEventListener('input', () => {
@@ -2090,8 +2293,8 @@
           return;
         }
 
-        vigenciaOsError.textContent = vigenciaOsInput.value <= getCurrentDateInputValue()
-          ? 'A vigencia da OS deve ser futura.'
+        vigenciaOsError.textContent = vigenciaOsInput.value < getCurrentDateInputValue()
+          ? 'A vig\u00eancia da OS n\u00e3o pode ser anterior a hoje.'
           : '';
       });
 
@@ -2119,7 +2322,7 @@
       });
 
       cpfCondutorInput.addEventListener('blur', () => {
-        void syncCondutorByCpf(cpfCondutorInput, condutorInput, cpfCondutorError, 'Falha ao localizar condutor.');
+        void syncCondutorByCpf(cpfCondutorInput, condutorInput, cpfCondutorError, 'Falha ao localizar condutor.', 'condutor');
       });
 
       openVinculoCondutorPopupButton.addEventListener('click', () => {
@@ -2136,7 +2339,7 @@
       });
 
       cpfPrepostoInput.addEventListener('blur', () => {
-        void syncCondutorByCpf(cpfPrepostoInput, prepostoCondutorInput, cpfPrepostoError, 'Falha ao localizar preposto.');
+        void syncCondutorByCpf(cpfPrepostoInput, prepostoCondutorInput, cpfPrepostoError, 'Falha ao localizar preposto.', 'preposto');
       });
 
       prepostoDiasInput.addEventListener('input', () => {
@@ -2186,6 +2389,13 @@
           return;
         }
 
+        if (requireFormChangeToSave && !hasTrackedFormChanges()) {
+          feedback.textContent = 'Altere ao menos um campo para salvar.';
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+          updateSaveButtonAvailability();
+          return;
+        }
+
         const payload = {
           codigoAccess: normalizeText(codigoAccessInput.value, 50),
           termoAdesao: normalizeTermoAdesao(termoAdesaoInput.value),
@@ -2208,6 +2418,7 @@
           tipoTroca: normalizeText(tipoTrocaInput.value, 255),
           dataEncerramento: dataEncerramentoInput.value,
           substitutionSourceCodigo: isSubstitutionInsertion ? substitutionSourceCodigo : null,
+          activationSourceCodigo: isActivationInsertion ? substitutionSourceCodigo : null,
           anotacao: normalizeAnnotation(anotacaoInput.value),
         };
         let hasError = false;
@@ -2238,11 +2449,14 @@
           hasError = true;
         }
 
-        if (!payload.vigenciaOs) {
+        if (editingCodigo === null && !payload.vigenciaOs) {
           vigenciaOsError.textContent = 'Informe a vigencia da OS.';
           hasError = true;
-        } else if (payload.vigenciaOs <= getCurrentDateInputValue()) {
-          vigenciaOsError.textContent = 'A vigencia da OS deve ser futura.';
+        } else if (editingCodigo === null && payload.vigenciaOs < getCurrentDateInputValue()) {
+          vigenciaOsError.textContent = 'A vig\u00eancia da OS n\u00e3o pode ser anterior a hoje.';
+          hasError = true;
+        } else if (editingCodigo === null && activationSourceEncerramento && payload.vigenciaOs <= activationSourceEncerramento) {
+          vigenciaOsError.textContent = `A vig\u00eancia deve ser posterior ao encerramento do registro anterior (${activationSourceEncerramento}).`;
           hasError = true;
         }
 
@@ -2257,18 +2471,12 @@
         }
 
 
-        if (!payload.dataAdmissaoCondutor) {
-          dataAdmissaoCondutorError.textContent = 'Informe a admissão do condutor.';
-          hasError = true;
-        } else if (payload.dataAdmissaoCondutor > getCurrentDateInputValue()) {
+        if (payload.dataAdmissaoCondutor && payload.dataAdmissaoCondutor > getCurrentDateInputValue()) {
           dataAdmissaoCondutorError.textContent = 'A admissão do condutor não pode ser futura.';
           hasError = true;
         }
 
-        if (!payload.dataAdmissaoMonitor) {
-          dataAdmissaoMonitorError.textContent = 'Informe a admissão do monitor.';
-          hasError = true;
-        } else if (payload.dataAdmissaoMonitor > getCurrentDateInputValue()) {
+        if (payload.dataAdmissaoMonitor && payload.dataAdmissaoMonitor > getCurrentDateInputValue()) {
           dataAdmissaoMonitorError.textContent = 'A admissão do monitor não pode ser futura.';
           hasError = true;
         }
@@ -2301,6 +2509,11 @@
           hasError = true;
         }
 
+        if ((payload.situacao === 'Cancelado' || payload.situacao === 'Inativo') && !payload.dataEncerramento) {
+          dataEncerramentoError.textContent = 'Informe a data de encerramento.';
+          hasError = true;
+        }
+
         if (hasError) {
           feedback.textContent = 'Corrija os campos para continuar.';
           feedback.classList.add('dsc-feedback-error');
@@ -2309,10 +2522,13 @@
 
         const isEditingRequest = editingCodigo !== null;
         const isSubstitutionRequest = isSubstitutionInsertion;
+        const isActivationRequest = isActivationInsertion;
 
         feedback.textContent = isEditingRequest
           ? 'Salvando alteracao...'
-          : isSubstitutionRequest
+          : isActivationRequest
+            ? 'Salvando ativacao...'
+            : isSubstitutionRequest
             ? 'Salvando substituicao...'
             : 'Salvando OrdemServico...';
 
@@ -2333,7 +2549,9 @@
 
           const successMessage = isEditingRequest
             ? 'OrdemServico alterada com sucesso.'
-            : isSubstitutionRequest
+            : isActivationRequest
+              ? 'OrdemServico ativada com sucesso.'
+              : isSubstitutionRequest
               ? 'Nova OrdemServico criada com sucesso.'
               : 'OrdemServico cadastrada com sucesso.';
 
