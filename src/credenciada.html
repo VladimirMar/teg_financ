@@ -142,7 +142,7 @@
 
                   <label class="dsc-field-group" for="credenciada-logradouro">
                     <span>Logradouro</span>
-                    <input class="dsc-form-control" id="credenciada-logradouro" type="text" placeholder="RUA, AVENIDA, NUMERO E COMPLEMENTO" maxlength="255" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciada-logradouro" type="text" placeholder="RUA, AVENIDA, NUMERO E COMPLEMENTO" maxlength="255" readonly />
                     <div class="dsc-form-error" id="credenciada-logradouro-error"></div>
                   </label>
                 </div>
@@ -150,14 +150,28 @@
                 <div class="dsc-form-row">
                   <label class="dsc-field-group" for="credenciada-bairro">
                     <span>Bairro</span>
-                    <input class="dsc-form-control" id="credenciada-bairro" type="text" placeholder="BAIRRO" maxlength="120" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciada-bairro" type="text" placeholder="BAIRRO" maxlength="120" readonly />
                     <div class="dsc-form-error" id="credenciada-bairro-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="credenciada-municipio">
                     <span>Municipio</span>
-                    <input class="dsc-form-control" id="credenciada-municipio" type="text" placeholder="MUNICIPIO" maxlength="120" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciada-municipio" type="text" placeholder="MUNICIPIO" maxlength="120" readonly />
                     <div class="dsc-form-error" id="credenciada-municipio-error"></div>
+                  </label>
+                </div>
+
+                <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciada-numero">
+                    <span>Numero</span>
+                    <input class="dsc-form-control" id="credenciada-numero" type="text" placeholder="NUMERO" maxlength="30" />
+                    <div class="dsc-form-error" id="credenciada-numero-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciada-complemento">
+                    <span>Complemento</span>
+                    <input class="dsc-form-control" id="credenciada-complemento" type="text" placeholder="COMPLEMENTO" maxlength="30" />
+                    <div class="dsc-form-error" id="credenciada-complemento-error"></div>
                   </label>
                 </div>
               </section>
@@ -241,6 +255,8 @@
       const logradouroInput = document.getElementById('credenciada-logradouro');
       const bairroInput = document.getElementById('credenciada-bairro');
       const cepInput = document.getElementById('credenciada-cep');
+      const numeroInput = document.getElementById('credenciada-numero');
+      const complementoInput = document.getElementById('credenciada-complemento');
       const municipioInput = document.getElementById('credenciada-municipio');
       const emailInput = document.getElementById('credenciada-email');
       const telefone1Input = document.getElementById('credenciada-telefone-1');
@@ -254,6 +270,8 @@
       const logradouroError = document.getElementById('credenciada-logradouro-error');
       const bairroError = document.getElementById('credenciada-bairro-error');
       const cepError = document.getElementById('credenciada-cep-error');
+      const numeroError = document.getElementById('credenciada-numero-error');
+      const complementoError = document.getElementById('credenciada-complemento-error');
       const municipioError = document.getElementById('credenciada-municipio-error');
       const emailError = document.getElementById('credenciada-email-error');
       const telefone1Error = document.getElementById('credenciada-telefone-1-error');
@@ -439,6 +457,8 @@
         logradouroError.textContent = '';
         bairroError.textContent = '';
         cepError.textContent = '';
+        numeroError.textContent = '';
+        complementoError.textContent = '';
         municipioError.textContent = '';
         emailError.textContent = '';
         telefone1Error.textContent = '';
@@ -488,7 +508,7 @@
       };
 
       const setFormReadOnly = (isReadOnly) => {
-        [nomeInput, cnpjCpfInput, logradouroInput, bairroInput, cepInput, municipioInput, emailInput, telefone1Input, telefone2Input, representanteInput, cpfRepresentanteInput, rgRepresentanteInput, statusInput].forEach((input) => {
+        [nomeInput, cnpjCpfInput, cepInput, numeroInput, complementoInput, emailInput, telefone1Input, telefone2Input, representanteInput, cpfRepresentanteInput, rgRepresentanteInput, statusInput].forEach((input) => {
           input.readOnly = isReadOnly;
         });
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
@@ -707,6 +727,8 @@
         logradouroInput.value = item.logradouro || '';
         bairroInput.value = item.bairro || '';
         cepInput.value = item.cep || '';
+        numeroInput.value = item.numero || '';
+        complementoInput.value = item.complemento || '';
         municipioInput.value = item.municipio || '';
         emailInput.value = item.email || '';
         telefone1Input.value = item.telefone_01 || '';
@@ -726,6 +748,8 @@
         logradouroInput.value = item.logradouro || '';
         bairroInput.value = item.bairro || '';
         cepInput.value = item.cep || '';
+        numeroInput.value = item.numero || '';
+        complementoInput.value = item.complemento || '';
         municipioInput.value = item.municipio || '';
         emailInput.value = item.email || '';
         telefone1Input.value = item.telefone_01 || '';
@@ -809,51 +833,57 @@
         cnpjCpfInput.value = normalizeCnpjCpf(cnpjCpfInput.value);
       });
 
-      logradouroInput.addEventListener('input', () => {
-        logradouroInput.value = normalizeText(logradouroInput.value, 255);
-      });
-
-      bairroInput.addEventListener('input', () => {
-        bairroInput.value = normalizeText(bairroInput.value, 120);
-      });
-
       cepInput.addEventListener('input', () => {
         cepInput.value = normalizeCep(cepInput.value);
       });
 
       const fillAddressFromCep = (item) => {
-        if (!logradouroInput.value) logradouroInput.value = item.logradouro || '';
-        if (!bairroInput.value) bairroInput.value = item.bairro || '';
-        if (!municipioInput.value) municipioInput.value = item.municipio || '';
+        logradouroInput.value = item.logradouro || '';
+        bairroInput.value = item.bairro || '';
+        municipioInput.value = item.municipio || '';
       };
+
+      let lastCepLookedUp = '';
+
+      cepInput.addEventListener('input', () => {
+        lastCepLookedUp = '';
+      });
 
       cepInput.addEventListener('blur', async () => {
         const cep = normalizeCep(cepInput.value);
-        if (!/^\d{5}-\d{3}$/.test(cep)) return;
-        if (logradouroInput.value || bairroInput.value || municipioInput.value) return;
+        if (!/^\d{5}-\d{3}$/.test(cep)) {
+          lastCepLookedUp = '';
+          return;
+        }
+        if (cep === lastCepLookedUp) return;
 
         try {
           const res = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}`);
           if (res.ok) {
             const data = await res.json();
-            if (data.item) { fillAddressFromCep(data.item); }
+            if (data.item) {
+              fillAddressFromCep(data.item);
+              lastCepLookedUp = cep;
+            }
             return;
           }
           if (res.status === 404) {
-            const buscarNuvem = confirm(`CEP ${cep} nao encontrado na base local.\nDeseja buscar na nuvem (ViaCEP)?`);
-            if (!buscarNuvem) return;
-
             const resCloud = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}&cloud=true`);
             if (resCloud.ok) {
               const dataCloud = await resCloud.json();
-              if (dataCloud.item) { fillAddressFromCep(dataCloud.item); }
+              if (dataCloud.item) {
+                fillAddressFromCep(dataCloud.item);
+                lastCepLookedUp = cep;
+                return;
+              }
             }
           }
+          lastCepLookedUp = '';
         } catch { /* silencioso */ }
       });
 
-      municipioInput.addEventListener('input', () => {
-        municipioInput.value = normalizeText(municipioInput.value, 120);
+      cepInput.addEventListener('input', () => {
+        lastCepLookedUp = '';
       });
 
       emailInput.addEventListener('blur', () => {
@@ -889,10 +919,9 @@
 
         const credenciado = normalizeText(nomeInput.value, 255);
         const cnpjCpf = normalizeCnpjCpf(cnpjCpfInput.value);
-        const logradouro = normalizeText(logradouroInput.value, 255);
-        const bairro = normalizeText(bairroInput.value, 120);
         const cep = normalizeCep(cepInput.value);
-        const municipio = normalizeText(municipioInput.value, 120);
+        const numero = normalizeText(numeroInput.value, 30);
+        const complemento = normalizeText(complementoInput.value, 30);
         const email = normalizeEmailList(emailInput.value);
         const telefone1 = normalizePhone(telefone1Input.value);
         const telefone2 = normalizePhone(telefone2Input.value);
@@ -911,10 +940,9 @@
 
         nomeInput.value = credenciado;
         cnpjCpfInput.value = cnpjCpf;
-        logradouroInput.value = logradouro;
-        bairroInput.value = bairro;
         cepInput.value = cep;
-        municipioInput.value = municipio;
+        numeroInput.value = numero;
+        complementoInput.value = complemento;
         emailInput.value = email;
         telefone1Input.value = telefone1;
         telefone2Input.value = telefone2;
@@ -974,10 +1002,9 @@
             body: JSON.stringify({
               credenciado,
               cnpjCpf,
-              logradouro,
-              bairro,
               cep,
-              municipio,
+              numero,
+              complemento,
               email,
               telefone1,
               telefone2,

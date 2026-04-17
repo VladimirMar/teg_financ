@@ -41,7 +41,9 @@ body:has(#veiculo-rejection-grid-body) .dsc-container,
 body:has(#ordem-servico-grid-body) .dsc-container,
 body:has(#ordem-servico-rejection-grid-body) .dsc-container,
 body:has(#vinculo-grid-body) .dsc-container,
-body:has(#vinculo-rejection-grid-body) .dsc-container {
+body:has(#vinculo-rejection-grid-body) .dsc-container,
+body:has(#cep-grid-body) .dsc-container,
+body:has(#cep-rejection-grid-body) .dsc-container {
   width: min(100%, 1620px);
   max-width: 1620px;
 }
@@ -701,7 +703,9 @@ body:has(#credenciada-rejection-grid-body) .dsc-access-grid-card,
 body:has(#ordem-servico-grid-body) .dsc-access-grid-card,
 body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid-card,
 body:has(#vinculo-grid-body) .dsc-access-grid-card,
-body:has(#vinculo-rejection-grid-body) .dsc-access-grid-card {
+body:has(#vinculo-rejection-grid-body) .dsc-access-grid-card,
+body:has(#cep-grid-body) .dsc-access-grid-card,
+body:has(#cep-rejection-grid-body) .dsc-access-grid-card {
   width: min(100%, 1760px);
   margin-left: 0;
   margin-right: auto;

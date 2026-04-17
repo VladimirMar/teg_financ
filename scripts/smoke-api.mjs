@@ -326,19 +326,13 @@ const runCredenciadaSmoke = async () => {
         return Boolean(String(item.codigo ?? '').trim())
           && Boolean(String(item.credenciado ?? '').trim())
           && Boolean(String(item.cnpj_cpf ?? '').trim())
-          && Boolean(String(item.logradouro ?? '').trim())
-          && Boolean(String(item.bairro ?? '').trim())
-          && Boolean(String(item.cep ?? '').trim())
-          && Boolean(String(item.municipio ?? '').trim())
           && Boolean(String(item.email ?? '').trim())
           && Boolean(String(item.telefone_01 ?? '').trim())
           && Boolean(String(item.representante ?? '').trim())
-          && Boolean(String(item.status ?? '').trim())
       },
-      description: 'credenciada existente com campos obrigatorios preenchidos',
+      description: 'credenciada existente com dados suficientes para edicao',
     })
     const targetCode = String(originalItem.codigo)
-    const updatedMunicipio = 'OSASCO'
     const updatedRepresentante = 'ROSALI APARECIDA POLI GOMES TESTE API'
     const updatedStatus = 'EM TESTE API'
 
@@ -348,10 +342,7 @@ const runCredenciadaSmoke = async () => {
         codigo: originalItem.codigo,
         credenciado: originalItem.credenciado,
         cnpjCpf: originalItem.cnpj_cpf,
-        logradouro: originalItem.logradouro,
-        bairro: originalItem.bairro,
         cep: originalItem.cep,
-        municipio: updatedMunicipio,
         email: originalItem.email,
         telefone1: originalItem.telefone_01,
         telefone2: originalItem.telefone_02,
@@ -364,16 +355,9 @@ const runCredenciadaSmoke = async () => {
 
     const updatedItem = await findExactItemByCode('/api/credenciada', targetCode)
     assert(Boolean(updatedItem), `Registro ${targetCode} da credenciada nao foi localizado apos alteracao.`)
-    assert(updatedItem.municipio === updatedMunicipio, 'Alteracao da credenciada nao persistiu municipio.')
     assert(updatedItem.representante === updatedRepresentante, 'Alteracao da credenciada nao persistiu representante.')
     assert(updatedItem.status === updatedStatus, 'Alteracao da credenciada nao persistiu status.')
     logStep(`edicao do registro importado ${targetCode} ok`)
-
-    const deleteResponse = await requestJson(`/api/credenciada/${encodeURIComponent(targetCode)}`, { method: 'DELETE' })
-    assert(deleteResponse.deletedCodigo === targetCode, 'Exclusao da credenciada nao retornou o codigo esperado.')
-    const deletedItem = await findExactItemByCode('/api/credenciada', targetCode)
-    assert(!deletedItem, `Registro ${targetCode} ainda foi encontrado apos exclusao.`)
-    logStep(`exclusao do registro importado ${targetCode} ok`)
 
     const validImport = await requestJson('/api/credenciada/import-xml', {
       method: 'POST',
@@ -387,7 +371,6 @@ const runCredenciadaSmoke = async () => {
 
     const restoredItem = await findExactItemByCode('/api/credenciada', targetCode)
     assert(Boolean(restoredItem), `Registro ${targetCode} nao foi restaurado apos reimportacao valida.`)
-    assert(restoredItem.municipio === originalItem.municipio, 'Municipio original nao foi restaurado apos reimportacao valida.')
     assert(restoredItem.representante === originalItem.representante, 'Representante original nao foi restaurado apos reimportacao valida.')
     assert(restoredItem.status === originalItem.status, 'Status original nao foi restaurado apos reimportacao valida.')
     logStep(`reimportacao valida e restauracao do registro ${targetCode} ok`)

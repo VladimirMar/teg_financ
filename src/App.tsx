@@ -1633,7 +1633,7 @@ function App() {
               className={`menu-item ${activeView === 'credenciamentoTermo' ? 'menu-item-active' : ''}`}
               onClick={() => setActiveView('credenciamentoTermo')}
             >
-              Credenciamento Termo
+              Termo
             </li>
             <li
               className={`menu-item ${activeView === 'veiculo' ? 'menu-item-active' : ''}`}
@@ -1658,6 +1658,12 @@ function App() {
               onClick={() => setActiveView('ordemServico')}
             >
               OrdemServico
+            </li>
+            <li
+              className={`menu-item ${activeView === 'cep' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('cep')}
+            >
+              CEP
             </li>
             <li className="menu-item">Relatorios</li>
           </ul>
@@ -2662,6 +2668,24 @@ function App() {
                 className="access-embed-frame"
                 src="/src/vinculoMonitor.html"
                 title="Cadastro de vinculo do monitor"
+              />
+            </div>
+          </>
+        ) : activeView === 'cep' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Tabela de enderecamento</p>
+              <h2 id="content-title">CEP</h2>
+              <p className="content-description">
+                Consulte, inclua, altere e importe os registros de CEP com auto-preenchimento de endereco via ViaCEP.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/cep.html"
+                title="Cadastro de CEP"
               />
             </div>
           </>

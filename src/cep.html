@@ -4,9 +4,13 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cadastro de CEP</title>
+    <title>CADASTRO DE CEP</title>
 
     <link rel="stylesheet" href="css/login.css" />
+    <style>
+      #cep-form { max-width: 860px; }
+      #cep-form .dsc-form-control { min-height: 52px; padding: 14px 18px; box-sizing: border-box; }
+    </style>
   </head>
   <body>
     <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
@@ -87,7 +91,7 @@
             </form>
 
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="cep-form">
-              <h2 id="cep-form-title">Novo registro</h2>
+              <h2 id="cep-form-title">CADASTRO DE CEP</h2>
 
               <div class="dsc-form-row">
                 <label class="dsc-field-group" for="cep-cep">
@@ -97,7 +101,36 @@
                 </label>
                 <label class="dsc-field-group" for="cep-uf">
                   <span>UF</span>
-                  <input class="dsc-form-control" id="cep-uf" type="text" placeholder="SP" maxlength="2" />
+                  <select class="dsc-form-control" id="cep-uf">
+                    <option value="">Selecione</option>
+                    <option value="AC">AC</option>
+                    <option value="AL">AL</option>
+                    <option value="AP">AP</option>
+                    <option value="AM">AM</option>
+                    <option value="BA">BA</option>
+                    <option value="CE">CE</option>
+                    <option value="DF">DF</option>
+                    <option value="ES">ES</option>
+                    <option value="GO">GO</option>
+                    <option value="MA">MA</option>
+                    <option value="MT">MT</option>
+                    <option value="MS">MS</option>
+                    <option value="MG">MG</option>
+                    <option value="PA">PA</option>
+                    <option value="PB">PB</option>
+                    <option value="PR">PR</option>
+                    <option value="PE">PE</option>
+                    <option value="PI">PI</option>
+                    <option value="RJ">RJ</option>
+                    <option value="RN">RN</option>
+                    <option value="RS">RS</option>
+                    <option value="RO">RO</option>
+                    <option value="RR">RR</option>
+                    <option value="SC">SC</option>
+                    <option value="SP">SP</option>
+                    <option value="SE">SE</option>
+                    <option value="TO">TO</option>
+                  </select>
                   <div class="dsc-form-error" id="cep-uf-error"></div>
                 </label>
                 <label class="dsc-field-group" for="cep-ibge">
@@ -125,12 +158,6 @@
                   <div class="dsc-form-error" id="cep-municipio-error"></div>
                 </label>
               </div>
-
-              <label class="dsc-field-group" for="cep-complemento">
-                <span>Complemento</span>
-                <input class="dsc-form-control" id="cep-complemento" type="text" placeholder="COMPLEMENTO" maxlength="255" />
-                <div class="dsc-form-error" id="cep-complemento-error"></div>
-              </label>
 
               <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-cep-button">Salvar CEP</button>
@@ -233,7 +260,6 @@
       const cepFormTitle = document.getElementById('cep-form-title');
       const cepInput = document.getElementById('cep-cep');
       const logradouroInput = document.getElementById('cep-logradouro');
-      const complementoInput = document.getElementById('cep-complemento');
       const bairroInput = document.getElementById('cep-bairro');
       const municipioInput = document.getElementById('cep-municipio');
       const ufInput = document.getElementById('cep-uf');
@@ -248,9 +274,10 @@
       };
 
       const setFormReadOnly = (readOnly) => {
-        [cepInput, logradouroInput, complementoInput, bairroInput, municipioInput, ufInput, ibgeInput].forEach((el) => {
+        [cepInput, logradouroInput, bairroInput, municipioInput, ibgeInput].forEach((el) => {
           el.readOnly = readOnly;
         });
+        ufInput.disabled = readOnly;
         saveCepButton.style.display = readOnly ? 'none' : '';
       };
 
@@ -274,7 +301,7 @@
         cepForm.reset();
         clearErrors();
         setFormReadOnly(false);
-        cepFormTitle.textContent = 'Novo registro';
+        cepFormTitle.textContent = 'CADASTRO DE CEP';
         saveCepButton.textContent = 'Salvar CEP';
         editingCep = null;
       };
@@ -282,10 +309,9 @@
       const fillForm = (item) => {
         cepInput.value = item.cep || '';
         logradouroInput.value = item.logradouro || '';
-        complementoInput.value = item.complemento || '';
         bairroInput.value = item.bairro || '';
         municipioInput.value = item.municipio || '';
-        ufInput.value = item.uf || '';
+        ufInput.value = (item.uf || '').trim().toUpperCase();
         ibgeInput.value = item.ibge || '';
         clearErrors();
       };
@@ -311,10 +337,9 @@
       const collectPayload = () => ({
         cep: normalizeCep(cepInput.value),
         logradouro: normalizeText(logradouroInput.value, 255),
-        complemento: normalizeText(complementoInput.value, 255),
         bairro: normalizeText(bairroInput.value, 120),
         municipio: normalizeText(municipioInput.value, 120),
-        uf: normalizeUf(ufInput.value),
+        uf: ufInput.value,
         ibge: normalizeIbge(ibgeInput.value),
       });
 
@@ -407,8 +432,8 @@
           sortMunicipioIndicator.textContent = currentSortBy === 'municipio' ? (currentSortDirection === 'asc' ? '↑' : '↓') : '';
 
           gridFeedback.textContent = '';
-        } catch {
-          gridFeedback.textContent = 'Erro de comunicacao com o servidor.';
+        } catch (err) {
+          gridFeedback.textContent = 'Erro de comunicacao com o servidor: ' + (err?.message ?? err);
         }
       };
 
@@ -656,8 +681,36 @@
       });
 
       // ---- Input normalization ----
-      cepInput.addEventListener('input', () => { cepInput.value = normalizeCep(cepInput.value); });
-      ufInput.addEventListener('input', () => { ufInput.value = normalizeUf(ufInput.value); });
+      let lastCepLookedUp = '';
+
+      cepInput.addEventListener('input', () => {
+        cepInput.value = normalizeCep(cepInput.value);
+        lastCepLookedUp = '';
+      });
+
+      cepInput.addEventListener('blur', async () => {
+        if (editingCep !== null) return; // só na inserção
+        const cep = cepInput.value;
+        if (!/^\d{5}-\d{3}$/.test(cep)) return;
+        if (cep === lastCepLookedUp) return;
+        lastCepLookedUp = cep;
+
+        try {
+          const res = await fetch(`${API_BASE}/api/cep/lookup?cep=${encodeURIComponent(cep)}&cloud=true`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data.item) {
+            editingCep = data.item.cep || cep;
+            logradouroInput.value = data.item.logradouro || '';
+            bairroInput.value = data.item.bairro || '';
+            municipioInput.value = data.item.municipio || '';
+            ufInput.value = data.item.uf || '';
+            ibgeInput.value = data.item.ibge || '';
+          }
+        } catch { /* silencioso */ }
+      });
+
+      // ufInput is a select — no input normalization needed
       ibgeInput.addEventListener('input', () => { ibgeInput.value = normalizeIbge(ibgeInput.value); });
 
       // ---- Init ----

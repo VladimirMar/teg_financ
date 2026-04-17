@@ -1,0 +1,1 @@
+Auth API escutando na porta 3001
