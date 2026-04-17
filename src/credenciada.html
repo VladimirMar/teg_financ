@@ -821,6 +821,12 @@
         cepInput.value = normalizeCep(cepInput.value);
       });
 
+      const fillAddressFromCep = (item) => {
+        if (!logradouroInput.value) logradouroInput.value = item.logradouro || '';
+        if (!bairroInput.value) bairroInput.value = item.bairro || '';
+        if (!municipioInput.value) municipioInput.value = item.municipio || '';
+      };
+
       cepInput.addEventListener('blur', async () => {
         const cep = normalizeCep(cepInput.value);
         if (!/^\d{5}-\d{3}$/.test(cep)) return;
@@ -828,12 +834,20 @@
 
         try {
           const res = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}`);
-          if (!res.ok) return;
-          const data = await res.json();
-          if (data.item) {
-            if (!logradouroInput.value) logradouroInput.value = data.item.logradouro || '';
-            if (!bairroInput.value) bairroInput.value = data.item.bairro || '';
-            if (!municipioInput.value) municipioInput.value = data.item.municipio || '';
+          if (res.ok) {
+            const data = await res.json();
+            if (data.item) { fillAddressFromCep(data.item); }
+            return;
+          }
+          if (res.status === 404) {
+            const buscarNuvem = confirm(`CEP ${cep} nao encontrado na base local.\nDeseja buscar na nuvem (ViaCEP)?`);
+            if (!buscarNuvem) return;
+
+            const resCloud = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}&cloud=true`);
+            if (resCloud.ok) {
+              const dataCloud = await resCloud.json();
+              if (dataCloud.item) { fillAddressFromCep(dataCloud.item); }
+            }
           }
         } catch { /* silencioso */ }
       });
