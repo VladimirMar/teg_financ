@@ -821,6 +821,23 @@
         cepInput.value = normalizeCep(cepInput.value);
       });
 
+      cepInput.addEventListener('blur', async () => {
+        const cep = normalizeCep(cepInput.value);
+        if (!/^\d{5}-\d{3}$/.test(cep)) return;
+        if (logradouroInput.value || bairroInput.value || municipioInput.value) return;
+
+        try {
+          const res = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data.item) {
+            if (!logradouroInput.value) logradouroInput.value = data.item.logradouro || '';
+            if (!bairroInput.value) bairroInput.value = data.item.bairro || '';
+            if (!municipioInput.value) municipioInput.value = data.item.municipio || '';
+          }
+        } catch { /* silencioso */ }
+      });
+
       municipioInput.addEventListener('input', () => {
         municipioInput.value = normalizeText(municipioInput.value, 120);
       });

@@ -142,10 +142,7 @@
                 <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-top">
                   <label class="dsc-field-group" for="ordem-servico-cnpj-cpf">
                     <span>CNPJ/CPF do credenciado</span>
-                    <input class="dsc-form-control" id="ordem-servico-cnpj-cpf" type="text" inputmode="numeric" list="ordem-servico-cnpj-cpf-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CNPJ/CPF DA CREDENCIADA" maxlength="18" />
-                    <datalist id="ordem-servico-cnpj-cpf-options">
-                      <option value=""></option>
-                    </datalist>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-cnpj-cpf" type="text" inputmode="numeric" autocomplete="off" placeholder="CNPJ/CPF (preenchido pelo termo)" maxlength="18" readonly />
                     <div class="dsc-form-error" id="ordem-servico-cnpj-cpf-error"></div>
                   </label>
 
@@ -973,6 +970,7 @@
       };
 
       const clearLookupFields = () => {
+        cnpjCpfInput.value = '';
         credenciadoInput.value = '';
         dreDescricaoInput.value = '';
         modalidadeDescricaoInput.value = '';
@@ -1079,6 +1077,7 @@
       };
 
       const renderEntitySuggestions = (listElement, items, getValue, getLabel) => {
+        if (!listElement) return;
         listElement.innerHTML = '<option value=""></option>';
 
         items.forEach((item) => {
@@ -1384,8 +1383,6 @@
           return;
         }
 
-        const mustForceTipoTrocaInclusao = editingCodigo === null || isRevisionInsertion;
-
         if (editingCodigo !== null) {
           applyIdentityFieldLock();
         }
@@ -1399,20 +1396,19 @@
             : true;
         }
 
-        tipoTrocaInput.readOnly = mustForceTipoTrocaInclusao;
+        const revisaoIsSemRevisao = normalizeRevisao(revisaoInput.value) === '-S/R';
 
-        if (!mustForceTipoTrocaInclusao) {
-          renderTipoTrocaOptions(tipoTrocaInput.value);
-          return;
-        }
+        tipoTrocaInput.readOnly = revisaoIsSemRevisao;
 
-        const tipoTrocaInclusaoOption = getTipoTrocaInclusaoOption();
+        if (revisaoIsSemRevisao) {
+          const tipoTrocaInclusaoOption = getTipoTrocaInclusaoOption();
 
-        if (tipoTrocaInclusaoOption) {
-          tipoTrocaInput.value = normalizeText(String(tipoTrocaInclusaoOption.lista || ''), 255);
-          tipoTrocaError.textContent = '';
-        } else if (hasTermoAdesao) {
-          tipoTrocaError.textContent = 'Tipo de troca INCLUSAO DE VEICULO nao encontrado.';
+          if (tipoTrocaInclusaoOption) {
+            tipoTrocaInput.value = normalizeText(String(tipoTrocaInclusaoOption.lista || ''), 255);
+            tipoTrocaError.textContent = '';
+          } else if (hasTermoAdesao) {
+            tipoTrocaError.textContent = 'Tipo de troca INCLUSAO DE VEICULO nao encontrado.';
+          }
         }
 
         renderTipoTrocaOptions(tipoTrocaInput.value);
@@ -1751,6 +1747,7 @@
           isInsertNewTerm = false;
           numOsInput.value = '';
           revisaoInput.value = normalizeRevisao('');
+          termoAdesaoError.textContent = '';
           syncOsConcatInput();
           applyInsertSpecificRules();
           return;
@@ -1758,6 +1755,25 @@
 
         feedback.textContent = 'Consultando o proximo Num OS...';
         feedback.className = 'dsc-feedback';
+
+        try {
+          const termoItem = await fetchLookupItem(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, 'Termo de adesao nao encontrado na tabela termo.');
+          termoAdesaoError.textContent = '';
+          cnpjCpfInput.value = termoItem.cnpjCpf || '';
+          credenciadoInput.value = termoItem.credenciado || '';
+          cnpjCpfError.textContent = '';
+          credenciadoError.textContent = '';
+        } catch (error) {
+          isInsertNewTerm = false;
+          numOsInput.value = '';
+          cnpjCpfInput.value = '';
+          credenciadoInput.value = '';
+          syncOsConcatInput();
+          feedback.textContent = '';
+          termoAdesaoError.textContent = getRequestErrorMessage(error, 'Termo de adesao nao encontrado na tabela termo.');
+          applyInsertSpecificRules();
+          return;
+        }
 
         try {
           const nextOs = await fetchNextNumOsByTermo(termoAdesao);
@@ -2326,6 +2342,7 @@
       revisaoInput.addEventListener('input', () => {
         revisaoInput.value = normalizeRevisao(revisaoInput.value);
         syncOsConcatInput();
+        applyInsertSpecificRules();
       });
 
       addRevisaoButton.addEventListener('click', () => {
@@ -2334,7 +2351,6 @@
 
       cnpjCpfInput.addEventListener('input', () => {
         cnpjCpfInput.value = normalizeCnpjCpf(cnpjCpfInput.value);
-        queueSuggestionLoad(credenciadaSuggestionTimeoutId, (timeoutId) => { credenciadaSuggestionTimeoutId = timeoutId; }, loadCredenciadaSuggestions, () => cnpjCpfInput.value);
       });
 
       vigenciaOsInput.addEventListener('input', () => {
@@ -2346,10 +2362,6 @@
         vigenciaOsError.textContent = vigenciaOsInput.value < getCurrentDateInputValue()
           ? 'A vig\u00eancia da OS n\u00e3o pode ser anterior a hoje.'
           : '';
-      });
-
-      cnpjCpfInput.addEventListener('blur', () => {
-        void syncCredenciadaByDocument();
       });
 
       dreCodigoInput.addEventListener('input', () => {
@@ -2511,8 +2523,7 @@
         }
 
         if (!payload.cnpjCpf) {
-          cnpjCpfError.textContent = 'Informe o CNPJ/CPF do credenciado.';
-          hasError = true;
+          cnpjCpfError.textContent = 'CNPJ/CPF do credenciado nao preenchido. Digite um termo de adesao valido.';
         }
 
         if (!payload.dreCodigo) {

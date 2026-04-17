@@ -149,19 +149,33 @@
                 <div class="dsc-form-row">
                   <label class="dsc-field-group" for="credenciamento-termo-situacao-publicacao">
                     <span>Situacao de publicacao</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-situacao-publicacao" type="text" maxlength="100" />
+                    <input class="dsc-form-control" id="credenciamento-termo-situacao-publicacao" type="text" maxlength="100" list="credenciamento-termo-situacao-publicacao-options" />
+                    <datalist id="credenciamento-termo-situacao-publicacao-options">
+                      <option value="Publicado"></option>
+                      <option value="Enviado"></option>
+                      <option value="Publicar"></option>
+                    </datalist>
                     <div class="dsc-form-error" id="credenciamento-termo-situacao-publicacao-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="credenciamento-termo-situacao-emissao">
                     <span>Situacao de emissao</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-situacao-emissao" type="text" maxlength="100" />
+                    <input class="dsc-form-control" id="credenciamento-termo-situacao-emissao" type="text" maxlength="100" list="credenciamento-termo-situacao-emissao-options" />
+                    <datalist id="credenciamento-termo-situacao-emissao-options">
+                      <option value="Emitido"></option>
+                      <option value="Emitir"></option>
+                    </datalist>
                     <div class="dsc-form-error" id="credenciamento-termo-situacao-emissao-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="credenciamento-termo-status-termo">
                     <span>Status termo</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-status-termo" type="text" maxlength="100" />
+                    <input class="dsc-form-control" id="credenciamento-termo-status-termo" type="text" maxlength="100" list="credenciamento-termo-status-termo-options" />
+                    <datalist id="credenciamento-termo-status-termo-options">
+                      <option value="Ativo"></option>
+                      <option value="Inativo"></option>
+                      <option value="Rescindido"></option>
+                    </datalist>
                     <div class="dsc-form-error" id="credenciamento-termo-status-termo-error"></div>
                   </label>
 
@@ -173,7 +187,7 @@
 
                   <label class="dsc-field-group" for="credenciamento-termo-check-aditivo">
                     <span>Check aditivo</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-check-aditivo" type="text" inputmode="numeric" maxlength="2" />
+                    <input id="credenciamento-termo-check-aditivo" type="checkbox" />
                     <div class="dsc-form-error" id="credenciamento-termo-check-aditivo-error"></div>
                   </label>
                 </div>
@@ -211,30 +225,41 @@
                 <div class="dsc-form-row">
                   <label class="dsc-field-group" for="credenciamento-termo-tipo-termo">
                     <span>Tipo de termo</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-tipo-termo" type="text" maxlength="100" />
+                    <input class="dsc-form-control" id="credenciamento-termo-tipo-termo" type="text" maxlength="100" list="credenciamento-termo-tipo-termo-options" />
+                    <datalist id="credenciamento-termo-tipo-termo-options">
+                      <option value="Pessoa F&#237;sica"></option>
+                      <option value="Pessoa Jur&#237;dica"></option>
+                      <option value="Cooperativa"></option>
+                    </datalist>
                     <div class="dsc-form-error" id="credenciamento-termo-tipo-termo-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="credenciamento-termo-representante">
                     <span>Representante</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-representante" type="text" maxlength="255" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-representante" type="text" maxlength="255" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-representante-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="credenciamento-termo-cpf-representante">
                     <span>CPF representante</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-cpf-representante" type="text" maxlength="14" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-cpf-representante" type="text" maxlength="14" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-cpf-representante-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="credenciamento-termo-rg-representante">
                     <span>RG representante</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-rg-representante" type="text" maxlength="30" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-rg-representante" type="text" maxlength="30" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-rg-representante-error"></div>
                   </label>
                 </div>
 
                 <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciamento-termo-cep">
+                    <span>CEP</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-cep" type="text" inputmode="numeric" placeholder="00000-000" maxlength="9" />
+                    <div class="dsc-form-error" id="credenciamento-termo-cep-error"></div>
+                  </label>
+
                   <label class="dsc-field-group" for="credenciamento-termo-logradouro">
                     <span>Logradouro</span>
                     <input class="dsc-form-control" id="credenciamento-termo-logradouro" type="text" maxlength="255" />
@@ -438,6 +463,7 @@
       const rgRepresentanteInput = document.getElementById('credenciamento-termo-rg-representante');
       const logradouroInput = document.getElementById('credenciamento-termo-logradouro');
       const bairroInput = document.getElementById('credenciamento-termo-bairro');
+      const cepEnderecoInput = document.getElementById('credenciamento-termo-cep');
       const municipioInput = document.getElementById('credenciamento-termo-municipio');
       const especificacaoSeiInput = document.getElementById('credenciamento-termo-especificacao-sei');
       const valorContratoInput = document.getElementById('credenciamento-termo-valor-contrato');
@@ -556,7 +582,7 @@
         form.reset();
         credenciadaCodigoInput.value = '';
         cnpjCpfInput.value = '';
-        checkAditivoInput.value = '1';
+        checkAditivoInput.checked = true;
         importFileNameInput.value = defaultImportFileName;
         resetMessages();
       };
@@ -575,7 +601,7 @@
         situacaoEmissaoInput.value = item.situacao_emissao || '';
         statusTermoInput.value = item.status_termo || '';
         statusAditivoInput.value = item.status_aditivo || '';
-        checkAditivoInput.value = item.check_aditivo || '';
+        checkAditivoInput.checked = item.check_aditivo === '1';;
         inicioVigenciaInput.value = item.inicio_vigencia || '';
         terminoVigenciaInput.value = item.termino_vigencia || '';
         compDataAditivoInput.value = item.comp_data_aditivo || '';
@@ -611,7 +637,7 @@
           params.set('search', currentSearch);
         }
 
-        return `/api/credenciamento-termo?${params.toString()}`;
+        return `/api/termo?${params.toString()}`;
       };
 
       const buildRejectionUrl = () => {
@@ -624,7 +650,7 @@
           params.set('search', currentRejectionSearch);
         }
 
-        return `/api/credenciamento-termo/import-rejections?${params.toString()}`;
+        return `/api/termo/import-rejections?${params.toString()}`;
       };
 
       const renderGrid = (items) => {
@@ -672,7 +698,7 @@
             }
 
             try {
-              const response = await fetch(`/api/credenciamento-termo/${encodeURIComponent(codigo)}`, { method: 'DELETE' });
+              const response = await fetch(`/api/termo/${encodeURIComponent(codigo)}`, { method: 'DELETE' });
               if (!response.ok) {
                 throw new Error(await getRequestErrorMessage(response, 'Falha ao excluir o registro.'));
               }
@@ -765,6 +791,9 @@
         if (!credenciado) {
           credenciadaCodigoInput.value = '';
           cnpjCpfInput.value = '';
+          representanteInput.value = '';
+          cpfRepresentanteInput.value = '';
+          rgRepresentanteInput.value = '';
           return;
         }
 
@@ -782,6 +811,9 @@
         } catch (error) {
           credenciadaCodigoInput.value = '';
           cnpjCpfInput.value = '';
+          representanteInput.value = '';
+          cpfRepresentanteInput.value = '';
+          rgRepresentanteInput.value = '';
           errors.credenciado.textContent = error instanceof Error ? error.message : 'Falha ao localizar credenciada.';
         }
       };
@@ -791,21 +823,17 @@
         aditivo: normalizeIntegerInput(aditivoInput.value, 2),
         termoAdesao: normalizeText(termoAdesaoInput.value, 255),
         sei: normalizeText(seiInput.value, 255),
-        credenciado: normalizeText(credenciadoInput.value, 255),
         credenciadaCodigo: normalizeIntegerInput(credenciadaCodigoInput.value, 10),
         situacaoPublicacao: normalizeText(situacaoPublicacaoInput.value, 100),
         situacaoEmissao: normalizeText(situacaoEmissaoInput.value, 100),
         statusTermo: normalizeText(statusTermoInput.value, 100),
         statusAditivo: normalizeText(statusAditivoInput.value, 100),
-        checkAditivo: normalizeIntegerInput(checkAditivoInput.value, 2),
+        checkAditivo: checkAditivoInput.checked ? 1 : 0,
         inicioVigencia: inicioVigenciaInput.value,
         terminoVigencia: terminoVigenciaInput.value,
         compDataAditivo: compDataAditivoInput.value,
         dataPubAditivo: dataPubAditivoInput.value,
         tipoTermo: normalizeText(tipoTermoInput.value, 100),
-        representante: normalizeText(representanteInput.value, 255),
-        cpfRepresentante: normalizeCpf(cpfRepresentanteInput.value),
-        rgRepresentante: normalizeText(rgRepresentanteInput.value, 30),
         logradouro: normalizeText(logradouroInput.value, 255),
         bairro: normalizeText(bairroInput.value, 120),
         municipio: normalizeText(municipioInput.value, 120),
@@ -826,15 +854,15 @@
         resetMessages();
         const payload = collectPayload();
 
-        if (!payload.credenciado) {
-          errors.credenciado.textContent = 'Informe o credenciado.';
+        if (!payload.credenciadaCodigo) {
+          errors.credenciado.textContent = 'Informe o credenciado (codigo da credenciada e obrigatorio).';
           return;
         }
 
         feedback.textContent = 'Salvando registro...';
 
         try {
-          const response = await fetch(editingCodigo ? `/api/credenciamento-termo/${encodeURIComponent(editingCodigo)}` : '/api/credenciamento-termo', {
+          const response = await fetch(editingCodigo ? `/api/termo/${encodeURIComponent(editingCodigo)}` : '/api/termo', {
             method: editingCodigo ? 'PUT' : 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -879,7 +907,7 @@
         importFeedback.textContent = 'Executando importacao...';
 
         try {
-          const response = await fetch('/api/credenciamento-termo/import-xml', {
+          const response = await fetch('/api/termo/import-xml', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1006,13 +1034,34 @@
 
       codigoXmlInput.addEventListener('input', () => { codigoXmlInput.value = normalizeIntegerInput(codigoXmlInput.value, 10); });
       aditivoInput.addEventListener('input', () => { aditivoInput.value = normalizeIntegerInput(aditivoInput.value, 2); });
-      checkAditivoInput.addEventListener('input', () => { checkAditivoInput.value = normalizeIntegerInput(checkAditivoInput.value, 2); });
-      cpfRepresentanteInput.addEventListener('input', () => { cpfRepresentanteInput.value = normalizeCpf(cpfRepresentanteInput.value); });
       valorContratoInput.addEventListener('input', () => { valorContratoInput.value = normalizeDecimalInput(valorContratoInput.value); });
       valorContratoAtualizadoInput.addEventListener('input', () => { valorContratoAtualizadoInput.value = normalizeDecimalInput(valorContratoAtualizadoInput.value); });
+
+      cepEnderecoInput.addEventListener('input', () => {
+        const digits = cepEnderecoInput.value.replace(/\D/g, '').slice(0, 8);
+        cepEnderecoInput.value = digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
+      });
+
+      cepEnderecoInput.addEventListener('blur', async () => {
+        const cep = cepEnderecoInput.value;
+        if (!/^\d{5}-\d{3}$/.test(cep)) return;
+        if (logradouroInput.value || bairroInput.value || municipioInput.value) return;
+
+        try {
+          const res = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data.item) {
+            if (!logradouroInput.value) logradouroInput.value = data.item.logradouro || '';
+            if (!bairroInput.value) bairroInput.value = data.item.bairro || '';
+            if (!municipioInput.value) municipioInput.value = data.item.municipio || '';
+          }
+        } catch { /* silencioso */ }
+      });
 
       clearForm();
       void loadItems();
     </script>
   </body>
 </html>
+
