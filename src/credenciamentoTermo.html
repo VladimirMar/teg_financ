@@ -4,9 +4,37 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cadastro de credenciamento termo</title>
+    <title>Cadastro de Termo</title>
 
     <link rel="stylesheet" href="css/login.css" />
+    <style>
+      #login-section.dsc-container {
+        max-width: 1600px;
+      }
+
+      #credenciamento-termo-form {
+        width: 100%;
+        max-width: 1600px;
+      }
+
+      #credenciamento-termo-form .dsc-form-section-card {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 24px 26px;
+      }
+
+      body:has(#credenciamento-termo-grid-body) .dsc-access-grid-card {
+        min-height: 860px;
+      }
+
+      #credenciamento-termo-grid thead th:nth-child(5),
+      #credenciamento-termo-grid thead th:nth-child(6),
+      #credenciamento-termo-grid tbody td:nth-child(5),
+      #credenciamento-termo-grid tbody td:nth-child(6) {
+        min-width: 130px;
+        white-space: nowrap;
+      }
+    </style>
   </head>
   <body>
     <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
@@ -19,7 +47,7 @@
                 <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-credenciamento-termo-button">Inserir registro</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-credenciamento-termo-import-button">Importar XML</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-credenciamento-termo-rejections-button">Recusas XML</button>
-                <input class="dsc-form-control dsc-access-filter-input" id="credenciamento-termo-search" type="text" placeholder="Filtrar por codigo, codigo XML, termo, credenciado, SEI ou aditivo" />
+                <input class="dsc-form-control dsc-access-filter-input" id="credenciamento-termo-search" type="text" placeholder="Filtrar por codigo, termo, credenciado, SEI ou aditivo" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-credenciamento-termo-filter-button">Limpar</button>
               </form>
@@ -86,16 +114,25 @@
             </form>
 
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciamento-termo-form">
-              <h2 id="credenciamento-termo-form-title">Novo registro</h2>
+              <h2 id="credenciamento-termo-form-title">Cadastro de Termo</h2>
 
               <section class="dsc-form-section-card">
                 <h3 class="dsc-form-section-title">Identificacao</h3>
 
                 <div class="dsc-form-row">
-                  <label class="dsc-field-group" for="credenciamento-termo-codigo-xml">
-                    <span>Codigo XML</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-codigo-xml" type="text" inputmode="numeric" maxlength="10" />
-                    <div class="dsc-form-error" id="credenciamento-termo-codigo-xml-error"></div>
+                  <input id="credenciamento-termo-codigo-xml" type="hidden" />
+                  <div class="dsc-form-error dsc-hidden" id="credenciamento-termo-codigo-xml-error"></div>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-sei">
+                    <span>SEI</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-sei" type="text" inputmode="numeric" maxlength="19" placeholder="9999.9999/9999999-9" />
+                    <div class="dsc-form-error" id="credenciamento-termo-sei-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-termo-adesao">
+                    <span>Termo de adesao</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-termo-adesao" type="text" maxlength="12" placeholder="2026/0011093" readonly />
+                    <div class="dsc-form-error" id="credenciamento-termo-termo-adesao-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="credenciamento-termo-aditivo">
@@ -104,16 +141,15 @@
                     <div class="dsc-form-error" id="credenciamento-termo-aditivo-error"></div>
                   </label>
 
-                  <label class="dsc-field-group" for="credenciamento-termo-termo-adesao">
-                    <span>Termo de adesao</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-termo-adesao" type="text" maxlength="255" />
-                    <div class="dsc-form-error" id="credenciamento-termo-termo-adesao-error"></div>
-                  </label>
-
-                  <label class="dsc-field-group" for="credenciamento-termo-sei">
-                    <span>SEI</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-sei" type="text" maxlength="255" />
-                    <div class="dsc-form-error" id="credenciamento-termo-sei-error"></div>
+                  <label class="dsc-field-group" for="credenciamento-termo-tipo-termo">
+                    <span>Tipo de termo</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-tipo-termo" type="text" maxlength="100" list="credenciamento-termo-tipo-termo-options" />
+                    <datalist id="credenciamento-termo-tipo-termo-options">
+                      <option value="Pessoa F&#237;sica"></option>
+                      <option value="Pessoa Jur&#237;dica"></option>
+                      <option value="Cooperativa"></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="credenciamento-termo-tipo-termo-error"></div>
                   </label>
                 </div>
               </section>
@@ -124,16 +160,14 @@
                 <div class="dsc-form-row">
                   <label class="dsc-field-group" for="credenciamento-termo-credenciado">
                     <span>Credenciado</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-credenciado" type="text" maxlength="255" />
-                    <p class="dsc-form-hint">Ao sair do campo, a tela localiza o codigo da credenciada pelo nome.</p>
+                    <input class="dsc-form-control" id="credenciamento-termo-credenciado" type="text" maxlength="255" list="credenciamento-termo-credenciado-options" autocomplete="off" />
+                    <datalist id="credenciamento-termo-credenciado-options"></datalist>
+                    <p class="dsc-form-hint">Ao sair do campo, a tela localiza a credenciada ativa pelo nome.</p>
                     <div class="dsc-form-error" id="credenciamento-termo-credenciado-error"></div>
                   </label>
 
-                  <label class="dsc-field-group" for="credenciamento-termo-credenciada-codigo">
-                    <span>Codigo credenciada</span>
-                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-credenciada-codigo" type="text" readonly />
-                    <div class="dsc-form-error" id="credenciamento-termo-credenciada-codigo-error"></div>
-                  </label>
+                  <input id="credenciamento-termo-credenciada-codigo" type="hidden" />
+                  <div class="dsc-form-error dsc-hidden" id="credenciamento-termo-credenciada-codigo-error"></div>
 
                   <label class="dsc-field-group" for="credenciamento-termo-cnpj-cpf">
                     <span>CNPJ/CPF</span>
@@ -181,15 +215,29 @@
 
                   <label class="dsc-field-group" for="credenciamento-termo-status-aditivo">
                     <span>Status aditivo</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-status-aditivo" type="text" maxlength="100" />
+                    <input class="dsc-form-control" id="credenciamento-termo-status-aditivo" type="text" maxlength="100" list="credenciamento-termo-status-aditivo-options" />
+                    <datalist id="credenciamento-termo-status-aditivo-options">
+                      <option value="Publicar"></option>
+                      <option value="Publicado"></option>
+                      <option value="Enviado"></option>
+                    </datalist>
                     <div class="dsc-form-error" id="credenciamento-termo-status-aditivo-error"></div>
                   </label>
 
-                  <label class="dsc-field-group" for="credenciamento-termo-check-aditivo">
+                  <div class="dsc-field-group">
                     <span>Check aditivo</span>
-                    <input id="credenciamento-termo-check-aditivo" type="checkbox" />
+                    <div class="dsc-radio-field-group">
+                      <label>
+                        <input id="credenciamento-termo-check-aditivo-sim" name="credenciamento-termo-check-aditivo" type="radio" value="1" />
+                        <span>Sim</span>
+                      </label>
+                      <label>
+                        <input id="credenciamento-termo-check-aditivo-nao" name="credenciamento-termo-check-aditivo" type="radio" value="0" />
+                        <span>Nao</span>
+                      </label>
+                    </div>
                     <div class="dsc-form-error" id="credenciamento-termo-check-aditivo-error"></div>
-                  </label>
+                  </div>
                 </div>
 
                 <div class="dsc-form-row">
@@ -206,13 +254,13 @@
                   </label>
 
                   <label class="dsc-field-group" for="credenciamento-termo-comp-data-aditivo">
-                    <span>Comp data aditivo</span>
+                    <span>Data de comparecimento</span>
                     <input class="dsc-form-control" id="credenciamento-termo-comp-data-aditivo" type="date" />
                     <div class="dsc-form-error" id="credenciamento-termo-comp-data-aditivo-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="credenciamento-termo-data-pub-aditivo">
-                    <span>Data pub aditivo</span>
+                    <span>Data de publicacao</span>
                     <input class="dsc-form-control" id="credenciamento-termo-data-pub-aditivo" type="date" />
                     <div class="dsc-form-error" id="credenciamento-termo-data-pub-aditivo-error"></div>
                   </label>
@@ -223,17 +271,6 @@
                 <h3 class="dsc-form-section-title">Representacao e endereco</h3>
 
                 <div class="dsc-form-row">
-                  <label class="dsc-field-group" for="credenciamento-termo-tipo-termo">
-                    <span>Tipo de termo</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-tipo-termo" type="text" maxlength="100" list="credenciamento-termo-tipo-termo-options" />
-                    <datalist id="credenciamento-termo-tipo-termo-options">
-                      <option value="Pessoa F&#237;sica"></option>
-                      <option value="Pessoa Jur&#237;dica"></option>
-                      <option value="Cooperativa"></option>
-                    </datalist>
-                    <div class="dsc-form-error" id="credenciamento-termo-tipo-termo-error"></div>
-                  </label>
-
                   <label class="dsc-field-group" for="credenciamento-termo-representante">
                     <span>Representante</span>
                     <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-representante" type="text" maxlength="255" readonly />
@@ -256,25 +293,25 @@
                 <div class="dsc-form-row">
                   <label class="dsc-field-group" for="credenciamento-termo-cep">
                     <span>CEP</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-cep" type="text" inputmode="numeric" placeholder="00000-000" maxlength="9" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-cep" type="text" inputmode="numeric" placeholder="00000-000" maxlength="9" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-cep-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="credenciamento-termo-logradouro">
                     <span>Logradouro</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-logradouro" type="text" maxlength="255" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-logradouro" type="text" maxlength="255" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-logradouro-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="credenciamento-termo-bairro">
                     <span>Bairro</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-bairro" type="text" maxlength="120" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-bairro" type="text" maxlength="120" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-bairro-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="credenciamento-termo-municipio">
                     <span>Municipio</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-municipio" type="text" maxlength="120" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-municipio" type="text" maxlength="120" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-municipio-error"></div>
                   </label>
                 </div>
@@ -360,16 +397,15 @@
 
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header">
-                <h2>Registros cadastrados</h2>
+                <h2>Tabela termo</h2>
                 <span id="credenciamento-termo-total"></span>
               </div>
 
               <div class="dsc-access-grid-wrapper">
-                <table class="dsc-access-grid">
+                <table class="dsc-access-grid" id="credenciamento-termo-grid">
                   <thead>
                     <tr>
                       <th>Codigo</th>
-                      <th>Codigo XML</th>
                       <th>
                         <button type="button" class="dsc-grid-sort-button" id="sort-credenciamento-termo-button">
                           Termo <span id="sort-credenciamento-termo-indicator">↑</span>
@@ -416,6 +452,7 @@
       const searchInput = document.getElementById('credenciamento-termo-search');
       const clearFilterButton = document.getElementById('clear-credenciamento-termo-filter-button');
       const insertButton = document.getElementById('insert-credenciamento-termo-button');
+      const saveButton = document.getElementById('save-credenciamento-termo-button');
       const cancelButton = document.getElementById('cancel-credenciamento-termo-button');
       const importButton = document.getElementById('open-credenciamento-termo-import-button');
       const rejectionButton = document.getElementById('open-credenciamento-termo-rejections-button');
@@ -446,13 +483,15 @@
       const termoAdesaoInput = document.getElementById('credenciamento-termo-termo-adesao');
       const seiInput = document.getElementById('credenciamento-termo-sei');
       const credenciadoInput = document.getElementById('credenciamento-termo-credenciado');
+      const credenciadoOptions = document.getElementById('credenciamento-termo-credenciado-options');
       const credenciadaCodigoInput = document.getElementById('credenciamento-termo-credenciada-codigo');
       const cnpjCpfInput = document.getElementById('credenciamento-termo-cnpj-cpf');
       const situacaoPublicacaoInput = document.getElementById('credenciamento-termo-situacao-publicacao');
       const situacaoEmissaoInput = document.getElementById('credenciamento-termo-situacao-emissao');
       const statusTermoInput = document.getElementById('credenciamento-termo-status-termo');
       const statusAditivoInput = document.getElementById('credenciamento-termo-status-aditivo');
-      const checkAditivoInput = document.getElementById('credenciamento-termo-check-aditivo');
+      const checkAditivoYesInput = document.getElementById('credenciamento-termo-check-aditivo-sim');
+      const checkAditivoNoInput = document.getElementById('credenciamento-termo-check-aditivo-nao');
       const inicioVigenciaInput = document.getElementById('credenciamento-termo-inicio-vigencia');
       const terminoVigenciaInput = document.getElementById('credenciamento-termo-termino-vigencia');
       const compDataAditivoInput = document.getElementById('credenciamento-termo-comp-data-aditivo');
@@ -516,6 +555,7 @@
       const rejectionPageSize = 20;
       const defaultImportFileName = 'Credenciamento_Termo.xml';
       let editingCodigo = null;
+      let formMode = 'create';
       let currentPage = 1;
       let totalPages = 1;
       let currentSearch = '';
@@ -528,6 +568,36 @@
 
       const normalizeText = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trim().toUpperCase().slice(0, maxLength);
       const normalizeIntegerInput = (value, maxDigits = 10) => value.replace(/\D/g, '').slice(0, maxDigits);
+      const normalizeSei = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 16);
+
+        if (digits.length <= 4) {
+          return digits;
+        }
+
+        if (digits.length <= 8) {
+          return `${digits.slice(0, 4)}.${digits.slice(4)}`;
+        }
+
+        if (digits.length <= 15) {
+          return `${digits.slice(0, 4)}.${digits.slice(4, 8)}/${digits.slice(8)}`;
+        }
+
+        return `${digits.slice(0, 4)}.${digits.slice(4, 8)}/${digits.slice(8, 15)}-${digits.slice(15)}`;
+      };
+      const normalizeTermoAdesao = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+
+        if (digits.length <= 4) {
+          return digits;
+        }
+
+        return `${digits.slice(0, 4)}/${digits.slice(4)}`;
+      };
+      const deriveTermoAdesaoFromSei = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 16);
+        return normalizeTermoAdesao(digits.slice(4, 15));
+      };
       const normalizeCpf = (value) => {
         const digits = value.replace(/\D/g, '').slice(0, 11);
         if (digits.length <= 3) return digits;
@@ -576,24 +646,85 @@
         rejectionPanel.classList.add('dsc-hidden');
       };
 
+      const formInputs = [
+        codigoXmlInput,
+        aditivoInput,
+        termoAdesaoInput,
+        seiInput,
+        credenciadoInput,
+        credenciadaCodigoInput,
+        cnpjCpfInput,
+        situacaoPublicacaoInput,
+        situacaoEmissaoInput,
+        statusTermoInput,
+        statusAditivoInput,
+        inicioVigenciaInput,
+        terminoVigenciaInput,
+        compDataAditivoInput,
+        dataPubAditivoInput,
+        tipoTermoInput,
+        representanteInput,
+        cpfRepresentanteInput,
+        rgRepresentanteInput,
+        logradouroInput,
+        bairroInput,
+        cepEnderecoInput,
+        municipioInput,
+        especificacaoSeiInput,
+        valorContratoInput,
+        valorContratoAtualizadoInput,
+        folhasInput,
+        dataPublicacaoInput,
+        vencimentoGeralInput,
+        mesRenovacaoInput,
+        tpOptanteInput,
+        infoSeiInput,
+        objetoInput,
+      ];
+
+      const setFormReadOnly = (isReadOnly) => {
+        formInputs.forEach((input) => {
+          input.readOnly = isReadOnly;
+        });
+        termoAdesaoInput.readOnly = true;
+        checkAditivoYesInput.disabled = isReadOnly;
+        checkAditivoNoInput.disabled = isReadOnly;
+        saveButton.classList.toggle('dsc-hidden', isReadOnly);
+      };
+
+      const showForm = (mode = 'create') => {
+        const isEditing = mode === 'edit';
+        const isReadOnly = mode === 'view';
+
+        formMode = mode;
+        hidePanels();
+        form.classList.remove('dsc-hidden');
+        formTitle.textContent = isReadOnly ? 'Consulta de Termo' : isEditing ? 'Alteracao de Termo' : 'Cadastro de Termo';
+        saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar credenciamento termo';
+        setFormReadOnly(isReadOnly);
+      };
+
       const clearForm = () => {
         editingCodigo = null;
-        formTitle.textContent = 'Novo registro';
+        formMode = 'create';
+        formTitle.textContent = 'Cadastro de Termo';
         form.reset();
         credenciadaCodigoInput.value = '';
         cnpjCpfInput.value = '';
-        checkAditivoInput.checked = true;
+        checkAditivoYesInput.checked = true;
+        checkAditivoNoInput.checked = false;
         importFileNameInput.value = defaultImportFileName;
+        setFormReadOnly(false);
         resetMessages();
       };
 
       const fillForm = (item) => {
         editingCodigo = item.codigo;
-        formTitle.textContent = `Editar registro ${item.codigo}`;
+        formTitle.textContent = `Alteracao de credenciamento termo ${item.codigo}`;
         codigoXmlInput.value = item.codigo_xml || '';
         aditivoInput.value = item.aditivo || '';
         termoAdesaoInput.value = item.termo_adesao || '';
-        seiInput.value = item.sei || '';
+        seiInput.value = normalizeSei(item.sei || '');
         credenciadoInput.value = item.credenciado || '';
         credenciadaCodigoInput.value = item.credenciada_codigo || '';
         cnpjCpfInput.value = item.cnpj_cpf || '';
@@ -601,7 +732,8 @@
         situacaoEmissaoInput.value = item.situacao_emissao || '';
         statusTermoInput.value = item.status_termo || '';
         statusAditivoInput.value = item.status_aditivo || '';
-        checkAditivoInput.checked = item.check_aditivo === '1';;
+        checkAditivoYesInput.checked = item.check_aditivo === '1';
+        checkAditivoNoInput.checked = item.check_aditivo !== '1';
         inicioVigenciaInput.value = item.inicio_vigencia || '';
         terminoVigenciaInput.value = item.termino_vigencia || '';
         compDataAditivoInput.value = item.comp_data_aditivo || '';
@@ -610,6 +742,7 @@
         representanteInput.value = item.representante || '';
         cpfRepresentanteInput.value = item.cpf_representante || '';
         rgRepresentanteInput.value = item.rg_representante || '';
+        cepEnderecoInput.value = item.credenciada_cep || '';
         logradouroInput.value = item.logradouro || '';
         bairroInput.value = item.bairro || '';
         municipioInput.value = item.municipio || '';
@@ -654,61 +787,34 @@
       };
 
       const renderGrid = (items) => {
+        gridBody.innerHTML = '';
+
         if (!items.length) {
-          gridBody.innerHTML = '';
           emptyState.classList.remove('dsc-hidden');
           return;
         }
 
         emptyState.classList.add('dsc-hidden');
-        gridBody.innerHTML = items.map((item) => `
-          <tr>
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
             <td>${item.codigo}</td>
-            <td>${item.codigo_xml || ''}</td>
             <td>${item.termo_adesao || ''}</td>
             <td>${item.credenciado || ''}</td>
             <td>${item.aditivo || ''}</td>
             <td>${item.inicio_vigencia || ''}</td>
             <td>${item.termino_vigencia || ''}</td>
             <td>${item.status_aditivo || ''}</td>
-            <td class="dsc-grid-actions-cell">
-              <button type="button" class="dsc-btn dsc-btn-white dsc-btn-small" data-action="edit" data-codigo="${item.codigo}">Editar</button>
-              <button type="button" class="dsc-btn dsc-btn-white dsc-btn-small" data-action="delete" data-codigo="${item.codigo}">Excluir</button>
+            <td>
+              <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button" data-action="view" data-codigo="${item.codigo}">Consulta</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}">Excluir</button>
+              </div>
             </td>
-          </tr>
-        `).join('');
-
-        Array.from(gridBody.querySelectorAll('button[data-action="edit"]')).forEach((button) => {
-          button.addEventListener('click', () => {
-            const item = items.find((current) => current.codigo === button.dataset.codigo);
-            if (!item) {
-              return;
-            }
-            hidePanels();
-            fillForm(item);
-            form.classList.remove('dsc-hidden');
-          });
-        });
-
-        Array.from(gridBody.querySelectorAll('button[data-action="delete"]')).forEach((button) => {
-          button.addEventListener('click', async () => {
-            const codigo = button.dataset.codigo;
-            if (!codigo || !window.confirm('Confirma a exclusao do registro?')) {
-              return;
-            }
-
-            try {
-              const response = await fetch(`/api/termo/${encodeURIComponent(codigo)}`, { method: 'DELETE' });
-              if (!response.ok) {
-                throw new Error(await getRequestErrorMessage(response, 'Falha ao excluir o registro.'));
-              }
-
-              showBanner('Registro excluido com sucesso.');
-              await loadItems();
-            } catch (error) {
-              showBanner(error instanceof Error ? error.message : 'Falha ao excluir o registro.', 'error');
-            }
-          });
+          `;
+          row.dataset.item = JSON.stringify(item);
+          gridBody.appendChild(row);
         });
       };
 
@@ -784,6 +890,28 @@
         }
       };
 
+      const populateCredenciadaOptions = async (search = '') => {
+        try {
+          const response = await fetch(`/api/credenciada?page=1&pageSize=30&search=${encodeURIComponent(search)}`, {
+            headers: { Accept: 'application/json' },
+          });
+
+          if (!response.ok) {
+            throw new Error(await getRequestErrorMessage(response, 'Falha ao carregar credenciadas.'));
+          }
+
+          const payload = await response.json();
+          const options = (payload.items || [])
+            .filter((item) => normalizeText(item.status || '', 50) === 'ATIVO')
+            .map((item) => `<option value="${item.credenciado || ''}"></option>`)
+            .join('');
+
+          credenciadoOptions.innerHTML = '<option value=""></option>' + options;
+        } catch (_) {
+          credenciadoOptions.innerHTML = '<option value=""></option>';
+        }
+      };
+
       const syncCredenciadaByName = async () => {
         const credenciado = normalizeText(credenciadoInput.value, 255);
         credenciadoInput.value = credenciado;
@@ -794,6 +922,10 @@
           representanteInput.value = '';
           cpfRepresentanteInput.value = '';
           rgRepresentanteInput.value = '';
+          cepEnderecoInput.value = '';
+          logradouroInput.value = '';
+          bairroInput.value = '';
+          municipioInput.value = '';
           return;
         }
 
@@ -804,9 +936,22 @@
           }
 
           const payload = await response.json();
+          const credenciadaStatus = normalizeText(payload.item?.status || '', 50);
+
+          if (!payload.item || credenciadaStatus !== 'ATIVO') {
+            throw new Error('Somente credenciadas ativas podem ser selecionadas.');
+          }
+
           credenciadoInput.value = payload.item.credenciado || credenciado;
           credenciadaCodigoInput.value = payload.item.codigo || '';
           cnpjCpfInput.value = payload.item.cnpj_cpf || '';
+          representanteInput.value = payload.item.representante || '';
+          cpfRepresentanteInput.value = payload.item.cpf_representante || '';
+          rgRepresentanteInput.value = payload.item.rg_representante || '';
+          cepEnderecoInput.value = payload.item.cep || '';
+          logradouroInput.value = payload.item.logradouro || '';
+          bairroInput.value = payload.item.bairro || '';
+          municipioInput.value = payload.item.municipio || '';
           errors.credenciado.textContent = '';
         } catch (error) {
           credenciadaCodigoInput.value = '';
@@ -814,6 +959,10 @@
           representanteInput.value = '';
           cpfRepresentanteInput.value = '';
           rgRepresentanteInput.value = '';
+          cepEnderecoInput.value = '';
+          logradouroInput.value = '';
+          bairroInput.value = '';
+          municipioInput.value = '';
           errors.credenciado.textContent = error instanceof Error ? error.message : 'Falha ao localizar credenciada.';
         }
       };
@@ -821,22 +970,19 @@
       const collectPayload = () => ({
         codigoXml: normalizeIntegerInput(codigoXmlInput.value, 10),
         aditivo: normalizeIntegerInput(aditivoInput.value, 2),
-        termoAdesao: normalizeText(termoAdesaoInput.value, 255),
+        termoAdesao: normalizeTermoAdesao(termoAdesaoInput.value),
         sei: normalizeText(seiInput.value, 255),
         credenciadaCodigo: normalizeIntegerInput(credenciadaCodigoInput.value, 10),
         situacaoPublicacao: normalizeText(situacaoPublicacaoInput.value, 100),
         situacaoEmissao: normalizeText(situacaoEmissaoInput.value, 100),
         statusTermo: normalizeText(statusTermoInput.value, 100),
         statusAditivo: normalizeText(statusAditivoInput.value, 100),
-        checkAditivo: checkAditivoInput.checked ? 1 : 0,
+        checkAditivo: checkAditivoYesInput.checked ? 1 : 0,
         inicioVigencia: inicioVigenciaInput.value,
         terminoVigencia: terminoVigenciaInput.value,
         compDataAditivo: compDataAditivoInput.value,
         dataPubAditivo: dataPubAditivoInput.value,
         tipoTermo: normalizeText(tipoTermoInput.value, 100),
-        logradouro: normalizeText(logradouroInput.value, 255),
-        bairro: normalizeText(bairroInput.value, 120),
-        municipio: normalizeText(municipioInput.value, 120),
         especificacaoSei: normalizeText(especificacaoSeiInput.value, 255),
         valorContrato: normalizeDecimalInput(valorContratoInput.value),
         valorContratoAtualizado: normalizeDecimalInput(valorContratoAtualizadoInput.value),
@@ -851,6 +997,11 @@
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
+
+        if (formMode === 'view') {
+          return;
+        }
+
         resetMessages();
         const payload = collectPayload();
 
@@ -958,9 +1109,8 @@
       });
 
       insertButton.addEventListener('click', () => {
-        hidePanels();
         clearForm();
-        form.classList.remove('dsc-hidden');
+        showForm('create');
       });
 
       cancelButton.addEventListener('click', () => {
@@ -1032,48 +1182,82 @@
         void syncCredenciadaByName();
       });
 
+      credenciadoInput.addEventListener('focus', () => {
+        void populateCredenciadaOptions(credenciadoInput.value.trim());
+      });
+
+      credenciadoInput.addEventListener('input', () => {
+        credenciadaCodigoInput.value = '';
+
+        if (credenciadoInput.value.trim().length >= 2) {
+          void populateCredenciadaOptions(credenciadoInput.value.trim());
+          return;
+        }
+
+        credenciadoOptions.innerHTML = '<option value=""></option>';
+      });
+
       codigoXmlInput.addEventListener('input', () => { codigoXmlInput.value = normalizeIntegerInput(codigoXmlInput.value, 10); });
       aditivoInput.addEventListener('input', () => { aditivoInput.value = normalizeIntegerInput(aditivoInput.value, 2); });
+      seiInput.addEventListener('input', () => {
+        seiInput.value = normalizeSei(seiInput.value);
+        termoAdesaoInput.value = deriveTermoAdesaoFromSei(seiInput.value);
+      });
+      termoAdesaoInput.addEventListener('input', () => { termoAdesaoInput.value = normalizeTermoAdesao(termoAdesaoInput.value); });
       valorContratoInput.addEventListener('input', () => { valorContratoInput.value = normalizeDecimalInput(valorContratoInput.value); });
       valorContratoAtualizadoInput.addEventListener('input', () => { valorContratoAtualizadoInput.value = normalizeDecimalInput(valorContratoAtualizadoInput.value); });
 
-      cepEnderecoInput.addEventListener('input', () => {
-        const digits = cepEnderecoInput.value.replace(/\D/g, '').slice(0, 8);
-        cepEnderecoInput.value = digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
-      });
+      gridBody.addEventListener('click', async (event) => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) {
+          return;
+        }
 
-      const fillAddressFromCep = (item) => {
-        if (!logradouroInput.value) logradouroInput.value = item.logradouro || '';
-        if (!bairroInput.value) bairroInput.value = item.bairro || '';
-        if (!municipioInput.value) municipioInput.value = item.municipio || '';
-      };
+        const row = button.closest('tr');
+        const item = row?.dataset.item ? JSON.parse(row.dataset.item) : null;
+        const { action, codigo } = button.dataset;
 
-      cepEnderecoInput.addEventListener('blur', async () => {
-        const cep = cepEnderecoInput.value;
-        if (!/^\d{5}-\d{3}$/.test(cep)) return;
-        if (logradouroInput.value || bairroInput.value || municipioInput.value) return;
-
-        try {
-          const res = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.item) { fillAddressFromCep(data.item); }
+        if (action === 'view') {
+          if (!item) {
             return;
           }
-          if (res.status === 404) {
-            const buscarNuvem = confirm(`CEP ${cep} nao encontrado na base local.\nDeseja buscar na nuvem (ViaCEP)?`);
-            if (!buscarNuvem) return;
+          clearForm();
+          fillForm(item);
+          showForm('view');
+          return;
+        }
 
-            const resCloud = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}&cloud=true`);
-            if (resCloud.ok) {
-              const dataCloud = await resCloud.json();
-              if (dataCloud.item) { fillAddressFromCep(dataCloud.item); }
-            }
+        if (action === 'edit') {
+          if (!item) {
+            return;
           }
-        } catch { /* silencioso */ }
+          clearForm();
+          fillForm(item);
+          showForm('edit');
+          return;
+        }
+
+        if (action === 'delete') {
+          if (!codigo || !window.confirm('Confirma a exclusao do registro?')) {
+            return;
+          }
+
+          try {
+            const response = await fetch(`/api/termo/${encodeURIComponent(codigo)}`, { method: 'DELETE' });
+            if (!response.ok) {
+              throw new Error(await getRequestErrorMessage(response, 'Falha ao excluir o registro.'));
+            }
+
+            showBanner('Registro excluido com sucesso.');
+            await loadItems();
+          } catch (error) {
+            showBanner(error instanceof Error ? error.message : 'Falha ao excluir o registro.', 'error');
+          }
+        }
       });
 
-      clearForm();
+clearForm();
+  void populateCredenciadaOptions('');
       void loadItems();
     </script>
   </body>
