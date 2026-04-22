@@ -26,17 +26,21 @@
               </form>
             </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="vinculo-rejection-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="vinculo-rejection-title">
             <section class="dsc-card dsc-hidden" id="vinculo-rejection-panel">
-              <div class="dsc-access-grid-header">
-                <h2>Registros nao importados</h2>
-                <span id="vinculo-rejection-total"></span>
+              <div class="dsc-popup-header dsc-popup-header-sticky dsc-popup-header-with-compact-close">
+                <div class="dsc-popup-header-copy">
+                  <h2 id="vinculo-rejection-title">Registros nao importados</h2>
+                  <span id="vinculo-rejection-total"></span>
+                </div>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-vinculo-rejection-modal-button" aria-label="Fechar recusas xml">X</button>
               </div>
 
               <form class="dsc-access-filter-form" id="vinculo-rejection-filter-form">
                 <input class="dsc-form-control dsc-access-filter-input" id="vinculo-rejection-search" type="text" placeholder="Filtrar por arquivo, empregador, CPF ou motivo" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-vinculo-rejection-filter-button">Limpar</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="close-vinculo-rejection-panel-button">Fechar</button>
               </form>
 
               <div class="dsc-access-grid-wrapper">
@@ -68,9 +72,16 @@
                 <button type="button" class="dsc-btn dsc-btn-white" id="next-vinculo-rejection-page-button">Proxima</button>
               </div>
             </section>
+              </div>
+            </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="vinculo-import-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="vinculo-import-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="vinculo-import-form">
-              <h2>Importacao de vinculo do condutor por XML</h2>
+              <div class="dsc-popup-header dsc-popup-header-with-compact-close">
+                <h2 id="vinculo-import-title">Importacao de vinculo do condutor por XML</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-vinculo-import-modal-button" aria-label="Fechar importacao de vinculo do condutor">X</button>
+              </div>
 
               <label class="dsc-field-group" for="vinculo-import-file-name">
                 <span>Nome do arquivo XML</span>
@@ -80,16 +91,23 @@
 
               <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue">Executar importacao</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-vinculo-import-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="vinculo-import-feedback"></p>
             </form>
+              </div>
+            </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="vinculo-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="vinculo-form-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="vinculo-form">
-              <h2 id="vinculo-form-title">Novo registro</h2>
+              <div class="dsc-popup-header dsc-popup-header-sticky">
+                <h2 id="vinculo-form-title">VINCULO CONDUTOR</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-vinculo-form-modal-button" aria-label="Fechar formulario de vinculo do condutor">X</button>
+              </div>
 
               <section class="dsc-form-section-card">
                 <h3 class="dsc-form-section-title">Dados do vinculo</h3>
@@ -152,13 +170,15 @@
                 </div>
               </section>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-vinculo-button">Salvar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-vinculo-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="vinculo-form-feedback"></p>
             </form>
+              </div>
+            </div>
 
             <section class="dsc-card">
               <div class="dsc-access-grid-header">
@@ -217,6 +237,9 @@
         const saveButton = document.getElementById('save-vinculo-button');
         const cancelButton = document.getElementById('cancel-vinculo-button');
         const termoInput = document.getElementById('vinculo-termo-adesao');
+        const formModal = document.getElementById('vinculo-form-modal');
+        const importModal = document.getElementById('vinculo-import-modal');
+        const rejectionModal = document.getElementById('vinculo-rejection-modal');
         const numOsInput = document.getElementById('vinculo-num-os');
         const revisaoInput = document.getElementById('vinculo-revisao');
         const credenciadoInput = document.getElementById('vinculo-credenciado');
@@ -238,12 +261,14 @@
         const importFeedback = document.getElementById('vinculo-import-feedback');
         const openImportButton = document.getElementById('open-vinculo-import-button');
         const cancelImportButton = document.getElementById('cancel-vinculo-import-button');
+        const closeImportModalButton = document.getElementById('close-vinculo-import-modal-button');
+        const closeFormModalButton = document.getElementById('close-vinculo-form-modal-button');
         const openRejectionsButton = document.getElementById('open-vinculo-rejections-button');
         const rejectionPanel = document.getElementById('vinculo-rejection-panel');
         const rejectionFilterForm = document.getElementById('vinculo-rejection-filter-form');
         const rejectionSearchInput = document.getElementById('vinculo-rejection-search');
         const clearRejectionFilterButton = document.getElementById('clear-vinculo-rejection-filter-button');
-        const closeRejectionPanelButton = document.getElementById('close-vinculo-rejection-panel-button');
+        const closeRejectionPanelButton = document.getElementById('close-vinculo-rejection-modal-button');
         const rejectionGridBody = document.getElementById('vinculo-rejection-grid-body');
         const rejectionEmptyState = document.getElementById('vinculo-rejection-empty-state');
         const rejectionFeedback = document.getElementById('vinculo-rejection-grid-feedback');
@@ -368,6 +393,18 @@
           saveButton.classList.toggle('dsc-hidden', isReadOnly);
         };
 
+        const setPopupVisibility = (modalElement, shouldShow) => {
+          modalElement.classList.toggle('dsc-hidden', !shouldShow);
+          modalElement.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+        };
+
+        const syncPopupPageState = () => {
+          const isPopupVisible = !formModal.classList.contains('dsc-hidden')
+            || !importModal.classList.contains('dsc-hidden')
+            || !rejectionModal.classList.contains('dsc-hidden');
+          document.body.classList.toggle('dsc-popup-open', isPopupVisible);
+        };
+
         const fillFormFromItem = (item) => {
           termoInput.value = item.termo_adesao || '';
           numOsInput.value = item.num_os || '';
@@ -383,6 +420,8 @@
 
         const hideForm = () => {
           form.classList.add('dsc-hidden');
+          setPopupVisibility(formModal, false);
+          syncPopupPageState();
           state.editingId = null;
           state.formMode = 'create';
           form.reset();
@@ -401,20 +440,24 @@
         const showForm = (mode = 'create') => {
           state.formMode = mode;
           const isViewing = mode === 'view';
-          const isEditing = mode === 'edit';
-          formTitle.textContent = isViewing ? 'Consulta de registro' : isEditing ? 'Alterar registro' : 'Novo registro';
+          formTitle.textContent = 'VINCULO CONDUTOR';
           form.classList.remove('dsc-hidden');
+          setPopupVisibility(formModal, true);
+          syncPopupPageState();
           importForm.classList.add('dsc-hidden');
+          setPopupVisibility(importModal, false);
           rejectionPanel.classList.add('dsc-hidden');
+          setPopupVisibility(rejectionModal, false);
           setFormReadOnly(isViewing);
           if (isViewing) {
             setFeedback(formFeedback, 'Modo consulta. Alteracoes nao sao permitidas.');
           }
-          form.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
         const hideImportForm = () => {
           importForm.classList.add('dsc-hidden');
+          setPopupVisibility(importModal, false);
+          syncPopupPageState();
           clearFeedbackState(importFeedback);
           importFileNameError.textContent = '';
         };
@@ -422,15 +465,18 @@
         const showImportForm = () => {
           hideForm();
           rejectionPanel.classList.add('dsc-hidden');
+          setPopupVisibility(rejectionModal, false);
           importForm.classList.remove('dsc-hidden');
-          importForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setPopupVisibility(importModal, true);
+          syncPopupPageState();
         };
 
         const showRejectionPanel = async () => {
           hideForm();
           hideImportForm();
           rejectionPanel.classList.remove('dsc-hidden');
-          rejectionPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setPopupVisibility(rejectionModal, true);
+          syncPopupPageState();
           await loadRejections();
         };
 
@@ -733,6 +779,8 @@
 
         closeRejectionPanelButton.addEventListener('click', () => {
           rejectionPanel.classList.add('dsc-hidden');
+          setPopupVisibility(rejectionModal, false);
+          syncPopupPageState();
         });
 
         insertButton.addEventListener('click', () => {
@@ -741,10 +789,50 @@
         });
 
         cancelButton.addEventListener('click', hideForm);
+        closeFormModalButton.addEventListener('click', hideForm);
         openImportButton.addEventListener('click', showImportForm);
         cancelImportButton.addEventListener('click', hideImportForm);
+        closeImportModalButton.addEventListener('click', hideImportForm);
         openRejectionsButton.addEventListener('click', () => {
           void showRejectionPanel();
+        });
+        formModal.addEventListener('click', (event) => {
+          if (event.target === formModal) {
+            hideForm();
+          }
+        });
+        importModal.addEventListener('click', (event) => {
+          if (event.target === importModal) {
+            hideImportForm();
+          }
+        });
+        rejectionModal.addEventListener('click', (event) => {
+          if (event.target === rejectionModal) {
+            rejectionPanel.classList.add('dsc-hidden');
+            setPopupVisibility(rejectionModal, false);
+            syncPopupPageState();
+          }
+        });
+        document.addEventListener('keydown', (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+
+          if (!formModal.classList.contains('dsc-hidden')) {
+            hideForm();
+            return;
+          }
+
+          if (!importModal.classList.contains('dsc-hidden')) {
+            hideImportForm();
+            return;
+          }
+
+          if (!rejectionModal.classList.contains('dsc-hidden')) {
+            rejectionPanel.classList.add('dsc-hidden');
+            setPopupVisibility(rejectionModal, false);
+            syncPopupPageState();
+          }
         });
 
         credenciadoInput.addEventListener('focus', () => {

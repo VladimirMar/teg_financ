@@ -24,8 +24,13 @@
               </form>
             </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="login-dre-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="login-dre-form-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="login-dre-form">
-              <h2 id="login-dre-form-title">Novo relacionamento</h2>
+              <div class="dsc-popup-header dsc-popup-header-sticky">
+                <h2 id="login-dre-form-title">LOGIN X DRE</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-login-dre-form-modal-button" aria-label="Fechar formulario login x DRE">X</button>
+              </div>
 
               <div class="dsc-form-row dsc-login-dre-form-row">
                 <label class="dsc-field-group" for="login-codigo">
@@ -59,16 +64,23 @@
                 </label>
               </div>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-login-dre-button">Salvar relacionamento</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-login-dre-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="login-dre-form-feedback"></p>
             </form>
+              </div>
+            </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="login-dre-bulk-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="login-dre-bulk-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="login-dre-bulk-form">
-              <h2>Vincular todas as DREs ao usuario</h2>
+              <div class="dsc-popup-header dsc-popup-header-sticky">
+                <h2 id="login-dre-bulk-title">VINCULAR DRES</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-login-dre-bulk-modal-button" aria-label="Fechar vinculacao em massa de DRE">X</button>
+              </div>
 
               <div class="dsc-form-row dsc-login-dre-form-row">
                 <label class="dsc-field-group" for="bulk-login-codigo">
@@ -88,13 +100,15 @@
 
               <p class="dsc-form-hint">A operacao gravara apenas as DREs ainda nao vinculadas ao usuario escolhido.</p>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-login-dre-bulk-button">Gravar todas as DREs</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-login-dre-bulk-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="login-dre-bulk-feedback"></p>
             </form>
+              </div>
+            </div>
 
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header">
@@ -141,6 +155,8 @@
     </main>
 
     <script>
+      const formModal = document.getElementById('login-dre-form-modal');
+      const bulkFormModal = document.getElementById('login-dre-bulk-modal');
       const form = document.getElementById('login-dre-form');
       const bulkForm = document.getElementById('login-dre-bulk-form');
       const loginCodigoSelect = document.getElementById('login-codigo');
@@ -162,6 +178,8 @@
       const bulkInsertButton = document.getElementById('insert-login-dre-bulk-button');
       const cancelButton = document.getElementById('cancel-login-dre-button');
       const bulkCancelButton = document.getElementById('cancel-login-dre-bulk-button');
+      const closeFormModalButton = document.getElementById('close-login-dre-form-modal-button');
+      const closeBulkModalButton = document.getElementById('close-login-dre-bulk-modal-button');
       const filterForm = document.getElementById('login-dre-filter-form');
       const clearFilterButton = document.getElementById('clear-login-dre-filter-button');
       const searchInput = document.getElementById('login-dre-search');
@@ -380,25 +398,43 @@
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
       };
 
+      const setPopupVisibility = (modalElement, shouldShow) => {
+        modalElement.classList.toggle('dsc-hidden', !shouldShow);
+        modalElement.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+      };
+
+      const syncPopupPageState = () => {
+        const isPopupVisible = !formModal.classList.contains('dsc-hidden') || !bulkFormModal.classList.contains('dsc-hidden');
+        document.body.classList.toggle('dsc-popup-open', isPopupVisible);
+      };
+
       const showForm = (mode = 'create') => {
         const isEditing = mode === 'edit';
         const isReadOnly = mode === 'view';
 
         formMode = mode;
         bulkForm.classList.add('dsc-hidden');
+        setPopupVisibility(bulkFormModal, false);
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isReadOnly ? 'Consulta de relacionamento' : isEditing ? 'Alterar relacionamento' : 'Novo relacionamento';
+        setPopupVisibility(formModal, true);
+        syncPopupPageState();
+        formTitle.textContent = 'LOGIN X DRE';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar relacionamento';
         setFormReadOnly(isReadOnly);
       };
 
       const showBulkForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
         bulkForm.classList.remove('dsc-hidden');
+        setPopupVisibility(bulkFormModal, true);
+        syncPopupPageState();
       };
 
       const hideForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
+        syncPopupPageState();
         form.reset();
         editingPair = null;
         formMode = 'create';
@@ -414,6 +450,8 @@
 
       const hideBulkForm = () => {
         bulkForm.classList.add('dsc-hidden');
+        setPopupVisibility(bulkFormModal, false);
+        syncPopupPageState();
         bulkForm.reset();
         selectedBulkLoginCodigo = '';
         bulkLoginCodigoSelect.value = '';
@@ -745,6 +783,36 @@
       bulkInsertButton.addEventListener('click', startBulkInsert);
       cancelButton.addEventListener('click', hideForm);
       bulkCancelButton.addEventListener('click', hideBulkForm);
+      closeFormModalButton.addEventListener('click', hideForm);
+      closeBulkModalButton.addEventListener('click', hideBulkForm);
+      [formModal, bulkFormModal].forEach((modalElement) => {
+        modalElement.addEventListener('click', (event) => {
+          if (event.target !== modalElement) {
+            return;
+          }
+
+          if (modalElement === formModal) {
+            hideForm();
+            return;
+          }
+
+          hideBulkForm();
+        });
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+          return;
+        }
+
+        if (!formModal.classList.contains('dsc-hidden')) {
+          hideForm();
+          return;
+        }
+
+        if (!bulkFormModal.classList.contains('dsc-hidden')) {
+          hideBulkForm();
+        }
+      });
 
       filterForm.addEventListener('submit', (event) => {
         event.preventDefault();

@@ -86,8 +86,13 @@
               <p class="dsc-feedback" id="veiculo-import-feedback"></p>
             </form>
 
-            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="veiculo-form">
-              <h2 id="veiculo-form-title">Novo registro</h2>
+            <div class="dsc-popup-overlay dsc-hidden" id="veiculo-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="veiculo-form-title">
+                <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="veiculo-form">
+                  <div class="dsc-popup-header dsc-popup-header-sticky">
+                    <h2 id="veiculo-form-title">VEICULO</h2>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-veiculo-form-modal-button" aria-label="Fechar formulario de veiculo">X</button>
+                  </div>
 
               <section class="dsc-form-section-card dsc-form-section-card-veiculo-identificacao">
                 <h3 class="dsc-form-section-title">Identificacao</h3>
@@ -265,13 +270,15 @@
                 </div>
               </section>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-veiculo-button">Salvar veiculo</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-veiculo-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="veiculo-form-feedback"></p>
-            </form>
+                </form>
+              </div>
+            </div>
 
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header">
@@ -318,6 +325,7 @@
 
     <script>
       const form = document.getElementById('veiculo-form');
+      const formModal = document.getElementById('veiculo-form-modal');
       const crmInput = document.getElementById('veiculo-crm');
       const placasInput = document.getElementById('veiculo-placas');
       const anoInput = document.getElementById('veiculo-ano');
@@ -382,6 +390,7 @@
       const sortIndicator = document.getElementById('sort-veiculo-indicator');
       const formTitle = document.getElementById('veiculo-form-title');
       const saveButton = document.getElementById('save-veiculo-button');
+      const closeFormModalButton = document.getElementById('close-veiculo-form-modal-button');
       const statusBanner = document.getElementById('status-banner');
       const rejectionPanel = document.getElementById('veiculo-rejection-panel');
       const rejectionFilterForm = document.getElementById('veiculo-rejection-filter-form');
@@ -923,6 +932,16 @@
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
       };
 
+      const setPopupVisibility = (modalElement, shouldShow) => {
+        modalElement.classList.toggle('dsc-hidden', !shouldShow);
+        modalElement.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+      };
+
+      const syncPopupPageState = () => {
+        const isPopupVisible = !formModal.classList.contains('dsc-hidden');
+        document.body.classList.toggle('dsc-popup-open', isPopupVisible);
+      };
+
       const showForm = (mode = 'create') => {
         const isEditing = mode === 'edit';
         const isReadOnly = mode === 'view';
@@ -931,7 +950,9 @@
         importForm.classList.add('dsc-hidden');
         rejectionPanel.classList.add('dsc-hidden');
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isReadOnly ? 'Consulta de veiculo' : isEditing ? 'Alteracao de veiculo' : 'Cadastro de veiculo';
+        setPopupVisibility(formModal, true);
+        syncPopupPageState();
+        formTitle.textContent = 'VEICULO';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar veiculo';
         setFormReadOnly(isReadOnly);
       };
@@ -956,6 +977,8 @@
 
       const hideForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
+        syncPopupPageState();
         form.reset();
         renderSeguradoraOptions('');
         renderMarcaModeloOptions('');
@@ -1495,8 +1518,21 @@
         void showRejectionPanel();
       });
       cancelButton.addEventListener('click', hideForm);
+      closeFormModalButton.addEventListener('click', hideForm);
       cancelImportButton.addEventListener('click', hideImportForm);
       closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
+
+      formModal.addEventListener('click', (event) => {
+        if (event.target === formModal) {
+          hideForm();
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !formModal.classList.contains('dsc-hidden')) {
+          hideForm();
+        }
+      });
 
       importForm.addEventListener('submit', async (event) => {
         event.preventDefault();

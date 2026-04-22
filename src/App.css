@@ -545,6 +545,84 @@
   background: #fff;
 }
 
+body.management-modal-open {
+  overflow: hidden;
+}
+
+.management-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(14, 36, 52, 0.42);
+  backdrop-filter: blur(5px);
+}
+
+.management-modal-shell {
+  width: min(100%, 760px);
+  max-height: calc(100vh - 36px);
+}
+
+.management-modal-form-card {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  gap: 16px;
+}
+
+.management-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin: -18px -20px 0;
+  padding: 18px 20px 14px;
+  background: linear-gradient(180deg, rgba(255, 251, 243, 0.98), rgba(255, 251, 243, 0.9));
+  border-bottom: 1px solid rgba(33, 49, 57, 0.08);
+}
+
+.management-modal-kicker {
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.76rem;
+  color: #56746f;
+}
+
+.management-modal-header h2 {
+  margin: 0;
+}
+
+.management-modal-subtitle {
+  margin: 0;
+  color: var(--text-soft);
+  font-weight: 700;
+}
+
+.management-modal-close-button {
+  flex: 0 0 auto;
+  min-width: 52px;
+  min-height: 52px;
+  padding: 0;
+}
+
+.management-modal-footer {
+  position: sticky;
+  bottom: -18px;
+  margin: 0 -20px -18px;
+  padding: 16px 20px 18px;
+  background: linear-gradient(180deg, rgba(255, 251, 243, 0.88), rgba(255, 251, 243, 0.98));
+  border-top: 1px solid rgba(33, 49, 57, 0.08);
+}
+
 .smoke-card {
   display: grid;
   gap: 14px;
@@ -806,6 +884,10 @@
   .smoke-import-card-header {
     flex-direction: column;
   }
+
+  .management-modal-overlay {
+    padding: 16px;
+  }
 }
 
 @media (max-width: 920px) {
@@ -831,6 +913,16 @@
     padding: 22px;
   }
 
+  .management-modal-header {
+    margin: -22px -22px 0;
+    padding: 18px 22px 14px;
+  }
+
+  .management-modal-footer {
+    margin: 0 -22px -22px;
+    padding: 16px 22px 22px;
+  }
+
   .management-grid-header,
   .dre-list-header {
     align-items: flex-start;
@@ -852,6 +944,18 @@
   .bus-stage,
   .access-embed-card {
     border-radius: 24px;
+  }
+
+  .management-modal-overlay {
+    padding: 10px;
+  }
+
+  .management-modal-header {
+    flex-direction: column;
+  }
+
+  .management-modal-close-button {
+    width: 100%;
   }
 
   .login-copy,

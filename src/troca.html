@@ -23,8 +23,13 @@
               </form>
             </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="troca-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="troca-form-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="troca-form">
-              <h2 id="troca-form-title">Novo registro</h2>
+              <div class="dsc-popup-header dsc-popup-header-sticky">
+                <h2 id="troca-form-title">TIPO DE TROCA</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-troca-form-modal-button" aria-label="Fechar formulario de tipo de troca">X</button>
+              </div>
 
               <div class="dsc-form-row">
                 <label class="dsc-field-group" for="troca-controle">
@@ -40,13 +45,15 @@
                 <div class="dsc-form-error" id="troca-lista-error"></div>
               </label>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-troca-button">Salvar tipo de troca</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-troca-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="troca-form-feedback"></p>
             </form>
+              </div>
+            </div>
 
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header">
@@ -97,6 +104,7 @@
 
     <script>
       const form = document.getElementById('troca-form');
+      const formModal = document.getElementById('troca-form-modal');
       const controleInput = document.getElementById('troca-controle');
       const listaInput = document.getElementById('troca-lista');
       const controleError = document.getElementById('troca-controle-error');
@@ -122,6 +130,7 @@
       const sortListaIndicator = document.getElementById('sort-troca-lista-indicator');
       const formTitle = document.getElementById('troca-form-title');
       const saveButton = document.getElementById('save-troca-button');
+      const closeFormModalButton = document.getElementById('close-troca-form-modal-button');
       const statusBanner = document.getElementById('status-banner');
 
       const pageSize = 20;
@@ -203,19 +212,32 @@
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
       };
 
+      const setPopupVisibility = (modalElement, shouldShow) => {
+        modalElement.classList.toggle('dsc-hidden', !shouldShow);
+        modalElement.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+      };
+
+      const syncPopupPageState = () => {
+        document.body.classList.toggle('dsc-popup-open', !formModal.classList.contains('dsc-hidden'));
+      };
+
       const showForm = (mode = 'create') => {
         const isEditing = mode === 'edit';
         const isReadOnly = mode === 'view';
 
         formMode = mode;
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isReadOnly ? 'Consulta de tipo de troca' : isEditing ? 'Alteracao de tipo de troca' : 'Cadastro de tipo de troca';
+        setPopupVisibility(formModal, true);
+        syncPopupPageState();
+        formTitle.textContent = 'TIPO DE TROCA';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar tipo de troca';
         setFormReadOnly(isReadOnly);
       };
 
       const hideForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
+        syncPopupPageState();
         form.reset();
         editingCodigo = null;
         formMode = 'create';
@@ -464,6 +486,17 @@
 
       insertButton.addEventListener('click', startInsert);
       cancelButton.addEventListener('click', hideForm);
+      closeFormModalButton.addEventListener('click', hideForm);
+      formModal.addEventListener('click', (event) => {
+        if (event.target === formModal) {
+          hideForm();
+        }
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !formModal.classList.contains('dsc-hidden')) {
+          hideForm();
+        }
+      });
 
       filterForm.addEventListener('submit', (event) => {
         event.preventDefault();

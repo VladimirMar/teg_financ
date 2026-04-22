@@ -53,17 +53,21 @@
               </form>
             </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="credenciamento-termo-rejection-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="credenciamento-termo-rejection-title">
             <section class="dsc-card dsc-hidden" id="credenciamento-termo-rejection-panel">
-              <div class="dsc-access-grid-header">
-                <h2>Registros nao importados</h2>
-                <span id="credenciamento-termo-rejection-total"></span>
+              <div class="dsc-popup-header dsc-popup-header-sticky dsc-popup-header-with-compact-close">
+                <div class="dsc-popup-header-copy">
+                  <h2 id="credenciamento-termo-rejection-title">Registros nao importados</h2>
+                  <span id="credenciamento-termo-rejection-total"></span>
+                </div>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-credenciamento-termo-rejection-modal-button" aria-label="Fechar recusas xml">X</button>
               </div>
 
               <form class="dsc-access-filter-form" id="credenciamento-termo-rejection-filter-form">
                 <input class="dsc-form-control dsc-access-filter-input" id="credenciamento-termo-rejection-search" type="text" placeholder="Filtrar por arquivo, codigo XML, credenciado, aditivo ou motivo" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-credenciamento-termo-rejection-filter-button">Limpar</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="close-credenciamento-termo-rejection-panel-button">Fechar</button>
               </form>
 
               <div class="dsc-access-grid-wrapper">
@@ -93,9 +97,16 @@
                 <button type="button" class="dsc-btn dsc-btn-white" id="next-credenciamento-termo-rejection-page-button">Proxima</button>
               </div>
             </section>
+              </div>
+            </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="credenciamento-termo-import-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="credenciamento-termo-import-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciamento-termo-import-form">
-              <h2>Importacao de credenciamento termo por XML</h2>
+              <div class="dsc-popup-header dsc-popup-header-with-compact-close">
+                <h2 id="credenciamento-termo-import-title">Importacao de credenciamento termo por XML</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-credenciamento-termo-import-modal-button" aria-label="Fechar importacao de termo">X</button>
+              </div>
 
               <label class="dsc-field-group" for="credenciamento-termo-import-file-name">
                 <span>Nome do arquivo XML</span>
@@ -105,16 +116,23 @@
 
               <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-credenciamento-termo-import-button">Executar importacao</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-credenciamento-termo-import-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="credenciamento-termo-import-feedback"></p>
             </form>
+              </div>
+            </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="credenciamento-termo-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="credenciamento-termo-form-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciamento-termo-form">
-              <h2 id="credenciamento-termo-form-title">Cadastro de Termo</h2>
+              <div class="dsc-popup-header dsc-popup-header-sticky">
+                <h2 id="credenciamento-termo-form-title">CADASTRO DE TERMO</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-credenciamento-termo-form-modal-button" aria-label="Fechar formulario de termo">X</button>
+              </div>
 
               <section class="dsc-form-section-card">
                 <h3 class="dsc-form-section-title">Identificacao</h3>
@@ -387,13 +405,15 @@
                 </label>
               </section>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-credenciamento-termo-button">Salvar credenciamento termo</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-credenciamento-termo-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="credenciamento-termo-form-feedback"></p>
             </form>
+              </div>
+            </div>
 
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header">
@@ -439,6 +459,9 @@
     </main>
 
     <script>
+      const formModal = document.getElementById('credenciamento-termo-form-modal');
+      const importModal = document.getElementById('credenciamento-termo-import-modal');
+      const rejectionModal = document.getElementById('credenciamento-termo-rejection-modal');
       const form = document.getElementById('credenciamento-termo-form');
       const importForm = document.getElementById('credenciamento-termo-import-form');
       const filterForm = document.getElementById('credenciamento-termo-filter-form');
@@ -454,9 +477,11 @@
       const insertButton = document.getElementById('insert-credenciamento-termo-button');
       const saveButton = document.getElementById('save-credenciamento-termo-button');
       const cancelButton = document.getElementById('cancel-credenciamento-termo-button');
+      const closeFormModalButton = document.getElementById('close-credenciamento-termo-form-modal-button');
       const importButton = document.getElementById('open-credenciamento-termo-import-button');
       const rejectionButton = document.getElementById('open-credenciamento-termo-rejections-button');
       const cancelImportButton = document.getElementById('cancel-credenciamento-termo-import-button');
+      const closeImportModalButton = document.getElementById('close-credenciamento-termo-import-modal-button');
       const gridBody = document.getElementById('credenciamento-termo-grid-body');
       const rejectionGridBody = document.getElementById('credenciamento-termo-rejection-grid-body');
       const emptyState = document.getElementById('credenciamento-termo-empty-state');
@@ -472,7 +497,7 @@
       const rejectionPanel = document.getElementById('credenciamento-termo-rejection-panel');
       const rejectionSearchInput = document.getElementById('credenciamento-termo-rejection-search');
       const clearRejectionFilterButton = document.getElementById('clear-credenciamento-termo-rejection-filter-button');
-      const closeRejectionPanelButton = document.getElementById('close-credenciamento-termo-rejection-panel-button');
+      const closeRejectionPanelButton = document.getElementById('close-credenciamento-termo-rejection-modal-button');
       const sortButton = document.getElementById('sort-credenciamento-termo-button');
       const sortIndicator = document.getElementById('sort-credenciamento-termo-indicator');
       const importFileNameInput = document.getElementById('credenciamento-termo-import-file-name');
@@ -708,6 +733,18 @@
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
       };
 
+      const setPopupVisibility = (modalElement, shouldShow) => {
+        modalElement.classList.toggle('dsc-hidden', !shouldShow);
+        modalElement.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+      };
+
+      const syncPopupPageState = () => {
+        const isPopupVisible = !formModal.classList.contains('dsc-hidden')
+          || !importModal.classList.contains('dsc-hidden')
+          || !rejectionModal.classList.contains('dsc-hidden');
+        document.body.classList.toggle('dsc-popup-open', isPopupVisible);
+      };
+
       const showForm = (mode = 'create') => {
         const isEditing = mode === 'edit';
         const isReadOnly = mode === 'view';
@@ -715,7 +752,11 @@
         formMode = mode;
         hidePanels();
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isReadOnly ? 'Consulta de Termo' : isEditing ? 'Alteracao de Termo' : 'Cadastro de Termo';
+        setPopupVisibility(importModal, false);
+        setPopupVisibility(rejectionModal, false);
+        setPopupVisibility(formModal, true);
+        syncPopupPageState();
+        formTitle.textContent = 'CADASTRO DE TERMO';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar credenciamento termo';
         setFormReadOnly(isReadOnly);
       };
@@ -723,7 +764,7 @@
       const clearForm = () => {
         editingCodigo = null;
         formMode = 'create';
-        formTitle.textContent = 'Cadastro de Termo';
+        formTitle.textContent = 'CADASTRO DE TERMO';
         form.reset();
         credenciadaCodigoInput.value = '';
         cnpjCpfInput.value = '';
@@ -736,7 +777,7 @@
 
       const fillForm = (item) => {
         editingCodigo = item.codigo;
-        formTitle.textContent = `Alteracao de credenciamento termo ${item.codigo}`;
+        formTitle.textContent = 'CADASTRO DE TERMO';
         codigoXmlInput.value = item.codigo_xml || '';
         aditivoInput.value = item.aditivo || '';
         termoAdesaoInput.value = item.termo_adesao || '';
@@ -772,6 +813,25 @@
         tpOptanteInput.value = item.tp_optante || '';
         infoSeiInput.value = item.info_sei || '';
         objetoInput.value = item.objeto || '';
+      };
+
+      const hideForm = () => {
+        form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
+        syncPopupPageState();
+        clearForm();
+      };
+
+      const hideImportForm = () => {
+        importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
+        syncPopupPageState();
+      };
+
+      const hideRejectionPanel = () => {
+        rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
+        syncPopupPageState();
       };
 
       const buildUrl = () => {
@@ -1129,31 +1189,70 @@
         showForm('create');
       });
 
-      cancelButton.addEventListener('click', () => {
-        hidePanels();
-        clearForm();
-      });
+      cancelButton.addEventListener('click', hideForm);
+      closeFormModalButton.addEventListener('click', hideForm);
 
       importButton.addEventListener('click', () => {
         hidePanels();
         importFileNameInput.value = defaultImportFileName;
         importFeedback.textContent = '';
         importForm.classList.remove('dsc-hidden');
+        setPopupVisibility(importModal, true);
+        setPopupVisibility(rejectionModal, false);
+        syncPopupPageState();
       });
 
-      cancelImportButton.addEventListener('click', () => {
-        hidePanels();
+      formModal.addEventListener('click', (event) => {
+        if (event.target === formModal) {
+          hideForm();
+        }
       });
+
+      importModal.addEventListener('click', (event) => {
+        if (event.target === importModal) {
+          hideImportForm();
+        }
+      });
+
+      rejectionModal.addEventListener('click', (event) => {
+        if (event.target === rejectionModal) {
+          hideRejectionPanel();
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+          return;
+        }
+
+        if (!formModal.classList.contains('dsc-hidden')) {
+          hideForm();
+          return;
+        }
+
+        if (!importModal.classList.contains('dsc-hidden')) {
+          hideImportForm();
+          return;
+        }
+
+        if (!rejectionModal.classList.contains('dsc-hidden')) {
+          hideRejectionPanel();
+        }
+      });
+
+      cancelImportButton.addEventListener('click', hideImportForm);
+      closeImportModalButton.addEventListener('click', hideImportForm);
 
       rejectionButton.addEventListener('click', async () => {
         hidePanels();
         rejectionPanel.classList.remove('dsc-hidden');
+        setPopupVisibility(importModal, false);
+        setPopupVisibility(rejectionModal, true);
+        syncPopupPageState();
         await loadRejections();
       });
 
-      closeRejectionPanelButton.addEventListener('click', () => {
-        rejectionPanel.classList.add('dsc-hidden');
-      });
+      closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
 
       previousPageButton.addEventListener('click', () => {
         if (currentPage > 1) {

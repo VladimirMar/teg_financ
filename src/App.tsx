@@ -905,6 +905,27 @@ function App() {
     setModalidadeStatusMessage('')
   }
 
+  useEffect(() => {
+    if (!isModalidadeFormVisible) {
+      return
+    }
+
+    document.body.classList.add('management-modal-open')
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isSavingModalidade) {
+        handleCancelModalidadeForm()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.classList.remove('management-modal-open')
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [handleCancelModalidadeForm, isModalidadeFormVisible, isSavingModalidade])
+
   const handleCreateDre = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -1532,6 +1553,74 @@ function App() {
     setSeguradoraStatusMessage('')
   }
 
+  useEffect(() => {
+    const hasOpenManagementModal = isDreFormVisible
+      || isModalidadeFormVisible
+      || isTitularFormVisible
+      || isMarcaModeloFormVisible
+      || isSeguradoraFormVisible
+
+    if (!hasOpenManagementModal) {
+      document.body.classList.remove('management-modal-open')
+      return
+    }
+
+    document.body.classList.add('management-modal-open')
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') {
+        return
+      }
+
+      if (isDreFormVisible && !isSavingDre) {
+        handleCancelDreForm()
+        return
+      }
+
+      if (isModalidadeFormVisible && !isSavingModalidade) {
+        handleCancelModalidadeForm()
+        return
+      }
+
+      if (isTitularFormVisible && !isSavingTitular) {
+        handleCancelTitularForm()
+        return
+      }
+
+      if (isMarcaModeloFormVisible && !isSavingMarcaModelo) {
+        handleCancelMarcaModeloForm()
+        return
+      }
+
+      if (isSeguradoraFormVisible && !isSavingSeguradora) {
+        handleCancelSeguradoraForm()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.classList.remove('management-modal-open')
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [
+    handleCancelDreForm,
+    handleCancelMarcaModeloForm,
+    handleCancelModalidadeForm,
+    handleCancelSeguradoraForm,
+    handleCancelTitularForm,
+    isDreFormVisible,
+    isMarcaModeloFormVisible,
+    isModalidadeFormVisible,
+    isSavingDre,
+    isSavingMarcaModelo,
+    isSavingModalidade,
+    isSavingSeguradora,
+    isSavingTitular,
+    isSeguradoraFormVisible,
+    isTitularFormVisible,
+  ])
+
   const handleCreateSeguradora = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -1917,49 +2006,89 @@ function App() {
               </div>
 
               {isDreFormVisible ? (
-                <form className="management-card management-form dre-form" onSubmit={handleCreateDre} noValidate>
-                  <h2>{dreFormMode === 'view' ? 'Consulta de registro' : editingDreCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+                <div
+                  className="management-modal-overlay"
+                  role="presentation"
+                  onClick={(event) => {
+                    if (event.target === event.currentTarget && !isSavingDre) {
+                      handleCancelDreForm()
+                    }
+                  }}
+                >
+                  <div
+                    className="management-modal-shell"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="dre-modal-title"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <form className="management-card management-form dre-form management-modal-form-card" onSubmit={handleCreateDre} noValidate>
+                      <div className="management-modal-header">
+                        <div>
+                          <p className="management-modal-kicker">Cadastro administrativo</p>
+                          <h2 id="dre-modal-title">DRE</h2>
+                        </div>
+                        <button
+                          type="button"
+                          className="secondary-button management-modal-close-button"
+                          onClick={handleCancelDreForm}
+                          disabled={isSavingDre}
+                          aria-label="Fechar formulario de DRE"
+                        >
+                          X
+                        </button>
+                      </div>
 
-                  <label className="field-group" htmlFor="dre-sigla">
-                    <span>Sigla</span>
-                    <input
-                      id="dre-sigla"
-                      name="sigla"
-                      type="text"
-                      value={dreSigla}
-                      onChange={(event) => setDreSigla(normalizeDreSiglaInput(event.target.value))}
-                      maxLength={2}
-                      disabled={isSavingDre || dreFormMode === 'view'}
-                      aria-invalid={Boolean(dreSiglaError)}
-                    />
-                    {dreSiglaError ? <strong className="field-error">{dreSiglaError}</strong> : null}
-                  </label>
+                      <p className="management-modal-subtitle">
+                        {dreFormMode === 'view' ? 'Consulta de registro' : editingDreCodigo ? 'Alterar registro' : 'Novo registro'}
+                      </p>
 
-                  <label className="field-group" htmlFor="dre-descricao">
-                    <span>Descricao</span>
-                    <input
-                      id="dre-descricao"
-                      name="descricao"
-                      type="text"
-                      value={dreDescricao}
-                      onChange={(event) => setDreDescricao(event.target.value)}
-                      disabled={isSavingDre || dreFormMode === 'view'}
-                      aria-invalid={Boolean(dreDescricaoError)}
-                    />
-                    {dreDescricaoError ? <strong className="field-error">{dreDescricaoError}</strong> : null}
-                  </label>
+                      <label className="field-group" htmlFor="dre-sigla">
+                        <span>Sigla</span>
+                        <input
+                          id="dre-sigla"
+                          name="sigla"
+                          type="text"
+                          value={dreSigla}
+                          onChange={(event) => setDreSigla(normalizeDreSiglaInput(event.target.value))}
+                          maxLength={2}
+                          disabled={isSavingDre || dreFormMode === 'view'}
+                          aria-invalid={Boolean(dreSiglaError)}
+                        />
+                        {dreSiglaError ? <strong className="field-error">{dreSiglaError}</strong> : null}
+                      </label>
 
-                  <div className="button-row dre-button-row">
-                    {dreFormMode !== 'view' ? (
-                      <button type="submit" className="primary-button" disabled={isSavingDre}>
-                        {isSavingDre ? 'Salvando...' : editingDreCodigo ? 'Salvar alteracao' : 'Salvar DRE'}
-                      </button>
-                    ) : null}
-                    <button type="button" className="secondary-button" onClick={handleCancelDreForm} disabled={isSavingDre}>
-                      {dreFormMode === 'view' ? 'Fechar' : 'Cancelar'}
-                    </button>
+                      <label className="field-group" htmlFor="dre-descricao">
+                        <span>Descricao</span>
+                        <input
+                          id="dre-descricao"
+                          name="descricao"
+                          type="text"
+                          value={dreDescricao}
+                          onChange={(event) => setDreDescricao(event.target.value)}
+                          disabled={isSavingDre || dreFormMode === 'view'}
+                          aria-invalid={Boolean(dreDescricaoError)}
+                        />
+                        {dreDescricaoError ? <strong className="field-error">{dreDescricaoError}</strong> : null}
+                      </label>
+
+                      <p className={`status-message status-${dreStatusTone}`} aria-live="polite">
+                        {dreStatusMessage}
+                      </p>
+
+                      <div className="button-row dre-button-row management-modal-footer">
+                        {dreFormMode !== 'view' ? (
+                          <button type="submit" className="primary-button" disabled={isSavingDre}>
+                            {isSavingDre ? 'Salvando...' : editingDreCodigo ? 'Salvar alteracao' : 'Salvar DRE'}
+                          </button>
+                        ) : null}
+                        <button type="button" className="secondary-button" onClick={handleCancelDreForm} disabled={isSavingDre}>
+                          {dreFormMode === 'view' ? 'Fechar' : 'Cancelar'}
+                        </button>
+                      </div>
+                    </form>
                   </div>
-                </form>
+                </div>
               ) : null}
 
               <div className="management-card management-grid-card dre-list-card">
@@ -2020,7 +2149,7 @@ function App() {
                 </div>
 
                 <p className={`status-message status-${dreStatusTone}`} aria-live="polite">
-                  {dreStatusMessage}
+                  {isDreFormVisible ? '' : dreStatusMessage}
                 </p>
 
                 <div className="management-pagination">
@@ -2087,34 +2216,74 @@ function App() {
               </div>
 
               {isModalidadeFormVisible ? (
-                <form className="management-card management-form dre-form" onSubmit={handleCreateModalidade} noValidate>
-                  <h2>{modalidadeFormMode === 'view' ? 'Consulta de registro' : editingModalidadeCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+                <div
+                  className="management-modal-overlay"
+                  role="presentation"
+                  onClick={(event) => {
+                    if (event.target === event.currentTarget && !isSavingModalidade) {
+                      handleCancelModalidadeForm()
+                    }
+                  }}
+                >
+                  <div
+                    className="management-modal-shell"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="modalidade-modal-title"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <form className="management-card management-form dre-form management-modal-form-card" onSubmit={handleCreateModalidade} noValidate>
+                      <div className="management-modal-header">
+                        <div>
+                          <p className="management-modal-kicker">Cadastro administrativo</p>
+                          <h2 id="modalidade-modal-title">MODALIDADE</h2>
+                        </div>
+                        <button
+                          type="button"
+                          className="secondary-button management-modal-close-button"
+                          onClick={handleCancelModalidadeForm}
+                          disabled={isSavingModalidade}
+                          aria-label="Fechar formulario de modalidade"
+                        >
+                          X
+                        </button>
+                      </div>
 
-                  <label className="field-group" htmlFor="modalidade-descricao">
-                    <span>Descricao</span>
-                    <input
-                      id="modalidade-descricao"
-                      name="descricao"
-                      type="text"
-                      value={modalidadeDescricao}
-                      onChange={(event) => setModalidadeDescricao(event.target.value)}
-                      disabled={isSavingModalidade || modalidadeFormMode === 'view'}
-                      aria-invalid={Boolean(modalidadeDescricaoError)}
-                    />
-                    {modalidadeDescricaoError ? <strong className="field-error">{modalidadeDescricaoError}</strong> : null}
-                  </label>
+                      <p className="management-modal-subtitle">
+                        {modalidadeFormMode === 'view' ? 'Consulta de registro' : editingModalidadeCodigo ? 'Alterar registro' : 'Novo registro'}
+                      </p>
 
-                  <div className="button-row dre-button-row">
-                    {modalidadeFormMode !== 'view' ? (
-                      <button type="submit" className="primary-button" disabled={isSavingModalidade}>
-                        {isSavingModalidade ? 'Salvando...' : editingModalidadeCodigo ? 'Salvar alteracao' : 'Salvar Modalidade'}
-                      </button>
-                    ) : null}
-                    <button type="button" className="secondary-button" onClick={handleCancelModalidadeForm} disabled={isSavingModalidade}>
-                      {modalidadeFormMode === 'view' ? 'Fechar' : 'Cancelar'}
-                    </button>
+                      <label className="field-group" htmlFor="modalidade-descricao">
+                        <span>Descricao</span>
+                        <input
+                          id="modalidade-descricao"
+                          name="descricao"
+                          type="text"
+                          value={modalidadeDescricao}
+                          onChange={(event) => setModalidadeDescricao(event.target.value)}
+                          disabled={isSavingModalidade || modalidadeFormMode === 'view'}
+                          aria-invalid={Boolean(modalidadeDescricaoError)}
+                        />
+                        {modalidadeDescricaoError ? <strong className="field-error">{modalidadeDescricaoError}</strong> : null}
+                      </label>
+
+                      <p className={`status-message status-${modalidadeStatusTone}`} aria-live="polite">
+                        {modalidadeStatusMessage}
+                      </p>
+
+                      <div className="button-row dre-button-row management-modal-footer">
+                        {modalidadeFormMode !== 'view' ? (
+                          <button type="submit" className="primary-button" disabled={isSavingModalidade}>
+                            {isSavingModalidade ? 'Salvando...' : editingModalidadeCodigo ? 'Salvar alteracao' : 'Salvar Modalidade'}
+                          </button>
+                        ) : null}
+                        <button type="button" className="secondary-button" onClick={handleCancelModalidadeForm} disabled={isSavingModalidade}>
+                          {modalidadeFormMode === 'view' ? 'Fechar' : 'Cancelar'}
+                        </button>
+                      </div>
+                    </form>
                   </div>
-                </form>
+                </div>
               ) : null}
 
               <div className="management-card management-grid-card dre-list-card">
@@ -2171,7 +2340,7 @@ function App() {
                 </div>
 
                 <p className={`status-message status-${modalidadeStatusTone}`} aria-live="polite">
-                  {modalidadeStatusMessage}
+                  {isModalidadeFormVisible ? '' : modalidadeStatusMessage}
                 </p>
 
                 <div className="management-pagination">
@@ -2237,51 +2406,91 @@ function App() {
               </div>
 
               {isTitularFormVisible ? (
-                <form className="management-card management-form dre-form" onSubmit={handleCreateTitular} noValidate>
-                  <h2>{titularFormMode === 'view' ? 'Consulta de registro' : editingTitularCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+                <div
+                  className="management-modal-overlay"
+                  role="presentation"
+                  onClick={(event) => {
+                    if (event.target === event.currentTarget && !isSavingTitular) {
+                      handleCancelTitularForm()
+                    }
+                  }}
+                >
+                  <div
+                    className="management-modal-shell"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="titular-modal-title"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <form className="management-card management-form dre-form management-modal-form-card" onSubmit={handleCreateTitular} noValidate>
+                      <div className="management-modal-header">
+                        <div>
+                          <p className="management-modal-kicker">Cadastro administrativo</p>
+                          <h2 id="titular-modal-title">TITULAR DO CRM</h2>
+                        </div>
+                        <button
+                          type="button"
+                          className="secondary-button management-modal-close-button"
+                          onClick={handleCancelTitularForm}
+                          disabled={isSavingTitular}
+                          aria-label="Fechar formulario de titular do CRM"
+                        >
+                          X
+                        </button>
+                      </div>
 
-                  <label className="field-group" htmlFor="titular-cnpj-cpf">
-                    <span>CNPJ/CPF</span>
-                    <input
-                      id="titular-cnpj-cpf"
-                      name="cnpj-cpf"
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
-                      maxLength={18}
-                      value={titularCnpjCpf}
-                      onChange={(event) => setTitularCnpjCpf(formatCpfOrCnpj(event.target.value))}
-                      disabled={isSavingTitular || titularFormMode === 'view'}
-                      aria-invalid={Boolean(titularCnpjCpfError)}
-                    />
-                    {titularCnpjCpfError ? <strong className="field-error">{titularCnpjCpfError}</strong> : null}
-                  </label>
+                      <p className="management-modal-subtitle">
+                        {titularFormMode === 'view' ? 'Consulta de registro' : editingTitularCodigo ? 'Alterar registro' : 'Novo registro'}
+                      </p>
 
-                  <label className="field-group" htmlFor="titular-nome">
-                    <span>Titular do CRM</span>
-                    <input
-                      id="titular-nome"
-                      name="titular"
-                      type="text"
-                      value={titularNome}
-                      onChange={(event) => setTitularNome(event.target.value)}
-                      disabled={isSavingTitular || titularFormMode === 'view'}
-                      aria-invalid={Boolean(titularNomeError)}
-                    />
-                    {titularNomeError ? <strong className="field-error">{titularNomeError}</strong> : null}
-                  </label>
+                      <label className="field-group" htmlFor="titular-cnpj-cpf">
+                        <span>CNPJ/CPF</span>
+                        <input
+                          id="titular-cnpj-cpf"
+                          name="cnpj-cpf"
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                          maxLength={18}
+                          value={titularCnpjCpf}
+                          onChange={(event) => setTitularCnpjCpf(formatCpfOrCnpj(event.target.value))}
+                          disabled={isSavingTitular || titularFormMode === 'view'}
+                          aria-invalid={Boolean(titularCnpjCpfError)}
+                        />
+                        {titularCnpjCpfError ? <strong className="field-error">{titularCnpjCpfError}</strong> : null}
+                      </label>
 
-                  <div className="button-row dre-button-row">
-                    {titularFormMode !== 'view' ? (
-                      <button type="submit" className="primary-button" disabled={isSavingTitular}>
-                        {isSavingTitular ? 'Salvando...' : editingTitularCodigo ? 'Salvar alteracao' : 'Salvar titular do CRM'}
-                      </button>
-                    ) : null}
-                    <button type="button" className="secondary-button" onClick={handleCancelTitularForm} disabled={isSavingTitular}>
-                      {titularFormMode === 'view' ? 'Fechar' : 'Cancelar'}
-                    </button>
+                      <label className="field-group" htmlFor="titular-nome">
+                        <span>Titular do CRM</span>
+                        <input
+                          id="titular-nome"
+                          name="titular"
+                          type="text"
+                          value={titularNome}
+                          onChange={(event) => setTitularNome(event.target.value)}
+                          disabled={isSavingTitular || titularFormMode === 'view'}
+                          aria-invalid={Boolean(titularNomeError)}
+                        />
+                        {titularNomeError ? <strong className="field-error">{titularNomeError}</strong> : null}
+                      </label>
+
+                      <p className={`status-message status-${titularStatusTone}`} aria-live="polite">
+                        {titularStatusMessage}
+                      </p>
+
+                      <div className="button-row dre-button-row management-modal-footer">
+                        {titularFormMode !== 'view' ? (
+                          <button type="submit" className="primary-button" disabled={isSavingTitular}>
+                            {isSavingTitular ? 'Salvando...' : editingTitularCodigo ? 'Salvar alteracao' : 'Salvar titular do CRM'}
+                          </button>
+                        ) : null}
+                        <button type="button" className="secondary-button" onClick={handleCancelTitularForm} disabled={isSavingTitular}>
+                          {titularFormMode === 'view' ? 'Fechar' : 'Cancelar'}
+                        </button>
+                      </div>
+                    </form>
                   </div>
-                </form>
+                </div>
               ) : null}
 
               <div className="management-card management-grid-card dre-list-card">
@@ -2344,7 +2553,7 @@ function App() {
                 </div>
 
                 <p className={`status-message status-${titularStatusTone}`} aria-live="polite">
-                  {titularStatusMessage}
+                  {isTitularFormVisible ? '' : titularStatusMessage}
                 </p>
 
                 <div className="management-pagination">
@@ -2410,34 +2619,74 @@ function App() {
               </div>
 
               {isMarcaModeloFormVisible ? (
-                <form className="management-card management-form dre-form" onSubmit={handleCreateMarcaModelo} noValidate>
-                  <h2>{marcaModeloFormMode === 'view' ? 'Consulta de registro' : editingMarcaModeloCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+                <div
+                  className="management-modal-overlay"
+                  role="presentation"
+                  onClick={(event) => {
+                    if (event.target === event.currentTarget && !isSavingMarcaModelo) {
+                      handleCancelMarcaModeloForm()
+                    }
+                  }}
+                >
+                  <div
+                    className="management-modal-shell"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="marca-modelo-modal-title"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <form className="management-card management-form dre-form management-modal-form-card" onSubmit={handleCreateMarcaModelo} noValidate>
+                      <div className="management-modal-header">
+                        <div>
+                          <p className="management-modal-kicker">Cadastro administrativo</p>
+                          <h2 id="marca-modelo-modal-title">MARCA/MODELO</h2>
+                        </div>
+                        <button
+                          type="button"
+                          className="secondary-button management-modal-close-button"
+                          onClick={handleCancelMarcaModeloForm}
+                          disabled={isSavingMarcaModelo}
+                          aria-label="Fechar formulario de marca/modelo"
+                        >
+                          X
+                        </button>
+                      </div>
 
-                  <label className="field-group" htmlFor="marca-modelo-descricao">
-                    <span>Descricao</span>
-                    <input
-                      id="marca-modelo-descricao"
-                      name="descricao"
-                      type="text"
-                      value={marcaModeloDescricao}
-                      onChange={(event) => setMarcaModeloDescricao(event.target.value)}
-                      disabled={isSavingMarcaModelo || marcaModeloFormMode === 'view'}
-                      aria-invalid={Boolean(marcaModeloDescricaoError)}
-                    />
-                    {marcaModeloDescricaoError ? <strong className="field-error">{marcaModeloDescricaoError}</strong> : null}
-                  </label>
+                      <p className="management-modal-subtitle">
+                        {marcaModeloFormMode === 'view' ? 'Consulta de registro' : editingMarcaModeloCodigo ? 'Alterar registro' : 'Novo registro'}
+                      </p>
 
-                  <div className="button-row dre-button-row">
-                    {marcaModeloFormMode !== 'view' ? (
-                      <button type="submit" className="primary-button" disabled={isSavingMarcaModelo}>
-                        {isSavingMarcaModelo ? 'Salvando...' : editingMarcaModeloCodigo ? 'Salvar alteracao' : 'Salvar marca/modelo'}
-                      </button>
-                    ) : null}
-                    <button type="button" className="secondary-button" onClick={handleCancelMarcaModeloForm} disabled={isSavingMarcaModelo}>
-                      {marcaModeloFormMode === 'view' ? 'Fechar' : 'Cancelar'}
-                    </button>
+                      <label className="field-group" htmlFor="marca-modelo-descricao">
+                        <span>Descricao</span>
+                        <input
+                          id="marca-modelo-descricao"
+                          name="descricao"
+                          type="text"
+                          value={marcaModeloDescricao}
+                          onChange={(event) => setMarcaModeloDescricao(event.target.value)}
+                          disabled={isSavingMarcaModelo || marcaModeloFormMode === 'view'}
+                          aria-invalid={Boolean(marcaModeloDescricaoError)}
+                        />
+                        {marcaModeloDescricaoError ? <strong className="field-error">{marcaModeloDescricaoError}</strong> : null}
+                      </label>
+
+                      <p className={`status-message status-${marcaModeloStatusTone}`} aria-live="polite">
+                        {marcaModeloStatusMessage}
+                      </p>
+
+                      <div className="button-row dre-button-row management-modal-footer">
+                        {marcaModeloFormMode !== 'view' ? (
+                          <button type="submit" className="primary-button" disabled={isSavingMarcaModelo}>
+                            {isSavingMarcaModelo ? 'Salvando...' : editingMarcaModeloCodigo ? 'Salvar alteracao' : 'Salvar marca/modelo'}
+                          </button>
+                        ) : null}
+                        <button type="button" className="secondary-button" onClick={handleCancelMarcaModeloForm} disabled={isSavingMarcaModelo}>
+                          {marcaModeloFormMode === 'view' ? 'Fechar' : 'Cancelar'}
+                        </button>
+                      </div>
+                    </form>
                   </div>
-                </form>
+                </div>
               ) : null}
 
               <div className="management-card management-grid-card dre-list-card">
@@ -2494,7 +2743,7 @@ function App() {
                 </div>
 
                 <p className={`status-message status-${marcaModeloStatusTone}`} aria-live="polite">
-                  {marcaModeloStatusMessage}
+                  {isMarcaModeloFormVisible ? '' : marcaModeloStatusMessage}
                 </p>
 
                 <div className="management-pagination">
@@ -2560,48 +2809,88 @@ function App() {
               </div>
 
               {isSeguradoraFormVisible ? (
-                <form className="management-card management-form dre-form" onSubmit={handleCreateSeguradora} noValidate>
-                  <h2>{seguradoraFormMode === 'view' ? 'Consulta de registro' : editingSeguradoraCodigo ? 'Alterar registro' : 'Novo registro'}</h2>
+                <div
+                  className="management-modal-overlay"
+                  role="presentation"
+                  onClick={(event) => {
+                    if (event.target === event.currentTarget && !isSavingSeguradora) {
+                      handleCancelSeguradoraForm()
+                    }
+                  }}
+                >
+                  <div
+                    className="management-modal-shell"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="seguradora-modal-title"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <form className="management-card management-form dre-form management-modal-form-card" onSubmit={handleCreateSeguradora} noValidate>
+                      <div className="management-modal-header">
+                        <div>
+                          <p className="management-modal-kicker">Cadastro administrativo</p>
+                          <h2 id="seguradora-modal-title">SEGURADORAS</h2>
+                        </div>
+                        <button
+                          type="button"
+                          className="secondary-button management-modal-close-button"
+                          onClick={handleCancelSeguradoraForm}
+                          disabled={isSavingSeguradora}
+                          aria-label="Fechar formulario de seguradoras"
+                        >
+                          X
+                        </button>
+                      </div>
 
-                  <label className="field-group" htmlFor="seguradora-controle">
-                    <span>Controle</span>
-                    <input
-                      id="seguradora-controle"
-                      name="controle"
-                      type="text"
-                      value={seguradoraControle}
-                      onChange={(event) => setSeguradoraControle(event.target.value)}
-                      disabled={isSavingSeguradora || seguradoraFormMode === 'view'}
-                      aria-invalid={Boolean(seguradoraControleError)}
-                    />
-                    {seguradoraControleError ? <strong className="field-error">{seguradoraControleError}</strong> : null}
-                  </label>
+                      <p className="management-modal-subtitle">
+                        {seguradoraFormMode === 'view' ? 'Consulta de registro' : editingSeguradoraCodigo ? 'Alterar registro' : 'Novo registro'}
+                      </p>
 
-                  <label className="field-group" htmlFor="seguradora-lista">
-                    <span>Descricao</span>
-                    <input
-                      id="seguradora-lista"
-                      name="lista"
-                      type="text"
-                      value={seguradoraLista}
-                      onChange={(event) => setSeguradoraLista(event.target.value)}
-                      disabled={isSavingSeguradora || seguradoraFormMode === 'view'}
-                      aria-invalid={Boolean(seguradoraListaError)}
-                    />
-                    {seguradoraListaError ? <strong className="field-error">{seguradoraListaError}</strong> : null}
-                  </label>
+                      <label className="field-group" htmlFor="seguradora-controle">
+                        <span>Controle</span>
+                        <input
+                          id="seguradora-controle"
+                          name="controle"
+                          type="text"
+                          value={seguradoraControle}
+                          onChange={(event) => setSeguradoraControle(event.target.value)}
+                          disabled={isSavingSeguradora || seguradoraFormMode === 'view'}
+                          aria-invalid={Boolean(seguradoraControleError)}
+                        />
+                        {seguradoraControleError ? <strong className="field-error">{seguradoraControleError}</strong> : null}
+                      </label>
 
-                  <div className="button-row dre-button-row">
-                    {seguradoraFormMode !== 'view' ? (
-                      <button type="submit" className="primary-button" disabled={isSavingSeguradora}>
-                        {isSavingSeguradora ? 'Salvando...' : editingSeguradoraCodigo ? 'Salvar alteracao' : 'Salvar seguradora'}
-                      </button>
-                    ) : null}
-                    <button type="button" className="secondary-button" onClick={handleCancelSeguradoraForm} disabled={isSavingSeguradora}>
-                      {seguradoraFormMode === 'view' ? 'Fechar' : 'Cancelar'}
-                    </button>
+                      <label className="field-group" htmlFor="seguradora-lista">
+                        <span>Descricao</span>
+                        <input
+                          id="seguradora-lista"
+                          name="lista"
+                          type="text"
+                          value={seguradoraLista}
+                          onChange={(event) => setSeguradoraLista(event.target.value)}
+                          disabled={isSavingSeguradora || seguradoraFormMode === 'view'}
+                          aria-invalid={Boolean(seguradoraListaError)}
+                        />
+                        {seguradoraListaError ? <strong className="field-error">{seguradoraListaError}</strong> : null}
+                      </label>
+
+                      <p className={`status-message status-${seguradoraStatusTone}`} aria-live="polite">
+                        {seguradoraStatusMessage}
+                      </p>
+
+                      <div className="button-row dre-button-row management-modal-footer">
+                        {seguradoraFormMode !== 'view' ? (
+                          <button type="submit" className="primary-button" disabled={isSavingSeguradora}>
+                            {isSavingSeguradora ? 'Salvando...' : editingSeguradoraCodigo ? 'Salvar alteracao' : 'Salvar seguradora'}
+                          </button>
+                        ) : null}
+                        <button type="button" className="secondary-button" onClick={handleCancelSeguradoraForm} disabled={isSavingSeguradora}>
+                          {seguradoraFormMode === 'view' ? 'Fechar' : 'Cancelar'}
+                        </button>
+                      </div>
+                    </form>
                   </div>
-                </form>
+                </div>
               ) : null}
 
               <div className="management-card management-grid-card dre-list-card">
@@ -2664,7 +2953,7 @@ function App() {
                 </div>
 
                 <p className={`status-message status-${seguradoraStatusTone}`} aria-live="polite">
-                  {seguradoraStatusMessage}
+                  {isSeguradoraFormVisible ? '' : seguradoraStatusMessage}
                 </p>
 
                 <div className="management-pagination">

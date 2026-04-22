@@ -25,17 +25,21 @@
               </form>
             </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="credenciada-rejection-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="credenciada-rejection-title">
             <section class="dsc-card dsc-hidden" id="credenciada-rejection-panel">
-              <div class="dsc-access-grid-header">
-                <h2>Registros nao importados</h2>
-                <span id="credenciada-rejection-total"></span>
+              <div class="dsc-popup-header dsc-popup-header-sticky dsc-popup-header-with-compact-close">
+                <div class="dsc-popup-header-copy">
+                  <h2 id="credenciada-rejection-title">Registros nao importados</h2>
+                  <span id="credenciada-rejection-total"></span>
+                </div>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-credenciada-rejection-modal-button" aria-label="Fechar recusas xml">X</button>
               </div>
 
               <form class="dsc-access-filter-form" id="credenciada-rejection-filter-form">
                 <input class="dsc-form-control dsc-access-filter-input" id="credenciada-rejection-search" type="text" placeholder="Filtrar por arquivo, codigo, credenciada, representante, status ou motivo" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-credenciada-rejection-filter-button">Limpar</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="close-credenciada-rejection-panel-button">Fechar</button>
               </form>
 
               <div class="dsc-access-grid-wrapper">
@@ -67,9 +71,16 @@
                 <button type="button" class="dsc-btn dsc-btn-white" id="next-credenciada-rejection-page-button">Proxima</button>
               </div>
             </section>
+              </div>
+            </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="credenciada-import-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="credenciada-import-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciada-import-form">
-              <h2>Importacao de credenciada por XML</h2>
+              <div class="dsc-popup-header dsc-popup-header-with-compact-close">
+                <h2 id="credenciada-import-title">Importacao de credenciada por XML</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-credenciada-import-modal-button" aria-label="Fechar importacao de credenciada">X</button>
+              </div>
 
               <label class="dsc-field-group" for="credenciada-import-file-name">
                 <span>Nome do arquivo XML</span>
@@ -79,16 +90,23 @@
 
               <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-credenciada-import-button">Executar importacao</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-credenciada-import-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="credenciada-import-feedback"></p>
             </form>
+              </div>
+            </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="credenciada-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="credenciada-form-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciada-form">
-              <h2 id="credenciada-form-title">Novo registro</h2>
+              <div class="dsc-popup-header dsc-popup-header-sticky">
+                <h2 id="credenciada-form-title">CREDENCIADA</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-credenciada-form-modal-button" aria-label="Fechar formulario de credenciada">X</button>
+              </div>
 
               <div class="dsc-form-row dsc-form-row-credenciada-top">
                 <label class="dsc-field-group" for="credenciada-nome">
@@ -200,13 +218,15 @@
                 </div>
               </section>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-credenciada-button">Salvar credenciada</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-credenciada-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="credenciada-form-feedback"></p>
             </form>
+              </div>
+            </div>
 
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header">
@@ -282,6 +302,8 @@
       const statusError = document.getElementById('credenciada-status-error');
       const feedback = document.getElementById('credenciada-form-feedback');
       const gridFeedback = document.getElementById('credenciada-grid-feedback');
+      const importModal = document.getElementById('credenciada-import-modal');
+      const rejectionModal = document.getElementById('credenciada-rejection-modal');
       const insertButton = document.getElementById('insert-credenciada-button');
       const importButton = document.getElementById('open-credenciada-import-button');
       const rejectionButton = document.getElementById('open-credenciada-rejections-button');
@@ -291,6 +313,7 @@
       const importFileNameError = document.getElementById('credenciada-import-file-name-error');
       const importFeedback = document.getElementById('credenciada-import-feedback');
       const cancelImportButton = document.getElementById('cancel-credenciada-import-button');
+      const closeImportModalButton = document.getElementById('close-credenciada-import-modal-button');
       const filterForm = document.getElementById('credenciada-filter-form');
       const clearFilterButton = document.getElementById('clear-credenciada-filter-button');
       const searchInput = document.getElementById('credenciada-search');
@@ -302,8 +325,10 @@
       const paginationInfo = document.getElementById('credenciada-pagination-info');
       const sortButton = document.getElementById('sort-credenciada-button');
       const sortIndicator = document.getElementById('sort-credenciada-indicator');
+      const formModal = document.getElementById('credenciada-form-modal');
       const formTitle = document.getElementById('credenciada-form-title');
       const saveButton = document.getElementById('save-credenciada-button');
+      const closeFormModalButton = document.getElementById('close-credenciada-form-modal-button');
       const statusBanner = document.getElementById('status-banner');
       const rejectionPanel = document.getElementById('credenciada-rejection-panel');
       const rejectionFilterForm = document.getElementById('credenciada-rejection-filter-form');
@@ -316,7 +341,7 @@
       const nextRejectionPageButton = document.getElementById('next-credenciada-rejection-page-button');
       const rejectionPaginationInfo = document.getElementById('credenciada-rejection-pagination-info');
       const clearRejectionFilterButton = document.getElementById('clear-credenciada-rejection-filter-button');
-      const closeRejectionPanelButton = document.getElementById('close-credenciada-rejection-panel-button');
+      const closeRejectionPanelButton = document.getElementById('close-credenciada-rejection-modal-button');
 
       const pageSize = 20;
       const rejectionPageSize = 20;
@@ -514,31 +539,55 @@
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
       };
 
+      const setPopupVisibility = (modalElement, shouldShow) => {
+        modalElement.classList.toggle('dsc-hidden', !shouldShow);
+        modalElement.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+      };
+
+      const syncPopupPageState = () => {
+        const isPopupVisible = !formModal.classList.contains('dsc-hidden')
+          || !importModal.classList.contains('dsc-hidden')
+          || !rejectionModal.classList.contains('dsc-hidden');
+        document.body.classList.toggle('dsc-popup-open', isPopupVisible);
+      };
+
       const showForm = (mode = 'create') => {
         const isEditing = mode === 'edit';
         const isReadOnly = mode === 'view';
 
         formMode = mode;
         importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
         rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isReadOnly ? 'Consulta de credenciada' : isEditing ? 'Alteracao de credenciada' : 'Cadastro de credenciada';
+        setPopupVisibility(formModal, true);
+        syncPopupPageState();
+        formTitle.textContent = 'CREDENCIADA';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar credenciada';
         setFormReadOnly(isReadOnly);
       };
 
       const showImportForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
         rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
         importForm.classList.remove('dsc-hidden');
+        setPopupVisibility(importModal, true);
+        syncPopupPageState();
         importFileNameInput.value = defaultImportFileName;
         resetImportMessages();
       };
 
       const showRejectionPanel = async (search = currentRejectionSearch) => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
         importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
         rejectionPanel.classList.remove('dsc-hidden');
+        setPopupVisibility(rejectionModal, true);
+        syncPopupPageState();
         currentRejectionSearch = search;
         rejectionSearchInput.value = search;
         currentRejectionPage = 1;
@@ -547,6 +596,8 @@
 
       const hideForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
+        syncPopupPageState();
         form.reset();
         editingCodigo = null;
         formMode = 'create';
@@ -556,12 +607,16 @@
 
       const hideImportForm = () => {
         importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
+        syncPopupPageState();
         importFileNameInput.value = defaultImportFileName;
         resetImportMessages();
       };
 
       const hideRejectionPanel = () => {
         rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
+        syncPopupPageState();
         rejectionGridBody.innerHTML = '';
         rejectionEmptyState.classList.add('dsc-hidden');
         setRejectionGridMessage('');
@@ -1043,8 +1098,44 @@
         void showRejectionPanel();
       });
       cancelButton.addEventListener('click', hideForm);
+      closeFormModalButton.addEventListener('click', hideForm);
+      formModal.addEventListener('click', (event) => {
+        if (event.target === formModal) {
+          hideForm();
+        }
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+          return;
+        }
+
+        if (!formModal.classList.contains('dsc-hidden')) {
+          hideForm();
+          return;
+        }
+
+        if (!importModal.classList.contains('dsc-hidden')) {
+          hideImportForm();
+          return;
+        }
+
+        if (!rejectionModal.classList.contains('dsc-hidden')) {
+          hideRejectionPanel();
+        }
+      });
       cancelImportButton.addEventListener('click', hideImportForm);
+      closeImportModalButton.addEventListener('click', hideImportForm);
       closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
+      importModal.addEventListener('click', (event) => {
+        if (event.target === importModal) {
+          hideImportForm();
+        }
+      });
+      rejectionModal.addEventListener('click', (event) => {
+        if (event.target === rejectionModal) {
+          hideRejectionPanel();
+        }
+      });
 
       importForm.addEventListener('submit', async (event) => {
         event.preventDefault();

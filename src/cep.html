@@ -29,79 +29,99 @@
               </form>
             </div>
 
-            <section class="dsc-card dsc-hidden" id="cep-rejection-panel">
-              <div class="dsc-access-grid-header">
-                <h2>Registros nao importados</h2>
-                <span id="cep-rejection-total"></span>
+            <div class="dsc-popup-overlay dsc-hidden" id="cep-rejection-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="cep-rejection-title">
+                <section class="dsc-card dsc-hidden" id="cep-rejection-panel">
+                  <div class="dsc-popup-header dsc-popup-header-sticky">
+                    <h2 id="cep-rejection-title">REGISTROS NAO IMPORTADOS</h2>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-cep-rejection-modal-button" aria-label="Fechar recusas XML">X</button>
+                  </div>
+
+                  <div class="dsc-access-grid-header">
+                    <span id="cep-rejection-total"></span>
+                  </div>
+
+                  <form class="dsc-access-filter-form" id="cep-rejection-filter-form">
+                    <input class="dsc-form-control dsc-access-filter-input" id="cep-rejection-search" type="text" placeholder="Filtrar por arquivo, CEP, municipio, UF ou motivo" />
+                    <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="clear-cep-rejection-filter-button">Limpar</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="close-cep-rejection-panel-button">Fechar</button>
+                  </form>
+
+                  <div class="dsc-access-grid-wrapper">
+                    <table class="dsc-access-grid">
+                      <thead>
+                        <tr>
+                          <th>Data importacao</th>
+                          <th>Arquivo XML</th>
+                          <th>Linha XML</th>
+                          <th>CEP XML</th>
+                          <th>Logradouro XML</th>
+                          <th>Municipio XML</th>
+                          <th>UF XML</th>
+                          <th>Motivo da recusa</th>
+                        </tr>
+                      </thead>
+                      <tbody id="cep-rejection-grid-body"></tbody>
+                    </table>
+
+                    <p class="dsc-empty-state dsc-hidden" id="cep-rejection-empty-state">Nenhum registro recusado encontrado.</p>
+                  </div>
+
+                  <p class="dsc-feedback" id="cep-rejection-grid-feedback"></p>
+
+                  <div class="dsc-access-pagination dsc-popup-footer-sticky">
+                    <button type="button" class="dsc-btn dsc-btn-white" id="previous-cep-rejection-page-button">Anterior</button>
+                    <span id="cep-rejection-pagination-info">Pagina 1 de 1</span>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="next-cep-rejection-page-button">Proxima</button>
+                  </div>
+                </section>
               </div>
+            </div>
 
-              <form class="dsc-access-filter-form" id="cep-rejection-filter-form">
-                <input class="dsc-form-control dsc-access-filter-input" id="cep-rejection-search" type="text" placeholder="Filtrar por arquivo, CEP, municipio, UF ou motivo" />
-                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="clear-cep-rejection-filter-button">Limpar</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="close-cep-rejection-panel-button">Fechar</button>
-              </form>
+            <div class="dsc-popup-overlay dsc-hidden" id="cep-import-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="cep-import-title">
+                <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="cep-import-form">
+                  <div class="dsc-popup-header dsc-popup-header-sticky">
+                    <h2 id="cep-import-title">IMPORTACAO DE CEPS POR XML</h2>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-cep-import-modal-button" aria-label="Fechar importacao XML de CEP">X</button>
+                  </div>
 
-              <div class="dsc-access-grid-wrapper">
-                <table class="dsc-access-grid">
-                  <thead>
-                    <tr>
-                      <th>Data importacao</th>
-                      <th>Arquivo XML</th>
-                      <th>Linha XML</th>
-                      <th>CEP XML</th>
-                      <th>Logradouro XML</th>
-                      <th>Municipio XML</th>
-                      <th>UF XML</th>
-                      <th>Motivo da recusa</th>
-                    </tr>
-                  </thead>
-                  <tbody id="cep-rejection-grid-body"></tbody>
-                </table>
+                  <label class="dsc-field-group" for="cep-import-file-name">
+                    <span>Nome do arquivo XML</span>
+                    <input class="dsc-form-control" id="cep-import-file-name" type="text" placeholder="Ceps.xml" />
+                    <div class="dsc-form-error" id="cep-import-file-name-error"></div>
+                  </label>
 
-                <p class="dsc-empty-state dsc-hidden" id="cep-rejection-empty-state">Nenhum registro recusado encontrado.</p>
+                  <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
+
+                  <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
+                    <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-cep-import-button">Executar importacao</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="cancel-cep-import-button">Cancelar</button>
+                  </div>
+
+                  <p class="dsc-feedback" id="cep-import-feedback"></p>
+                </form>
               </div>
+            </div>
 
-              <p class="dsc-feedback" id="cep-rejection-grid-feedback"></p>
+            <div class="dsc-popup-overlay dsc-hidden" id="cep-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="cep-form-title">
+                <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="cep-form">
+                  <div class="dsc-popup-header dsc-popup-header-sticky">
+                    <h2 id="cep-form-title">CADASTRO DE CEP</h2>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-cep-form-modal-button" aria-label="Fechar formulario de CEP">X</button>
+                  </div>
 
-              <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-cep-rejection-page-button">Anterior</button>
-                <span id="cep-rejection-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-cep-rejection-page-button">Proxima</button>
-              </div>
-            </section>
-
-            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="cep-import-form">
-              <h2>Importacao de CEPs por XML</h2>
-
-              <label class="dsc-field-group" for="cep-import-file-name">
-                <span>Nome do arquivo XML</span>
-                <input class="dsc-form-control" id="cep-import-file-name" type="text" placeholder="Ceps.xml" />
-                <div class="dsc-form-error" id="cep-import-file-name-error"></div>
-              </label>
-
-              <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
-
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
-                <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-cep-import-button">Executar importacao</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-cep-import-button">Cancelar</button>
-              </div>
-
-              <p class="dsc-feedback" id="cep-import-feedback"></p>
-            </form>
-
-            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="cep-form">
-              <h2 id="cep-form-title">CADASTRO DE CEP</h2>
-
-              <div class="dsc-form-row">
-                <label class="dsc-field-group" for="cep-cep">
-                  <span>CEP</span>
-                  <input class="dsc-form-control" id="cep-cep" type="text" inputmode="numeric" placeholder="00000-000" maxlength="9" />
-                  <div class="dsc-form-error" id="cep-cep-error"></div>
-                </label>
-                <label class="dsc-field-group" for="cep-uf">
-                  <span>UF</span>
-                  <select class="dsc-form-control" id="cep-uf">
+                  <div class="dsc-form-row">
+                    <label class="dsc-field-group" for="cep-cep">
+                      <span>CEP</span>
+                      <input class="dsc-form-control" id="cep-cep" type="text" inputmode="numeric" placeholder="00000-000" maxlength="9" />
+                      <div class="dsc-form-error" id="cep-cep-error"></div>
+                    </label>
+                    <label class="dsc-field-group" for="cep-uf">
+                      <span>UF</span>
+                      <select class="dsc-form-control" id="cep-uf">
                     <option value="">Selecione</option>
                     <option value="AC">AC</option>
                     <option value="AL">AL</option>
@@ -130,42 +150,44 @@
                     <option value="SP">SP</option>
                     <option value="SE">SE</option>
                     <option value="TO">TO</option>
-                  </select>
-                  <div class="dsc-form-error" id="cep-uf-error"></div>
-                </label>
-                <label class="dsc-field-group" for="cep-ibge">
-                  <span>IBGE</span>
-                  <input class="dsc-form-control" id="cep-ibge" type="text" inputmode="numeric" placeholder="0000000" maxlength="10" />
-                  <div class="dsc-form-error" id="cep-ibge-error"></div>
-                </label>
+                      </select>
+                      <div class="dsc-form-error" id="cep-uf-error"></div>
+                    </label>
+                    <label class="dsc-field-group" for="cep-ibge">
+                      <span>IBGE</span>
+                      <input class="dsc-form-control" id="cep-ibge" type="text" inputmode="numeric" placeholder="0000000" maxlength="10" />
+                      <div class="dsc-form-error" id="cep-ibge-error"></div>
+                    </label>
+                  </div>
+
+                  <label class="dsc-field-group" for="cep-logradouro">
+                    <span>Logradouro</span>
+                    <input class="dsc-form-control" id="cep-logradouro" type="text" placeholder="NOME DO LOGRADOURO" maxlength="255" />
+                    <div class="dsc-form-error" id="cep-logradouro-error"></div>
+                  </label>
+
+                  <div class="dsc-form-row">
+                    <label class="dsc-field-group" for="cep-bairro">
+                      <span>Bairro</span>
+                      <input class="dsc-form-control" id="cep-bairro" type="text" placeholder="NOME DO BAIRRO" maxlength="120" />
+                      <div class="dsc-form-error" id="cep-bairro-error"></div>
+                    </label>
+                    <label class="dsc-field-group" for="cep-municipio">
+                      <span>Municipio</span>
+                      <input class="dsc-form-control" id="cep-municipio" type="text" placeholder="NOME DO MUNICIPIO" maxlength="120" />
+                      <div class="dsc-form-error" id="cep-municipio-error"></div>
+                    </label>
+                  </div>
+
+                  <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
+                    <button type="submit" class="dsc-btn dsc-btn-blue" id="save-cep-button">Salvar CEP</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="cancel-cep-button">Cancelar</button>
+                  </div>
+
+                  <p class="dsc-feedback" id="cep-form-feedback"></p>
+                </form>
               </div>
-
-              <label class="dsc-field-group" for="cep-logradouro">
-                <span>Logradouro</span>
-                <input class="dsc-form-control" id="cep-logradouro" type="text" placeholder="NOME DO LOGRADOURO" maxlength="255" />
-                <div class="dsc-form-error" id="cep-logradouro-error"></div>
-              </label>
-
-              <div class="dsc-form-row">
-                <label class="dsc-field-group" for="cep-bairro">
-                  <span>Bairro</span>
-                  <input class="dsc-form-control" id="cep-bairro" type="text" placeholder="NOME DO BAIRRO" maxlength="120" />
-                  <div class="dsc-form-error" id="cep-bairro-error"></div>
-                </label>
-                <label class="dsc-field-group" for="cep-municipio">
-                  <span>Municipio</span>
-                  <input class="dsc-form-control" id="cep-municipio" type="text" placeholder="NOME DO MUNICIPIO" maxlength="120" />
-                  <div class="dsc-form-error" id="cep-municipio-error"></div>
-                </label>
-              </div>
-
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
-                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-cep-button">Salvar CEP</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-cep-button">Cancelar</button>
-              </div>
-
-              <p class="dsc-feedback" id="cep-form-feedback"></p>
-            </form>
+            </div>
 
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header">
@@ -256,7 +278,12 @@
       };
 
       // ---- Elements ----
+      const cepFormModal = document.getElementById('cep-form-modal');
+      const cepImportModal = document.getElementById('cep-import-modal');
+      const cepRejectionModal = document.getElementById('cep-rejection-modal');
       const cepForm = document.getElementById('cep-form');
+      const cepImportForm = document.getElementById('cep-import-form');
+      const cepRejectionPanel = document.getElementById('cep-rejection-panel');
       const cepFormTitle = document.getElementById('cep-form-title');
       const cepInput = document.getElementById('cep-cep');
       const logradouroInput = document.getElementById('cep-logradouro');
@@ -266,11 +293,53 @@
       const ibgeInput = document.getElementById('cep-ibge');
       const saveCepButton = document.getElementById('save-cep-button');
       const cancelCepButton = document.getElementById('cancel-cep-button');
+      const closeCepFormModalButton = document.getElementById('close-cep-form-modal-button');
+      const closeCepImportModalButton = document.getElementById('close-cep-import-modal-button');
+      const closeCepRejectionModalButton = document.getElementById('close-cep-rejection-modal-button');
       const feedback = document.getElementById('cep-form-feedback');
       const errors = {
         cep: document.getElementById('cep-cep-error'),
         municipio: document.getElementById('cep-municipio-error'),
         uf: document.getElementById('cep-uf-error'),
+      };
+
+      const setPopupVisibility = (modalElement, shouldShow) => {
+        modalElement.classList.toggle('dsc-hidden', !shouldShow);
+        modalElement.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+      };
+
+      const syncPopupPageState = () => {
+        const isPopupVisible = [cepFormModal, cepImportModal, cepRejectionModal]
+          .some((modalElement) => !modalElement.classList.contains('dsc-hidden'));
+        document.body.classList.toggle('dsc-popup-open', isPopupVisible);
+      };
+
+      const hideImportForm = () => {
+        cepImportForm.classList.add('dsc-hidden');
+        setPopupVisibility(cepImportModal, false);
+        syncPopupPageState();
+      };
+
+      const hideRejectionPanel = () => {
+        cepRejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(cepRejectionModal, false);
+        syncPopupPageState();
+      };
+
+      const showImportForm = () => {
+        hideForm();
+        hideRejectionPanel();
+        cepImportForm.classList.remove('dsc-hidden');
+        setPopupVisibility(cepImportModal, true);
+        syncPopupPageState();
+      };
+
+      const showRejectionPanel = () => {
+        hideForm();
+        hideImportForm();
+        cepRejectionPanel.classList.remove('dsc-hidden');
+        setPopupVisibility(cepRejectionModal, true);
+        syncPopupPageState();
       };
 
       const setFormReadOnly = (readOnly) => {
@@ -288,13 +357,17 @@
 
       const hideForm = () => {
         cepForm.classList.add('dsc-hidden');
+        setPopupVisibility(cepFormModal, false);
+        syncPopupPageState();
         editingCep = null;
       };
 
       const showForm = () => {
         cepForm.classList.remove('dsc-hidden');
-        document.getElementById('cep-import-form').classList.add('dsc-hidden');
-        document.getElementById('cep-rejection-panel').classList.add('dsc-hidden');
+        setPopupVisibility(cepFormModal, true);
+        hideImportForm();
+        hideRejectionPanel();
+        syncPopupPageState();
       };
 
       const clearForm = () => {
@@ -323,7 +396,6 @@
         saveCepButton.textContent = 'Salvar CEP';
         editingCep = item.cep;
         showForm();
-        cepForm.scrollIntoView({ behavior: 'smooth' });
       };
 
       const startView = (item) => {
@@ -331,7 +403,6 @@
         setFormReadOnly(true);
         cepFormTitle.textContent = 'Consultar registro';
         showForm();
-        cepForm.scrollIntoView({ behavior: 'smooth' });
       };
 
       const collectPayload = () => ({
@@ -545,11 +616,36 @@
       document.getElementById('insert-cep-button').addEventListener('click', () => {
         clearForm();
         showForm();
-        cepForm.scrollIntoView({ behavior: 'smooth' });
       });
 
       cancelCepButton.addEventListener('click', () => {
         hideForm();
+      });
+
+      closeCepFormModalButton.addEventListener('click', () => {
+        hideForm();
+      });
+
+      cepFormModal.addEventListener('click', (event) => {
+        if (event.target === cepFormModal) {
+          hideForm();
+        }
+      });
+
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !cepFormModal.classList.contains('dsc-hidden')) {
+          hideForm();
+          return;
+        }
+
+        if (event.key === 'Escape' && !cepImportModal.classList.contains('dsc-hidden')) {
+          hideImportForm();
+          return;
+        }
+
+        if (event.key === 'Escape' && !cepRejectionModal.classList.contains('dsc-hidden')) {
+          hideRejectionPanel();
+        }
       });
 
       // ---- Filter ----
@@ -601,13 +697,11 @@
 
       // ---- Import ----
       document.getElementById('open-cep-import-button').addEventListener('click', () => {
-        document.getElementById('cep-import-form').classList.remove('dsc-hidden');
-        cepForm.classList.add('dsc-hidden');
-        document.getElementById('cep-rejection-panel').classList.add('dsc-hidden');
+        showImportForm();
       });
 
       document.getElementById('cancel-cep-import-button').addEventListener('click', () => {
-        document.getElementById('cep-import-form').classList.add('dsc-hidden');
+        hideImportForm();
       });
 
       document.getElementById('cep-import-form').addEventListener('submit', async (e) => {
@@ -647,15 +741,33 @@
 
       // ---- Rejections ----
       document.getElementById('open-cep-rejections-button').addEventListener('click', () => {
-        document.getElementById('cep-rejection-panel').classList.remove('dsc-hidden');
-        cepForm.classList.add('dsc-hidden');
-        document.getElementById('cep-import-form').classList.add('dsc-hidden');
+        showRejectionPanel();
         currentRejectionPage = 1;
         void loadRejections();
       });
 
       document.getElementById('close-cep-rejection-panel-button').addEventListener('click', () => {
-        document.getElementById('cep-rejection-panel').classList.add('dsc-hidden');
+        hideRejectionPanel();
+      });
+
+      closeCepImportModalButton.addEventListener('click', () => {
+        hideImportForm();
+      });
+
+      closeCepRejectionModalButton.addEventListener('click', () => {
+        hideRejectionPanel();
+      });
+
+      cepImportModal.addEventListener('click', (event) => {
+        if (event.target === cepImportModal) {
+          hideImportForm();
+        }
+      });
+
+      cepRejectionModal.addEventListener('click', (event) => {
+        if (event.target === cepRejectionModal) {
+          hideRejectionPanel();
+        }
       });
 
       document.getElementById('cep-rejection-filter-form').addEventListener('submit', (e) => {

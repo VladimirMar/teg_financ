@@ -396,7 +396,38 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   padding-right: 56px;
 }
 
+#condutor-form .dsc-popup-header-sticky,
+#monitor-form .dsc-popup-header-sticky,
+#credenciada-form .dsc-popup-header-sticky,
+#troca-form .dsc-popup-header-sticky,
+#vinculo-form .dsc-popup-header-sticky,
+#credenciamento-termo-form .dsc-popup-header-sticky,
+#login-dre-form .dsc-popup-header-sticky,
+#login-dre-bulk-form .dsc-popup-header-sticky,
+#register-form .dsc-popup-header-sticky,
+#cep-form .dsc-popup-header-sticky,
+#cep-import-form .dsc-popup-header-sticky,
+#cep-rejection-panel .dsc-popup-header-sticky {
+  justify-content: center;
+  padding-right: 56px;
+}
+
 #ordem-servico-form-title {
+  text-align: center;
+}
+
+#condutor-form-title,
+#monitor-form-title,
+#credenciada-form-title,
+#troca-form-title,
+#vinculo-form-title,
+#credenciamento-termo-form-title,
+#login-dre-form-title,
+#login-dre-bulk-title,
+#form-title,
+#cep-form-title,
+#cep-import-title,
+#cep-rejection-title {
   text-align: center;
 }
 
@@ -415,6 +446,7 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   .dsc-popup-shell-ordem-servico {
     width: min(100%, 1360px);
   }
+
 }
 
 #condutor-form,

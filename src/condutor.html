@@ -25,17 +25,21 @@
               </form>
             </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="condutor-rejection-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="condutor-rejection-title">
             <section class="dsc-card dsc-hidden" id="condutor-rejection-panel">
-              <div class="dsc-access-grid-header">
-                <h2>Registros nao importados</h2>
-                <span id="condutor-rejection-total"></span>
+              <div class="dsc-popup-header dsc-popup-header-sticky dsc-popup-header-with-compact-close">
+                <div class="dsc-popup-header-copy">
+                  <h2 id="condutor-rejection-title">Registros nao importados</h2>
+                  <span id="condutor-rejection-total"></span>
+                </div>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-condutor-rejection-modal-button" aria-label="Fechar recusas xml">X</button>
               </div>
 
               <form class="dsc-access-filter-form" id="condutor-rejection-filter-form">
                 <input class="dsc-form-control dsc-access-filter-input" id="condutor-rejection-search" type="text" placeholder="Filtrar por arquivo, codigo, condutor, CRMC ou motivo" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-condutor-rejection-filter-button">Limpar</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="close-condutor-rejection-panel-button">Fechar</button>
               </form>
 
               <div class="dsc-access-grid-wrapper">
@@ -67,9 +71,16 @@
                 <button type="button" class="dsc-btn dsc-btn-white" id="next-condutor-rejection-page-button">Proxima</button>
               </div>
             </section>
+              </div>
+            </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="condutor-import-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="condutor-import-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="condutor-import-form">
-              <h2>Importacao de condutor por XML</h2>
+              <div class="dsc-popup-header dsc-popup-header-with-compact-close">
+                <h2 id="condutor-import-title">Importacao de condutor por XML</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-condutor-import-modal-button" aria-label="Fechar importacao de condutor">X</button>
+              </div>
 
               <label class="dsc-field-group" for="condutor-import-file-name">
                 <span>Nome do arquivo XML</span>
@@ -79,16 +90,23 @@
 
               <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-condutor-import-button">Executar importacao</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-condutor-import-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="condutor-import-feedback"></p>
             </form>
+              </div>
+            </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="condutor-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="condutor-form-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="condutor-form">
-              <h2 id="condutor-form-title">Novo registro</h2>
+              <div class="dsc-popup-header dsc-popup-header-sticky">
+                <h2 id="condutor-form-title">CONDUTOR</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-condutor-form-modal-button" aria-label="Fechar formulario de condutor">X</button>
+              </div>
 
               <div class="dsc-form-tabs" id="condutor-form-tabs">
                 <button type="button" class="dsc-form-tab-button dsc-form-tab-button-active" data-tab-target="cadastro">Dados do condutor</button>
@@ -182,13 +200,15 @@
                 </section>
               </div>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-condutor-button">Salvar condutor</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-condutor-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="condutor-form-feedback"></p>
             </form>
+              </div>
+            </div>
 
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header">
@@ -247,6 +267,9 @@
       const validadeCursoError = document.getElementById('condutor-validade-curso-error');
       const feedback = document.getElementById('condutor-form-feedback');
       const gridFeedback = document.getElementById('condutor-grid-feedback');
+      const formModal = document.getElementById('condutor-form-modal');
+      const importModal = document.getElementById('condutor-import-modal');
+      const rejectionModal = document.getElementById('condutor-rejection-modal');
       const insertButton = document.getElementById('insert-condutor-button');
       const importButton = document.getElementById('open-condutor-import-button');
       const rejectionButton = document.getElementById('open-condutor-rejections-button');
@@ -256,6 +279,7 @@
       const importFileNameError = document.getElementById('condutor-import-file-name-error');
       const importFeedback = document.getElementById('condutor-import-feedback');
       const cancelImportButton = document.getElementById('cancel-condutor-import-button');
+      const closeImportModalButton = document.getElementById('close-condutor-import-modal-button');
       const filterForm = document.getElementById('condutor-filter-form');
       const clearFilterButton = document.getElementById('clear-condutor-filter-button');
       const searchInput = document.getElementById('condutor-search');
@@ -269,6 +293,7 @@
       const sortCondutorIndicator = document.getElementById('sort-condutor-indicator');
       const formTitle = document.getElementById('condutor-form-title');
       const saveButton = document.getElementById('save-condutor-button');
+      const closeFormModalButton = document.getElementById('close-condutor-form-modal-button');
       const statusBanner = document.getElementById('status-banner');
       const tipoVinculoRadios = Array.from(document.querySelectorAll('input[name="condutor-tipo-vinculo"]'));
       const rejectionPanel = document.getElementById('condutor-rejection-panel');
@@ -282,7 +307,7 @@
       const nextRejectionPageButton = document.getElementById('next-condutor-rejection-page-button');
       const rejectionPaginationInfo = document.getElementById('condutor-rejection-pagination-info');
       const clearRejectionFilterButton = document.getElementById('clear-condutor-rejection-filter-button');
-      const closeRejectionPanelButton = document.getElementById('close-condutor-rejection-panel-button');
+      const closeRejectionPanelButton = document.getElementById('close-condutor-rejection-modal-button');
       const formTabButtons = Array.from(document.querySelectorAll('#condutor-form-tabs .dsc-form-tab-button'));
       const cadastroTabPanel = document.getElementById('condutor-tab-cadastro');
       const vinculoTabPanel = document.getElementById('condutor-tab-vinculos');
@@ -610,15 +635,29 @@
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
       };
 
+      const setPopupVisibility = (modalElement, shouldShow) => {
+        modalElement.classList.toggle('dsc-hidden', !shouldShow);
+        modalElement.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+      };
+
+      const syncPopupPageState = () => {
+        const isPopupVisible = !formModal.classList.contains('dsc-hidden') || !importModal.classList.contains('dsc-hidden') || !rejectionModal.classList.contains('dsc-hidden');
+        document.body.classList.toggle('dsc-popup-open', isPopupVisible);
+      };
+
       const showForm = (mode = 'create') => {
         const isEditing = mode === 'edit';
         const isReadOnly = mode === 'view';
 
         formMode = mode;
         importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
         rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isReadOnly ? 'Consulta de condutor' : isEditing ? 'Alteracao de condutor' : 'Cadastro de condutor';
+        setPopupVisibility(formModal, true);
+        syncPopupPageState();
+        formTitle.textContent = 'CONDUTOR';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar condutor';
         setFormReadOnly(isReadOnly);
         setActiveFormTab('cadastro');
@@ -627,16 +666,24 @@
 
       const showImportForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
         rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
         importForm.classList.remove('dsc-hidden');
+        setPopupVisibility(importModal, true);
+        syncPopupPageState();
         importFileNameInput.value = defaultImportFileName;
         resetImportMessages();
       };
 
       const showRejectionPanel = async (search = currentRejectionSearch) => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
         importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
         rejectionPanel.classList.remove('dsc-hidden');
+        setPopupVisibility(rejectionModal, true);
+        syncPopupPageState();
         currentRejectionSearch = search;
         rejectionSearchInput.value = search;
         currentRejectionPage = 1;
@@ -645,6 +692,8 @@
 
       const hideForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
+        syncPopupPageState();
         form.reset();
         setSelectedTipoVinculo('');
         editingCodigo = null;
@@ -657,12 +706,16 @@
 
       const hideImportForm = () => {
         importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
+        syncPopupPageState();
         importFileNameInput.value = defaultImportFileName;
         resetImportMessages();
       };
 
       const hideRejectionPanel = () => {
         rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
+        syncPopupPageState();
         rejectionGridBody.innerHTML = '';
         rejectionEmptyState.classList.add('dsc-hidden');
         setRejectionGridMessage('');
@@ -1049,8 +1102,50 @@
         void showRejectionPanel();
       });
       cancelButton.addEventListener('click', hideForm);
+      closeFormModalButton.addEventListener('click', hideForm);
       cancelImportButton.addEventListener('click', hideImportForm);
+      closeImportModalButton.addEventListener('click', hideImportForm);
       closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
+
+      [formModal, importModal, rejectionModal].forEach((modalElement) => {
+        modalElement.addEventListener('click', (event) => {
+          if (event.target !== modalElement) {
+            return;
+          }
+
+          if (modalElement === formModal) {
+            hideForm();
+            return;
+          }
+
+          if (modalElement === rejectionModal) {
+            hideRejectionPanel();
+            return;
+          }
+
+          hideImportForm();
+        });
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+          return;
+        }
+
+        if (!formModal.classList.contains('dsc-hidden')) {
+          hideForm();
+          return;
+        }
+
+        if (!importModal.classList.contains('dsc-hidden')) {
+          hideImportForm();
+          return;
+        }
+
+        if (!rejectionModal.classList.contains('dsc-hidden')) {
+          hideRejectionPanel();
+        }
+      });
 
       importForm.addEventListener('submit', async (event) => {
         event.preventDefault();

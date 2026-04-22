@@ -23,36 +23,43 @@
               </form>
             </div>
 
-            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="register-form">
-              <h2 id="form-title">Novo registro</h2>
+            <div class="dsc-popup-overlay dsc-hidden" id="access-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="form-title">
+                <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="register-form">
+                  <div class="dsc-popup-header dsc-popup-header-sticky">
+                    <h2 id="form-title">Cadastro de acesso</h2>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-access-form-modal-button" aria-label="Fechar formulario de acesso">X</button>
+                  </div>
 
-              <label class="dsc-field-group" for="nome">
-                <span>Nome</span>
-                <input class="dsc-form-control" id="nome" type="text" placeholder="NOME DO USUARIO" maxlength="50" />
-                <div class="dsc-form-error" id="nome-error"></div>
-              </label>
+                  <label class="dsc-field-group" for="nome">
+                    <span>Nome</span>
+                    <input class="dsc-form-control" id="nome" type="text" placeholder="NOME DO USUARIO" maxlength="50" />
+                    <div class="dsc-form-error" id="nome-error"></div>
+                  </label>
 
-              <label class="dsc-field-group" for="email">
-                <span>Email</span>
-                <input class="dsc-form-control" id="email" type="email" placeholder="nome@empresa.com" />
-                <div class="dsc-form-error" id="email-error"></div>
-              </label>
+                  <label class="dsc-field-group" for="email">
+                    <span>Email</span>
+                    <input class="dsc-form-control" id="email" type="email" placeholder="nome@empresa.com" />
+                    <div class="dsc-form-error" id="email-error"></div>
+                  </label>
 
-              <label class="dsc-field-group" for="password">
-                <span>Senha</span>
-                <input class="dsc-form-control" id="password" type="password" placeholder="Digite a senha" />
-                <div class="dsc-form-error" id="password-error"></div>
-              </label>
+                  <label class="dsc-field-group" for="password">
+                    <span>Senha</span>
+                    <input class="dsc-form-control" id="password" type="password" placeholder="Digite a senha" />
+                    <div class="dsc-form-error" id="password-error"></div>
+                  </label>
 
-              <p class="dsc-form-hint" id="password-hint"></p>
+                  <p class="dsc-form-hint" id="password-hint"></p>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
-                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-access-button">Salvar acesso</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-access-button">Cancelar</button>
+                  <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
+                    <button type="submit" class="dsc-btn dsc-btn-blue" id="save-access-button">Salvar acesso</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="cancel-access-button">Cancelar</button>
+                  </div>
+
+                  <p class="dsc-feedback" id="form-feedback"></p>
+                </form>
               </div>
-
-              <p class="dsc-feedback" id="form-feedback"></p>
-            </form>
+            </div>
 
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header">
@@ -94,6 +101,7 @@
     </main>
 
     <script>
+      const formModal = document.getElementById('access-form-modal');
       const form = document.getElementById('register-form');
       const nomeInput = document.getElementById('nome');
       const emailInput = document.getElementById('email');
@@ -105,6 +113,7 @@
       const gridFeedback = document.getElementById('grid-feedback');
       const insertAccessButton = document.getElementById('insert-access-button');
       const cancelAccessButton = document.getElementById('cancel-access-button');
+      const closeFormModalButton = document.getElementById('close-access-form-modal-button');
       const filterForm = document.getElementById('access-filter-form');
       const clearFilterButton = document.getElementById('clear-filter-button');
       const accessSearchInput = document.getElementById('access-search');
@@ -188,6 +197,16 @@
         return error instanceof Error ? error.message : fallbackMessage;
       };
 
+      const setPopupVisibility = (modalElement, shouldShow) => {
+        modalElement.classList.toggle('dsc-hidden', !shouldShow);
+        modalElement.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+      };
+
+      const syncPopupPageState = () => {
+        const isPopupVisible = !formModal.classList.contains('dsc-hidden');
+        document.body.classList.toggle('dsc-popup-open', isPopupVisible);
+      };
+
       const setFormReadOnly = (isReadOnly) => {
         nomeInput.readOnly = isReadOnly;
         emailInput.readOnly = isReadOnly;
@@ -202,6 +221,8 @@
 
         formMode = mode;
         form.classList.remove('dsc-hidden');
+        setPopupVisibility(formModal, true);
+        syncPopupPageState();
         formTitle.textContent = isReadOnly ? 'Consulta de acesso' : isEditing ? 'Alteracao de acesso' : 'Cadastro de acesso';
         saveAccessButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar acesso';
         passwordHint.textContent = isReadOnly
@@ -214,6 +235,8 @@
 
       const hideForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
+        syncPopupPageState();
         form.reset();
         editingCodigo = null;
         formMode = 'create';
@@ -481,6 +504,19 @@
 
       insertAccessButton.addEventListener('click', startInsert);
       cancelAccessButton.addEventListener('click', hideForm);
+      closeFormModalButton.addEventListener('click', hideForm);
+
+      formModal.addEventListener('click', (event) => {
+        if (event.target === formModal) {
+          hideForm();
+        }
+      });
+
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !formModal.classList.contains('dsc-hidden')) {
+          hideForm();
+        }
+      });
 
       filterForm.addEventListener('submit', (event) => {
         event.preventDefault();

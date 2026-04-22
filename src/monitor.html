@@ -25,17 +25,21 @@
               </form>
             </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="monitor-rejection-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="monitor-rejection-title">
             <section class="dsc-card dsc-hidden" id="monitor-rejection-panel">
-              <div class="dsc-access-grid-header">
-                <h2>Registros nao importados</h2>
-                <span id="monitor-rejection-total"></span>
+              <div class="dsc-popup-header dsc-popup-header-sticky dsc-popup-header-with-compact-close">
+                <div class="dsc-popup-header-copy">
+                  <h2 id="monitor-rejection-title">Registros nao importados</h2>
+                  <span id="monitor-rejection-total"></span>
+                </div>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-monitor-rejection-modal-button" aria-label="Fechar recusas xml">X</button>
               </div>
 
               <form class="dsc-access-filter-form" id="monitor-rejection-filter-form">
                 <input class="dsc-form-control dsc-access-filter-input" id="monitor-rejection-search" type="text" placeholder="Filtrar por arquivo, codigo, monitor, RG, tipo vinculo ou motivo" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-monitor-rejection-filter-button">Limpar</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="close-monitor-rejection-panel-button">Fechar</button>
               </form>
 
               <div class="dsc-access-grid-wrapper">
@@ -67,9 +71,16 @@
                 <button type="button" class="dsc-btn dsc-btn-white" id="next-monitor-rejection-page-button">Proxima</button>
               </div>
             </section>
+              </div>
+            </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="monitor-import-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="monitor-import-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="monitor-import-form">
-              <h2>Importacao de monitor por XML</h2>
+              <div class="dsc-popup-header dsc-popup-header-with-compact-close">
+                <h2 id="monitor-import-title">Importacao de monitor por XML</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-monitor-import-modal-button" aria-label="Fechar importacao de monitor">X</button>
+              </div>
 
               <label class="dsc-field-group" for="monitor-import-file-name">
                 <span>Nome do arquivo XML</span>
@@ -79,16 +90,23 @@
 
               <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-monitor-import-button">Executar importacao</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-monitor-import-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="monitor-import-feedback"></p>
             </form>
+              </div>
+            </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="monitor-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="monitor-form-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="monitor-form">
-              <h2 id="monitor-form-title">Novo registro</h2>
+              <div class="dsc-popup-header dsc-popup-header-sticky">
+                <h2 id="monitor-form-title">MONITOR</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-monitor-form-modal-button" aria-label="Fechar formulario de monitor">X</button>
+              </div>
 
               <div class="dsc-form-tabs" id="monitor-form-tabs">
                 <button type="button" class="dsc-form-tab-button dsc-form-tab-button-active" data-tab-target="cadastro">Dados do monitor</button>
@@ -189,13 +207,15 @@
                 </section>
               </div>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-monitor-button">Salvar monitor</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-monitor-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="monitor-form-feedback"></p>
             </form>
+              </div>
+            </div>
 
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header">
@@ -258,6 +278,9 @@
       const nascimentoError = document.getElementById('monitor-nascimento-error');
       const feedback = document.getElementById('monitor-form-feedback');
       const gridFeedback = document.getElementById('monitor-grid-feedback');
+      const formModal = document.getElementById('monitor-form-modal');
+      const importModal = document.getElementById('monitor-import-modal');
+      const rejectionModal = document.getElementById('monitor-rejection-modal');
       const insertButton = document.getElementById('insert-monitor-button');
       const importButton = document.getElementById('open-monitor-import-button');
       const rejectionButton = document.getElementById('open-monitor-rejections-button');
@@ -267,6 +290,7 @@
       const importFileNameError = document.getElementById('monitor-import-file-name-error');
       const importFeedback = document.getElementById('monitor-import-feedback');
       const cancelImportButton = document.getElementById('cancel-monitor-import-button');
+      const closeImportModalButton = document.getElementById('close-monitor-import-modal-button');
       const filterForm = document.getElementById('monitor-filter-form');
       const clearFilterButton = document.getElementById('clear-monitor-filter-button');
       const searchInput = document.getElementById('monitor-search');
@@ -280,6 +304,7 @@
       const sortMonitorIndicator = document.getElementById('sort-monitor-indicator');
       const formTitle = document.getElementById('monitor-form-title');
       const saveButton = document.getElementById('save-monitor-button');
+      const closeFormModalButton = document.getElementById('close-monitor-form-modal-button');
       const statusBanner = document.getElementById('status-banner');
       const tipoVinculoRadios = Array.from(document.querySelectorAll('input[name="monitor-tipo-vinculo"]'));
       const rejectionPanel = document.getElementById('monitor-rejection-panel');
@@ -293,7 +318,7 @@
       const nextRejectionPageButton = document.getElementById('next-monitor-rejection-page-button');
       const rejectionPaginationInfo = document.getElementById('monitor-rejection-pagination-info');
       const clearRejectionFilterButton = document.getElementById('clear-monitor-rejection-filter-button');
-      const closeRejectionPanelButton = document.getElementById('close-monitor-rejection-panel-button');
+      const closeRejectionPanelButton = document.getElementById('close-monitor-rejection-modal-button');
       const formTabButtons = Array.from(document.querySelectorAll('#monitor-form-tabs .dsc-form-tab-button'));
       const cadastroTabPanel = document.getElementById('monitor-tab-cadastro');
       const vinculoTabPanel = document.getElementById('monitor-tab-vinculos');
@@ -619,15 +644,29 @@
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
       };
 
+      const setPopupVisibility = (modalElement, shouldShow) => {
+        modalElement.classList.toggle('dsc-hidden', !shouldShow);
+        modalElement.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+      };
+
+      const syncPopupPageState = () => {
+        const isPopupVisible = !formModal.classList.contains('dsc-hidden') || !importModal.classList.contains('dsc-hidden') || !rejectionModal.classList.contains('dsc-hidden');
+        document.body.classList.toggle('dsc-popup-open', isPopupVisible);
+      };
+
       const showForm = (mode = 'create') => {
         const isEditing = mode === 'edit';
         const isReadOnly = mode === 'view';
 
         formMode = mode;
         importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
         rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
         form.classList.remove('dsc-hidden');
-        formTitle.textContent = isReadOnly ? 'Consulta de monitor' : isEditing ? 'Alteracao de monitor' : 'Cadastro de monitor';
+        setPopupVisibility(formModal, true);
+        syncPopupPageState();
+        formTitle.textContent = 'MONITOR';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar monitor';
         setFormReadOnly(isReadOnly);
         setActiveFormTab('cadastro');
@@ -636,16 +675,24 @@
 
       const showImportForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
         rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
         importForm.classList.remove('dsc-hidden');
+        setPopupVisibility(importModal, true);
+        syncPopupPageState();
         importFileNameInput.value = defaultImportFileName;
         resetImportMessages();
       };
 
       const showRejectionPanel = async (search = currentRejectionSearch) => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
         importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
         rejectionPanel.classList.remove('dsc-hidden');
+        setPopupVisibility(rejectionModal, true);
+        syncPopupPageState();
         currentRejectionSearch = search;
         rejectionSearchInput.value = search;
         currentRejectionPage = 1;
@@ -654,6 +701,8 @@
 
       const hideForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
+        syncPopupPageState();
         form.reset();
         codigoInput.value = '';
         setSelectedTipoVinculo('');
@@ -667,12 +716,16 @@
 
       const hideImportForm = () => {
         importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
+        syncPopupPageState();
         importFileNameInput.value = defaultImportFileName;
         resetImportMessages();
       };
 
       const hideRejectionPanel = () => {
         rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
+        syncPopupPageState();
         rejectionGridBody.innerHTML = '';
         rejectionEmptyState.classList.add('dsc-hidden');
         setRejectionGridMessage('');
@@ -1090,8 +1143,50 @@
         void showRejectionPanel();
       });
       cancelButton.addEventListener('click', hideForm);
+      closeFormModalButton.addEventListener('click', hideForm);
       cancelImportButton.addEventListener('click', hideImportForm);
+      closeImportModalButton.addEventListener('click', hideImportForm);
       closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
+
+      [formModal, importModal, rejectionModal].forEach((modalElement) => {
+        modalElement.addEventListener('click', (event) => {
+          if (event.target !== modalElement) {
+            return;
+          }
+
+          if (modalElement === formModal) {
+            hideForm();
+            return;
+          }
+
+          if (modalElement === rejectionModal) {
+            hideRejectionPanel();
+            return;
+          }
+
+          hideImportForm();
+        });
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+          return;
+        }
+
+        if (!formModal.classList.contains('dsc-hidden')) {
+          hideForm();
+          return;
+        }
+
+        if (!importModal.classList.contains('dsc-hidden')) {
+          hideImportForm();
+          return;
+        }
+
+        if (!rejectionModal.classList.contains('dsc-hidden')) {
+          hideRejectionPanel();
+        }
+      });
 
       importForm.addEventListener('submit', async (event) => {
         event.preventDefault();
