@@ -82,6 +82,13 @@ jobs:
           cat api.log
           exit 1
 
+      - name: Verify invalid fixtures
+        shell: bash
+        run: |
+          mkdir -p .artifacts
+          set -o pipefail
+          INVALID_FIXTURE_REPORT_PATH=.artifacts/invalid-fixture-report-${{ matrix.suite }}.json npm run verify:invalid-fixtures:${{ matrix.suite }} 2>&1 | tee .artifacts/invalid-fixtures-${{ matrix.suite }}.log
+
       - name: Run smoke suite
         shell: bash
         run: |
@@ -101,19 +108,33 @@ jobs:
           const suite = process.env.SMOKE_SUITE
           const reportPath = `.artifacts/smoke-report-${suite}.json`
           const smokeLogPath = `.artifacts/smoke-${suite}.log`
+          const invalidFixtureReportPath = `.artifacts/invalid-fixture-report-${suite}.json`
+          const invalidFixtureLogPath = `.artifacts/invalid-fixtures-${suite}.log`
           const apiLogPath = 'api.log'
           const summaryPath = `.artifacts/failure-summary-${suite}.md`
 
           const report = fs.existsSync(reportPath)
             ? JSON.parse(fs.readFileSync(reportPath, 'utf8'))
             : null
+          const invalidFixtureReport = fs.existsSync(invalidFixtureReportPath)
+            ? JSON.parse(fs.readFileSync(invalidFixtureReportPath, 'utf8'))
+            : null
           const smokeLog = fs.existsSync(smokeLogPath)
             ? fs.readFileSync(smokeLogPath, 'utf8')
             : 'Smoke log indisponivel.'
+          const invalidFixtureLog = fs.existsSync(invalidFixtureLogPath)
+            ? fs.readFileSync(invalidFixtureLogPath, 'utf8')
+            : 'Invalid fixture log indisponivel.'
           const apiLog = fs.existsSync(apiLogPath)
             ? fs.readFileSync(apiLogPath, 'utf8')
             : 'API log indisponivel.'
           const imports = report?.executedSuites?.flatMap((suiteReport) => suiteReport.imports ?? []) ?? []
+          const invalidFixtureLines = invalidFixtureReport?.executedSuites?.length
+            ? invalidFixtureReport.executedSuites.map((suiteReport) => {
+                const summary = suiteReport.importSummary
+                return `- ${suiteReport.fileName} (${suiteReport.status}): processed=${summary?.processed ?? 'n/a'}, skipped=${summary?.skipped ?? 'n/a'}, failure=${suiteReport.failureMessage || 'n/a'}`
+              }).join('\n')
+            : '- Nenhuma verificacao de fixture invalido registrada.'
 
           const importLines = imports.length
             ? imports.map((item) => `- ${item.label} (${item.fileName}): total=${item.total}, processed=${item.processed}, inserted=${item.inserted}, updated=${item.updated}, skipped=${item.skipped}`).join('\n')
@@ -131,6 +152,16 @@ jobs:
             '## Import Logs',
             '',
             importLines,
+            '',
+            '## Invalid Fixture Checks',
+            '',
+            invalidFixtureLines,
+            '',
+            '## Invalid Fixture Log Tail',
+            '',
+            '```text',
+            ...invalidFixtureLog.split('\n').slice(-60),
+            '```',
             '',
             '## Smoke Log Tail',
             '',
@@ -156,6 +187,8 @@ jobs:
           name: smoke-failure-${{ matrix.suite }}
           path: |
             api.log
+            .artifacts/invalid-fixtures-${{ matrix.suite }}.log
+            .artifacts/invalid-fixture-report-${{ matrix.suite }}.json
             .artifacts/smoke-${{ matrix.suite }}.log
             .artifacts/smoke-report-${{ matrix.suite }}.json
             .artifacts/failure-summary-${{ matrix.suite }}.md

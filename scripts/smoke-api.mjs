@@ -282,6 +282,8 @@ const runCondutorSmoke = async () => {
     recordImport(suiteReport, 'invalid-import', invalidImport)
     assert(invalidImport.skipped === 3, 'Importacao invalida de condutor nao retornou 3 recusas.')
     assert(invalidImport.processed === 0, 'Importacao invalida de condutor nao retornou 0 registros processados.')
+    assert(Array.isArray(invalidImport.skippedRecords) && invalidImport.skippedRecords.length === 3, 'Importacao invalida de condutor nao retornou os 3 registros recusados no payload.')
+    assert(invalidImport.skippedRecords.some((item) => item.index === 1 && item.message.includes('nome do condutor invalido no XML')), 'Recusa explicita por nome invalido nao encontrada no payload de condutor.')
     logStep(`importacao invalida do condutor: ${invalidImport.processed} processado(s), ${invalidImport.skipped} recusado(s)`)
 
     const rejectionResponse = await requestJson('/api/condutor/import-rejections?page=1&pageSize=20&search=Condutor-invalid.xml')
@@ -289,6 +291,7 @@ const runCondutorSmoke = async () => {
       .filter((item) => item.arquivo_xml === 'Condutor-invalid.xml')
       .map((item) => item.motivo_recusa)
 
+  assert(rejectionReasons.some((reason) => reason.includes('nome do condutor invalido no XML')), 'Recusa por nome invalido nao encontrada para condutor.')
     assert(rejectionReasons.some((reason) => reason.includes('codigo invalido no XML')), 'Recusa por codigo invalido nao encontrada para condutor.')
     assert(rejectionReasons.some((reason) => reason.includes('CPF invalido no XML')), 'Recusa por CPF invalido nao encontrada para condutor.')
     logStep('importacao invalida e painel de recusas do condutor ok')
@@ -382,6 +385,9 @@ const runCredenciadaSmoke = async () => {
     recordImport(suiteReport, 'invalid-import', invalidImport)
     assert(invalidImport.skipped === 2, 'Importacao invalida de credenciada nao retornou 2 recusas.')
     assert(invalidImport.processed === 1, 'Importacao invalida de credenciada nao retornou 1 registro processado.')
+    assert(Array.isArray(invalidImport.skippedRecords) && invalidImport.skippedRecords.length === 2, 'Importacao invalida de credenciada nao retornou os 2 registros recusados no payload.')
+    assert(invalidImport.skippedRecords.some((item) => item.index === 2 && item.message.includes('codigo invalido no XML')), 'Recusa explicita por codigo invalido nao encontrada no payload de credenciada.')
+    assert(invalidImport.skippedRecords.some((item) => item.index === 3 && item.message.includes('email invalido no XML')), 'Recusa explicita por email invalido nao encontrada no payload de credenciada.')
     logStep(`importacao invalida da credenciada: ${invalidImport.processed} processado(s), ${invalidImport.skipped} recusado(s)`)
 
     const rejectionResponse = await requestJson('/api/credenciada/import-rejections?page=1&pageSize=20&search=Credenciados-invalid.xml')
@@ -507,6 +513,9 @@ const runVeiculoSmoke = async () => {
     recordImport(suiteReport, 'invalid-import', invalidImport)
     assert(invalidImport.skipped === 2, 'Importacao invalida de veiculo nao retornou 2 recusas.')
     assert(invalidImport.processed === 1, 'Importacao invalida de veiculo nao retornou 1 registro processado.')
+    assert(Array.isArray(invalidImport.skippedRecords) && invalidImport.skippedRecords.length === 2, 'Importacao invalida de veiculo nao retornou os 2 registros recusados no payload.')
+    assert(invalidImport.skippedRecords.some((item) => item.index === 2 && item.message.includes('codigo invalido no XML')), 'Recusa explicita por codigo invalido nao encontrada no payload de veiculo.')
+    assert(invalidImport.skippedRecords.some((item) => item.index === 3 && (item.message.includes('tipo de bancada invalido no XML') || item.message.includes('tipo de veiculo invalido no XML'))), 'Recusa explicita por tipo invalido nao encontrada no payload de veiculo.')
     logStep(`importacao invalida do veiculo: ${invalidImport.processed} processado(s), ${invalidImport.skipped} recusado(s)`) 
 
     const rejectionResponse = await requestJson('/api/veiculo/import-rejections?page=1&pageSize=20&search=Veiculo-invalid.xml')
