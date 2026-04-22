@@ -14,13 +14,89 @@ import { createSeguradoraItem, deleteSeguradoraItem, listSeguradoraItemsPaginate
 import type { SeguradoraItem } from './services/seguradora'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'modalidade' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'credenciamentoTermo' | 'veiculo' | 'vinculoCondutor' | 'vinculoMonitor' | 'ordemServico'
+type ActiveView = 'inicio' | 'dre' | 'modalidade' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'credenciamentoTermo' | 'veiculo' | 'vinculoCondutor' | 'vinculoMonitor' | 'ordemServico' | 'cep' | 'smoke'
+type SmokeSuite = 'all' | 'condutor' | 'credenciada' | 'veiculo' | 'marca-modelo'
+type SmokeLogStream = 'stdout' | 'stderr'
 type DreSortField = 'codigo' | 'descricao'
 type DreSortDirection = 'asc' | 'desc'
 type TitularSortField = 'codigo' | 'cnpj_cpf' | 'titular'
 type MarcaModeloSortField = 'codigo' | 'descricao'
 type SeguradoraSortField = 'codigo' | 'controle' | 'descricao'
 type FormMode = 'create' | 'edit' | 'view'
+
+type SmokeSkippedRecord = {
+  index: number
+  codigoXml?: string
+  message: string
+}
+
+type SmokeImportSummary = {
+  label: string
+  fileName: string
+  total: number
+  processed: number
+  inserted: number
+  updated: number
+  skipped: number
+  skippedRecords: SmokeSkippedRecord[]
+}
+
+type SmokeRunReport = {
+  requestedSuite: string
+  status: string
+  startedAt: string
+  finishedAt: string | null
+  failureMessage: string
+  executedSuites: Array<{
+    name: string
+    status: string
+    startedAt?: string
+    finishedAt?: string | null
+    failureMessage?: string
+    imports?: SmokeImportSummary[]
+  }>
+}
+
+type SmokeInvalidFixtureReport = {
+  requestedSuite: string
+  status: string
+  startedAt: string
+  finishedAt: string | null
+  failureMessage: string
+  executedSuites: Array<{
+    suite: string
+    fileName: string
+    status: string
+    startedAt: string
+    finishedAt: string | null
+    failureMessage: string
+    importSummary: Omit<SmokeImportSummary, 'label' | 'fileName'> | null
+    rejectionReasons: string[]
+  }>
+}
+
+type SmokeRunResponse = {
+  message: string
+  suite: string
+  scriptName: string
+  status: string
+  exitCode: number
+  reportPath: string
+  report: SmokeRunReport | null
+  stdoutTail: string
+  stderrTail: string
+  invalidFixtureStatus: string
+  invalidFixtureReportPath: string
+  invalidFixtureReport: SmokeInvalidFixtureReport | null
+}
+
+const smokeSuiteOptions: Array<{ value: SmokeSuite, label: string }> = [
+  { value: 'all', label: 'Aplicacao completa' },
+  { value: 'condutor', label: 'Condutor' },
+  { value: 'credenciada', label: 'Credenciada' },
+  { value: 'veiculo', label: 'Veiculo' },
+  { value: 'marca-modelo', label: 'Marca/Modelo' },
+]
 
 type StoredSession = {
   email: string
@@ -142,6 +218,16 @@ function formatCpfOrCnpj(value: string) {
   return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`
 }
 
+function getSmokeReportFileName(result: SmokeRunResponse | null) {
+  if (!result?.reportPath) {
+    return 'smoke-report.json'
+  }
+
+  const normalizedPath = result.reportPath.replace(/\\/g, '/')
+  const segments = normalizedPath.split('/')
+  return segments[segments.length - 1] || 'smoke-report.json'
+}
+
 function App() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -152,6 +238,15 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [session, setSession] = useState<StoredSession | null>(null)
   const [activeView, setActiveView] = useState<ActiveView>('inicio')
+  const [isRunningSmoke, setIsRunningSmoke] = useState(false)
+  const [selectedSmokeSuite, setSelectedSmokeSuite] = useState<SmokeSuite>('all')
+  const [smokeStatusMessage, setSmokeStatusMessage] = useState('')
+  const [smokeStatusTone, setSmokeStatusTone] = useState<StatusTone>('idle')
+  const [smokeStdout, setSmokeStdout] = useState('')
+  const [smokeStderr, setSmokeStderr] = useState('')
+  const [selectedSmokeLogStream, setSelectedSmokeLogStream] = useState<SmokeLogStream>('stdout')
+  const [smokeReportActionMessage, setSmokeReportActionMessage] = useState('')
+  const [smokeResult, setSmokeResult] = useState<SmokeRunResponse | null>(null)
   const [dreItems, setDreItems] = useState<DreItem[]>([])
   const [dreSigla, setDreSigla] = useState('')
   const [dreSiglaError, setDreSiglaError] = useState('')
@@ -569,6 +664,89 @@ function App() {
     setStatusTone('idle')
     setStatusMessage('Sessao encerrada.')
     setActiveView('inicio')
+  }
+
+  const handleRunFullSmoke = async () => {
+    setIsRunningSmoke(true)
+    setSmokeStatusTone('idle')
+    setSmokeStatusMessage(`Executando smoke ${selectedSmokeSuite === 'all' ? 'completo da aplicacao' : `da suite ${selectedSmokeSuite}`}...`)
+    setSmokeStdout('')
+    setSmokeStderr('')
+    setSmokeReportActionMessage('')
+
+    try {
+      const response = await fetch('/api/smoke/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({ suite: selectedSmokeSuite }),
+      })
+
+      const payload = await response.json().catch(() => null) as SmokeRunResponse | null
+
+      setSmokeResult(payload)
+      setSmokeStdout(payload?.stdoutTail ?? '')
+      setSmokeStderr(payload?.stderrTail ?? '')
+      setSelectedSmokeLogStream(payload?.status === 'failed' ? 'stderr' : 'stdout')
+
+      if (!response.ok) {
+        throw new Error(payload?.message || 'Falha ao executar smoke da aplicacao.')
+      }
+
+      setSmokeStatusTone('success')
+      setSmokeStatusMessage(payload?.message || 'Smoke completo executado com sucesso.')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao executar smoke da aplicacao.'
+      setSmokeStatusTone('error')
+      setSmokeStatusMessage(message)
+    } finally {
+      setIsRunningSmoke(false)
+    }
+  }
+
+  const handleCopySmokeReportPath = async () => {
+    if (!smokeResult?.reportPath) {
+      setSmokeReportActionMessage('Nenhum relatorio disponivel para copiar.')
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(smokeResult.reportPath)
+      setSmokeReportActionMessage('Caminho do relatorio copiado para a area de transferencia.')
+    } catch {
+      setSmokeReportActionMessage('Nao foi possivel copiar o caminho do relatorio.')
+    }
+  }
+
+  const handleOpenSmokeReport = () => {
+    if (!smokeResult?.report) {
+      setSmokeReportActionMessage('Nenhum relatorio JSON disponivel para abrir.')
+      return
+    }
+
+    const reportBlob = new Blob([`${JSON.stringify(smokeResult.report, null, 2)}\n`], { type: 'application/json' })
+    const reportUrl = URL.createObjectURL(reportBlob)
+    window.open(reportUrl, '_blank', 'noopener,noreferrer')
+    window.setTimeout(() => URL.revokeObjectURL(reportUrl), 60_000)
+    setSmokeReportActionMessage('Relatorio JSON aberto em uma nova aba.')
+  }
+
+  const handleDownloadSmokeReport = () => {
+    if (!smokeResult?.report) {
+      setSmokeReportActionMessage('Nenhum relatorio JSON disponivel para download.')
+      return
+    }
+
+    const reportBlob = new Blob([`${JSON.stringify(smokeResult.report, null, 2)}\n`], { type: 'application/json' })
+    const reportUrl = URL.createObjectURL(reportBlob)
+    const link = document.createElement('a')
+    link.href = reportUrl
+    link.download = getSmokeReportFileName(smokeResult)
+    link.click()
+    window.setTimeout(() => URL.revokeObjectURL(reportUrl), 60_000)
+    setSmokeReportActionMessage('Download do relatorio JSON iniciado.')
   }
 
   const resetDreForm = () => {
@@ -1665,7 +1843,12 @@ function App() {
             >
               CEP
             </li>
-            <li className="menu-item">Relatorios</li>
+            <li
+              className={`menu-item ${activeView === 'smoke' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('smoke')}
+            >
+              Smoke Test
+            </li>
           </ul>
         </nav>
 
@@ -2705,6 +2888,273 @@ function App() {
                 src="/src/ordemServico.html"
                 title="OrdemServico"
               />
+            </div>
+          </>
+        ) : activeView === 'smoke' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Validacao operacional</p>
+              <h2 id="content-title">Smoke Test da Aplicacao</h2>
+              <p className="content-description">
+                Execute a suite completa ou uma suite especifica da API local e acompanhe erros,
+                resumo detalhado por suite, importacoes exercitadas e o trecho final do log.
+              </p>
+            </div>
+
+            <div className="management-layout">
+              <div className="management-toolbar">
+                <div className="smoke-suite-selector" role="group" aria-label="Selecionar suite de smoke">
+                  {smokeSuiteOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={`secondary-button smoke-suite-button ${selectedSmokeSuite === option.value ? 'smoke-suite-button-active' : ''}`}
+                      onClick={() => setSelectedSmokeSuite(option.value)}
+                      disabled={isRunningSmoke}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="primary-button dre-insert-button"
+                  onClick={handleRunFullSmoke}
+                  disabled={isRunningSmoke}
+                >
+                  {isRunningSmoke ? 'Executando smoke...' : 'Executar smoke selecionado'}
+                </button>
+              </div>
+
+              <div className="management-card smoke-card">
+                <h2>Resultado da execucao</h2>
+                <p className={`status-message status-${smokeStatusTone}`} aria-live="polite">
+                  {smokeStatusMessage}
+                </p>
+
+                {smokeResult ? (
+                  <div className="smoke-summary-grid">
+                    <article className="smoke-summary-card">
+                      <span className="smoke-card-label">Suite solicitada</span>
+                      <strong>{smokeResult.suite}</strong>
+                    </article>
+                    <article className="smoke-summary-card">
+                      <span className="smoke-card-label">Status</span>
+                      <strong>{smokeResult.status}</strong>
+                    </article>
+                    <article className="smoke-summary-card">
+                      <span className="smoke-card-label">Exit code</span>
+                      <strong>{smokeResult.exitCode}</strong>
+                    </article>
+                    {smokeResult.invalidFixtureStatus !== 'not-run' ? (
+                      <article className="smoke-summary-card">
+                        <span className="smoke-card-label">Fixtures invalidos</span>
+                        <strong>{smokeResult.invalidFixtureStatus}</strong>
+                      </article>
+                    ) : null}
+                    <article className="smoke-summary-card smoke-summary-card-wide">
+                      <span className="smoke-card-label">Script</span>
+                      <strong>{smokeResult.scriptName}</strong>
+                    </article>
+                    {smokeResult.reportPath ? (
+                      <article className="smoke-summary-card smoke-summary-card-wide">
+                        <span className="smoke-card-label">Relatorio JSON</span>
+                        <strong>{smokeResult.reportPath}</strong>
+                        <div className="smoke-report-actions">
+                          <button type="button" className="secondary-button smoke-report-action-button" onClick={handleCopySmokeReportPath}>
+                            Copiar caminho
+                          </button>
+                          <button type="button" className="secondary-button smoke-report-action-button" onClick={handleOpenSmokeReport}>
+                            Abrir relatorio
+                          </button>
+                          <button type="button" className="secondary-button smoke-report-action-button" onClick={handleDownloadSmokeReport}>
+                            Baixar JSON
+                          </button>
+                        </div>
+                      </article>
+                    ) : null}
+                    {smokeResult.invalidFixtureReportPath ? (
+                      <article className="smoke-summary-card smoke-summary-card-wide">
+                        <span className="smoke-card-label">Relatorio fixtures invalidos</span>
+                        <strong>{smokeResult.invalidFixtureReportPath}</strong>
+                      </article>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {smokeReportActionMessage ? (
+                  <p className="smoke-report-action-message">{smokeReportActionMessage}</p>
+                ) : null}
+
+                {smokeResult?.status === 'failed' || smokeResult?.report?.failureMessage ? (
+                  <div className="smoke-error-card" role="alert">
+                    <h3>Erro detectado</h3>
+                    <p>{smokeResult.report?.failureMessage || smokeResult.message}</p>
+                    {smokeResult.stderrTail ? (
+                      <pre className="smoke-error-output">{smokeResult.stderrTail}</pre>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {smokeResult?.report?.executedSuites?.length ? (
+                  <div className="smoke-suite-grid">
+                    {smokeResult.report.executedSuites.map((suiteReport) => (
+                      <article className="smoke-suite-card" key={`${suiteReport.name}-${suiteReport.startedAt ?? suiteReport.status}`}>
+                        <div className="smoke-suite-card-header">
+                          <div>
+                            <span className="smoke-card-label">Suite</span>
+                            <h3>{suiteReport.name}</h3>
+                          </div>
+                          <span className={`smoke-suite-badge smoke-suite-badge-${suiteReport.status}`}>{suiteReport.status}</span>
+                        </div>
+
+                        {suiteReport.failureMessage ? (
+                          <p className="smoke-suite-error">{suiteReport.failureMessage}</p>
+                        ) : null}
+
+                        {suiteReport.imports?.length ? (
+                          <div className="smoke-import-grid">
+                            {suiteReport.imports.map((importItem) => (
+                              <article className="smoke-import-card" key={`${suiteReport.name}-${importItem.label}-${importItem.fileName}`}>
+                                <div className="smoke-import-card-header">
+                                  <div>
+                                    <span className="smoke-card-label">Importacao</span>
+                                    <strong>{importItem.label}</strong>
+                                  </div>
+                                  <span>{importItem.fileName}</span>
+                                </div>
+
+                                <div className="smoke-import-metrics">
+                                  <span>Total: {importItem.total}</span>
+                                  <span>Processados: {importItem.processed}</span>
+                                  <span>Incluidos: {importItem.inserted}</span>
+                                  <span>Alterados: {importItem.updated}</span>
+                                  <span>Recusados: {importItem.skipped}</span>
+                                </div>
+
+                                {importItem.skippedRecords.length ? (
+                                  <div className="smoke-skipped-list">
+                                    <span className="smoke-card-label">Recusas registradas</span>
+                                    <ul>
+                                      {importItem.skippedRecords.map((record) => (
+                                        <li key={`${importItem.label}-${record.index}-${record.codigoXml ?? 'sem-codigo'}`}>
+                                          Linha {record.index}
+                                          {record.codigoXml ? `, codigo ${record.codigoXml}` : ''}
+                                          : {record.message}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                ) : null}
+                              </article>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="smoke-suite-empty">Nenhuma importacao registrada para esta suite.</p>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                ) : null}
+
+                {smokeResult?.invalidFixtureReport?.executedSuites?.length ? (
+                  <>
+                    <h3>Verificacao de fixtures invalidos</h3>
+                    <div className="smoke-suite-grid">
+                      {smokeResult.invalidFixtureReport.executedSuites.map((suiteReport) => (
+                        <article className="smoke-suite-card" key={`${suiteReport.suite}-${suiteReport.fileName}-${suiteReport.startedAt}`}>
+                          <div className="smoke-suite-card-header">
+                            <div>
+                              <span className="smoke-card-label">Suite</span>
+                              <h3>{suiteReport.suite}</h3>
+                            </div>
+                            <span className={`smoke-suite-badge smoke-suite-badge-${suiteReport.status}`}>{suiteReport.status}</span>
+                          </div>
+
+                          {suiteReport.failureMessage ? (
+                            <p className="smoke-suite-error">{suiteReport.failureMessage}</p>
+                          ) : null}
+
+                          {suiteReport.importSummary ? (
+                            <article className="smoke-import-card">
+                              <div className="smoke-import-card-header">
+                                <div>
+                                  <span className="smoke-card-label">Fixture</span>
+                                  <strong>{suiteReport.fileName}</strong>
+                                </div>
+                              </div>
+
+                              <div className="smoke-import-metrics">
+                                <span>Total: {suiteReport.importSummary.total}</span>
+                                <span>Processados: {suiteReport.importSummary.processed}</span>
+                                <span>Incluidos: {suiteReport.importSummary.inserted}</span>
+                                <span>Alterados: {suiteReport.importSummary.updated}</span>
+                                <span>Recusados: {suiteReport.importSummary.skipped}</span>
+                              </div>
+
+                              {suiteReport.importSummary.skippedRecords.length ? (
+                                <div className="smoke-skipped-list">
+                                  <span className="smoke-card-label">Recusas no payload</span>
+                                  <ul>
+                                    {suiteReport.importSummary.skippedRecords.map((record) => (
+                                      <li key={`${suiteReport.fileName}-${record.index}-${record.codigoXml ?? 'sem-codigo'}`}>
+                                        Linha {record.index}
+                                        {record.codigoXml ? `, codigo ${record.codigoXml}` : ''}
+                                        : {record.message}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+
+                              {suiteReport.rejectionReasons.length ? (
+                                <div className="smoke-skipped-list">
+                                  <span className="smoke-card-label">Recusas persistidas</span>
+                                  <ul>
+                                    {suiteReport.rejectionReasons.map((reason) => (
+                                      <li key={`${suiteReport.fileName}-${reason}`}>{reason}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+                            </article>
+                          ) : (
+                            <p className="smoke-suite-empty">Nenhum resultado estruturado foi retornado para esta verificacao.</p>
+                          )}
+                        </article>
+                      ))}
+                    </div>
+                  </>
+                ) : null}
+
+                <div className="smoke-log-card">
+                  <h3>Log final</h3>
+                  <div className="smoke-log-filter" role="group" aria-label="Selecionar stream do log">
+                    <button
+                      type="button"
+                      className={`secondary-button smoke-log-filter-button ${selectedSmokeLogStream === 'stdout' ? 'smoke-log-filter-button-active' : ''} ${smokeResult?.status === 'passed' ? 'smoke-log-filter-button-recommended' : ''}`}
+                      onClick={() => setSelectedSmokeLogStream('stdout')}
+                    >
+                      stdout
+                      {smokeResult?.status === 'passed' ? <span className="smoke-log-filter-badge">principal</span> : null}
+                    </button>
+                    <button
+                      type="button"
+                      className={`secondary-button smoke-log-filter-button ${selectedSmokeLogStream === 'stderr' ? 'smoke-log-filter-button-active' : ''} ${smokeResult?.status === 'failed' ? 'smoke-log-filter-button-recommended-error' : ''}`}
+                      onClick={() => setSelectedSmokeLogStream('stderr')}
+                    >
+                      stderr
+                      {smokeResult?.status === 'failed' ? <span className="smoke-log-filter-badge smoke-log-filter-badge-error">erro</span> : null}
+                    </button>
+                  </div>
+                  <pre className="smoke-log-output">
+                    {selectedSmokeLogStream === 'stdout'
+                      ? (smokeStdout || 'Nenhum stdout retornado para esta execucao.')
+                      : (smokeStderr || 'Nenhum stderr retornado para esta execucao.')}
+                  </pre>
+                </div>
+              </div>
             </div>
           </>
         ) : (

@@ -545,6 +545,229 @@
   background: #fff;
 }
 
+.smoke-card {
+  display: grid;
+  gap: 14px;
+}
+
+.smoke-suite-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1 1 720px;
+}
+
+.smoke-suite-button {
+  min-width: 150px;
+}
+
+.smoke-suite-button-active {
+  background: linear-gradient(135deg, rgba(200, 92, 44, 0.18), rgba(218, 140, 47, 0.16));
+  color: #7b341e;
+  box-shadow: inset 0 0 0 1px rgba(200, 92, 44, 0.24);
+}
+
+.smoke-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.smoke-summary-card,
+.smoke-suite-card,
+.smoke-import-card,
+.smoke-error-card {
+  border-radius: 22px;
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(117, 141, 138, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+.smoke-summary-card {
+  display: grid;
+  gap: 8px;
+}
+
+.smoke-report-actions,
+.smoke-log-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.smoke-report-action-button,
+.smoke-log-filter-button {
+  min-width: 140px;
+}
+
+.smoke-log-filter-button {
+  position: relative;
+}
+
+.smoke-log-filter-button-active {
+  background: linear-gradient(135deg, rgba(24, 58, 81, 0.16), rgba(16, 45, 38, 0.14));
+  color: #163949;
+  box-shadow: inset 0 0 0 1px rgba(24, 58, 81, 0.18);
+}
+
+.smoke-log-filter-button-recommended {
+  box-shadow: inset 0 0 0 1px rgba(22, 101, 52, 0.22);
+}
+
+.smoke-log-filter-button-recommended-error {
+  box-shadow: inset 0 0 0 1px rgba(154, 52, 18, 0.22);
+}
+
+.smoke-log-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(22, 101, 52, 0.12);
+  color: #166534;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.smoke-log-filter-badge-error {
+  background: rgba(154, 52, 18, 0.12);
+  color: #9a3412;
+}
+
+.smoke-summary-card-wide {
+  grid-column: span 2;
+}
+
+.smoke-card-label,
+.smoke-suite-card-header span,
+.smoke-import-card-header span {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
+}
+
+.smoke-error-card {
+  gap: 10px;
+  background: rgba(255, 241, 236, 0.92);
+  border-color: rgba(194, 65, 12, 0.18);
+}
+
+.smoke-error-card h3,
+.smoke-suite-card h3,
+.smoke-import-card strong,
+.smoke-log-card h3 {
+  margin: 0;
+}
+
+.smoke-error-output {
+  margin: 0;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(123, 52, 30, 0.08);
+  color: #7b341e;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.smoke-report-action-message {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.smoke-suite-grid,
+.smoke-import-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.smoke-suite-card {
+  display: grid;
+  gap: 14px;
+}
+
+.smoke-suite-card-header,
+.smoke-import-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.smoke-suite-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.smoke-suite-badge-passed {
+  background: rgba(22, 101, 52, 0.12);
+  color: #166534;
+}
+
+.smoke-suite-badge-failed {
+  background: rgba(154, 52, 18, 0.12);
+  color: #9a3412;
+}
+
+.smoke-suite-error,
+.smoke-suite-empty {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.smoke-import-card {
+  display: grid;
+  gap: 10px;
+}
+
+.smoke-import-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.smoke-skipped-list {
+  display: grid;
+  gap: 8px;
+}
+
+.smoke-skipped-list ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.smoke-log-card {
+  display: grid;
+  gap: 10px;
+}
+
+.smoke-log-output {
+  margin: 0;
+  min-height: 220px;
+  max-height: 420px;
+  overflow: auto;
+  padding: 16px;
+  border-radius: 20px;
+  background: #0f2230;
+  color: #e8f1ee;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media (max-width: 1180px) {
   .dashboard-page {
     grid-template-columns: 1fr;
@@ -573,6 +796,15 @@
   .management-filter-form,
   .dre-filter-form {
     flex: 1 1 100%;
+  }
+
+  .smoke-summary-card-wide {
+    grid-column: span 1;
+  }
+
+  .smoke-suite-card-header,
+  .smoke-import-card-header {
+    flex-direction: column;
   }
 }
 
