@@ -605,6 +605,22 @@
         if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
         return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
       };
+      const formatCurrencyInput = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 15);
+
+        if (!digits) {
+          return '';
+        }
+
+        const amount = Number(digits) / 100;
+
+        return new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(amount);
+      };
       const normalizeDecimalInput = (value) => value.replace(/[^0-9,.-]/g, '').replace(/(,.*),/g, '$1').slice(0, 20);
 
       const resetMessages = () => {
@@ -747,8 +763,8 @@
         bairroInput.value = item.bairro || '';
         municipioInput.value = item.municipio || '';
         especificacaoSeiInput.value = item.especificacao_sei || '';
-        valorContratoInput.value = item.valor_contrato || '';
-        valorContratoAtualizadoInput.value = item.valor_contrato_atualizado || '';
+        valorContratoInput.value = formatCurrencyInput(item.valor_contrato || '');
+        valorContratoAtualizadoInput.value = item.valorContratoExtenso || item.valor_contrato_atualizado || '';
         folhasInput.value = item.folhas || '';
         dataPublicacaoInput.value = item.data_publicacao || '';
         vencimentoGeralInput.value = item.vencimento_geral || '';
@@ -1204,7 +1220,7 @@
         termoAdesaoInput.value = deriveTermoAdesaoFromSei(seiInput.value);
       });
       termoAdesaoInput.addEventListener('input', () => { termoAdesaoInput.value = normalizeTermoAdesao(termoAdesaoInput.value); });
-      valorContratoInput.addEventListener('input', () => { valorContratoInput.value = normalizeDecimalInput(valorContratoInput.value); });
+      valorContratoInput.addEventListener('input', () => { valorContratoInput.value = formatCurrencyInput(valorContratoInput.value); });
       valorContratoAtualizadoInput.addEventListener('input', () => { valorContratoAtualizadoInput.value = normalizeDecimalInput(valorContratoAtualizadoInput.value); });
 
       gridBody.addEventListener('click', async (event) => {

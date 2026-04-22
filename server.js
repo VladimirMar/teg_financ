@@ -2234,6 +2234,131 @@ const normalizeDecimalValue = (value) => {
   return Number.isFinite(parsed) ? Number(parsed.toFixed(2)) : NaN
 }
 
+const currencyWordsUnits = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove']
+const currencyWordsTeens = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove']
+const currencyWordsTens = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa']
+const currencyWordsHundreds = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos']
+const currencyWordsScales = [null, ['mil', 'mil'], ['milhão', 'milhões'], ['bilhão', 'bilhões'], ['trilhão', 'trilhões']]
+
+const buildCurrencyWordsBelowOneThousand = (value) => {
+  if (!Number.isInteger(value) || value < 0 || value > 999) {
+    return ''
+  }
+
+  if (value === 0) {
+    return ''
+  }
+
+  if (value === 100) {
+    return 'cem'
+  }
+
+  const hundreds = Math.floor(value / 100)
+  const remainder = value % 100
+  const parts = []
+
+  if (hundreds > 0) {
+    parts.push(currencyWordsHundreds[hundreds])
+  }
+
+  if (remainder >= 10 && remainder < 20) {
+    parts.push(currencyWordsTeens[remainder - 10])
+  } else {
+    const tens = Math.floor(remainder / 10)
+    const units = remainder % 10
+
+    if (tens > 0) {
+      parts.push(currencyWordsTens[tens])
+    }
+
+    if (units > 0) {
+      parts.push(currencyWordsUnits[units])
+    }
+  }
+
+  return parts.join(' e ')
+}
+
+const joinCurrencyWordParts = (parts) => {
+  if (parts.length === 0) {
+    return ''
+  }
+
+  if (parts.length === 1) {
+    return parts[0]
+  }
+
+  const lastPart = parts[parts.length - 1]
+  return `${parts.slice(0, -1).join(', ')} e ${lastPart}`
+}
+
+const buildIntegerCurrencyWords = (value) => {
+  if (!Number.isInteger(value) || value < 0) {
+    return ''
+  }
+
+  if (value === 0) {
+    return 'zero'
+  }
+
+  const chunkParts = []
+  let remaining = value
+  let scaleIndex = 0
+
+  while (remaining > 0) {
+    const chunkValue = remaining % 1000
+
+    if (chunkValue > 0) {
+      const chunkText = buildCurrencyWordsBelowOneThousand(chunkValue)
+
+      if (scaleIndex === 0) {
+        chunkParts.unshift(chunkText)
+      } else if (scaleIndex === 1) {
+        chunkParts.unshift(chunkValue === 1 ? 'mil' : `${chunkText} mil`)
+      } else {
+        const [singularLabel, pluralLabel] = currencyWordsScales[scaleIndex] ?? ['', '']
+        chunkParts.unshift(`${chunkText} ${chunkValue === 1 ? singularLabel : pluralLabel}`.trim())
+      }
+    }
+
+    remaining = Math.floor(remaining / 1000)
+    scaleIndex += 1
+  }
+
+  return joinCurrencyWordParts(chunkParts)
+}
+
+const buildCurrencyExtenso = (value) => {
+  const rawValue = normalizeRequestValue(value)
+  const normalizedValue = /^-?\d+(?:\.\d+)?$/.test(rawValue)
+    ? Number(rawValue)
+    : normalizeDecimalValue(value)
+
+  if (normalizedValue === null || Number.isNaN(normalizedValue)) {
+    return ''
+  }
+
+  const absoluteValue = Math.abs(normalizedValue)
+  let integerValue = Math.floor(absoluteValue)
+  let centValue = Math.round((absoluteValue - integerValue) * 100)
+
+  if (centValue === 100) {
+    integerValue += 1
+    centValue = 0
+  }
+
+  const integerText = `${buildIntegerCurrencyWords(integerValue)} ${integerValue === 1 ? 'real' : 'reais'}`
+
+  if (centValue === 0) {
+    return normalizedValue < 0 ? `menos ${integerText}` : integerText
+  }
+
+  const centText = `${buildIntegerCurrencyWords(centValue)} ${centValue === 1 ? 'centavo' : 'centavos'}`
+  const fullText = `${integerText} e ${centText}`
+
+  return normalizedValue < 0 ? `menos ${fullText}` : fullText
+}
+
 const normalizeIntegerValue = (value) => {
   const normalizedValue = normalizeRequestValue(value)
 
@@ -2910,6 +3035,36 @@ const credenciadaImportRecusaSelectClause = `
   TO_CHAR(data_importacao, 'YYYY-MM-DD HH24:MI:SS') AS data_importacao`
 
 const credenciamentoTermoCredenciadoExpression = "COALESCE(BTRIM((SELECT cr.credenciado FROM credenciada cr WHERE cr.codigo = credenciada_codigo)), '')"
+const credenciamentoTermoEmpresaExpression = "COALESCE(BTRIM((SELECT cr.empresa FROM credenciada cr WHERE cr.codigo = credenciada_codigo)), '')"
+const credenciamentoTermoCnpjCpfExpression = "COALESCE(BTRIM((SELECT cr.cnpj_cpf FROM credenciada cr WHERE cr.codigo = credenciada_codigo)), '')"
+const credenciamentoTermoEspecificacaoSeiExpression = `CASE
+  WHEN ${credenciamentoTermoCredenciadoExpression} = '' AND ${credenciamentoTermoCnpjCpfExpression} = '' THEN ''
+  WHEN ${credenciamentoTermoCnpjCpfExpression} = '' THEN CONCAT('CREDENCIAMENTO TEG - ', ${credenciamentoTermoCredenciadoExpression})
+  WHEN ${credenciamentoTermoCredenciadoExpression} = '' THEN CONCAT('CREDENCIAMENTO TEG - CNPJ/CPF: ', ${credenciamentoTermoCnpjCpfExpression})
+  ELSE CONCAT('CREDENCIAMENTO TEG - ', ${credenciamentoTermoCredenciadoExpression}, ' - CNPJ/CPF: ', ${credenciamentoTermoCnpjCpfExpression})
+END`
+const credenciamentoTermoMesRenovacaoExpression = `CASE
+  WHEN termino_vigencia IS NULL THEN ''
+  ELSE CONCAT(
+    CASE EXTRACT(MONTH FROM termino_vigencia)
+      WHEN 1 THEN 'jan'
+      WHEN 2 THEN 'fev'
+      WHEN 3 THEN 'mar'
+      WHEN 4 THEN 'abr'
+      WHEN 5 THEN 'mai'
+      WHEN 6 THEN 'jun'
+      WHEN 7 THEN 'jul'
+      WHEN 8 THEN 'ago'
+      WHEN 9 THEN 'set'
+      WHEN 10 THEN 'out'
+      WHEN 11 THEN 'nov'
+      WHEN 12 THEN 'dez'
+      ELSE ''
+    END,
+    '/',
+    TO_CHAR(termino_vigencia::date, 'YYYY')
+  )
+END`
 const credenciamentoTermoNormalizedTermoExpression = "REGEXP_REPLACE(COALESCE(BTRIM(termo_adesao), ''), '\\D', '', 'g')"
 
 const credenciamentoTermoSelectClause = `
@@ -2917,7 +3072,8 @@ const credenciamentoTermoSelectClause = `
   codigo_xml::text AS codigo_xml,
   credenciada_codigo::text AS credenciada_codigo,
   ${credenciamentoTermoCredenciadoExpression} AS credenciado,
-  COALESCE(BTRIM((SELECT cr.cnpj_cpf FROM credenciada cr WHERE cr.codigo = credenciada_codigo)), '') AS cnpj_cpf,
+  ${credenciamentoTermoEmpresaExpression} AS empresa,
+  ${credenciamentoTermoCnpjCpfExpression} AS cnpj_cpf,
   COALESCE(BTRIM(termo_adesao), '') AS termo_adesao,
   COALESCE(BTRIM(sei), '') AS sei,
   aditivo::text AS aditivo,
@@ -2938,7 +3094,7 @@ const credenciamentoTermoSelectClause = `
   COALESCE((SELECT BTRIM(c.logradouro) FROM ceps c WHERE c.cep = BTRIM((SELECT cr.cep FROM credenciada cr WHERE cr.codigo = credenciada_codigo))), '') AS logradouro,
   COALESCE((SELECT BTRIM(c.bairro) FROM ceps c WHERE c.cep = BTRIM((SELECT cr.cep FROM credenciada cr WHERE cr.codigo = credenciada_codigo))), '') AS bairro,
   COALESCE((SELECT BTRIM(c.municipio) FROM ceps c WHERE c.cep = BTRIM((SELECT cr.cep FROM credenciada cr WHERE cr.codigo = credenciada_codigo))), '') AS municipio,
-  COALESCE(BTRIM(especificacao_sei), '') AS especificacao_sei,
+  ${credenciamentoTermoEspecificacaoSeiExpression} AS especificacao_sei,
   valor_contrato::text AS valor_contrato,
   COALESCE(BTRIM(objeto), '') AS objeto,
   COALESCE(BTRIM(folhas), '') AS folhas,
@@ -2946,7 +3102,7 @@ const credenciamentoTermoSelectClause = `
   COALESCE(BTRIM(info_sei), '') AS info_sei,
   valor_contrato_atualizado::text AS valor_contrato_atualizado,
   TO_CHAR(vencimento_geral::date, 'YYYY-MM-DD') AS vencimento_geral,
-  COALESCE(BTRIM(mes_renovacao), '') AS mes_renovacao,
+  ${credenciamentoTermoMesRenovacaoExpression} AS mes_renovacao,
   COALESCE(BTRIM(tp_optante), '') AS tp_optante,
   TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
   TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
@@ -4250,7 +4406,16 @@ const fetchCredenciamentoTermoItemByCodigo = async (executor, codigo) => {
     [normalizedCodigo],
   )
 
-  return result.rows[0] ?? null
+  const item = result.rows[0] ?? null
+
+  if (!item) {
+    return null
+  }
+
+  return {
+    ...item,
+    valorContratoExtenso: buildCurrencyExtenso(item.valor_contrato),
+  }
 }
 
 const fetchVinculoCondutorItemById = async (executor, id) => {
@@ -9253,9 +9418,13 @@ const server = createServer(async (request, response) => {
         values,
       )
       const total = countResult.rows[0]?.total ?? 0
+      const items = result.rows.map((item) => ({
+        ...item,
+        valorContratoExtenso: buildCurrencyExtenso(item.valor_contrato),
+      }))
 
       sendJson(response, 200, {
-        items: result.rows,
+        items,
         total,
         page,
         pageSize,
@@ -9295,8 +9464,10 @@ const server = createServer(async (request, response) => {
           ...item,
           termoAdesao: normalizeRequestValue(item.termo_adesao),
           credenciadoCodigo: item.credenciada_codigo ? Number(item.credenciada_codigo) : null,
+          empresa: normalizeCredenciadaText(item.empresa, 255),
           tipoTermo: normalizeCredenciadaText(item.tipo_termo, 100),
           cnpjCpf: normalizeCnpjCpf(item.cnpj_cpf),
+          valorContratoExtenso: buildCurrencyExtenso(item.valor_contrato),
         },
       })
     } catch (error) {

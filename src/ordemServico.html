@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ORDEM DE SERVICO</title>
 
-    <link rel="stylesheet" href="css/login.css?v=20260422-termo-popup-3" />
+    <link rel="stylesheet" href="css/login.css?v=20260422-termo-summary-layout-3" />
   </head>
   <body>
     <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
@@ -647,6 +647,27 @@
         return `${day}/${month}/${year}`;
       };
 
+      const formatSummaryCurrency = (value) => {
+        const normalizedValue = String(value ?? '').trim();
+
+        if (!normalizedValue) {
+          return 'Nao informado';
+        }
+
+        const parsedValue = Number(normalizedValue);
+
+        if (!Number.isFinite(parsedValue)) {
+          return normalizedValue;
+        }
+
+        return new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(parsedValue);
+      };
+
       const buildSummaryFieldHtml = (label, value) => `
         <div class="dsc-ordem-servico-summary-field">
           <span class="dsc-ordem-servico-summary-label">${escapeHtml(label)}</span>
@@ -708,15 +729,15 @@
         }
 
         return `
-          <div class="${classNames.join(' ')}">
-            <span class="dsc-ordem-servico-termo-label">${escapeHtml(label)}</span>
-            <strong class="dsc-ordem-servico-termo-box">${escapeHtml(formatSummaryValue(value))}</strong>
+          <div class="dsc-ordem-servico-summary-field ${classNames.join(' ')}">
+            <span class="dsc-ordem-servico-summary-label dsc-ordem-servico-termo-label">${escapeHtml(label)}</span>
+            <strong class="dsc-ordem-servico-summary-value dsc-ordem-servico-termo-box">${escapeHtml(formatSummaryValue(value))}</strong>
           </div>
         `;
       };
 
       const buildReadonlyTermoSectionHtml = (title, fields, options = {}) => `
-        <section class="dsc-ordem-servico-termo-section${options.fullWidth ? ' dsc-ordem-servico-termo-section-full' : ''}">
+        <section class="dsc-ordem-servico-summary-card dsc-ordem-servico-termo-section${options.fullWidth ? ' dsc-ordem-servico-termo-section-full' : ''}">
           <h4>${escapeHtml(title)}</h4>
           <div class="dsc-ordem-servico-termo-grid${options.compact ? ' dsc-ordem-servico-termo-grid-compact' : ''}">
             ${fields.join('')}
@@ -747,16 +768,16 @@
         termoSubtitle.textContent = `Consulta do termo ${formatSummaryValue(termoItem?.termoAdesao || termoAdesaoInput.value)}.`;
 
         const headerSection = `
-          <section class="dsc-ordem-servico-termo-section dsc-ordem-servico-termo-section-full dsc-ordem-servico-termo-hero">
+          <section class="dsc-ordem-servico-summary-card dsc-ordem-servico-termo-section dsc-ordem-servico-termo-section-full dsc-ordem-servico-termo-hero">
             <h4>Cabecalho do termo</h4>
             <div class="dsc-ordem-servico-termo-hero-top">
               ${buildReadonlyTermoFieldHtml('Termo', termoItem?.termoAdesao || termoAdesaoInput.value, { emphasis: true, compactLabel: true })}
               ${buildReadonlyTermoFieldHtml('SEI', termoItem?.sei, { emphasis: true, compactLabel: true })}
               ${buildReadonlyTermoFieldHtml('CNPJ', termoItem?.cnpjCpf, { emphasis: true, compactLabel: true })}
-              ${buildReadonlyTermoFieldHtml('Status', termoItem?.status_termo || termoItem?.statusTermo, { status: true, compactLabel: true })}
             </div>
             <div class="dsc-ordem-servico-termo-hero-middle">
-              ${buildReadonlyTermoFieldHtml('Credenciado', termoItem?.credenciado, { emphasis: true, full: true })}
+              ${buildReadonlyTermoFieldHtml('Credenciado', termoItem?.credenciado, { emphasis: true })}
+              ${buildReadonlyTermoFieldHtml('Status', termoItem?.status_termo || termoItem?.statusTermo, { status: true })}
             </div>
             <div class="dsc-ordem-servico-termo-hero-bottom">
               ${buildReadonlyTermoFieldHtml('Tipo termo', termoItem?.tipo_termo || termoItem?.tipoTermo, { compactLabel: true })}
@@ -767,7 +788,7 @@
         `;
 
         const credenciadaSection = buildReadonlyTermoSectionHtml('Credenciada e classificacao', [
-          buildReadonlyTermoFieldHtml('Codigo credenciado', termoItem?.credenciadoCodigo),
+          buildReadonlyTermoFieldHtml('Empresa', termoItem?.empresa || termoItem?.credenciado, { wide: true }),
           buildReadonlyTermoFieldHtml('Tipo optante', termoItem?.tp_optante),
           buildReadonlyTermoFieldHtml('Aditivo', termoItem?.aditivo),
           buildReadonlyTermoFieldHtml('Check aditivo', termoItem?.check_aditivo === '1' ? 'SIM' : 'NAO'),
@@ -780,7 +801,7 @@
           buildReadonlyTermoFieldHtml('Publicacao', formatSummaryDate(termoItem?.data_pub_aditivo || termoItem?.data_publicacao)),
           buildReadonlyTermoFieldHtml('Mes renovacao', termoItem?.mes_renovacao),
           buildReadonlyTermoFieldHtml('Status aditivo', termoItem?.status_aditivo),
-        ]);
+        ], { fullWidth: true });
 
         const representationSection = buildReadonlyTermoSectionHtml('Representacao', [
           buildReadonlyTermoFieldHtml('Representante', termoItem?.representante, { wide: true }),
@@ -797,8 +818,8 @@
 
         const complementSection = buildReadonlyTermoSectionHtml('Complementos', [
           buildReadonlyTermoFieldHtml('Especificacao SEI', termoItem?.especificacao_sei, { full: true }),
-          buildReadonlyTermoFieldHtml('Valor contrato', termoItem?.valor_contrato),
-          buildReadonlyTermoFieldHtml('Valor atualizado', termoItem?.valor_contrato_atualizado),
+          buildReadonlyTermoFieldHtml('Valor contrato', formatSummaryCurrency(termoItem?.valor_contrato)),
+          buildReadonlyTermoFieldHtml('Valor por extenso', termoItem?.valorContratoExtenso || termoItem?.valor_contrato_atualizado),
           buildReadonlyTermoFieldHtml('Folhas', termoItem?.folhas),
           buildReadonlyTermoFieldHtml('Vencimento geral', formatSummaryDate(termoItem?.vencimento_geral)),
           buildReadonlyTermoFieldHtml('Info SEI', termoItem?.info_sei, { wide: true }),
@@ -1373,7 +1394,7 @@
 
       const clearViewOnlyLock = () => {
         getFormControls().forEach((element) => {
-          if (element !== cancelButton && element !== closeFormModalButton && element !== closeSummaryButton) {
+            if (element !== cancelButton && element !== closeFormModalButton && element !== closeSummaryButton) {
             element.disabled = false;
           }
         });
@@ -1385,19 +1406,20 @@
 
       const applyViewOnlyLock = () => {
         getFormControls().forEach((element) => {
-          element.disabled = element !== cancelButton && element !== closeFormModalButton && element !== closeSummaryButton && element !== openVinculoCondutorPopupButton && element !== openVinculoMonitorPopupButton && element !== showSummaryButton;
+            element.disabled = element !== cancelButton && element !== closeFormModalButton && element !== closeSummaryButton && element !== openVinculoCondutorPopupButton && element !== openVinculoMonitorPopupButton && element !== showTermoButton && element !== showSummaryButton;
         });
         cancelButton.disabled = false;
         closeFormModalButton.disabled = false;
         closeSummaryButton.disabled = false;
         openVinculoCondutorPopupButton.disabled = false;
         openVinculoMonitorPopupButton.disabled = false;
+          showTermoButton.disabled = false;
         showSummaryButton.disabled = false;
         saveButton.classList.add('dsc-hidden');
       };
 
       const getInsertGuardControls = () => getFormControls()
-        .filter((element) => element !== termoAdesaoInput && element !== cancelButton && element !== closeFormModalButton && element !== closeSummaryButton && element !== openVinculoCondutorPopupButton && element !== openVinculoMonitorPopupButton && element !== showSummaryButton);
+          .filter((element) => element !== termoAdesaoInput && element !== cancelButton && element !== closeFormModalButton && element !== closeSummaryButton && element !== openVinculoCondutorPopupButton && element !== openVinculoMonitorPopupButton && element !== showTermoButton && element !== showSummaryButton);
 
       const updateInsertTermGuard = ({ focusIfMissing = false, showMissingError = true } = {}) => {
         if (formMode === 'view') {
