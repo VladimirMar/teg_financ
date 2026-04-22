@@ -1,0 +1,48 @@
+{
+  "requestedSuite": "credenciada",
+  "status": "passed",
+  "startedAt": "2026-04-22T11:47:59.871Z",
+  "finishedAt": "2026-04-22T11:48:04.048Z",
+  "executedSuites": [
+    {
+      "name": "credenciada",
+      "status": "passed",
+      "startedAt": "2026-04-22T11:47:59.878Z",
+      "finishedAt": "2026-04-22T11:48:04.048Z",
+      "imports": [
+        {
+          "label": "valid-import",
+          "fileName": "Credenciados.xml",
+          "total": 2938,
+          "processed": 2938,
+          "inserted": 0,
+          "updated": 2938,
+          "skipped": 0,
+          "skippedRecords": []
+        },
+        {
+          "label": "invalid-import",
+          "fileName": "Credenciados-invalid.xml",
+          "total": 3,
+          "processed": 1,
+          "inserted": 0,
+          "updated": 1,
+          "skipped": 2,
+          "skippedRecords": [
+            {
+              "index": 2,
+              "codigoXml": "ABC",
+              "message": "Registro 2: codigo invalido no XML."
+            },
+            {
+              "index": 3,
+              "codigoXml": "990099",
+              "message": "Registro 3: email invalido no XML."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "failureMessage": ""
+}

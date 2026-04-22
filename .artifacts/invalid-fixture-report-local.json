@@ -1,0 +1,108 @@
+{
+  "requestedSuite": "all",
+  "status": "passed",
+  "startedAt": "2026-04-22T11:16:38.523Z",
+  "finishedAt": "2026-04-22T11:16:39.455Z",
+  "executedSuites": [
+    {
+      "suite": "condutor",
+      "fileName": "Condutor-invalid.xml",
+      "status": "passed",
+      "startedAt": "2026-04-22T11:16:38.567Z",
+      "finishedAt": "2026-04-22T11:16:39.072Z",
+      "failureMessage": "",
+      "importSummary": {
+        "total": 3,
+        "processed": 0,
+        "inserted": 0,
+        "updated": 0,
+        "skipped": 3,
+        "skippedRecords": [
+          {
+            "index": 1,
+            "codigoXml": "9241",
+            "message": "Registro 1: nome do condutor invalido no XML."
+          },
+          {
+            "index": 2,
+            "codigoXml": "ABC",
+            "message": "Registro 2: codigo invalido no XML."
+          },
+          {
+            "index": 3,
+            "codigoXml": "990099",
+            "message": "Registro 3: CPF invalido no XML."
+          }
+        ]
+      },
+      "rejectionReasons": [
+        "Registro 1: nome do condutor invalido no XML.",
+        "Registro 2: codigo invalido no XML.",
+        "Registro 3: CPF invalido no XML."
+      ]
+    },
+    {
+      "suite": "credenciada",
+      "fileName": "Credenciados-invalid.xml",
+      "status": "passed",
+      "startedAt": "2026-04-22T11:16:39.073Z",
+      "finishedAt": "2026-04-22T11:16:39.341Z",
+      "failureMessage": "",
+      "importSummary": {
+        "total": 3,
+        "processed": 1,
+        "inserted": 0,
+        "updated": 1,
+        "skipped": 2,
+        "skippedRecords": [
+          {
+            "index": 2,
+            "codigoXml": "ABC",
+            "message": "Registro 2: codigo invalido no XML."
+          },
+          {
+            "index": 3,
+            "codigoXml": "990099",
+            "message": "Registro 3: email invalido no XML."
+          }
+        ]
+      },
+      "rejectionReasons": [
+        "Registro 2: codigo invalido no XML.",
+        "Registro 3: email invalido no XML."
+      ]
+    },
+    {
+      "suite": "veiculo",
+      "fileName": "Veiculo-invalid.xml",
+      "status": "passed",
+      "startedAt": "2026-04-22T11:16:39.341Z",
+      "finishedAt": "2026-04-22T11:16:39.454Z",
+      "failureMessage": "",
+      "importSummary": {
+        "total": 3,
+        "processed": 1,
+        "inserted": 0,
+        "updated": 1,
+        "skipped": 2,
+        "skippedRecords": [
+          {
+            "index": 2,
+            "codigoXml": "ABC",
+            "message": "Registro 2: codigo invalido no XML."
+          },
+          {
+            "index": 3,
+            "codigoXml": "9593",
+            "message": "Registro 3: tipo de bancada invalido no XML."
+          }
+        ]
+      },
+      "rejectionReasons": [
+        "Registro 2: codigo invalido no XML.",
+        "Registro 3: tipo de bancada invalido no XML."
+      ]
+    }
+  ],
+  "failureMessage": ""
+}

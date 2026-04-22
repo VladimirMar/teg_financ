@@ -1,0 +1,69 @@
+{
+  "requestedSuite": "condutor",
+  "status": "passed",
+  "startedAt": "2026-04-22T11:53:46.435Z",
+  "finishedAt": "2026-04-22T11:53:52.390Z",
+  "executedSuites": [
+    {
+      "name": "condutor",
+      "status": "passed",
+      "startedAt": "2026-04-22T11:53:46.442Z",
+      "finishedAt": "2026-04-22T11:53:52.390Z",
+      "imports": [
+        {
+          "label": "valid-import",
+          "fileName": "Condutor.xml",
+          "total": 8009,
+          "processed": 8006,
+          "inserted": 1,
+          "updated": 8005,
+          "skipped": 3,
+          "skippedRecords": [
+            {
+              "index": 5510,
+              "codigoXml": "16458",
+              "message": "Registro 5510: nome do condutor invalido no XML."
+            },
+            {
+              "index": 6286,
+              "codigoXml": "17096",
+              "message": "Registro 6286: nome do condutor invalido no XML."
+            },
+            {
+              "index": 7921,
+              "codigoXml": "17215",
+              "message": "Registro 7921: nome do condutor invalido no XML."
+            }
+          ]
+        },
+        {
+          "label": "invalid-import",
+          "fileName": "Condutor-invalid.xml",
+          "total": 3,
+          "processed": 0,
+          "inserted": 0,
+          "updated": 0,
+          "skipped": 3,
+          "skippedRecords": [
+            {
+              "index": 1,
+              "codigoXml": "9241",
+              "message": "Registro 1: nome do condutor invalido no XML."
+            },
+            {
+              "index": 2,
+              "codigoXml": "ABC",
+              "message": "Registro 2: codigo invalido no XML."
+            },
+            {
+              "index": 3,
+              "codigoXml": "990099",
+              "message": "Registro 3: CPF invalido no XML."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "failureMessage": ""
+}
