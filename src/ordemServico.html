@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ORDEM DE SERVICO</title>
 
-    <link rel="stylesheet" href="css/login.css" />
+    <link rel="stylesheet" href="css/login.css?v=20260422-grid" />
   </head>
   <body>
     <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
@@ -25,72 +25,90 @@
               </form>
             </div>
 
-            <section class="dsc-card dsc-hidden" id="ordem-servico-rejection-panel">
-              <div class="dsc-access-grid-header">
-                <h2>Registros nao importados</h2>
-                <span id="ordem-servico-rejection-total"></span>
+            <div class="dsc-popup-overlay dsc-hidden" id="ordem-servico-rejection-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="ordem-servico-rejection-title">
+                <section class="dsc-card dsc-hidden" id="ordem-servico-rejection-panel">
+                  <div class="dsc-popup-header dsc-popup-header-sticky dsc-popup-header-with-compact-close">
+                    <div class="dsc-popup-header-copy">
+                      <h2 id="ordem-servico-rejection-title">Registros nao importados</h2>
+                      <span id="ordem-servico-rejection-total"></span>
+                    </div>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-ordem-servico-rejection-panel-button" aria-label="Fechar recusas xml">X</button>
+                  </div>
+
+                  <form class="dsc-access-filter-form" id="ordem-servico-rejection-filter-form">
+                    <input class="dsc-form-control dsc-access-filter-input" id="ordem-servico-rejection-search" type="text" placeholder="Filtrar por arquivo, linha, OS, credenciado, DRE, CPF, CRM ou motivo" />
+                    <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="clear-ordem-servico-rejection-filter-button">Limpar</button>
+                  </form>
+
+                  <div class="dsc-access-grid-wrapper">
+                    <table class="dsc-access-grid">
+                      <thead>
+                        <tr>
+                          <th>Data importacao</th>
+                          <th>Arquivo XML</th>
+                          <th>Linha XML</th>
+                          <th>Codigo Access</th>
+                          <th>OS XML</th>
+                          <th>Credenciado XML</th>
+                          <th>DRE XML</th>
+                          <th>CPF condutor XML</th>
+                          <th>CPF monitor XML</th>
+                          <th>CRM XML</th>
+                          <th>Motivo da recusa</th>
+                        </tr>
+                      </thead>
+                      <tbody id="ordem-servico-rejection-grid-body"></tbody>
+                    </table>
+
+                    <p class="dsc-empty-state dsc-hidden" id="ordem-servico-rejection-empty-state">Nenhum registro recusado encontrado.</p>
+                  </div>
+
+                  <p class="dsc-feedback" id="ordem-servico-rejection-grid-feedback"></p>
+
+                  <div class="dsc-access-pagination">
+                    <button type="button" class="dsc-btn dsc-btn-white" id="previous-ordem-servico-rejection-page-button">Anterior</button>
+                    <span id="ordem-servico-rejection-pagination-info">Pagina 1 de 1</span>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="next-ordem-servico-rejection-page-button">Proxima</button>
+                  </div>
+                </section>
               </div>
+            </div>
 
-              <form class="dsc-access-filter-form" id="ordem-servico-rejection-filter-form">
-                <input class="dsc-form-control dsc-access-filter-input" id="ordem-servico-rejection-search" type="text" placeholder="Filtrar por arquivo, linha, OS, credenciado, DRE, CPF, CRM ou motivo" />
-                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="clear-ordem-servico-rejection-filter-button">Limpar</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="close-ordem-servico-rejection-panel-button">Fechar</button>
-              </form>
+            <div class="dsc-popup-overlay dsc-hidden" id="ordem-servico-import-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="ordem-servico-import-title">
+                <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="ordem-servico-import-form">
+                  <div class="dsc-popup-header dsc-popup-header-with-compact-close">
+                    <h2 id="ordem-servico-import-title">Importacao de OrdemServico por XML</h2>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-ordem-servico-import-modal-button" aria-label="Fechar importacao de ordem de servico">X</button>
+                  </div>
 
-              <div class="dsc-access-grid-wrapper">
-                <table class="dsc-access-grid">
-                  <thead>
-                    <tr>
-                      <th>Data importacao</th>
-                      <th>Arquivo XML</th>
-                      <th>Linha XML</th>
-                      <th>Codigo Access</th>
-                      <th>OS XML</th>
-                      <th>Credenciado XML</th>
-                      <th>DRE XML</th>
-                      <th>CPF condutor XML</th>
-                      <th>CPF monitor XML</th>
-                      <th>CRM XML</th>
-                      <th>Motivo da recusa</th>
-                    </tr>
-                  </thead>
-                  <tbody id="ordem-servico-rejection-grid-body"></tbody>
-                </table>
+                  <label class="dsc-field-group" for="ordem-servico-import-file-name">
+                    <span>Nome do arquivo XML</span>
+                    <input class="dsc-form-control" id="ordem-servico-import-file-name" type="text" placeholder="OrdemServico.xml" />
+                    <div class="dsc-form-error" id="ordem-servico-import-file-name-error"></div>
+                  </label>
 
-                <p class="dsc-empty-state dsc-hidden" id="ordem-servico-rejection-empty-state">Nenhum registro recusado encontrado.</p>
+                  <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
+
+                  <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
+                    <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-ordem-servico-import-button">Executar importacao</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="cancel-ordem-servico-import-button">Cancelar</button>
+                  </div>
+
+                  <p class="dsc-feedback" id="ordem-servico-import-feedback"></p>
+                </form>
               </div>
+            </div>
 
-              <p class="dsc-feedback" id="ordem-servico-rejection-grid-feedback"></p>
-
-              <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-ordem-servico-rejection-page-button">Anterior</button>
-                <span id="ordem-servico-rejection-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-ordem-servico-rejection-page-button">Proxima</button>
+            <div class="dsc-popup-overlay dsc-hidden" id="ordem-servico-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="ordem-servico-form-title">
+                <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="ordem-servico-form">
+              <div class="dsc-popup-header dsc-popup-header-sticky">
+                <h2 id="ordem-servico-form-title">ORDEM DE SERVICO</h2>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-ordem-servico-form-modal-button" aria-label="Fechar formulario de ordem de servico">X</button>
               </div>
-            </section>
-
-            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="ordem-servico-import-form">
-              <h2>Importacao de OrdemServico por XML</h2>
-
-              <label class="dsc-field-group" for="ordem-servico-import-file-name">
-                <span>Nome do arquivo XML</span>
-                <input class="dsc-form-control" id="ordem-servico-import-file-name" type="text" placeholder="OrdemServico.xml" />
-                <div class="dsc-form-error" id="ordem-servico-import-file-name-error"></div>
-              </label>
-
-              <p class="dsc-form-hint">Diretorio de importacao: C:/Users/m089383/Aplicativos/teg_financ/importXML</p>
-
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
-                <button type="submit" class="dsc-btn dsc-btn-blue" id="execute-ordem-servico-import-button">Executar importacao</button>
-                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-ordem-servico-import-button">Cancelar</button>
-              </div>
-
-              <p class="dsc-feedback" id="ordem-servico-import-feedback"></p>
-            </form>
-
-            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="ordem-servico-form">
-              <h2 id="ordem-servico-form-title">ORDEM DE SERVICO</h2>
 
               <section class="dsc-form-section-card dsc-form-section-card-ordem-servico-identificacao">
                 <h3 class="dsc-form-section-title">Identificacao</h3>
@@ -339,13 +357,31 @@
                 </label>
               </section>
 
-              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-ordem-servico-button">Salvar OrdemServico</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-ordem-servico-button">Cancelar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="show-ordem-servico-summary-button">Resumo OS</button>
               </div>
 
               <p class="dsc-feedback" id="ordem-servico-form-feedback"></p>
-            </form>
+                </form>
+
+                <div class="dsc-summary-overlay dsc-hidden" id="ordem-servico-summary-modal" aria-hidden="true">
+                  <section class="dsc-form-section-card dsc-form-section-card-ordem-servico-resumo dsc-hidden" id="ordem-servico-summary-panel" tabindex="-1">
+                    <div class="dsc-ordem-servico-summary-header dsc-popup-header-with-compact-close">
+                      <div>
+                        <h3 class="dsc-form-section-title">Resumo termo e OS</h3>
+                        <p class="dsc-ordem-servico-summary-subtitle" id="ordem-servico-summary-subtitle">Dados consolidados do termo, condutor, monitor e veiculo.</p>
+                      </div>
+                      <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-ordem-servico-summary-button" aria-label="Fechar resumo da ordem de servico">X</button>
+                    </div>
+
+                    <div class="dsc-ordem-servico-summary-grid" id="ordem-servico-summary-content"></div>
+                    <p class="dsc-feedback" id="ordem-servico-summary-feedback"></p>
+                  </section>
+                </div>
+              </div>
+            </div>
 
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header">
@@ -396,7 +432,10 @@
 
     <script>
       const form = document.getElementById('ordem-servico-form');
+      const formModal = document.getElementById('ordem-servico-form-modal');
+      const rejectionModal = document.getElementById('ordem-servico-rejection-modal');
       const importForm = document.getElementById('ordem-servico-import-form');
+      const importModal = document.getElementById('ordem-servico-import-modal');
       const rejectionPanel = document.getElementById('ordem-servico-rejection-panel');
       const osConcatInput = document.getElementById('ordem-servico-os-concat');
       const termoAdesaoInput = document.getElementById('ordem-servico-termo-adesao');
@@ -484,8 +523,17 @@
       const sortCredenciadoIndicator = document.getElementById('sort-ordem-servico-credenciado-indicator');
       const formTitle = document.getElementById('ordem-servico-form-title');
       const saveButton = document.getElementById('save-ordem-servico-button');
+      const showSummaryButton = document.getElementById('show-ordem-servico-summary-button');
+      const summaryModal = document.getElementById('ordem-servico-summary-modal');
+      const summaryPanel = document.getElementById('ordem-servico-summary-panel');
+      const closeSummaryButton = document.getElementById('close-ordem-servico-summary-button');
+      const summarySubtitle = document.getElementById('ordem-servico-summary-subtitle');
+      const summaryContent = document.getElementById('ordem-servico-summary-content');
+      const summaryFeedback = document.getElementById('ordem-servico-summary-feedback');
       const statusBanner = document.getElementById('status-banner');
+      const closeFormModalButton = document.getElementById('close-ordem-servico-form-modal-button');
       const importButton = document.getElementById('open-ordem-servico-import-button');
+      const closeImportModalButton = document.getElementById('close-ordem-servico-import-modal-button');
       const rejectionButton = document.getElementById('open-ordem-servico-rejections-button');
       const importFileNameInput = document.getElementById('ordem-servico-import-file-name');
       const importFileNameError = document.getElementById('ordem-servico-import-file-name-error');
@@ -547,6 +595,268 @@
       const normalizeCrm = (value) => value.toUpperCase().replace(/[^0-9A-Z.\-/]/g, '').slice(0, 20);
       const normalizeKey = (value) => (value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
       const normalizeComboInput = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trimStart().slice(0, maxLength);
+      const escapeHtml = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+      const formatSummaryValue = (value, fallback = 'Nao informado') => {
+        const normalizedValue = String(value ?? '').trim();
+        return normalizedValue || fallback;
+      };
+
+      const formatSummaryDate = (value) => {
+        const normalizedValue = String(value ?? '').trim();
+
+        if (!normalizedValue) {
+          return 'Nao informado';
+        }
+
+        const [datePart] = normalizedValue.split(' ');
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+          return normalizedValue;
+        }
+
+        const [year, month, day] = datePart.split('-');
+        return `${day}/${month}/${year}`;
+      };
+
+      const buildSummaryFieldHtml = (label, value) => `
+        <div class="dsc-ordem-servico-summary-field">
+          <span class="dsc-ordem-servico-summary-label">${escapeHtml(label)}</span>
+          <strong class="dsc-ordem-servico-summary-value">${escapeHtml(value)}</strong>
+        </div>
+      `;
+
+      const buildSummaryCardHtml = (title, fields) => `
+        <article class="dsc-ordem-servico-summary-card">
+          <h4>${escapeHtml(title)}</h4>
+          <div class="dsc-ordem-servico-summary-fields">
+            ${fields.map((field) => buildSummaryFieldHtml(field.label, field.value)).join('')}
+          </div>
+        </article>
+      `;
+
+      const getVeiculoCapacitiesSummary = (veiculoItem) => {
+        const entries = [
+          ['Cap. DETRAN', veiculoItem?.cap_detran],
+          ['Cap. TEG', veiculoItem?.cap_teg],
+          ['Cap. Creche', veiculoItem?.cap_teg_creche],
+          ['Cap. Acessivel', veiculoItem?.cap_acessivel],
+        ]
+          .filter(([, value]) => String(value ?? '').trim())
+          .map(([label, value]) => `${label}: ${String(value).trim()}`);
+
+        return entries.length ? entries.join(' | ') : 'Nao informado';
+      };
+
+      const getVeiculoTypesSummary = (veiculoItem) => {
+        const entries = [veiculoItem?.tipo_de_veiculo, veiculoItem?.tipo_de_bancada]
+          .map((value) => String(value ?? '').trim())
+          .filter(Boolean);
+
+        return entries.length ? entries.join(' | ') : 'Nao informado';
+      };
+
+      const clearOrdemServicoSummary = () => {
+        summaryModal.classList.add('dsc-hidden');
+        summaryModal.setAttribute('aria-hidden', 'true');
+        summaryPanel.classList.add('dsc-hidden');
+        summaryContent.innerHTML = '';
+        summarySubtitle.textContent = 'Dados consolidados do termo, condutor, monitor e veiculo.';
+        summaryFeedback.textContent = '';
+        summaryFeedback.className = 'dsc-feedback';
+      };
+
+      const focusOrdemServicoSummary = () => {
+        if (summaryPanel.classList.contains('dsc-hidden')) {
+          return;
+        }
+
+        if (document.activeElement instanceof HTMLElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
+
+        closeSummaryButton.disabled = false;
+        closeSummaryButton.focus({ preventScroll: true });
+
+        window.setTimeout(() => {
+          if (summaryPanel.classList.contains('dsc-hidden')) {
+            return;
+          }
+
+          if (document.activeElement instanceof HTMLElement && typeof document.activeElement.blur === 'function') {
+            document.activeElement.blur();
+          }
+
+          closeSummaryButton.focus({ preventScroll: true });
+        }, 24);
+
+        window.requestAnimationFrame(() => {
+          if (summaryPanel.classList.contains('dsc-hidden')) {
+            return;
+          }
+
+          if (document.activeElement instanceof HTMLElement && typeof document.activeElement.blur === 'function') {
+            document.activeElement.blur();
+          }
+
+          closeSummaryButton.focus({ preventScroll: true });
+        });
+      };
+
+      const renderOrdemServicoSummary = ({ termoItem, condutorItem, monitorItem, veiculoItem, notices = [] }) => {
+        const osLabel = formatSummaryValue(osConcatInput.value, 'OS em preenchimento');
+        summarySubtitle.textContent = `Resumo consolidado para ${osLabel}.`;
+
+        const termoFields = [
+          { label: 'Termo de adesao', value: formatSummaryValue(termoAdesaoInput.value) },
+          { label: 'Tipo de termo', value: formatSummaryValue(termoItem?.tipo_termo) },
+          { label: 'DRE', value: formatSummaryValue([dreCodigoInput.value, dreDescricaoInput.value].filter(Boolean).join(' - ')) },
+          { label: 'Credenciada', value: formatSummaryValue(termoItem?.credenciado || credenciadoInput.value) },
+        ];
+
+        const condutorFields = [
+          { label: 'Nome do condutor', value: formatSummaryValue(condutorItem?.condutor || condutorInput.value) },
+          { label: 'CPF do condutor', value: formatSummaryValue(condutorItem?.cpf_condutor || cpfCondutorInput.value) },
+          { label: 'CRMC do condutor', value: formatSummaryValue(condutorItem?.crmc) },
+          { label: 'Validade CRMC', value: formatSummaryDate(condutorItem?.validade_crmc) },
+          { label: 'Vinculo profissional', value: formatSummaryValue(condutorItem?.tipo_vinculo) },
+          { label: 'Validade do curso', value: formatSummaryDate(condutorItem?.validade_curso) },
+        ];
+
+        const monitorFields = [
+          { label: 'Nome do monitor', value: formatSummaryValue(monitorItem?.monitor || monitorInput.value) },
+          { label: 'CPF do monitor', value: formatSummaryValue(monitorItem?.cpf_monitor || cpfMonitorInput.value) },
+          { label: 'Data de nascimento', value: formatSummaryDate(monitorItem?.nascimento) },
+          { label: 'Vinculo profissional', value: formatSummaryValue(monitorItem?.tipo_vinculo) },
+          { label: 'Validade do curso', value: formatSummaryDate(monitorItem?.validade_curso) },
+        ];
+
+        const veiculoFields = [
+          { label: 'CRM do veiculo', value: formatSummaryValue(veiculoItem?.crm || crmInput.value) },
+          { label: 'Validade do CRM', value: formatSummaryDate(veiculoItem?.val_crm) },
+          { label: 'Seguradora', value: formatSummaryValue(veiculoItem?.seguradora) },
+          { label: 'Placa do veiculo', value: formatSummaryValue(veiculoItem?.placas || veiculoPlacasInput.value) },
+          { label: 'Ano do veiculo', value: formatSummaryValue(veiculoItem?.ano) },
+          { label: 'Capacidades do veiculo', value: getVeiculoCapacitiesSummary(veiculoItem) },
+          { label: 'Tipos do veiculo', value: getVeiculoTypesSummary(veiculoItem) },
+          { label: 'Validade da apolice', value: formatSummaryDate(veiculoItem?.seguro_termino) },
+          { label: 'Titular do veiculo', value: formatSummaryValue(veiculoItem?.titular) },
+        ];
+
+        summaryContent.innerHTML = [
+          buildSummaryCardHtml('Termo e OS', termoFields),
+          buildSummaryCardHtml('Condutor', condutorFields),
+          buildSummaryCardHtml('Monitor', monitorFields),
+          buildSummaryCardHtml('Veiculo', veiculoFields),
+        ].join('');
+
+        summaryModal.classList.remove('dsc-hidden');
+        summaryModal.setAttribute('aria-hidden', 'false');
+        summaryPanel.classList.remove('dsc-hidden');
+        summaryFeedback.textContent = notices.join(' ');
+        summaryFeedback.className = 'dsc-feedback';
+        focusOrdemServicoSummary();
+      };
+
+      const fetchSummaryLookup = async (url, fallbackMessage) => {
+        try {
+          return {
+            item: await fetchLookupItem(url, fallbackMessage),
+            error: '',
+          };
+        } catch (error) {
+          return {
+            item: null,
+            error: getRequestErrorMessage(error, fallbackMessage),
+          };
+        }
+      };
+
+      const handleShowOrdemServicoSummary = async () => {
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+        const cpfCondutor = normalizeCpf(cpfCondutorInput.value);
+        const cpfMonitor = normalizeCpf(cpfMonitorInput.value);
+        const crm = normalizeCrm(crmInput.value);
+
+        termoAdesaoInput.value = termoAdesao;
+        cpfCondutorInput.value = cpfCondutor;
+        cpfMonitorInput.value = cpfMonitor;
+        crmInput.value = crm;
+
+        const hasAnyReference = termoAdesao || getDocumentDigits(cpfCondutor) || getDocumentDigits(cpfMonitor) || crm;
+
+        if (!hasAnyReference) {
+          summaryFeedback.textContent = 'Preencha ao menos termo, CPF do condutor, CPF do monitor ou CRM para gerar o resumo.';
+          summaryFeedback.className = 'dsc-feedback dsc-feedback-error';
+          summaryModal.classList.remove('dsc-hidden');
+          summaryModal.setAttribute('aria-hidden', 'false');
+          summaryPanel.classList.remove('dsc-hidden');
+          summaryContent.innerHTML = '';
+          focusOrdemServicoSummary();
+          return;
+        }
+
+        showSummaryButton.disabled = true;
+        showSummaryButton.textContent = 'Carregando resumo...';
+        summaryFeedback.textContent = 'Montando resumo consolidado...';
+        summaryFeedback.className = 'dsc-feedback';
+        summaryModal.classList.remove('dsc-hidden');
+        summaryModal.setAttribute('aria-hidden', 'false');
+        summaryPanel.classList.remove('dsc-hidden');
+        focusOrdemServicoSummary();
+
+        try {
+          const [termoResult, condutorResult, monitorResult, veiculoResult] = await Promise.all([
+            termoAdesao
+              ? fetchSummaryLookup(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, 'Termo de adesao nao encontrado na tabela termo.')
+              : Promise.resolve({ item: null, error: '' }),
+            getDocumentDigits(cpfCondutor)
+              ? fetchSummaryLookup(`/api/condutor/lookup?cpf=${encodeURIComponent(cpfCondutor)}`, 'Falha ao localizar condutor.')
+              : Promise.resolve({ item: null, error: '' }),
+            getDocumentDigits(cpfMonitor)
+              ? fetchSummaryLookup(`/api/monitor/lookup?cpf=${encodeURIComponent(cpfMonitor)}`, 'Falha ao localizar monitor.')
+              : Promise.resolve({ item: null, error: '' }),
+            crm
+              ? fetchSummaryLookup(`/api/veiculo/lookup?crm=${encodeURIComponent(crm)}`, 'Falha ao localizar veiculo.')
+              : Promise.resolve({ item: null, error: '' }),
+          ]);
+
+          const notices = [];
+
+          if (termoAdesao && termoResult.error) {
+            notices.push('Termo exibido com dados do formulario porque o lookup do termo nao retornou registro.');
+          }
+
+          if (getDocumentDigits(cpfCondutor) && condutorResult.error) {
+            notices.push('Nao foi possivel complementar os dados detalhados do condutor.');
+          }
+
+          if (getDocumentDigits(cpfMonitor) && monitorResult.error) {
+            notices.push('Nao foi possivel complementar os dados detalhados do monitor.');
+          }
+
+          if (crm && veiculoResult.error) {
+            notices.push('Nao foi possivel complementar os dados detalhados do veiculo.');
+          }
+
+          renderOrdemServicoSummary({
+            termoItem: termoResult.item,
+            condutorItem: condutorResult.item,
+            monitorItem: monitorResult.item,
+            veiculoItem: veiculoResult.item,
+            notices,
+          });
+        } finally {
+          showSummaryButton.disabled = false;
+          showSummaryButton.textContent = 'Resumo OS';
+        }
+      };
+
       const deriveModalidadeFromDreDescricao = (dreDescricao) => {
         const normalizedDescricao = normalizeText(String(dreDescricao || ''), 255);
         const descricaoKey = normalizeKey(normalizedDescricao);
@@ -866,26 +1176,31 @@
 
       const clearViewOnlyLock = () => {
         getFormControls().forEach((element) => {
-          if (element !== cancelButton) {
+          if (element !== cancelButton && element !== closeFormModalButton && element !== closeSummaryButton) {
             element.disabled = false;
           }
         });
         cancelButton.disabled = false;
+        closeFormModalButton.disabled = false;
+        closeSummaryButton.disabled = false;
         saveButton.classList.remove('dsc-hidden');
       };
 
       const applyViewOnlyLock = () => {
         getFormControls().forEach((element) => {
-          element.disabled = element !== cancelButton && element !== openVinculoCondutorPopupButton && element !== openVinculoMonitorPopupButton;
+          element.disabled = element !== cancelButton && element !== closeFormModalButton && element !== closeSummaryButton && element !== openVinculoCondutorPopupButton && element !== openVinculoMonitorPopupButton && element !== showSummaryButton;
         });
         cancelButton.disabled = false;
+        closeFormModalButton.disabled = false;
+        closeSummaryButton.disabled = false;
         openVinculoCondutorPopupButton.disabled = false;
         openVinculoMonitorPopupButton.disabled = false;
+        showSummaryButton.disabled = false;
         saveButton.classList.add('dsc-hidden');
       };
 
       const getInsertGuardControls = () => getFormControls()
-        .filter((element) => element !== termoAdesaoInput && element !== cancelButton && element !== openVinculoCondutorPopupButton && element !== openVinculoMonitorPopupButton);
+        .filter((element) => element !== termoAdesaoInput && element !== cancelButton && element !== closeFormModalButton && element !== closeSummaryButton && element !== openVinculoCondutorPopupButton && element !== openVinculoMonitorPopupButton && element !== showSummaryButton);
 
       const updateInsertTermGuard = ({ focusIfMissing = false, showMissingError = true } = {}) => {
         if (formMode === 'view') {
@@ -909,6 +1224,9 @@
         getInsertGuardControls().forEach((element) => {
           element.disabled = !hasTermoAdesao;
         });
+
+        closeFormModalButton.disabled = false;
+        closeSummaryButton.disabled = false;
 
         applyInsertSpecificRules();
 
@@ -943,11 +1261,30 @@
         });
       };
 
+      const setPopupVisibility = (modalElement, shouldShow) => {
+        if (!modalElement) {
+          return;
+        }
+
+        modalElement.classList.toggle('dsc-hidden', !shouldShow);
+        modalElement.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+      };
+
+      const syncPopupPageState = () => {
+        const isPopupVisible = !formModal.classList.contains('dsc-hidden') || !importModal.classList.contains('dsc-hidden') || !rejectionModal.classList.contains('dsc-hidden');
+        document.body.classList.toggle('dsc-popup-open', isPopupVisible);
+      };
+
       const showForm = (mode = 'insert') => {
         rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
         importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
         form.classList.remove('dsc-hidden');
+        setPopupVisibility(formModal, true);
+        syncPopupPageState();
         formMode = mode;
+        clearOrdemServicoSummary();
         clearViewOnlyLock();
         dataAdmissaoCondutorInput.max = getCurrentDateInputValue();
         dataAdmissaoMonitorInput.max = getCurrentDateInputValue();
@@ -966,6 +1303,8 @@
         }
 
         updateSaveButtonAvailability();
+        closeFormModalButton.disabled = false;
+        closeSummaryButton.disabled = false;
         focusFormForMode(mode);
       };
 
@@ -982,6 +1321,8 @@
 
       const hideForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
+        syncPopupPageState();
         form.reset();
         osConcatInput.value = '';
         editingCodigo = null;
@@ -999,28 +1340,41 @@
         tipoTrocaInput.value = '';
         setSelectedSituacao('Ativo');
         resetMessages();
+        clearOrdemServicoSummary();
       };
 
       const showImportForm = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
         rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
         importForm.classList.remove('dsc-hidden');
+        setPopupVisibility(importModal, true);
+        syncPopupPageState();
       };
 
       const hideImportForm = () => {
         importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
+        syncPopupPageState();
         importFileNameInput.value = defaultImportFileName;
         resetImportMessages();
       };
 
       const showRejectionPanel = () => {
         form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
         importForm.classList.add('dsc-hidden');
+        setPopupVisibility(importModal, false);
         rejectionPanel.classList.remove('dsc-hidden');
+        setPopupVisibility(rejectionModal, true);
+        syncPopupPageState();
       };
 
       const hideRejectionPanel = () => {
         rejectionPanel.classList.add('dsc-hidden');
+        setPopupVisibility(rejectionModal, false);
+        syncPopupPageState();
       };
 
       const buildUrl = () => {
@@ -2435,6 +2789,18 @@
         void syncTipoTroca();
       });
 
+      form.addEventListener('input', () => {
+        if (!summaryModal.classList.contains('dsc-hidden')) {
+          clearOrdemServicoSummary();
+        }
+      });
+
+      form.addEventListener('change', () => {
+        if (!summaryModal.classList.contains('dsc-hidden')) {
+          clearOrdemServicoSummary();
+        }
+      });
+
       anotacaoInput.addEventListener('input', () => {
         anotacaoInput.value = normalizeAnnotation(anotacaoInput.value);
       });
@@ -2753,6 +3119,62 @@
       });
 
       cancelButton.addEventListener('click', hideForm);
+      closeFormModalButton.addEventListener('click', hideForm);
+      closeSummaryButton.addEventListener('click', clearOrdemServicoSummary);
+      showSummaryButton.addEventListener('click', () => {
+        void handleShowOrdemServicoSummary();
+      });
+      summaryModal.addEventListener('click', (event) => {
+        if (event.target === summaryModal) {
+          clearOrdemServicoSummary();
+        }
+      });
+      closeImportModalButton.addEventListener('click', hideImportForm);
+
+      [formModal, importModal, rejectionModal].forEach((modalElement) => {
+        modalElement.addEventListener('click', (event) => {
+          if (event.target !== modalElement) {
+            return;
+          }
+
+          if (modalElement === formModal) {
+            hideForm();
+            return;
+          }
+
+          if (modalElement === rejectionModal) {
+            hideRejectionPanel();
+            return;
+          }
+
+          hideImportForm();
+        });
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+          return;
+        }
+
+        if (!formModal.classList.contains('dsc-hidden')) {
+          hideForm();
+          return;
+        }
+
+        if (!importModal.classList.contains('dsc-hidden')) {
+          hideImportForm();
+          return;
+        }
+
+        if (!rejectionModal.classList.contains('dsc-hidden')) {
+          hideRejectionPanel();
+          return;
+        }
+
+        if (!summaryModal.classList.contains('dsc-hidden')) {
+          clearOrdemServicoSummary();
+        }
+      });
 
       if (topGridScroll && gridWrapper) {
         let syncingGridScroll = false;
