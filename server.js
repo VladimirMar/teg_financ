@@ -6333,14 +6333,11 @@ const findCredenciamentoTermoByTermoAdesao = async (termoAdesao, executor = pool
   }
 
   const result = await executor.query(
-      `SELECT t.codigo, t.termo_adesao, t.credenciada_codigo,
-        COALESCE(BTRIM(t.tipo_termo), '') AS tipo_termo,
-            COALESCE(BTRIM(cr.credenciado), '') AS credenciado,
-            COALESCE(BTRIM(cr.cnpj_cpf), '') AS cnpj_cpf
-     FROM ${credenciamentoTermoTableName} t
-     LEFT JOIN credenciada cr ON cr.codigo = t.credenciada_codigo
-     WHERE UPPER(BTRIM(COALESCE(t.termo_adesao, ''))) = UPPER($1)
-     ORDER BY t.aditivo ASC LIMIT 1`,
+      `SELECT
+        ${credenciamentoTermoSelectClause}
+     FROM ${credenciamentoTermoTableName}
+     WHERE UPPER(BTRIM(COALESCE(termo_adesao, ''))) = UPPER($1)
+     ORDER BY aditivo DESC, CAST(codigo AS integer) DESC LIMIT 1`,
     [normalizedTermo],
   )
 
@@ -9295,11 +9292,10 @@ const server = createServer(async (request, response) => {
 
       sendJson(response, 200, {
         item: {
-          termoAdesao: item.termo_adesao,
+          ...item,
+          termoAdesao: normalizeRequestValue(item.termo_adesao),
           credenciadoCodigo: item.credenciada_codigo ? Number(item.credenciada_codigo) : null,
           tipoTermo: normalizeCredenciadaText(item.tipo_termo, 100),
-          tipo_termo: normalizeCredenciadaText(item.tipo_termo, 100),
-          credenciado: normalizeCredenciadaText(item.credenciado, 255),
           cnpjCpf: normalizeCnpjCpf(item.cnpj_cpf),
         },
       })

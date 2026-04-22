@@ -698,6 +698,7 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 .dsc-form-section-card-ordem-servico-vinculos,
 .dsc-form-section-card-ordem-servico-operacional,
 .dsc-form-section-card-ordem-servico-anotacao,
+.dsc-form-section-card-ordem-servico-termo,
 .dsc-form-section-card-ordem-servico-resumo {
   width: 100%;
   box-sizing: border-box;
@@ -710,6 +711,14 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 18px;
+}
+
+.dsc-ordem-servico-termo-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .dsc-summary-overlay {
@@ -737,16 +746,157 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   box-shadow: 0 24px 54px rgba(15, 23, 42, 0.18);
 }
 
+#ordem-servico-termo-panel {
+  width: min(100%, 1160px);
+  max-height: min(78vh, 820px);
+  overflow: auto;
+  margin: 0;
+  padding: 12px 12px 14px;
+  border-radius: 4px;
+  border: 1px solid #8a8378;
+  background: #c9c5bc;
+  box-shadow: 0 24px 54px rgba(15, 23, 42, 0.18);
+}
+
 .dsc-ordem-servico-summary-subtitle {
-  margin: 8px 0 0;
-  color: #5d736a;
-  font-size: 0.95rem;
+  margin: 2px 0 0;
+  color: #5f5a52;
+  font-size: 0.82rem;
 }
 
 .dsc-ordem-servico-summary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+}
+
+.dsc-ordem-servico-termo-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.dsc-ordem-servico-termo-section {
+  display: grid;
+  gap: 6px;
+  padding: 7px;
+  border: 1px solid #8e877c;
+  border-radius: 0;
+  background: #d3cfc6;
+  box-shadow: none;
+}
+
+.dsc-ordem-servico-termo-section h4 {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #3a3834;
+  text-transform: none;
+}
+
+.dsc-ordem-servico-termo-hero {
+  gap: 7px;
+}
+
+.dsc-ordem-servico-termo-hero-top {
+  display: grid;
+  grid-template-columns: 220px 400px 270px 170px;
+  gap: 6px 10px;
+  align-items: end;
+}
+
+.dsc-ordem-servico-termo-hero-middle,
+.dsc-ordem-servico-termo-hero-bottom {
+  display: grid;
+  gap: 6px 10px;
+}
+
+.dsc-ordem-servico-termo-hero-bottom {
+  grid-template-columns: 500px 290px 290px;
+}
+
+.dsc-ordem-servico-termo-section-full {
+  grid-column: 1 / -1;
+}
+
+.dsc-ordem-servico-termo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 8px;
+}
+
+.dsc-ordem-servico-termo-grid-compact {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.dsc-ordem-servico-termo-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 5px;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dsc-ordem-servico-termo-field-emphasis {
+  font-weight: 700;
+}
+
+.dsc-ordem-servico-termo-field-status {
+  grid-template-columns: auto minmax(110px, 1fr);
+}
+
+.dsc-ordem-servico-termo-field-wide {
+  grid-column: span 2;
+}
+
+.dsc-ordem-servico-termo-field-full {
+  grid-column: 1 / -1;
+}
+
+.dsc-ordem-servico-termo-field-compact-label {
+  grid-template-columns: 1fr;
+  row-gap: 2px;
+}
+
+.dsc-ordem-servico-termo-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #1f1f1f;
+}
+
+.dsc-ordem-servico-termo-box {
+  display: block;
+  min-height: 22px;
+  padding: 1px 5px;
+  border: 1px solid #9a9488;
+  border-radius: 0;
+  background: #f7f7f5;
+  color: #1f1f1f;
+  font-size: 0.69rem;
+  font-weight: 700;
+  line-height: 1.1;
+  word-break: break-word;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.dsc-ordem-servico-termo-field-status .dsc-ordem-servico-termo-box {
+  background: #a9d08e;
+  font-weight: 700;
+  text-align: center;
+}
+
+.dsc-ordem-servico-termo-field-compact-label .dsc-ordem-servico-termo-box {
+  min-height: 22px;
+}
+
+.dsc-ordem-servico-termo-section:not(.dsc-ordem-servico-termo-hero) .dsc-ordem-servico-termo-box {
+  min-height: 20px;
+  padding: 1px 4px;
 }
 
 .dsc-ordem-servico-summary-card {
@@ -1574,12 +1724,38 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
   .dsc-form-section-card-ordem-servico-vinculos,
   .dsc-form-section-card-ordem-servico-operacional,
   .dsc-form-section-card-ordem-servico-anotacao,
+  .dsc-form-section-card-ordem-servico-termo,
   .dsc-form-section-card-ordem-servico-resumo {
     padding: 20px;
   }
 
+  .dsc-ordem-servico-termo-layout,
   .dsc-ordem-servico-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dsc-ordem-servico-termo-grid,
+  .dsc-ordem-servico-termo-grid-compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dsc-ordem-servico-termo-hero-top,
+  .dsc-ordem-servico-termo-hero-bottom {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dsc-ordem-servico-termo-hero-middle {
+    grid-template-columns: 1fr;
+  }
+
+  .dsc-ordem-servico-termo-field-wide,
+  .dsc-ordem-servico-termo-field-full {
+    grid-column: 1 / -1;
+  }
+
+  #ordem-servico-termo-panel {
+    width: min(100%, 980px);
+    max-height: min(74vh, 720px);
   }
 
   #veiculo-form {
@@ -1658,6 +1834,7 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
   .dsc-form-section-card-ordem-servico-vinculos,
   .dsc-form-section-card-ordem-servico-operacional,
   .dsc-form-section-card-ordem-servico-anotacao,
+  .dsc-form-section-card-ordem-servico-termo,
   .dsc-form-section-card-ordem-servico-resumo {
     gap: 14px;
     padding: 18px;
@@ -1673,8 +1850,31 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
     max-height: min(68vh, 620px);
   }
 
+  #ordem-servico-termo-panel {
+    width: 100%;
+    max-height: min(74vh, 680px);
+  }
+
+  .dsc-ordem-servico-termo-header,
   .dsc-ordem-servico-summary-header {
     margin-bottom: 14px;
+  }
+
+  .dsc-ordem-servico-termo-grid,
+  .dsc-ordem-servico-termo-grid-compact {
+    grid-template-columns: 1fr;
+  }
+
+  .dsc-ordem-servico-termo-hero-top,
+  .dsc-ordem-servico-termo-hero-middle,
+  .dsc-ordem-servico-termo-hero-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .dsc-ordem-servico-termo-field,
+  .dsc-ordem-servico-termo-field-compact-label {
+    grid-template-columns: 1fr;
+    row-gap: 4px;
   }
 
   .dsc-field-group {
