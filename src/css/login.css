@@ -43,7 +43,8 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-container,
 body:has(#vinculo-grid-body) .dsc-container,
 body:has(#vinculo-rejection-grid-body) .dsc-container,
 body:has(#cep-grid-body) .dsc-container,
-body:has(#cep-rejection-grid-body) .dsc-container {
+body:has(#cep-rejection-grid-body) .dsc-container,
+body:has(#emissao-parametro-grid-body) .dsc-container {
   width: min(100%, 1620px);
   max-width: 1620px;
 }
@@ -402,6 +403,7 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 #troca-form .dsc-popup-header-sticky,
 #vinculo-form .dsc-popup-header-sticky,
 #credenciamento-termo-form .dsc-popup-header-sticky,
+#emissao-parametro-form .dsc-popup-header-sticky,
 #login-dre-form .dsc-popup-header-sticky,
 #login-dre-bulk-form .dsc-popup-header-sticky,
 #register-form .dsc-popup-header-sticky,
@@ -422,6 +424,7 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 #troca-form-title,
 #vinculo-form-title,
 #credenciamento-termo-form-title,
+#emissao-parametro-form-title,
 #login-dre-form-title,
 #login-dre-bulk-title,
 #form-title,
@@ -505,6 +508,14 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 
 #credenciada-form {
   max-width: 980px;
+}
+
+#emissao-parametro-form {
+  max-width: 1320px;
+}
+
+#emissao-parametro-form .dsc-form-row {
+  grid-template-columns: minmax(220px, 0.45fr) minmax(220px, 0.55fr);
 }
 
 #credenciada-form .dsc-form-section-card {
@@ -593,6 +604,206 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 
 .dsc-form-control-os-concat {
   background: #fff6bf;
+}
+
+.dsc-emissao-documento {
+  display: grid;
+  gap: 24px;
+  width: min(100%, 920px);
+  margin: 0 auto;
+  padding: 32px 40px;
+  border: 1px solid rgba(120, 135, 156, 0.28);
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 18px 34px rgba(74, 89, 78, 0.12);
+  font-family: Arial, Helvetica, sans-serif;
+  min-width: 0;
+}
+
+.dsc-emissao-documento-header {
+  display: grid;
+  gap: 14px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(120, 135, 156, 0.28);
+}
+
+.dsc-emissao-documento-kicker {
+  margin: 0;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.dsc-emissao-documento-title {
+  margin: 0;
+  text-align: left;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: 0;
+  color: #17202a;
+}
+
+.dsc-emissao-documento-highlight {
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  border: 1px solid rgba(120, 135, 156, 0.28);
+  border-radius: 12px;
+  background: #ffffff;
+  min-width: 0;
+}
+
+.dsc-emissao-documento-highlight-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dsc-emissao-documento-highlight-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4b5563;
+}
+
+.dsc-emissao-documento-highlight-value {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #111827;
+  word-break: break-word;
+}
+
+.dsc-emissao-documento-notices {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: rgba(255, 247, 237, 0.98);
+  color: #92400e;
+}
+
+.dsc-emissao-documento-section {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.dsc-emissao-documento-section-body {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.dsc-emissao-documento-section-title {
+  margin: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(120, 135, 156, 0.28);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #374151;
+}
+
+.dsc-emissao-documento-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 18px 28px;
+  align-items: start;
+  min-width: 0;
+}
+
+.dsc-emissao-documento-grid-compact {
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+}
+
+.dsc-emissao-documento-field {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(120, 135, 156, 0.14);
+  min-width: 0;
+}
+
+.dsc-emissao-documento-field-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.dsc-emissao-documento-field-value {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.7;
+  color: #111827;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.dsc-emissao-documento-paragraph {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.95;
+  text-align: left;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.dsc-emissao-documento-footer {
+  display: grid;
+  gap: 20px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(120, 135, 156, 0.28);
+}
+
+.dsc-emissao-documento-date-line {
+  margin: 0;
+  text-align: right;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.8;
+  color: #111827;
+}
+
+#ordem-servico-emissao-content {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  padding: 6px 0 140px;
+  scroll-padding-bottom: 140px;
+}
+
+#ordem-servico-emissao-content .dsc-emissao-documento {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 960px) {
+  .dsc-emissao-documento {
+    width: 100%;
+    padding: 24px 20px;
+    gap: 20px;
+  }
+
+  .dsc-emissao-documento-grid,
+  .dsc-emissao-documento-grid-compact {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .dsc-form-row-ordem-servico-identificacao {
@@ -754,17 +965,17 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 }
 
 .dsc-summary-overlay {
-  position: absolute;
-  inset: 76px 18px 92px 18px;
+  position: fixed;
+  inset: 0;
+  z-index: 90;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding: 18px;
+  padding: 32px 24px;
   max-width: 100%;
-  justify-self: stretch;
-  background: rgba(15, 23, 42, 0.18);
-  backdrop-filter: blur(3px);
-  border-radius: 28px;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
 }
 
 #ordem-servico-form {
@@ -775,18 +986,36 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 
 #ordem-servico-summary-panel {
   width: min(100%, 1080px);
-  max-height: min(72vh, 760px);
+  max-height: min(82vh, 820px);
   overflow: auto;
   box-shadow: 0 24px 54px rgba(15, 23, 42, 0.18);
+  margin: 0;
 }
 
 #ordem-servico-termo-panel {
   width: min(100%, 1080px);
-  max-height: min(72vh, 760px);
+  max-height: min(82vh, 820px);
   overflow: auto;
   margin: 0;
   padding: 24px 26px;
   box-shadow: 0 24px 54px rgba(15, 23, 42, 0.18);
+}
+
+#ordem-servico-emissao-panel {
+  width: min(100%, 1080px);
+  max-height: min(82vh, 820px);
+  overflow: auto;
+  margin: 0;
+  padding: 24px 26px 0;
+  box-shadow: 0 24px 54px rgba(15, 23, 42, 0.22);
+}
+
+#ordem-servico-emissao-panel .dsc-popup-footer-sticky {
+  position: static !important;
+  bottom: auto !important;
+  z-index: auto !important;
+  margin-top: 12px;
+  padding: 14px 0 10px;
 }
 
 .dsc-ordem-servico-summary-subtitle {
@@ -1678,9 +1907,9 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
   }
 
   .dsc-summary-overlay {
-    inset: 68px 10px 82px 10px;
+    inset: 0;
     padding: 10px;
-    border-radius: 20px;
+    border-radius: 0;
   }
 
   #ordem-servico-summary-panel {
@@ -1882,18 +2111,22 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
   }
 
   .dsc-summary-overlay {
-    inset: 64px 6px 78px 6px;
-    padding: 6px;
+    padding: 12px 8px;
   }
 
   #ordem-servico-summary-panel {
     width: 100%;
-    max-height: min(68vh, 620px);
+    max-height: min(86vh, 700px);
   }
 
   #ordem-servico-termo-panel {
     width: 100%;
-    max-height: min(74vh, 680px);
+    max-height: min(86vh, 700px);
+  }
+
+  #ordem-servico-emissao-panel {
+    width: 100%;
+    max-height: min(86vh, 700px);
   }
 
   .dsc-ordem-servico-termo-header,

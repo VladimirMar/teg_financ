@@ -14,7 +14,7 @@ import { createSeguradoraItem, deleteSeguradoraItem, listSeguradoraItemsPaginate
 import type { SeguradoraItem } from './services/seguradora'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'modalidade' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'credenciamentoTermo' | 'veiculo' | 'vinculoCondutor' | 'vinculoMonitor' | 'ordemServico' | 'cep' | 'smoke'
+type ActiveView = 'inicio' | 'dre' | 'modalidade' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'credenciamentoTermo' | 'emissaoDocumentoParametro' | 'veiculo' | 'vinculoCondutor' | 'vinculoMonitor' | 'ordemServico' | 'cep' | 'smoke'
 type SmokeSuite = 'all' | 'condutor' | 'credenciada' | 'veiculo' | 'marca-modelo'
 type SmokeLogStream = 'stdout' | 'stderr'
 type DreSortField = 'codigo' | 'descricao'
@@ -1903,6 +1903,12 @@ function App() {
               Termo
             </li>
             <li
+              className={`menu-item ${activeView === 'emissaoDocumentoParametro' ? 'menu-item-active' : ''}`}
+              onClick={() => setActiveView('emissaoDocumentoParametro')}
+            >
+              Param. Emissao
+            </li>
+            <li
               className={`menu-item ${activeView === 'veiculo' ? 'menu-item-active' : ''}`}
               onClick={() => setActiveView('veiculo')}
             >
@@ -3086,6 +3092,24 @@ function App() {
                 className="access-embed-frame"
                 src="/src/credenciamentoTermo.html"
                 title="Cadastro de credenciamento termo"
+              />
+            </div>
+          </>
+        ) : activeView === 'emissaoDocumentoParametro' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Parametros legais</p>
+              <h2 id="content-title">Parametros de Emissao</h2>
+              <p className="content-description">
+                Mantenha os textos formais da emissao por data de referencia, sem depender apenas do seed inicial do banco.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/emissaoDocumentoParametro.html"
+                title="Parametros de emissao"
               />
             </div>
           </>

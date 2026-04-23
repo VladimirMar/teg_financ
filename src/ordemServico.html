@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ORDEM DE SERVICO</title>
 
-    <link rel="stylesheet" href="css/login.css?v=20260422-termo-summary-layout-3" />
+    <link rel="stylesheet" href="css/login.css?v=20260423-emissao-footer-static-7" />
   </head>
   <body>
     <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
@@ -362,6 +362,7 @@
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-ordem-servico-button">Cancelar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="show-ordem-servico-termo-button">Consulta Termo</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="show-ordem-servico-summary-button">Resumo OS</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="show-ordem-servico-emissao-button">Emissao Doc</button>
               </div>
 
               <p class="dsc-feedback" id="ordem-servico-form-feedback"></p>
@@ -394,6 +395,26 @@
 
                     <div class="dsc-ordem-servico-summary-grid" id="ordem-servico-summary-content"></div>
                     <p class="dsc-feedback" id="ordem-servico-summary-feedback"></p>
+                  </section>
+                </div>
+
+                <div class="dsc-summary-overlay dsc-hidden" id="ordem-servico-emissao-modal" aria-hidden="true">
+                  <section class="dsc-form-section-card dsc-form-section-card-ordem-servico-resumo dsc-hidden" id="ordem-servico-emissao-panel" tabindex="-1">
+                    <div class="dsc-ordem-servico-summary-header dsc-popup-header-with-compact-close">
+                      <div>
+                        <h3 class="dsc-form-section-title">Emissao de documento</h3>
+                        <p class="dsc-ordem-servico-summary-subtitle" id="ordem-servico-emissao-subtitle">Pre-visualizacao do documento operacional da ordem de servico.</p>
+                      </div>
+                      <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-ordem-servico-emissao-button" aria-label="Fechar emissao de documento">X</button>
+                    </div>
+
+                    <div class="dsc-ordem-servico-summary-grid" id="ordem-servico-emissao-content"></div>
+                    <p class="dsc-feedback" id="ordem-servico-emissao-feedback"></p>
+
+                    <div class="dsc-login-form-buttons dsc-access-form-buttons dsc-popup-footer-sticky">
+                      <button type="button" class="dsc-btn dsc-btn-white" id="print-ordem-servico-emissao-button">Imprimir</button>
+                      <button type="button" class="dsc-btn dsc-btn-blue" id="download-ordem-servico-emissao-doc-button">Gerar .doc</button>
+                    </div>
                   </section>
                 </div>
               </div>
@@ -541,6 +562,7 @@
       const saveButton = document.getElementById('save-ordem-servico-button');
       const showTermoButton = document.getElementById('show-ordem-servico-termo-button');
       const showSummaryButton = document.getElementById('show-ordem-servico-summary-button');
+      const showEmissaoButton = document.getElementById('show-ordem-servico-emissao-button');
       const termoModal = document.getElementById('ordem-servico-termo-modal');
       const termoPanel = document.getElementById('ordem-servico-termo-panel');
       const closeTermoButton = document.getElementById('close-ordem-servico-termo-button');
@@ -553,6 +575,14 @@
       const summarySubtitle = document.getElementById('ordem-servico-summary-subtitle');
       const summaryContent = document.getElementById('ordem-servico-summary-content');
       const summaryFeedback = document.getElementById('ordem-servico-summary-feedback');
+      const emissaoModal = document.getElementById('ordem-servico-emissao-modal');
+      const emissaoPanel = document.getElementById('ordem-servico-emissao-panel');
+      const closeEmissaoButton = document.getElementById('close-ordem-servico-emissao-button');
+      const printEmissaoButton = document.getElementById('print-ordem-servico-emissao-button');
+      const downloadEmissaoDocButton = document.getElementById('download-ordem-servico-emissao-doc-button');
+      const emissaoSubtitle = document.getElementById('ordem-servico-emissao-subtitle');
+      const emissaoContent = document.getElementById('ordem-servico-emissao-content');
+      const emissaoFeedback = document.getElementById('ordem-servico-emissao-feedback');
       const statusBanner = document.getElementById('status-banner');
       const closeFormModalButton = document.getElementById('close-ordem-servico-form-modal-button');
       const importButton = document.getElementById('open-ordem-servico-import-button');
@@ -610,6 +640,10 @@
       let tipoTrocaOptions = [];
       let dreOptions = [];
       let modalidadeOptions = [];
+      let lastEmissaoDocumentMarkup = '';
+      let lastEmissaoDocumentPrintMarkup = '';
+      let lastEmissaoDocumentTitle = 'Emissao de documento';
+      let lastEmissaoDocumentFileName = 'emissao-ordem-servico.doc';
 
       const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
       const normalizeText = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trimStart().toUpperCase().slice(0, maxLength);
@@ -753,6 +787,7 @@
         termoSubtitle.textContent = 'Consulta somente leitura dos dados do termo.';
         termoFeedback.textContent = '';
         termoFeedback.className = 'dsc-feedback';
+        syncPopupPageState();
       };
 
       const focusOrdemServicoTermo = () => {
@@ -839,6 +874,7 @@
         termoPanel.classList.remove('dsc-hidden');
         termoFeedback.textContent = '';
         termoFeedback.className = 'dsc-feedback';
+        syncPopupPageState();
         focusOrdemServicoTermo();
       };
 
@@ -887,6 +923,7 @@
         summarySubtitle.textContent = 'Dados consolidados do termo, condutor, monitor e veiculo.';
         summaryFeedback.textContent = '';
         summaryFeedback.className = 'dsc-feedback';
+        syncPopupPageState();
       };
 
       const focusOrdemServicoSummary = () => {
@@ -978,6 +1015,7 @@
         summaryPanel.classList.remove('dsc-hidden');
         summaryFeedback.textContent = notices.join(' ');
         summaryFeedback.className = 'dsc-feedback';
+        syncPopupPageState();
         focusOrdemServicoSummary();
       };
 
@@ -1072,6 +1110,759 @@
         } finally {
           showSummaryButton.disabled = false;
           showSummaryButton.textContent = 'Resumo OS';
+        }
+      };
+
+      const normalizeEmissaoDateKey = (value) => {
+        const normalizedValue = String(value ?? '').trim();
+
+        if (!normalizedValue) {
+          return '';
+        }
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+          const [year, month, day] = normalizedValue.split('-');
+          return `${day}/${month}/${year}`;
+        }
+
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return normalizedValue;
+        }
+
+        return '';
+      };
+
+      const buildOrdemServicoLabel = () => {
+        const currentValue = String(osConcatInput.value ?? '').trim();
+
+        if (currentValue) {
+          return currentValue;
+        }
+
+        return buildOsConcat({
+          termoAdesao: termoAdesaoInput.value,
+          numOs: numOsInput.value,
+          revisao: revisaoInput.value,
+        });
+      };
+
+      const formatEmissaoDateLong = (value) => {
+        const normalizedValue = normalizeEmissaoDateKey(value);
+
+        if (!normalizedValue) {
+          return 'data nao informada';
+        }
+
+        const [day, month, year] = normalizedValue.split('/').map(Number);
+        const date = new Date(year, month - 1, day);
+
+        if (Number.isNaN(date.getTime())) {
+          return normalizedValue;
+        }
+
+        return new Intl.DateTimeFormat('pt-BR', {
+          weekday: 'long',
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+        }).format(date);
+      };
+
+      const buildSummaryParagraphSectionHtml = (title, paragraphs) => `
+        <article class="dsc-ordem-servico-summary-card">
+          <h4>${escapeHtml(title)}</h4>
+          <div class="dsc-ordem-servico-summary-fields">
+            ${paragraphs
+              .filter((paragraph) => String(paragraph ?? '').trim())
+              .map((paragraph) => `<p class="dsc-ordem-servico-summary-value">${escapeHtml(paragraph)}</p>`)
+              .join('')}
+          </div>
+        </article>
+      `;
+
+      const clearOrdemServicoEmissao = () => {
+        emissaoModal.classList.add('dsc-hidden');
+        emissaoModal.setAttribute('aria-hidden', 'true');
+        emissaoPanel.classList.add('dsc-hidden');
+        emissaoContent.innerHTML = '';
+        emissaoSubtitle.textContent = 'Pre-visualizacao do documento operacional da ordem de servico.';
+        emissaoFeedback.textContent = '';
+        emissaoFeedback.className = 'dsc-feedback';
+        lastEmissaoDocumentMarkup = '';
+        lastEmissaoDocumentPrintMarkup = '';
+        lastEmissaoDocumentTitle = 'Emissao de documento';
+        lastEmissaoDocumentFileName = 'emissao-ordem-servico.doc';
+        syncPopupPageState();
+      };
+
+      const focusOrdemServicoEmissao = () => {
+        if (emissaoPanel.classList.contains('dsc-hidden')) {
+          return;
+        }
+
+        closeEmissaoButton.disabled = false;
+        closeEmissaoButton.focus({ preventScroll: true });
+      };
+
+      const buildEmissaoDocumentFieldsHtml = (fields, className = '') => `
+        <div class="dsc-emissao-documento-grid${className ? ` ${className}` : ''}">
+          ${fields.map((field) => `
+            <div class="dsc-emissao-documento-field">
+              <span class="dsc-emissao-documento-field-label">${escapeHtml(field.label)}</span>
+              <strong class="dsc-emissao-documento-field-value">${escapeHtml(formatSummaryValue(field.value))}</strong>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      const buildEmissaoDocumentSectionHtml = (title, content) => `
+        <section class="dsc-emissao-documento-section">
+          <h4 class="dsc-emissao-documento-section-title">${escapeHtml(title)}</h4>
+          <div class="dsc-emissao-documento-section-body">
+            ${content}
+          </div>
+        </section>
+      `;
+
+      const buildEmissaoDocumentFileName = (ordemServicoLabel) => {
+        const normalizedLabel = String(ordemServicoLabel || '')
+          .trim()
+          .replace(/\s+/g, '-')
+          .replace(/[^0-9A-Za-z_.-]/g, '-');
+
+        return `${normalizedLabel || 'emissao-ordem-servico'}.doc`;
+      };
+
+      const buildEmissaoDocumentWordMarkup = (documentMarkup = lastEmissaoDocumentMarkup) => {
+        if (!documentMarkup) {
+          return '';
+        }
+
+        const parser = new DOMParser();
+        const parsedDocument = parser.parseFromString(`<body>${documentMarkup}</body>`, 'text/html');
+        const article = parsedDocument.body.firstElementChild;
+
+        if (!article) {
+          return documentMarkup;
+        }
+
+        const appendColon = (label) => {
+          const normalizedLabel = String(label || '').trim().replace(/:+$/, '');
+          return normalizedLabel ? `${normalizedLabel}:` : '';
+        };
+
+        const footerSectionTitle = Array.from(article.querySelectorAll('.dsc-emissao-documento-section-title'))
+          .find((title) => title.textContent?.trim().toLowerCase() === 'rodape da emissao');
+
+        footerSectionTitle?.remove();
+
+        article.querySelectorAll('.dsc-emissao-documento-section-title').forEach((title) => {
+          const normalizedTitle = String(title.textContent || '').trim().toLowerCase();
+
+          if (normalizedTitle === 'obs 01 da emissao') {
+            title.textContent = 'Obs 01';
+          }
+
+          if (normalizedTitle === 'obs 02 da emissao') {
+            title.textContent = 'Obs 02';
+          }
+        });
+
+        article.querySelectorAll('.dsc-emissao-documento-highlight-field').forEach((field) => {
+          const labelElement = field.querySelector('.dsc-emissao-documento-highlight-label, .dsc-emissao-documento-field-label');
+          const valueElement = field.querySelector('.dsc-emissao-documento-highlight-value, .dsc-emissao-documento-field-value');
+
+          if (!labelElement || !valueElement) {
+            return;
+          }
+
+          labelElement.textContent = appendColon(labelElement.textContent);
+          valueElement.classList.add('dsc-emissao-documento-inline-value');
+          labelElement.classList.add('dsc-emissao-documento-inline-label');
+          field.classList.add('dsc-emissao-documento-inline-field');
+        });
+
+        article.querySelectorAll('.dsc-emissao-documento-field').forEach((field) => {
+          const labelElement = field.querySelector('.dsc-emissao-documento-field-label');
+          const valueElement = field.querySelector('.dsc-emissao-documento-field-value');
+
+          if (!labelElement || !valueElement) {
+            return;
+          }
+
+          labelElement.textContent = appendColon(labelElement.textContent);
+          labelElement.classList.add('dsc-emissao-documento-inline-label');
+          valueElement.classList.add('dsc-emissao-documento-inline-value');
+          field.classList.add('dsc-emissao-documento-inline-field');
+
+          const normalizedLabel = String(labelElement.textContent || '').trim().toLowerCase();
+          if (normalizedLabel === 'ano:' || normalizedLabel === 'cap. teg:') {
+            field.classList.add('dsc-emissao-documento-inline-field-nowrap');
+          }
+        });
+
+        article.querySelectorAll('.dsc-emissao-documento-section').forEach((section) => {
+          const title = section.querySelector('.dsc-emissao-documento-section-title');
+
+          if (String(title?.textContent || '').trim().toLowerCase() === 'objeto') {
+            section.querySelectorAll('.dsc-emissao-documento-paragraph').forEach((paragraph) => {
+              paragraph.classList.add('dsc-emissao-documento-paragraph-objeto');
+            });
+          }
+        });
+
+        article.querySelectorAll('.dsc-emissao-documento-section').forEach((section) => {
+          const title = section.querySelector('.dsc-emissao-documento-section-title');
+          const grid = section.querySelector('.dsc-emissao-documento-grid');
+
+          if (!title || !grid) {
+            return;
+          }
+
+          const normalizedTitle = String(title.textContent || '').trim().toLowerCase();
+          let columnCount = grid.classList.contains('dsc-emissao-documento-grid-compact') ? 3 : 2;
+
+          if (normalizedTitle === 'dados do condutor' || normalizedTitle === 'dados do monitor' || normalizedTitle === 'dados da emissao') {
+            columnCount = 1;
+          }
+
+          const fields = Array.from(grid.children);
+          const table = parsedDocument.createElement('table');
+          table.className = `dsc-emissao-documento-grid-table${columnCount === 3 ? ' dsc-emissao-documento-grid-table-compact' : ''}`;
+          if (columnCount === 1) {
+            table.classList.add('dsc-emissao-documento-grid-table-single');
+          }
+
+          for (let index = 0; index < fields.length; index += columnCount) {
+            const row = parsedDocument.createElement('tr');
+
+            for (let columnIndex = 0; columnIndex < columnCount; columnIndex += 1) {
+              const cell = parsedDocument.createElement('td');
+              cell.className = 'dsc-emissao-documento-grid-cell';
+              const field = fields[index + columnIndex];
+
+              if (field) {
+                cell.appendChild(field.cloneNode(true));
+              } else {
+                cell.innerHTML = '&nbsp;';
+              }
+
+              row.appendChild(cell);
+            }
+
+            table.appendChild(row);
+          }
+
+          grid.replaceWith(table);
+        });
+
+        article.querySelectorAll('.dsc-emissao-documento-paragraph').forEach((paragraph) => {
+          const normalizedText = String(paragraph.textContent || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .toLowerCase();
+
+          if (normalizedText === 'inclusao de veiculo') {
+            paragraph.remove();
+          }
+        });
+
+        return article.outerHTML;
+      };
+
+      const buildEmissaoDocumentHtml = (documentMarkup = lastEmissaoDocumentMarkup, documentTitle = lastEmissaoDocumentTitle) => {
+        const wordMarkup = buildEmissaoDocumentWordMarkup(documentMarkup);
+
+        return `<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>${escapeHtml(documentTitle)}</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0.635cm;
+        color: #111827;
+        background: #ffffff;
+        font-family: Aptos, Arial, Helvetica, sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.1;
+      }
+      .dsc-emissao-documento {
+        display: block;
+        width: 100%;
+        margin: 0;
+      }
+      .dsc-emissao-documento-header {
+        display: block;
+        margin: 0;
+        padding: 0;
+      }
+      .dsc-emissao-documento-logo-wrap {
+        margin: 0 0 8pt;
+        text-align: center;
+        page-break-inside: avoid;
+      }
+      .dsc-emissao-documento-logo {
+        display: block;
+        margin: 0 auto;
+        max-width: 110pt;
+        max-height: 72pt;
+      }
+      .dsc-emissao-documento-title-block {
+        margin: 0 0 10pt;
+        page-break-inside: avoid;
+      }
+      .dsc-emissao-documento-title-line {
+        margin: 0 0 3pt;
+        text-align: center;
+        font-family: Aptos, Arial, Helvetica, sans-serif;
+        font-size: 10.5pt;
+        font-weight: 700;
+        line-height: 1.1;
+        color: #111827;
+      }
+      .dsc-emissao-documento-kicker {
+        margin: 0 0 4pt;
+        text-align: left;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 10pt;
+        font-weight: 700;
+        color: #111827;
+      }
+      .dsc-emissao-documento-title {
+        margin: 0 0 8pt;
+        text-align: left;
+        font-family: Aptos, Arial, Helvetica, sans-serif;
+        font-size: 14.5pt;
+        font-weight: 700;
+        line-height: 1.15;
+        letter-spacing: 0;
+        color: #111827;
+      }
+      .dsc-emissao-documento-highlight,
+      .dsc-emissao-documento-notices,
+      .dsc-emissao-documento-section,
+      .dsc-emissao-documento-footer {
+        display: block;
+        margin: 0 0 6pt;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+      .dsc-emissao-documento-highlight-label,
+      .dsc-emissao-documento-field-label {
+        display: inline;
+        margin: 0;
+        font-size: 9pt;
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: 0;
+        line-height: 1.1;
+        color: #111827;
+      }
+      .dsc-emissao-documento-highlight-value,
+      .dsc-emissao-documento-field-value,
+      .dsc-emissao-documento-paragraph,
+      .dsc-emissao-documento-date-line {
+        display: block;
+        margin: 0 0 6pt;
+        font-family: Aptos, Arial, Helvetica, sans-serif;
+        font-size: 10.5pt;
+        font-weight: 700;
+        line-height: 1.1;
+        color: #111827;
+        text-align: left;
+        word-break: break-word;
+      }
+      .dsc-emissao-documento-inline-field {
+        display: block;
+        margin: 0;
+      }
+
+      .dsc-emissao-documento-inline-field-nowrap {
+        white-space: nowrap;
+      }
+
+      .dsc-emissao-documento-inline-label {
+        display: inline;
+        margin-right: 4pt;
+      }
+
+      .dsc-emissao-documento-inline-value {
+        display: inline;
+        margin: 0;
+      }
+      .dsc-emissao-documento-section-title {
+        margin: 9pt 0 4pt;
+        padding: 0;
+        border: 0;
+        text-transform: uppercase;
+        letter-spacing: 0;
+        font-size: 9.5pt;
+        font-weight: 700;
+        line-height: 1.1;
+        color: #111827;
+        text-align: center;
+      }
+      .dsc-emissao-documento-section-body {
+        display: block;
+        margin: 0;
+      }
+
+      .dsc-emissao-documento-grid-table {
+        width: 100%;
+        margin: 0 0 2pt;
+        border-collapse: separate;
+        border-spacing: 0 5pt;
+        table-layout: fixed;
+      }
+
+      .dsc-emissao-documento-grid-table-compact .dsc-emissao-documento-grid-cell {
+        width: 33.33%;
+      }
+
+      .dsc-emissao-documento-grid-table-single .dsc-emissao-documento-grid-cell {
+        width: 100%;
+        padding-right: 0;
+      }
+
+      .dsc-emissao-documento-grid-cell {
+        width: 50%;
+        padding: 0 12pt 0 0;
+        vertical-align: top;
+      }
+
+      .dsc-emissao-documento-grid-cell:last-child {
+        padding-right: 0;
+      }
+
+      .dsc-emissao-documento-field {
+        display: block;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        page-break-inside: avoid;
+      }
+      .dsc-emissao-documento-highlight-field {
+        margin: 0 0 5pt;
+      }
+      .dsc-emissao-documento-director-block {
+        margin: 6pt 0 4pt;
+        page-break-inside: avoid;
+      }
+      .dsc-emissao-documento-director-line {
+        margin: 0 0 2pt;
+        text-align: center;
+        font-family: Aptos, Arial, Helvetica, sans-serif;
+        font-size: 10pt;
+        font-weight: 700;
+        line-height: 1.1;
+      }
+      .dsc-emissao-documento-footer {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .dsc-emissao-documento-footer .dsc-emissao-documento-paragraph {
+        text-align: justify;
+        text-justify: inter-word;
+      }
+      .dsc-emissao-documento-paragraph-objeto {
+        text-align: justify;
+        text-justify: inter-word;
+        text-align-last: center;
+      }
+      .dsc-emissao-documento-date-line {
+        text-align: center;
+        font-size: 9.5pt;
+        margin-bottom: 0;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      @page { margin: 0.635cm; }
+      @media print {
+        body { padding: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    ${wordMarkup}
+  </body>
+</html>`;
+      };
+
+      const downloadEmissaoDocumentAsDoc = () => {
+        if (!lastEmissaoDocumentMarkup) {
+          emissaoFeedback.textContent = 'Gere a emissao antes de exportar o arquivo .doc.';
+          emissaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        const documentContent = buildEmissaoDocumentHtml(lastEmissaoDocumentMarkup);
+        const blob = new Blob(['\ufeff', documentContent], { type: 'application/msword' });
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = downloadUrl;
+        link.download = lastEmissaoDocumentFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+        emissaoFeedback.textContent = `Arquivo ${lastEmissaoDocumentFileName} gerado com sucesso.`;
+        emissaoFeedback.className = 'dsc-feedback dsc-feedback-success';
+      };
+
+      const buildEmissaoDocumentMarkup = ({ parametroItem, termoItem, condutorItem, monitorItem, veiculoItem, requestedDate, notices = [], includePrefeituraImage = false }) => {
+        const credenciado = String(termoItem?.credenciado || credenciadoInput.value || '').trim();
+        const termoAdesao = String(termoItem?.termoAdesao || termoItem?.termo_adesao || termoAdesaoInput.value || '').trim();
+        const ordemServicoLabel = buildOrdemServicoLabel();
+        const prefeituraImagem = String(parametroItem?.prefeitura_imagem || '').trim();
+        const tituloEmissao = String(parametroItem?.titulo_emissao || '').trim();
+        const diretorEmissao = String(parametroItem?.diretor_emissao || '').trim();
+        const dreLabel = [dreDescricaoInput.value, modalidadeDescricaoInput.value]
+          .map((value) => String(value ?? '').trim())
+          .filter(Boolean)
+          .join(' ');
+        const motivoEmissao = String(tipoTrocaInput.value || anotacaoInput.value || '').trim();
+
+        const vehicleFields = [
+          { label: 'CRM', value: formatSummaryValue(veiculoItem?.crm || crmInput.value) },
+          { label: 'Placas', value: formatSummaryValue(veiculoItem?.placas || veiculoPlacasInput.value) },
+          { label: 'Ano', value: formatSummaryValue(veiculoItem?.ano) },
+          { label: 'Tipo', value: formatSummaryValue(veiculoItem?.tipo_de_veiculo) },
+          { label: 'CAP. Detran', value: formatSummaryValue(veiculoItem?.cap_detran) },
+          { label: 'CAP. TEG', value: formatSummaryValue(veiculoItem?.cap_teg) },
+        ];
+
+        const condutorFields = [
+          { label: 'Nome', value: formatSummaryValue(condutorItem?.condutor || condutorInput.value) },
+          { label: 'CRMC', value: formatSummaryValue(condutorItem?.crmc) },
+          { label: 'CPF', value: formatSummaryValue(condutorItem?.cpf_condutor || cpfCondutorInput.value) },
+        ];
+
+        const monitorFields = [
+          { label: 'Monitor', value: formatSummaryValue(monitorItem?.monitor || monitorInput.value) },
+          { label: 'CPF', value: formatSummaryValue(monitorItem?.cpf_monitor || cpfMonitorInput.value) },
+        ];
+
+        const metaFields = [
+          { label: 'Edital de Chamamento Publico', value: formatSummaryValue(parametroItem?.edital_chamamento_publico) },
+          { label: 'Termo de Adesao ao Credenciamento', value: formatSummaryValue(termoAdesao) },
+          { label: 'N de Ordem de Servico', value: formatSummaryValue(ordemServicoLabel, 'OS em preenchimento') },
+          { label: 'Diretoria Regional de Educacao (DRE)', value: formatSummaryValue(dreLabel) },
+        ];
+
+        const sections = [];
+
+        if (notices.length) {
+          sections.push(`
+            <aside class="dsc-emissao-documento-notices">
+              ${notices.map((notice) => `<p class="dsc-emissao-documento-paragraph">${escapeHtml(notice)}</p>`).join('')}
+            </aside>
+          `);
+        }
+
+        sections.push(buildEmissaoDocumentSectionHtml('Dados do veiculo', buildEmissaoDocumentFieldsHtml(vehicleFields, 'dsc-emissao-documento-grid-compact')));
+        sections.push(buildEmissaoDocumentSectionHtml('Dados do condutor', buildEmissaoDocumentFieldsHtml(condutorFields)));
+        sections.push(buildEmissaoDocumentSectionHtml('Dados do monitor', buildEmissaoDocumentFieldsHtml(monitorFields)));
+        sections.push(buildEmissaoDocumentSectionHtml('Objeto', `<p class="dsc-emissao-documento-paragraph">${escapeHtml(formatSummaryValue(parametroItem?.objeto))}</p>`));
+        sections.push(buildEmissaoDocumentSectionHtml('Dados da emissao', buildEmissaoDocumentFieldsHtml(metaFields)));
+        sections.push(buildEmissaoDocumentSectionHtml('Obs 01 da emissao', `<p class="dsc-emissao-documento-paragraph">${escapeHtml(formatSummaryValue(parametroItem?.obs_01_emissao))}</p>`));
+        sections.push(buildEmissaoDocumentSectionHtml('Obs 02 da emissao', `
+          <p class="dsc-emissao-documento-paragraph">${escapeHtml(formatSummaryValue(parametroItem?.obs_02_emissao))}</p>
+          <p class="dsc-emissao-documento-paragraph">${escapeHtml(formatSummaryValue(motivoEmissao, 'Nao informado'))}</p>
+        `));
+
+        lastEmissaoDocumentTitle = `Emissao ${formatSummaryValue(ordemServicoLabel, 'OS')}`;
+        lastEmissaoDocumentFileName = buildEmissaoDocumentFileName(ordemServicoLabel);
+        return `
+          <article class="dsc-emissao-documento">
+            <header class="dsc-emissao-documento-header">
+              ${includePrefeituraImage && prefeituraImagem ? `<div class="dsc-emissao-documento-logo-wrap"><img class="dsc-emissao-documento-logo" src="${escapeHtml(prefeituraImagem)}" alt="Imagem da Prefeitura" /></div>` : ''}
+              ${tituloEmissao ? `<div class="dsc-emissao-documento-title-block">${tituloEmissao.split(/\n+/).map((line) => `<p class="dsc-emissao-documento-title-line">${escapeHtml(line)}</p>`).join('')}</div>` : ''}
+            </header>
+
+            <div class="dsc-emissao-documento-highlight">
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-highlight-label">Credenciado</span>
+                <strong class="dsc-emissao-documento-highlight-value">${escapeHtml(formatSummaryValue(credenciado))}</strong>
+              </div>
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-field-label">CNPJ/CPF</span>
+                <strong class="dsc-emissao-documento-field-value">${escapeHtml(formatSummaryValue(termoItem?.cnpjCpf || termoItem?.cnpj_cpf || cnpjCpfInput.value))}</strong>
+              </div>
+            </div>
+
+            ${sections.join('')}
+
+            <footer class="dsc-emissao-documento-footer">
+              <section class="dsc-emissao-documento-section">
+                <h4 class="dsc-emissao-documento-section-title">Rodape da emissao</h4>
+                <p class="dsc-emissao-documento-paragraph">${escapeHtml(formatSummaryValue(parametroItem?.rodape_emissao))}</p>
+              </section>
+              ${diretorEmissao ? `<div class="dsc-emissao-documento-director-block">${diretorEmissao.split(/\n+/).map((line) => `<p class="dsc-emissao-documento-director-line">${escapeHtml(line)}</p>`).join('')}</div>` : ''}
+              <p class="dsc-emissao-documento-date-line">Sao Paulo, ${escapeHtml(formatEmissaoDateLong(requestedDate))}</p>
+            </footer>
+          </article>
+        `;
+      };
+
+      const handlePrintOrdemServicoEmissao = () => {
+        if (!lastEmissaoDocumentMarkup) {
+          emissaoFeedback.textContent = 'Gere a emissao antes de imprimir.';
+          emissaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        let printFrame = document.getElementById('ordem-servico-emissao-print-frame');
+
+        if (!(printFrame instanceof HTMLIFrameElement)) {
+          printFrame = document.createElement('iframe');
+          printFrame.id = 'ordem-servico-emissao-print-frame';
+          printFrame.style.position = 'fixed';
+          printFrame.style.right = '0';
+          printFrame.style.bottom = '0';
+          printFrame.style.width = '0';
+          printFrame.style.height = '0';
+          printFrame.style.border = '0';
+          printFrame.style.opacity = '0';
+          printFrame.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(printFrame);
+        }
+
+        printFrame.onload = () => {
+          const printWindow = printFrame.contentWindow;
+
+          if (!printWindow) {
+            emissaoFeedback.textContent = 'Nao foi possivel abrir a visualizacao de impressao.';
+            emissaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+            return;
+          }
+
+          printWindow.focus();
+          printWindow.print();
+          emissaoFeedback.textContent = 'Visualizacao de impressao preparada.';
+          emissaoFeedback.className = 'dsc-feedback dsc-feedback-success';
+        };
+
+        printFrame.srcdoc = buildEmissaoDocumentHtml(lastEmissaoDocumentPrintMarkup || lastEmissaoDocumentMarkup);
+      };
+
+      const handleShowOrdemServicoEmissao = async () => {
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+        const cpfCondutor = normalizeCpf(cpfCondutorInput.value);
+        const cpfMonitor = normalizeCpf(cpfMonitorInput.value);
+        const crm = normalizeCrm(crmInput.value);
+        const requestedDate = normalizeEmissaoDateKey(getCurrentDateInputValue());
+
+        termoAdesaoInput.value = termoAdesao;
+        cpfCondutorInput.value = cpfCondutor;
+        cpfMonitorInput.value = cpfMonitor;
+        crmInput.value = crm;
+
+        const hasAnyReference = termoAdesao || getDocumentDigits(cpfCondutor) || getDocumentDigits(cpfMonitor) || crm;
+
+        emissaoModal.classList.remove('dsc-hidden');
+        emissaoModal.setAttribute('aria-hidden', 'false');
+        emissaoPanel.classList.remove('dsc-hidden');
+        syncPopupPageState();
+
+        if (!hasAnyReference) {
+          emissaoContent.innerHTML = '';
+          emissaoFeedback.textContent = 'Preencha ao menos termo, CPF do condutor, CPF do monitor ou CRM para gerar a emissao.';
+          emissaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          focusOrdemServicoEmissao();
+          return;
+        }
+
+        showEmissaoButton.disabled = true;
+        showEmissaoButton.textContent = 'Gerando emissao...';
+        emissaoSubtitle.textContent = `Montando emissao para ${buildOrdemServicoLabel() || 'OS em preenchimento'}...`;
+        emissaoFeedback.textContent = 'Buscando parametros e dados consolidados...';
+        emissaoFeedback.className = 'dsc-feedback';
+        emissaoContent.innerHTML = '';
+        focusOrdemServicoEmissao();
+
+        try {
+          const [parametroResult, termoResult, condutorResult, monitorResult, veiculoResult] = await Promise.all([
+            fetchSummaryLookup(`/api/emissao-documento-parametro/resolve?dataReferencia=${encodeURIComponent(requestedDate)}`, 'Parametro de emissao nao encontrado.'),
+            termoAdesao
+              ? fetchSummaryLookup(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, 'Termo de adesao nao encontrado na tabela termo.')
+              : Promise.resolve({ item: null, error: '' }),
+            getDocumentDigits(cpfCondutor)
+              ? fetchSummaryLookup(`/api/condutor/lookup?cpf=${encodeURIComponent(cpfCondutor)}`, 'Falha ao localizar condutor.')
+              : Promise.resolve({ item: null, error: '' }),
+            getDocumentDigits(cpfMonitor)
+              ? fetchSummaryLookup(`/api/monitor/lookup?cpf=${encodeURIComponent(cpfMonitor)}`, 'Falha ao localizar monitor.')
+              : Promise.resolve({ item: null, error: '' }),
+            crm
+              ? fetchSummaryLookup(`/api/veiculo/lookup?crm=${encodeURIComponent(crm)}`, 'Falha ao localizar veiculo.')
+              : Promise.resolve({ item: null, error: '' }),
+          ]);
+
+          if (parametroResult.error || !parametroResult.item) {
+            throw new Error(parametroResult.error || 'Parametro de emissao nao encontrado.');
+          }
+
+          const notices = [];
+
+          if (termoAdesao && termoResult.error) {
+            notices.push('Termo exibido com dados do formulario porque o lookup do termo nao retornou registro.');
+          }
+
+          if (getDocumentDigits(cpfCondutor) && condutorResult.error) {
+            notices.push('Nao foi possivel complementar os dados detalhados do condutor.');
+          }
+
+          if (getDocumentDigits(cpfMonitor) && monitorResult.error) {
+            notices.push('Nao foi possivel complementar os dados detalhados do monitor.');
+          }
+
+          if (crm && veiculoResult.error) {
+            notices.push('Nao foi possivel complementar os dados detalhados do veiculo.');
+          }
+
+          emissaoSubtitle.textContent = `Documento pronto para ${buildOrdemServicoLabel() || 'OS em preenchimento'}.`;
+          lastEmissaoDocumentMarkup = buildEmissaoDocumentMarkup({
+            parametroItem: parametroResult.item,
+            termoItem: termoResult.item,
+            condutorItem: condutorResult.item,
+            monitorItem: monitorResult.item,
+            veiculoItem: veiculoResult.item,
+            requestedDate,
+            notices,
+            includePrefeituraImage: false,
+          });
+          lastEmissaoDocumentPrintMarkup = buildEmissaoDocumentMarkup({
+            parametroItem: parametroResult.item,
+            termoItem: termoResult.item,
+            condutorItem: condutorResult.item,
+            monitorItem: monitorResult.item,
+            veiculoItem: veiculoResult.item,
+            requestedDate,
+            notices,
+            includePrefeituraImage: true,
+          });
+          emissaoContent.innerHTML = lastEmissaoDocumentMarkup;
+          emissaoFeedback.textContent = notices.join(' ');
+          emissaoFeedback.className = 'dsc-feedback';
+          syncPopupPageState();
+          focusOrdemServicoEmissao();
+        } catch (error) {
+          emissaoContent.innerHTML = '';
+          emissaoFeedback.textContent = getRequestErrorMessage(error, 'Falha ao gerar a emissao do documento.');
+          emissaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          lastEmissaoDocumentMarkup = '';
+          lastEmissaoDocumentPrintMarkup = '';
+          focusOrdemServicoEmissao();
+        } finally {
+          showEmissaoButton.disabled = false;
+          showEmissaoButton.textContent = 'Emissao Doc';
         }
       };
 
@@ -1406,15 +2197,16 @@
 
       const applyViewOnlyLock = () => {
         getFormControls().forEach((element) => {
-            element.disabled = element !== cancelButton && element !== closeFormModalButton && element !== closeSummaryButton && element !== openVinculoCondutorPopupButton && element !== openVinculoMonitorPopupButton && element !== showTermoButton && element !== showSummaryButton;
+              element.disabled = element !== cancelButton && element !== closeFormModalButton && element !== closeSummaryButton && element !== openVinculoCondutorPopupButton && element !== openVinculoMonitorPopupButton && element !== showTermoButton && element !== showSummaryButton && element !== showEmissaoButton;
         });
         cancelButton.disabled = false;
         closeFormModalButton.disabled = false;
         closeSummaryButton.disabled = false;
         openVinculoCondutorPopupButton.disabled = false;
         openVinculoMonitorPopupButton.disabled = false;
-          showTermoButton.disabled = false;
+            showTermoButton.disabled = false;
         showSummaryButton.disabled = false;
+          showEmissaoButton.disabled = false;
         saveButton.classList.add('dsc-hidden');
       };
 
@@ -3342,12 +4134,18 @@
       closeFormModalButton.addEventListener('click', hideForm);
       closeTermoButton.addEventListener('click', clearOrdemServicoTermo);
       closeSummaryButton.addEventListener('click', clearOrdemServicoSummary);
+      closeEmissaoButton.addEventListener('click', clearOrdemServicoEmissao);
       showTermoButton.addEventListener('click', () => {
         void handleShowOrdemServicoTermo();
       });
       showSummaryButton.addEventListener('click', () => {
         void handleShowOrdemServicoSummary();
       });
+      showEmissaoButton.addEventListener('click', () => {
+        void handleShowOrdemServicoEmissao();
+      });
+      printEmissaoButton.addEventListener('click', handlePrintOrdemServicoEmissao);
+      downloadEmissaoDocButton.addEventListener('click', downloadEmissaoDocumentAsDoc);
       termoModal.addEventListener('click', (event) => {
         if (event.target === termoModal) {
           clearOrdemServicoTermo();
@@ -3356,6 +4154,11 @@
       summaryModal.addEventListener('click', (event) => {
         if (event.target === summaryModal) {
           clearOrdemServicoSummary();
+        }
+      });
+      emissaoModal.addEventListener('click', (event) => {
+        if (event.target === emissaoModal) {
+          clearOrdemServicoEmissao();
         }
       });
       closeImportModalButton.addEventListener('click', hideImportForm);
@@ -3407,6 +4210,11 @@
 
         if (!summaryModal.classList.contains('dsc-hidden')) {
           clearOrdemServicoSummary();
+          return;
+        }
+
+        if (!emissaoModal.classList.contains('dsc-hidden')) {
+          clearOrdemServicoEmissao();
         }
       });
 

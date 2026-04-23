@@ -195,10 +195,13 @@ const vinculoMonitorImportXmlPath = '/api/vinculo-monitor/import-xml'
 const vinculoMonitorImportRejectionsPath = '/api/vinculo-monitor/import-rejections'
 const cepTableName = 'ceps'
 const cepImportRecusaTableName = 'cep_import_recusa'
+const emissaoDocumentoParametroTableName = 'emissao_documento_parametro'
 const cepCollectionPath = '/api/cep'
 const cepLookupPath = '/api/cep/lookup'
 const cepImportXmlPath = '/api/cep/import-xml'
 const cepImportRejectionsPath = '/api/cep/import-rejections'
+const emissaoDocumentoParametroCollectionPath = '/api/emissao-documento-parametro'
+const emissaoDocumentoParametroResolvePath = '/api/emissao-documento-parametro/resolve'
 
 const sendJson = (response, statusCode, payload) => {
   response.writeHead(statusCode, {
@@ -384,6 +387,11 @@ const getOrdemServicoCodigoFromUrl = (url) => {
 
 const getTitularCodigoFromUrl = (url) => {
   const match = url.match(/^\/api\/titular\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+const getEmissaoDocumentoParametroDataFromUrl = (url) => {
+  const match = url.match(/^\/api\/emissao-documento-parametro\/([^/]+)$/)
   return match ? decodeURIComponent(match[1]) : null
 }
 
@@ -5704,6 +5712,159 @@ const getCurrentDateInputValue = () => {
   return `${year}-${month}-${day}`
 }
 
+const normalizeEmissaoDocumentoDateKey = (value) => {
+  const normalizedValue = normalizeRequestValue(value)
+
+  if (!normalizedValue) {
+    return ''
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+    const [year, month, day] = normalizedValue.split('-')
+    return `${day}/${month}/${year}`
+  }
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+    return normalizedValue
+  }
+
+  return ''
+}
+
+const buildCurrentEmissaoDocumentoDateKey = () => normalizeEmissaoDocumentoDateKey(getCurrentDateInputValue())
+
+const isEmissaoDocumentoDateKeyValid = (value) => {
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+    return false
+  }
+
+  const [day, month, year] = value.split('/').map(Number)
+  const parsed = new Date(year, month - 1, day)
+
+  return parsed.getFullYear() === year
+    && parsed.getMonth() === month - 1
+    && parsed.getDate() === day
+}
+
+const normalizeEmissaoDocumentoParamText = (value, maxLength = 4000) => {
+  return normalizeRequestValue(value)
+    .replace(/\s+/g, ' ')
+    .slice(0, maxLength)
+}
+
+const normalizeEmissaoDocumentoParamMultilineText = (value, maxLength = 4000) => {
+  return String(value ?? '')
+    .replace(/\r/g, '')
+    .replace(/\t/g, ' ')
+    .replace(/[ ]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, maxLength)
+}
+
+const defaultEmissaoDocumentoTitulo = `SECRETARIA MUNICIPAL DE MOBILIDADE URBANA E TRANSPORTE
+DIVISAO DE TRANSPORTE ESCOLAR GRATUITO
+Rua Joaquim Carlos, 655 - Bairro Pari - Sao Paulo/SP`
+
+const defaultEmissaoDocumentoDiretor = `Leandro Gabrelon
+Diretor(a)
+Em 31/03/2026,`
+
+const emissaoDocumentoParametroSelectClause = `
+  BTRIM(data_referencia) AS data_referencia,
+  COALESCE(BTRIM(objeto), '') AS objeto,
+  COALESCE(BTRIM(edital_chamamento_publico), '') AS edital_chamamento_publico,
+  COALESCE(BTRIM(obs_01_emissao), '') AS obs_01_emissao,
+  COALESCE(BTRIM(obs_02_emissao), '') AS obs_02_emissao,
+  COALESCE(BTRIM(rodape_emissao), '') AS rodape_emissao,
+  COALESCE(prefeitura_imagem, '') AS prefeitura_imagem,
+  COALESCE(titulo_emissao, '') AS titulo_emissao,
+  COALESCE(diretor_emissao, '') AS diretor_emissao`
+
+const validateEmissaoDocumentoParametroPayload = async ({
+  dataReferencia,
+  objeto,
+  editalChamamentoPublico,
+  obs01Emissao,
+  obs02Emissao,
+  rodapeEmissao,
+  prefeituraImagem,
+  tituloEmissao,
+  diretorEmissao,
+  originalDataReferencia = null,
+}) => {
+  const normalizedDataReferencia = normalizeEmissaoDocumentoDateKey(dataReferencia)
+  const normalizedOriginalDataReferencia = normalizeEmissaoDocumentoDateKey(originalDataReferencia)
+  const normalizedObjeto = normalizeEmissaoDocumentoParamText(objeto)
+  const normalizedEditalChamamentoPublico = normalizeEmissaoDocumentoParamText(editalChamamentoPublico, 50)
+  const normalizedObs01Emissao = normalizeEmissaoDocumentoParamText(obs01Emissao)
+  const normalizedObs02Emissao = normalizeEmissaoDocumentoParamText(obs02Emissao)
+  const normalizedRodapeEmissao = normalizeEmissaoDocumentoParamText(rodapeEmissao)
+  const normalizedPrefeituraImagem = String(prefeituraImagem ?? '').trim().slice(0, 2_000_000)
+  const normalizedTituloEmissao = normalizeEmissaoDocumentoParamMultilineText(tituloEmissao || defaultEmissaoDocumentoTitulo)
+  const normalizedDiretorEmissao = normalizeEmissaoDocumentoParamMultilineText(diretorEmissao || defaultEmissaoDocumentoDiretor)
+
+  if (!normalizedDataReferencia || !isEmissaoDocumentoDateKeyValid(normalizedDataReferencia)) {
+    return { status: 400, payload: { message: 'Data de referencia invalida. Use dd/mm/yyyy.' } }
+  }
+
+  if (!normalizedObjeto) {
+    return { status: 400, payload: { message: 'Objeto e obrigatorio.' } }
+  }
+
+  if (!normalizedEditalChamamentoPublico) {
+    return { status: 400, payload: { message: 'Edital de Chamamento Publico e obrigatorio.' } }
+  }
+
+  if (!normalizedObs01Emissao) {
+    return { status: 400, payload: { message: 'Obs 01 da emissao e obrigatoria.' } }
+  }
+
+  if (!normalizedObs02Emissao) {
+    return { status: 400, payload: { message: 'Obs 02 da emissao e obrigatoria.' } }
+  }
+
+  if (!normalizedRodapeEmissao) {
+    return { status: 400, payload: { message: 'Rodape da emissao e obrigatorio.' } }
+  }
+
+  if (!normalizedTituloEmissao) {
+    return { status: 400, payload: { message: 'Titulo da emissao e obrigatorio.' } }
+  }
+
+  if (!normalizedDiretorEmissao) {
+    return { status: 400, payload: { message: 'Nome do diretor da emissao e obrigatorio.' } }
+  }
+
+  const duplicateResult = await pool.query(
+    `SELECT 1
+     FROM ${emissaoDocumentoParametroTableName}
+     WHERE BTRIM(data_referencia) = $1
+       AND ($2::text IS NULL OR BTRIM(data_referencia) <> $2)
+     LIMIT 1`,
+    [normalizedDataReferencia, normalizedOriginalDataReferencia || null],
+  )
+
+  if (duplicateResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'Ja existe parametro de emissao cadastrado para esta data.' } }
+  }
+
+  return {
+    status: 200,
+    payload: {
+      dataReferencia: normalizedDataReferencia,
+      objeto: normalizedObjeto,
+      editalChamamentoPublico: normalizedEditalChamamentoPublico,
+      obs01Emissao: normalizedObs01Emissao,
+      obs02Emissao: normalizedObs02Emissao,
+      rodapeEmissao: normalizedRodapeEmissao,
+      prefeituraImagem: normalizedPrefeituraImagem,
+      tituloEmissao: normalizedTituloEmissao,
+      diretorEmissao: normalizedDiretorEmissao,
+    },
+  }
+}
+
 const isDateBeforeToday = (value) => isDateInputValid(value) && value < getCurrentDateInputValue()
 const isDateAfterToday = (value) => isDateInputValid(value) && value > getCurrentDateInputValue()
 
@@ -6529,6 +6690,26 @@ const findLatestCredenciamentoTermoByTermoAdesao = async (termoAdesao, executor 
       ORDER BY t.aditivo DESC, t.codigo DESC
       LIMIT 1${lockClause}`,
     [normalizedTermo],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const findEmissaoDocumentoParametroByDate = async (dataReferencia, executor = pool) => {
+  const normalizedDateKey = normalizeEmissaoDocumentoDateKey(dataReferencia) || buildCurrentEmissaoDocumentoDateKey()
+
+  if (!isEmissaoDocumentoDateKeyValid(normalizedDateKey)) {
+    return null
+  }
+
+  const result = await executor.query(
+    `SELECT
+       ${emissaoDocumentoParametroSelectClause}
+     FROM ${emissaoDocumentoParametroTableName}
+     WHERE TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') <= TO_DATE($1, 'DD/MM/YYYY')
+     ORDER BY TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') DESC
+     LIMIT 1`,
+    [normalizedDateKey],
   )
 
   return result.rows[0] ?? null
@@ -8120,6 +8301,78 @@ const ensureDatabaseSchema = async () => {
   await pool.query(`ALTER TABLE ${cepTableName} ADD COLUMN IF NOT EXISTS data_inclusao timestamp`)
   await pool.query(`ALTER TABLE ${cepTableName} ADD COLUMN IF NOT EXISTS data_modificacao timestamp`)
   await pool.query(`ALTER TABLE ${cepTableName} ADD COLUMN IF NOT EXISTS complemento varchar(255)`)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ${emissaoDocumentoParametroTableName} (
+      data_referencia varchar(10) PRIMARY KEY,
+      objeto text NOT NULL,
+      edital_chamamento_publico varchar(50) NOT NULL,
+      obs_01_emissao text NOT NULL,
+      obs_02_emissao text NOT NULL,
+      rodape_emissao text NOT NULL,
+      prefeitura_imagem text NOT NULL DEFAULT '',
+      titulo_emissao text NOT NULL DEFAULT '',
+      diretor_emissao text NOT NULL DEFAULT '',
+      data_inclusao timestamp without time zone NOT NULL DEFAULT NOW(),
+      data_modificacao timestamp without time zone NOT NULL DEFAULT NOW()
+    )
+  `)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS data_referencia varchar(10)`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS objeto text`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS edital_chamamento_publico varchar(50)`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS obs_01_emissao text`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS obs_02_emissao text`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS rodape_emissao text`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS prefeitura_imagem text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS titulo_emissao text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS diretor_emissao text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ALTER COLUMN data_inclusao SET DEFAULT NOW()`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ALTER COLUMN data_modificacao SET DEFAULT NOW()`)
+  await pool.query(
+    `UPDATE ${emissaoDocumentoParametroTableName}
+     SET titulo_emissao = $1
+     WHERE COALESCE(BTRIM(titulo_emissao), '') = ''`,
+    [defaultEmissaoDocumentoTitulo],
+  )
+  await pool.query(
+    `UPDATE ${emissaoDocumentoParametroTableName}
+     SET diretor_emissao = $1
+     WHERE COALESCE(BTRIM(diretor_emissao), '') = ''`,
+    [defaultEmissaoDocumentoDiretor],
+  )
+  await pool.query(
+    `INSERT INTO ${emissaoDocumentoParametroTableName} (
+       data_referencia,
+       objeto,
+       edital_chamamento_publico,
+       obs_01_emissao,
+       obs_02_emissao,
+       rodape_emissao,
+       prefeitura_imagem,
+       titulo_emissao,
+       diretor_emissao,
+       data_inclusao,
+       data_modificacao
+     )
+     SELECT CAST($1 AS varchar(10)), CAST($2 AS text), CAST($3 AS varchar(50)), CAST($4 AS text), CAST($5 AS text), CAST($6 AS text), CAST($7 AS text), CAST($8 AS text), CAST($9 AS text), NOW(), NOW()
+     WHERE NOT EXISTS (
+       SELECT 1
+       FROM ${emissaoDocumentoParametroTableName}
+       WHERE BTRIM(data_referencia) = CAST($1 AS text)
+     )`,
+    [
+      '01/01/2022',
+      normalizeEmissaoDocumentoParamText('A prestacao de servicos de transporte escolar, nos termos do Edital de Chamamento Publico SMTT/DTP n 001/2022 e do TERMO de Adesao ao Credenciamento e seus respectivos aditivos, visando ao atendimento aos educandos devidamente matriculados na rede municipal de ensino.'),
+      normalizeEmissaoDocumentoParamText('001/2022', 50),
+      normalizeEmissaoDocumentoParamText('Faz parte desta Ordem de Servico a relacao de alunos transportados (em posse da DRE) conforme Termo de Autorizacao e de Ciencia de Demanda de Transporte Escolar.'),
+      normalizeEmissaoDocumentoParamText('Esta Ordem de Servico e emitida estritamente em virtude de:'),
+      normalizeEmissaoDocumentoParamText('A SECRETARIA MUNICIPAL DE MOBILIDADE URBANA E TRANSPORTE, por meio do Departamento de Transportes Publicos, emite a presente Ordem de Servico, prevista no TERMO de Adesao ao Credenciamento a favor do CONTRATADO acima, que se obriga a prestar os servicos de transporte escolar, conforme seus termos e caracteristicas operacionais constantes na Ficha de Controle Operacional (FCO) pela respectiva Diretoria Regional de Ensino.'),
+      '',
+      defaultEmissaoDocumentoTitulo,
+      defaultEmissaoDocumentoDiretor,
+    ],
+  )
 
   await syncCondutorVinculosFromOrdemServico(pool)
   await syncMonitorVinculosFromOrdemServico(pool)
@@ -8720,6 +8973,101 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar a proxima revisao.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === emissaoDocumentoParametroResolvePath) {
+    try {
+      const requestedDate = normalizeEmissaoDocumentoDateKey(requestUrl.searchParams.get('dataReferencia') ?? '') || buildCurrentEmissaoDocumentoDateKey()
+
+      if (!isEmissaoDocumentoDateKeyValid(requestedDate)) {
+        sendJson(response, 400, { message: 'Data de referencia invalida. Use dd/mm/yyyy ou yyyy-mm-dd.' })
+        return
+      }
+
+      const item = await findEmissaoDocumentoParametroByDate(requestedDate)
+
+      if (!item) {
+        sendJson(response, 404, { message: 'Parametro de emissao nao encontrado para a data informada.' })
+        return
+      }
+
+      sendJson(response, 200, {
+        item,
+        requestedDate,
+        exactMatch: item.data_referencia === requestedDate,
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar parametro de emissao.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === emissaoDocumentoParametroCollectionPath) {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 10) || 10, 1), 50)
+      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'desc').toLowerCase() === 'asc'
+        ? 'ASC'
+        : 'DESC'
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          COALESCE(BTRIM(data_referencia), '') ILIKE $${values.length}
+          OR COALESCE(BTRIM(edital_chamamento_publico), '') ILIKE $${values.length}
+          OR COALESCE(BTRIM(objeto), '') ILIKE $${values.length}
+          OR COALESCE(BTRIM(obs_01_emissao), '') ILIKE $${values.length}
+          OR COALESCE(BTRIM(obs_02_emissao), '') ILIKE $${values.length}
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM ${emissaoDocumentoParametroTableName} ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           ${emissaoDocumentoParametroSelectClause}
+         FROM ${emissaoDocumentoParametroTableName}
+         ${whereClause}
+         ORDER BY TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') ${sortDirection}, BTRIM(data_referencia) ${sortDirection}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: 'data_referencia',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar parametros de emissao.'
 
       sendJson(response, 500, { message })
     }
@@ -10721,6 +11069,67 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'POST' && pathname === emissaoDocumentoParametroCollectionPath) {
+    try {
+      const body = await readJsonBody(request)
+      const validationResult = await validateEmissaoDocumentoParametroPayload({
+        dataReferencia: body.dataReferencia,
+        objeto: body.objeto,
+        editalChamamentoPublico: body.editalChamamentoPublico,
+        obs01Emissao: body.obs01Emissao,
+        obs02Emissao: body.obs02Emissao,
+        rodapeEmissao: body.rodapeEmissao,
+        prefeituraImagem: body.prefeituraImagem,
+        tituloEmissao: body.tituloEmissao,
+        diretorEmissao: body.diretorEmissao,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const insertResult = await pool.query(
+        `INSERT INTO ${emissaoDocumentoParametroTableName} (
+           data_referencia,
+           objeto,
+           edital_chamamento_publico,
+           obs_01_emissao,
+           obs_02_emissao,
+           rodape_emissao,
+           prefeitura_imagem,
+           titulo_emissao,
+           diretor_emissao,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+         RETURNING ${emissaoDocumentoParametroSelectClause}`,
+        [
+          validationResult.payload.dataReferencia,
+          validationResult.payload.objeto,
+          validationResult.payload.editalChamamentoPublico,
+          validationResult.payload.obs01Emissao,
+          validationResult.payload.obs02Emissao,
+          validationResult.payload.rodapeEmissao,
+          validationResult.payload.prefeituraImagem,
+          validationResult.payload.tituloEmissao,
+          validationResult.payload.diretorEmissao,
+        ],
+      )
+
+      sendJson(response, 201, { item: insertResult.rows[0] })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao cadastrar parametro de emissao.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'POST' && pathname === '/api/marca-modelo') {
     try {
       const body = await readJsonBody(request)
@@ -12242,6 +12651,88 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'PUT' && getEmissaoDocumentoParametroDataFromUrl(pathname)) {
+    try {
+      const originalDataReferencia = getEmissaoDocumentoParametroDataFromUrl(pathname)
+      const body = await readJsonBody(request)
+
+      if (!originalDataReferencia) {
+        sendJson(response, 400, { message: 'Data original invalida.' })
+        return
+      }
+
+      const normalizedOriginalDataReferencia = normalizeEmissaoDocumentoDateKey(originalDataReferencia)
+      const existingResult = await pool.query(
+        `SELECT 1
+         FROM ${emissaoDocumentoParametroTableName}
+         WHERE BTRIM(data_referencia) = $1
+         LIMIT 1`,
+        [normalizedOriginalDataReferencia],
+      )
+
+      if (existingResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Parametro de emissao nao encontrado.' })
+        return
+      }
+
+      const validationResult = await validateEmissaoDocumentoParametroPayload({
+        dataReferencia: body.dataReferencia,
+        objeto: body.objeto,
+        editalChamamentoPublico: body.editalChamamentoPublico,
+        obs01Emissao: body.obs01Emissao,
+        obs02Emissao: body.obs02Emissao,
+        rodapeEmissao: body.rodapeEmissao,
+        prefeituraImagem: body.prefeituraImagem,
+        tituloEmissao: body.tituloEmissao,
+        diretorEmissao: body.diretorEmissao,
+        originalDataReferencia: normalizedOriginalDataReferencia,
+      })
+
+      if (validationResult.status !== 200) {
+        sendJson(response, validationResult.status, validationResult.payload)
+        return
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE ${emissaoDocumentoParametroTableName}
+         SET data_referencia = $1,
+             objeto = $2,
+             edital_chamamento_publico = $3,
+             obs_01_emissao = $4,
+             obs_02_emissao = $5,
+             rodape_emissao = $6,
+             prefeitura_imagem = $7,
+             titulo_emissao = $8,
+             diretor_emissao = $9,
+             data_modificacao = NOW()
+         WHERE BTRIM(data_referencia) = $10
+         RETURNING ${emissaoDocumentoParametroSelectClause}`,
+        [
+          validationResult.payload.dataReferencia,
+          validationResult.payload.objeto,
+          validationResult.payload.editalChamamentoPublico,
+          validationResult.payload.obs01Emissao,
+          validationResult.payload.obs02Emissao,
+          validationResult.payload.rodapeEmissao,
+          validationResult.payload.prefeituraImagem,
+          validationResult.payload.tituloEmissao,
+          validationResult.payload.diretorEmissao,
+          normalizedOriginalDataReferencia,
+        ],
+      )
+
+      sendJson(response, 200, { item: updateResult.rows[0] })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao alterar parametro de emissao.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'PUT' && getMarcaModeloCodigoFromUrl(pathname)) {
     try {
       const originalCodigo = getMarcaModeloCodigoFromUrl(pathname)
@@ -13341,6 +13832,39 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao excluir troca.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'DELETE' && getEmissaoDocumentoParametroDataFromUrl(pathname)) {
+    try {
+      const dataReferencia = normalizeEmissaoDocumentoDateKey(getEmissaoDocumentoParametroDataFromUrl(pathname))
+
+      if (!dataReferencia) {
+        sendJson(response, 400, { message: 'Data invalida para exclusao.' })
+        return
+      }
+
+      const deleteResult = await pool.query(
+        `DELETE FROM ${emissaoDocumentoParametroTableName}
+         WHERE BTRIM(data_referencia) = $1
+         RETURNING BTRIM(data_referencia) AS data_referencia`,
+        [dataReferencia],
+      )
+
+      if (deleteResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Parametro de emissao nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, { deletedDataReferencia: deleteResult.rows[0].data_referencia })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao excluir parametro de emissao.'
 
       sendJson(response, 500, { message })
     }

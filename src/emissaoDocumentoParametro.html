@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parametros de emissao</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
+    <main class="dsc-access-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-management-layout">
+            <div class="dsc-access-toolbar">
+              <form class="dsc-access-filter-form" id="emissao-parametro-filter-form">
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-emissao-parametro-button">Inserir registro</button>
+                <input class="dsc-form-control dsc-access-filter-input" id="emissao-parametro-search" type="text" placeholder="Filtrar por data, edital, objeto ou observacoes" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-emissao-parametro-filter-button">Limpar</button>
+              </form>
+            </div>
+
+            <div class="dsc-popup-overlay dsc-hidden" id="emissao-parametro-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="emissao-parametro-form-title">
+                <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="emissao-parametro-form">
+                  <div class="dsc-popup-header dsc-popup-header-sticky">
+                    <h2 id="emissao-parametro-form-title">PARAMETRO DE EMISSAO</h2>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-emissao-parametro-form-modal-button" aria-label="Fechar formulario de parametro de emissao">X</button>
+                  </div>
+
+                  <div class="dsc-form-row">
+                    <label class="dsc-field-group" for="emissao-parametro-data-referencia">
+                      <span>Data referencia</span>
+                      <input class="dsc-form-control" id="emissao-parametro-data-referencia" type="text" inputmode="numeric" placeholder="22/04/2026" maxlength="10" />
+                      <div class="dsc-form-error" id="emissao-parametro-data-referencia-error"></div>
+                    </label>
+
+                    <label class="dsc-field-group" for="emissao-parametro-edital">
+                      <span>Edital de Chamamento Publico</span>
+                      <input class="dsc-form-control" id="emissao-parametro-edital" type="text" placeholder="001/2022" maxlength="50" />
+                      <div class="dsc-form-error" id="emissao-parametro-edital-error"></div>
+                    </label>
+                  </div>
+
+                  <label class="dsc-field-group" for="emissao-parametro-objeto">
+                    <span>Objeto</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-objeto" placeholder="Texto do objeto" maxlength="4000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-objeto-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-obs-01">
+                    <span>Obs 01 da emissao</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-obs-01" placeholder="Observacao 01" maxlength="4000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-obs-01-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-obs-02">
+                    <span>Obs 02 da emissao</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-obs-02" placeholder="Observacao 02" maxlength="4000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-obs-02-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-rodape">
+                    <span>Rodape da emissao</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-rodape" placeholder="Rodape formal" maxlength="4000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-rodape-error"></div>
+                  </label>
+
+                  <div class="dsc-form-row">
+                    <label class="dsc-field-group" for="emissao-parametro-imagem-prefeitura">
+                      <span>Imagem da prefeitura</span>
+                      <input class="dsc-form-control" id="emissao-parametro-imagem-prefeitura" type="file" accept="image/*" />
+                      <div class="dsc-form-error" id="emissao-parametro-imagem-prefeitura-error"></div>
+                    </label>
+
+                    <div class="dsc-field-group">
+                      <span>Pre-visualizacao da imagem</span>
+                      <div class="dsc-card" style="padding: 12px; min-height: 140px; display: flex; align-items: center; justify-content: center;">
+                        <img id="emissao-parametro-imagem-prefeitura-preview" alt="Pre-visualizacao da imagem da prefeitura" style="max-width: 100%; max-height: 180px; object-fit: contain; display: none;" />
+                      </div>
+                      <button type="button" class="dsc-btn dsc-btn-white dsc-mt20" id="clear-emissao-parametro-imagem-prefeitura-button">Remover imagem</button>
+                    </div>
+                  </div>
+
+                  <label class="dsc-field-group" for="emissao-parametro-titulo-emissao">
+                    <span>Titulo da emissao</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-titulo-emissao" placeholder="Titulo da emissao" maxlength="4000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-titulo-emissao-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-diretor-emissao">
+                    <span>Diretor da emissao</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-diretor-emissao" placeholder="Nome e assinatura do diretor" maxlength="4000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-diretor-emissao-error"></div>
+                  </label>
+
+                  <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
+                    <button type="submit" class="dsc-btn dsc-btn-blue" id="save-emissao-parametro-button">Salvar parametro</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="cancel-emissao-parametro-button">Cancelar</button>
+                  </div>
+
+                  <p class="dsc-feedback" id="emissao-parametro-form-feedback"></p>
+                </form>
+              </div>
+            </div>
+
+            <div class="dsc-card dsc-access-grid-card">
+              <div class="dsc-access-grid-header">
+                <h2>Registros cadastrados</h2>
+                <span id="emissao-parametro-total"></span>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-emissao-parametro-data-button">
+                          Data referencia <span id="sort-emissao-parametro-data-indicator">↓</span>
+                        </button>
+                      </th>
+                      <th>Edital</th>
+                      <th>Objeto</th>
+                      <th>Obs 01</th>
+                      <th class="dsc-grid-actions-column">Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="emissao-parametro-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="emissao-parametro-empty-state">Nenhum parametro de emissao encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="emissao-parametro-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-emissao-parametro-page-button">Anterior</button>
+                <span id="emissao-parametro-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-emissao-parametro-page-button">Proxima</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('emissao-parametro-form');
+      const formModal = document.getElementById('emissao-parametro-form-modal');
+      const dataReferenciaInput = document.getElementById('emissao-parametro-data-referencia');
+      const editalInput = document.getElementById('emissao-parametro-edital');
+      const objetoInput = document.getElementById('emissao-parametro-objeto');
+      const obs01Input = document.getElementById('emissao-parametro-obs-01');
+      const obs02Input = document.getElementById('emissao-parametro-obs-02');
+      const rodapeInput = document.getElementById('emissao-parametro-rodape');
+      const prefeituraImagemInput = document.getElementById('emissao-parametro-imagem-prefeitura');
+      const prefeituraImagemPreview = document.getElementById('emissao-parametro-imagem-prefeitura-preview');
+      const clearPrefeituraImagemButton = document.getElementById('clear-emissao-parametro-imagem-prefeitura-button');
+      const tituloEmissaoInput = document.getElementById('emissao-parametro-titulo-emissao');
+      const diretorEmissaoInput = document.getElementById('emissao-parametro-diretor-emissao');
+      const dataReferenciaError = document.getElementById('emissao-parametro-data-referencia-error');
+      const editalError = document.getElementById('emissao-parametro-edital-error');
+      const objetoError = document.getElementById('emissao-parametro-objeto-error');
+      const obs01Error = document.getElementById('emissao-parametro-obs-01-error');
+      const obs02Error = document.getElementById('emissao-parametro-obs-02-error');
+      const rodapeError = document.getElementById('emissao-parametro-rodape-error');
+      const prefeituraImagemError = document.getElementById('emissao-parametro-imagem-prefeitura-error');
+      const tituloEmissaoError = document.getElementById('emissao-parametro-titulo-emissao-error');
+      const diretorEmissaoError = document.getElementById('emissao-parametro-diretor-emissao-error');
+      const feedback = document.getElementById('emissao-parametro-form-feedback');
+      const gridFeedback = document.getElementById('emissao-parametro-grid-feedback');
+      const insertButton = document.getElementById('insert-emissao-parametro-button');
+      const cancelButton = document.getElementById('cancel-emissao-parametro-button');
+      const closeFormModalButton = document.getElementById('close-emissao-parametro-form-modal-button');
+      const filterForm = document.getElementById('emissao-parametro-filter-form');
+      const clearFilterButton = document.getElementById('clear-emissao-parametro-filter-button');
+      const searchInput = document.getElementById('emissao-parametro-search');
+      const gridBody = document.getElementById('emissao-parametro-grid-body');
+      const emptyState = document.getElementById('emissao-parametro-empty-state');
+      const totalLabel = document.getElementById('emissao-parametro-total');
+      const previousPageButton = document.getElementById('previous-emissao-parametro-page-button');
+      const nextPageButton = document.getElementById('next-emissao-parametro-page-button');
+      const paginationInfo = document.getElementById('emissao-parametro-pagination-info');
+      const sortDataButton = document.getElementById('sort-emissao-parametro-data-button');
+      const sortDataIndicator = document.getElementById('sort-emissao-parametro-data-indicator');
+      const formTitle = document.getElementById('emissao-parametro-form-title');
+      const saveButton = document.getElementById('save-emissao-parametro-button');
+      const statusBanner = document.getElementById('status-banner');
+
+      const pageSize = 10;
+      let currentPage = 1;
+      let totalPages = 1;
+      let currentSearch = '';
+      let currentSortDirection = 'desc';
+      let editingDataReferencia = null;
+      let formMode = 'create';
+      let bannerTimeoutId = null;
+      let currentPrefeituraImagem = '';
+      const defaultTituloEmissao = `SECRETARIA MUNICIPAL DE MOBILIDADE URBANA E TRANSPORTE\nDIVISAO DE TRANSPORTE ESCOLAR GRATUITO\nRua Joaquim Carlos, 655 - Bairro Pari - Sao Paulo/SP`;
+      const defaultDiretorEmissao = `Leandro Gabrelon\nDiretor(a)\nEm 31/03/2026,`;
+
+      const normalizeText = (value, maxLength = 4000) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
+      const normalizeTextarea = (value, maxLength = 4000) => String(value ?? '').replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim().slice(0, maxLength);
+      const normalizeDataReferencia = (value) => {
+        const normalizedValue = String(value ?? '').trim();
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+          const [year, month, day] = normalizedValue.split('-');
+          return `${day}/${month}/${year}`;
+        }
+
+        const digits = normalizedValue.replace(/\D/g, '').slice(0, 8);
+
+        if (digits.length <= 2) {
+          return digits;
+        }
+
+        if (digits.length <= 4) {
+          return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+        }
+
+        return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+      };
+
+      const isDataReferenciaValida = (value) => {
+        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+          return false;
+        }
+
+        const [day, month, year] = value.split('/').map(Number);
+        const parsed = new Date(year, month - 1, day);
+        return parsed.getFullYear() === year && parsed.getMonth() === month - 1 && parsed.getDate() === day;
+      };
+
+      const setPopupVisibility = (modalElement, shouldShow) => {
+        modalElement.classList.toggle('dsc-hidden', !shouldShow);
+        modalElement.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+      };
+
+      const syncPopupPageState = () => {
+        document.body.classList.toggle('dsc-popup-open', !formModal.classList.contains('dsc-hidden'));
+      };
+
+      const readJsonResponse = async (response) => {
+        const rawBody = await response.text();
+
+        if (!rawBody) {
+          throw new Error('Resposta vazia do servidor.');
+        }
+
+        try {
+          return JSON.parse(rawBody);
+        } catch {
+          throw new Error('Resposta invalida do servidor.');
+        }
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof TypeError) {
+          return 'API indisponivel. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        if (error instanceof Error && ['Resposta vazia do servidor.', 'Resposta invalida do servidor.'].includes(error.message)) {
+          return 'API indisponivel ou respondeu de forma incompleta. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        return error instanceof Error ? error.message : fallbackMessage;
+      };
+
+      const resetMessages = () => {
+        dataReferenciaError.textContent = '';
+        editalError.textContent = '';
+        objetoError.textContent = '';
+        obs01Error.textContent = '';
+        obs02Error.textContent = '';
+        rodapeError.textContent = '';
+        prefeituraImagemError.textContent = '';
+        tituloEmissaoError.textContent = '';
+        diretorEmissaoError.textContent = '';
+        feedback.textContent = '';
+        feedback.className = 'dsc-feedback';
+      };
+
+      const syncPrefeituraImagemPreview = () => {
+        prefeituraImagemPreview.src = currentPrefeituraImagem || '';
+        prefeituraImagemPreview.style.display = currentPrefeituraImagem ? 'block' : 'none';
+      };
+
+      const setGridMessage = (message, tone = '') => {
+        gridFeedback.textContent = message;
+        gridFeedback.className = 'dsc-feedback';
+        if (tone) {
+          gridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const showBanner = (message, tone = 'success') => {
+        if (bannerTimeoutId) {
+          window.clearTimeout(bannerTimeoutId);
+        }
+
+        statusBanner.textContent = message;
+        statusBanner.className = `dsc-status-banner dsc-status-banner-${tone}`;
+
+        bannerTimeoutId = window.setTimeout(() => {
+          statusBanner.className = 'dsc-status-banner dsc-hidden';
+          statusBanner.textContent = '';
+        }, 3500);
+      };
+
+      const setFormReadOnly = (isReadOnly) => {
+        [dataReferenciaInput, editalInput, objetoInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput].forEach((input) => {
+          input.readOnly = isReadOnly;
+        });
+        prefeituraImagemInput.disabled = isReadOnly;
+        clearPrefeituraImagemButton.disabled = isReadOnly;
+        saveButton.classList.toggle('dsc-hidden', isReadOnly);
+      };
+
+      const showForm = (mode = 'create') => {
+        const isEditing = mode === 'edit';
+        const isReadOnly = mode === 'view';
+
+        formMode = mode;
+        form.classList.remove('dsc-hidden');
+        setPopupVisibility(formModal, true);
+        syncPopupPageState();
+        formTitle.textContent = 'PARAMETRO DE EMISSAO';
+        saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar parametro';
+        setFormReadOnly(isReadOnly);
+      };
+
+      const hideForm = () => {
+        form.classList.add('dsc-hidden');
+        setPopupVisibility(formModal, false);
+        syncPopupPageState();
+        form.reset();
+        currentPrefeituraImagem = '';
+        tituloEmissaoInput.value = defaultTituloEmissao;
+        diretorEmissaoInput.value = defaultDiretorEmissao;
+        syncPrefeituraImagemPreview();
+        editingDataReferencia = null;
+        formMode = 'create';
+        setFormReadOnly(false);
+        resetMessages();
+      };
+
+      const buildUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          pageSize: String(pageSize),
+          sortDirection: currentSortDirection,
+        });
+
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+
+        return `/api/emissao-documento-parametro?${params.toString()}`;
+      };
+
+      const getExcerpt = (value, maxLength = 96) => {
+        const normalizedValue = normalizeText(value, 4000);
+        if (normalizedValue.length <= maxLength) {
+          return normalizedValue;
+        }
+
+        return `${normalizedValue.slice(0, maxLength - 3)}...`;
+      };
+
+      const renderGrid = (items) => {
+        gridBody.innerHTML = '';
+
+        if (!items.length) {
+          emptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        emptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.data_referencia || ''}</td>
+            <td>${item.edital_chamamento_publico || ''}</td>
+            <td>${getExcerpt(item.objeto || '')}</td>
+            <td>${getExcerpt(item.obs_01_emissao || '')}</td>
+            <td>
+              <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button" data-action="view" data-data-referencia="${item.data_referencia}">Consulta</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-data-referencia="${item.data_referencia}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-data-referencia="${item.data_referencia}">Excluir</button>
+              </div>
+            </td>
+          `;
+          row.dataset.item = JSON.stringify(item);
+          gridBody.appendChild(row);
+        });
+      };
+
+      const updatePagination = (totalItems) => {
+        totalLabel.textContent = `${totalItems} item(ns) encontrados`;
+        paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        previousPageButton.disabled = currentPage <= 1;
+        nextPageButton.disabled = currentPage >= totalPages;
+        sortDataIndicator.textContent = currentSortDirection === 'asc' ? '↑' : '↓';
+      };
+
+      const loadItems = async () => {
+        setGridMessage('Carregando parametros de emissao...');
+
+        try {
+          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar parametros de emissao.');
+          }
+
+          totalPages = payload.totalPages || 1;
+          currentPage = payload.page || 1;
+          renderGrid(payload.items || []);
+          updatePagination(payload.total || 0);
+          setGridMessage(payload.items && payload.items.length ? '' : 'Nenhum parametro de emissao encontrado.');
+        } catch (error) {
+          gridBody.innerHTML = '';
+          emptyState.classList.remove('dsc-hidden');
+          setGridMessage(getRequestErrorMessage(error, 'Falha ao carregar parametros de emissao.'), 'error');
+        }
+      };
+
+      const fillForm = (item) => {
+        dataReferenciaInput.value = item.data_referencia || '';
+        editalInput.value = item.edital_chamamento_publico || '';
+        objetoInput.value = item.objeto || '';
+        obs01Input.value = item.obs_01_emissao || '';
+        obs02Input.value = item.obs_02_emissao || '';
+        rodapeInput.value = item.rodape_emissao || '';
+        currentPrefeituraImagem = item.prefeitura_imagem || '';
+        tituloEmissaoInput.value = item.titulo_emissao || defaultTituloEmissao;
+        diretorEmissaoInput.value = item.diretor_emissao || defaultDiretorEmissao;
+        syncPrefeituraImagemPreview();
+      };
+
+      const startInsert = () => {
+        editingDataReferencia = null;
+        form.reset();
+        currentPrefeituraImagem = '';
+        tituloEmissaoInput.value = defaultTituloEmissao;
+        diretorEmissaoInput.value = defaultDiretorEmissao;
+        syncPrefeituraImagemPreview();
+        resetMessages();
+        showForm('create');
+      };
+
+      const startEdit = (item) => {
+        editingDataReferencia = item.data_referencia;
+        fillForm(item);
+        resetMessages();
+        showForm('edit');
+      };
+
+      const startView = (item) => {
+        editingDataReferencia = item.data_referencia;
+        fillForm(item);
+        resetMessages();
+        showForm('view');
+      };
+
+      const handleDelete = async (item) => {
+        if (!window.confirm(`Excluir o parametro de emissao com data ${item.data_referencia}?`)) {
+          return;
+        }
+
+        setGridMessage(`Excluindo parametro ${item.data_referencia}...`);
+
+        try {
+          const response = await fetch(`/api/emissao-documento-parametro/${encodeURIComponent(item.data_referencia)}`, {
+            method: 'DELETE',
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao excluir parametro de emissao.');
+          }
+
+          setGridMessage('Parametro de emissao excluido com sucesso.', 'success');
+          showBanner(`Parametro ${item.data_referencia} excluido com sucesso.`, 'success');
+          if (editingDataReferencia === item.data_referencia) {
+            hideForm();
+          }
+          await loadItems();
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao excluir parametro de emissao.');
+          setGridMessage(message, 'error');
+          showBanner(message, 'error');
+        }
+      };
+
+      gridBody.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (!(target instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const action = target.dataset.action;
+        const row = target.closest('tr');
+        const rawItem = row ? row.dataset.item : '';
+
+        if (!rawItem) {
+          return;
+        }
+
+        const item = JSON.parse(rawItem);
+
+        if (action === 'view') {
+          startView(item);
+          return;
+        }
+
+        if (action === 'edit') {
+          startEdit(item);
+          return;
+        }
+
+        if (action === 'delete') {
+          void handleDelete(item);
+        }
+      });
+
+      dataReferenciaInput.addEventListener('input', () => {
+        dataReferenciaInput.value = normalizeDataReferencia(dataReferenciaInput.value);
+      });
+
+      editalInput.addEventListener('input', () => {
+        editalInput.value = normalizeText(editalInput.value, 50);
+      });
+
+      [objetoInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput].forEach((input) => {
+        input.addEventListener('input', () => {
+          input.value = normalizeTextarea(input.value, 4000);
+        });
+      });
+
+      prefeituraImagemInput.addEventListener('change', async () => {
+        prefeituraImagemError.textContent = '';
+        const file = prefeituraImagemInput.files?.[0];
+
+        if (!file) {
+          return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+          prefeituraImagemError.textContent = 'Selecione um arquivo de imagem valido.';
+          prefeituraImagemInput.value = '';
+          return;
+        }
+
+        try {
+          currentPrefeituraImagem = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ''));
+            reader.onerror = () => reject(new Error('Falha ao ler a imagem selecionada.'));
+            reader.readAsDataURL(file);
+          });
+          syncPrefeituraImagemPreview();
+        } catch (error) {
+          prefeituraImagemError.textContent = error instanceof Error ? error.message : 'Falha ao ler a imagem selecionada.';
+        }
+      });
+
+      clearPrefeituraImagemButton.addEventListener('click', () => {
+        currentPrefeituraImagem = '';
+        prefeituraImagemInput.value = '';
+        syncPrefeituraImagemPreview();
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        resetMessages();
+
+        if (formMode === 'view') {
+          feedback.textContent = 'Consulta em modo somente leitura.';
+          return;
+        }
+
+        const dataReferencia = normalizeDataReferencia(dataReferenciaInput.value);
+        const editalChamamentoPublico = normalizeText(editalInput.value, 50);
+        const objeto = normalizeTextarea(objetoInput.value, 4000);
+        const obs01Emissao = normalizeTextarea(obs01Input.value, 4000);
+        const obs02Emissao = normalizeTextarea(obs02Input.value, 4000);
+        const rodapeEmissao = normalizeTextarea(rodapeInput.value, 4000);
+        const tituloEmissao = normalizeTextarea(tituloEmissaoInput.value, 4000);
+        const diretorEmissao = normalizeTextarea(diretorEmissaoInput.value, 4000);
+        let hasError = false;
+
+        dataReferenciaInput.value = dataReferencia;
+        editalInput.value = editalChamamentoPublico;
+        objetoInput.value = objeto;
+        obs01Input.value = obs01Emissao;
+        obs02Input.value = obs02Emissao;
+        rodapeInput.value = rodapeEmissao;
+        tituloEmissaoInput.value = tituloEmissao;
+        diretorEmissaoInput.value = diretorEmissao;
+
+        if (!dataReferencia || !isDataReferenciaValida(dataReferencia)) {
+          dataReferenciaError.textContent = 'Informe uma data valida em dd/mm/yyyy.';
+          hasError = true;
+        }
+
+        if (!editalChamamentoPublico) {
+          editalError.textContent = 'Informe o edital.';
+          hasError = true;
+        }
+
+        if (!objeto) {
+          objetoError.textContent = 'Informe o objeto.';
+          hasError = true;
+        }
+
+        if (!obs01Emissao) {
+          obs01Error.textContent = 'Informe a observacao 01.';
+          hasError = true;
+        }
+
+        if (!obs02Emissao) {
+          obs02Error.textContent = 'Informe a observacao 02.';
+          hasError = true;
+        }
+
+        if (!rodapeEmissao) {
+          rodapeError.textContent = 'Informe o rodape.';
+          hasError = true;
+        }
+
+        if (!tituloEmissao) {
+          tituloEmissaoError.textContent = 'Informe o titulo da emissao.';
+          hasError = true;
+        }
+
+        if (!diretorEmissao) {
+          diretorEmissaoError.textContent = 'Informe o diretor da emissao.';
+          hasError = true;
+        }
+
+        if (hasError) {
+          feedback.textContent = 'Corrija os campos para continuar.';
+          feedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        try {
+          const response = await fetch(editingDataReferencia ? `/api/emissao-documento-parametro/${encodeURIComponent(editingDataReferencia)}` : '/api/emissao-documento-parametro', {
+            method: editingDataReferencia ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({
+              dataReferencia,
+              editalChamamentoPublico,
+              objeto,
+              obs01Emissao,
+              obs02Emissao,
+              rodapeEmissao,
+              prefeituraImagem: currentPrefeituraImagem,
+              tituloEmissao,
+              diretorEmissao,
+            }),
+          });
+
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao gravar parametro de emissao.');
+          }
+
+          const savedItem = payload.item;
+          feedback.textContent = editingDataReferencia
+            ? `Parametro ${savedItem.data_referencia} alterado com sucesso.`
+            : `Parametro ${savedItem.data_referencia} gravado com sucesso.`;
+          feedback.classList.add('dsc-feedback-success');
+          showBanner(feedback.textContent, 'success');
+          hideForm();
+          await loadItems();
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao gravar parametro de emissao.');
+          feedback.textContent = message;
+          feedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
+        }
+      });
+
+      insertButton.addEventListener('click', startInsert);
+      cancelButton.addEventListener('click', hideForm);
+      closeFormModalButton.addEventListener('click', hideForm);
+      formModal.addEventListener('click', (event) => {
+        if (event.target === formModal) {
+          hideForm();
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !formModal.classList.contains('dsc-hidden')) {
+          hideForm();
+        }
+      });
+
+      filterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentSearch = searchInput.value.trim();
+        currentPage = 1;
+        void loadItems();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      previousPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage -= 1;
+        void loadItems();
+      });
+
+      nextPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage += 1;
+        void loadItems();
+      });
+
+      sortDataButton.addEventListener('click', () => {
+        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      void loadItems();
+    </script>
+  </body>
+</html>
