@@ -7,6 +7,82 @@
     <title>Cadastro de credenciada</title>
 
     <link rel="stylesheet" href="css/login.css" />
+    <style>
+      #credenciada-form .dsc-form-tab-panel-active {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      #credenciada-tab-termos .dsc-form-section-card {
+        margin-bottom: 0;
+      }
+
+      .dsc-credenciada-termo-grid {
+        width: 100%;
+        min-width: 100%;
+        table-layout: auto;
+      }
+
+      body:has(#credenciada-grid-body) .dsc-credenciada-termo-grid {
+        width: 100%;
+        min-width: 100%;
+        table-layout: auto;
+      }
+
+      .dsc-credenciada-termo-grid th,
+      .dsc-credenciada-termo-grid td {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+        line-height: 1.2;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+      }
+
+      body:has(#credenciada-grid-body) .dsc-credenciada-termo-grid th,
+      body:has(#credenciada-grid-body) .dsc-credenciada-termo-grid td {
+        white-space: normal;
+      }
+
+      #credenciada-tab-termos .dsc-access-grid-wrapper {
+        overflow-x: hidden;
+      }
+
+      .dsc-credenciada-termo-grid th:nth-child(1),
+      .dsc-credenciada-termo-grid td:nth-child(1) {
+        width: 18ch;
+        min-width: 18ch;
+        white-space: nowrap;
+        overflow-wrap: normal;
+        word-break: normal;
+      }
+
+      .dsc-credenciada-termo-grid th:nth-child(2),
+      .dsc-credenciada-termo-grid td:nth-child(2) {
+        width: auto;
+      }
+
+      .dsc-credenciada-termo-grid th:nth-child(3),
+      .dsc-credenciada-termo-grid td:nth-child(3) {
+        width: 12ch;
+        min-width: 12ch;
+      }
+
+      .dsc-credenciada-termo-vigencia {
+        white-space: normal;
+        width: 30%;
+      }
+
+      .dsc-credenciada-termo-vigencia strong {
+        display: block;
+        font-size: 0.72rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: #4e635d;
+      }
+
+    </style>
   </head>
   <body>
     <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
@@ -108,6 +184,12 @@
                 <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-credenciada-form-modal-button" aria-label="Fechar formulario de credenciada">X</button>
               </div>
 
+              <div class="dsc-form-tabs" id="credenciada-form-tabs">
+                <button type="button" class="dsc-form-tab-button dsc-form-tab-button-active" data-tab-target="cadastro">Dados da credenciada</button>
+                <button type="button" class="dsc-form-tab-button" data-tab-target="termos">Termos vinculados</button>
+              </div>
+
+              <div class="dsc-form-tab-panel dsc-form-tab-panel-active" id="credenciada-tab-cadastro">
               <div class="dsc-form-row dsc-form-row-credenciada-top">
                 <label class="dsc-field-group" for="credenciada-nome">
                   <span>Credenciada</span>
@@ -119,6 +201,17 @@
                   <span>CNPJ/CPF</span>
                   <input class="dsc-form-control" id="credenciada-cnpj-cpf" type="text" inputmode="numeric" placeholder="000.000.000-00 ou 00.000.000/0000-00" maxlength="18" />
                   <div class="dsc-form-error" id="credenciada-cnpj-cpf-error"></div>
+                </label>
+
+                <label class="dsc-field-group" for="credenciada-tipo-termo">
+                  <span>Tipo de termo</span>
+                  <select class="dsc-form-control" id="credenciada-tipo-termo">
+                    <option value="">Selecione</option>
+                    <option value="PESSOA FISICA">Pessoa Fisica</option>
+                    <option value="PESSOA JURIDICA">Pessoa Juridica</option>
+                    <option value="COOPERATIVA">Cooperativa</option>
+                  </select>
+                  <div class="dsc-form-error" id="credenciada-tipo-termo-error"></div>
                 </label>
               </div>
 
@@ -212,14 +305,33 @@
                     <input class="dsc-form-control" id="credenciada-cpf-representante" type="text" placeholder="000.000.000-00" maxlength="14" />
                     <div class="dsc-form-error" id="credenciada-cpf-representante-error"></div>
                   </label>
-
-                  <label class="dsc-field-group" for="credenciada-rg-representante">
-                    <span>RG representante</span>
-                    <input class="dsc-form-control" id="credenciada-rg-representante" type="text" placeholder="RG DO REPRESENTANTE" maxlength="30" />
-                    <div class="dsc-form-error" id="credenciada-rg-representante-error"></div>
-                  </label>
                 </div>
               </section>
+
+              </div>
+
+              <div class="dsc-form-tab-panel" id="credenciada-tab-termos">
+                <section class="dsc-form-section-card">
+                  <h3 class="dsc-form-section-title" id="credenciada-termo-title">Termos vinculados</h3>
+
+                  <div class="dsc-access-grid-wrapper">
+                    <table class="dsc-access-grid dsc-credenciada-termo-grid">
+                      <thead>
+                        <tr>
+                          <th>Numero do termo</th>
+                          <th>Vigencia</th>
+                          <th>Status termo</th>
+                        </tr>
+                      </thead>
+                      <tbody id="credenciada-termo-grid-body"></tbody>
+                    </table>
+
+                    <p class="dsc-empty-state dsc-hidden" id="credenciada-termo-empty-state">Nenhum termo vinculado encontrado para a credenciada informada.</p>
+                  </div>
+
+                  <p class="dsc-feedback" id="credenciada-termo-feedback"></p>
+                </section>
+              </div>
 
               <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-credenciada-button">Salvar credenciada</button>
@@ -276,6 +388,7 @@
       const form = document.getElementById('credenciada-form');
       const nomeInput = document.getElementById('credenciada-nome');
       const cnpjCpfInput = document.getElementById('credenciada-cnpj-cpf');
+      const tipoTermoInput = document.getElementById('credenciada-tipo-termo');
       const logradouroInput = document.getElementById('credenciada-logradouro');
       const bairroInput = document.getElementById('credenciada-bairro');
       const cepInput = document.getElementById('credenciada-cep');
@@ -287,10 +400,10 @@
       const telefone2Input = document.getElementById('credenciada-telefone-2');
       const representanteInput = document.getElementById('credenciada-representante');
       const cpfRepresentanteInput = document.getElementById('credenciada-cpf-representante');
-      const rgRepresentanteInput = document.getElementById('credenciada-rg-representante');
       const statusInput = document.getElementById('credenciada-status');
       const nomeError = document.getElementById('credenciada-nome-error');
       const cnpjCpfError = document.getElementById('credenciada-cnpj-cpf-error');
+      const tipoTermoError = document.getElementById('credenciada-tipo-termo-error');
       const logradouroError = document.getElementById('credenciada-logradouro-error');
       const bairroError = document.getElementById('credenciada-bairro-error');
       const cepError = document.getElementById('credenciada-cep-error');
@@ -302,7 +415,6 @@
       const telefone2Error = document.getElementById('credenciada-telefone-2-error');
       const representanteError = document.getElementById('credenciada-representante-error');
       const cpfRepresentanteError = document.getElementById('credenciada-cpf-representante-error');
-      const rgRepresentanteError = document.getElementById('credenciada-rg-representante-error');
       const statusError = document.getElementById('credenciada-status-error');
       const feedback = document.getElementById('credenciada-form-feedback');
       const gridFeedback = document.getElementById('credenciada-grid-feedback');
@@ -346,6 +458,13 @@
       const rejectionPaginationInfo = document.getElementById('credenciada-rejection-pagination-info');
       const clearRejectionFilterButton = document.getElementById('clear-credenciada-rejection-filter-button');
       const closeRejectionPanelButton = document.getElementById('close-credenciada-rejection-modal-button');
+      const formTabButtons = Array.from(document.querySelectorAll('#credenciada-form-tabs .dsc-form-tab-button'));
+      const cadastroTabPanel = document.getElementById('credenciada-tab-cadastro');
+      const termoTabPanel = document.getElementById('credenciada-tab-termos');
+      const termoTitle = document.getElementById('credenciada-termo-title');
+      const termoGridBody = document.getElementById('credenciada-termo-grid-body');
+      const termoEmptyState = document.getElementById('credenciada-termo-empty-state');
+      const termoFeedback = document.getElementById('credenciada-termo-feedback');
 
       const pageSize = 20;
       const rejectionPageSize = 20;
@@ -454,9 +573,87 @@
         return timePart ? `${formattedDate} ${timePart.slice(0, 5)}` : formattedDate;
       };
 
+      const formatDateLabel = (value) => value ? String(value).split('-').reverse().join('/') : '';
+
+      const normalizeSearchText = (value) => String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toUpperCase();
+
+      const getCurrentDateInputValue = () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       const normalizeStatusValue = (value) => {
         const normalized = normalizeText(value, 50).toUpperCase();
         return normalized === 'CANCELADO' ? 'CANCELADO' : 'ATIVO';
+      };
+      const normalizeTipoTermoValue = (value) => {
+        const normalized = normalizeText(value, 20)
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+
+        if (normalized === 'COOPERATIVA') {
+          return 'COOPERATIVA';
+        }
+
+        if (normalized === 'PESSOA JURIDICA') {
+          return 'PESSOA JURIDICA';
+        }
+
+        return 'PESSOA FISICA';
+      };
+      const syncRepresentanteFieldsValue = () => {
+        const isPessoaFisica = tipoTermoInput.value === 'PESSOA FISICA';
+
+        if (!isPessoaFisica) {
+          return;
+        }
+
+        representanteInput.value = normalizeText(nomeInput.value, 255);
+        cpfRepresentanteInput.value = normalizeCpf(cnpjCpfInput.value);
+      };
+      const syncRepresentanteFieldsState = () => {
+        const isPessoaFisica = tipoTermoInput.value === 'PESSOA FISICA';
+        const shouldDisable = formMode === 'view' || isPessoaFisica;
+
+        [representanteInput, cpfRepresentanteInput].forEach((input) => {
+          input.disabled = shouldDisable;
+        });
+      };
+      const syncTipoTermoByDocument = () => {
+        const digits = cnpjCpfInput.value.replace(/\D/g, '');
+
+        if (!digits) {
+          tipoTermoInput.value = '';
+          tipoTermoInput.disabled = true;
+          syncRepresentanteFieldsValue();
+          syncRepresentanteFieldsState();
+          return;
+        }
+
+        if (digits.length <= 11) {
+          tipoTermoInput.value = 'PESSOA FISICA';
+          tipoTermoInput.disabled = true;
+          syncRepresentanteFieldsValue();
+          syncRepresentanteFieldsState();
+          return;
+        }
+
+        tipoTermoInput.disabled = false;
+
+        if (!['PESSOA JURIDICA', 'COOPERATIVA'].includes(tipoTermoInput.value)) {
+          tipoTermoInput.value = 'PESSOA JURIDICA';
+        }
+
+        syncRepresentanteFieldsValue();
+        syncRepresentanteFieldsState();
       };
 
       const readJsonResponse = async (response) => {
@@ -488,6 +685,7 @@
       const resetMessages = () => {
         nomeError.textContent = '';
         cnpjCpfError.textContent = '';
+        tipoTermoError.textContent = '';
         logradouroError.textContent = '';
         bairroError.textContent = '';
         cepError.textContent = '';
@@ -499,10 +697,67 @@
         telefone2Error.textContent = '';
         representanteError.textContent = '';
         cpfRepresentanteError.textContent = '';
-        rgRepresentanteError.textContent = '';
         statusError.textContent = '';
         feedback.textContent = '';
         feedback.className = 'dsc-feedback';
+      };
+      const formErrors = {
+        credenciado: nomeError,
+        cnpjCpf: cnpjCpfError,
+        tipoPessoa: tipoTermoError,
+        cep: cepError,
+        numero: numeroError,
+        complemento: complementoError,
+        logradouro: logradouroError,
+        bairro: bairroError,
+        municipio: municipioError,
+        email: emailError,
+        telefone1: telefone1Error,
+        telefone2: telefone2Error,
+        representante: representanteError,
+        cpfRepresentante: cpfRepresentanteError,
+        status: statusError,
+      };
+      const errorTargets = {
+        credenciado: nomeInput,
+        cnpjCpf: cnpjCpfInput,
+        tipoPessoa: tipoTermoInput,
+        cep: cepInput,
+        numero: numeroInput,
+        complemento: complementoInput,
+        logradouro: logradouroInput,
+        bairro: bairroInput,
+        municipio: municipioInput,
+        email: emailInput,
+        telefone1: telefone1Input,
+        telefone2: telefone2Input,
+        representante: representanteInput,
+        cpfRepresentante: cpfRepresentanteInput,
+        status: statusInput,
+      };
+      const revealFirstFormError = (errorMap = {}) => {
+        const firstErrorEntry = Object.entries(errorMap).find(([key, value]) => formErrors[key] && value);
+
+        if (!firstErrorEntry) {
+          return;
+        }
+
+        const [firstErrorKey, firstErrorMessage] = firstErrorEntry;
+        const target = errorTargets[firstErrorKey];
+
+        if (firstErrorMessage && feedback.textContent.trim() && !feedback.textContent.includes(firstErrorMessage)) {
+          feedback.textContent = `${feedback.textContent.trim()} ${firstErrorMessage}`;
+        }
+
+        if (!target || typeof target.scrollIntoView !== 'function') {
+          return;
+        }
+
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        if (typeof target.focus === 'function') {
+          window.setTimeout(() => target.focus({ preventScroll: true }), 120);
+        }
       };
 
       const resetImportMessages = () => {
@@ -527,6 +782,107 @@
         }
       };
 
+      const setActiveFormTab = (tabName = 'cadastro') => {
+        formTabButtons.forEach((button) => {
+          const isActive = button.dataset.tabTarget === tabName;
+          button.classList.toggle('dsc-form-tab-button-active', isActive);
+        });
+
+        cadastroTabPanel.classList.toggle('dsc-form-tab-panel-active', tabName === 'cadastro');
+        termoTabPanel.classList.toggle('dsc-form-tab-panel-active', tabName === 'termos');
+      };
+
+      const resetLinkedTermoGrid = () => {
+        termoGridBody.innerHTML = '';
+        termoEmptyState.classList.add('dsc-hidden');
+        termoFeedback.textContent = '';
+        termoFeedback.className = 'dsc-feedback';
+        termoTitle.textContent = 'Termos vinculados';
+      };
+
+      const renderLinkedTermoGrid = (items) => {
+        termoGridBody.innerHTML = '';
+        termoEmptyState.classList.toggle('dsc-hidden', items.length > 0);
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          const inicioVigencia = formatDateLabel(item.inicio_vigencia) || '-';
+          const terminoVigencia = formatDateLabel(item.termino_vigencia) || '-';
+          row.innerHTML = `
+            <td><strong>${item.termo_adesao || '-'}</strong></td>
+            <td class="dsc-credenciada-termo-vigencia"><strong>Inicio</strong>${inicioVigencia}<br /><strong>Termino</strong>${terminoVigencia}</td>
+            <td>${item.status_termo || ''}</td>
+          `;
+          termoGridBody.appendChild(row);
+        });
+      };
+
+      const loadLinkedTermos = async (showMissingMessage = false) => {
+        const credenciado = normalizeSearchText(nomeInput.value);
+        const cnpjCpfDigits = String(cnpjCpfInput.value || '').replace(/\D/g, '');
+        const searchValue = nomeInput.value.trim() || cnpjCpfInput.value.trim();
+
+        if (!credenciado && !cnpjCpfDigits) {
+          resetLinkedTermoGrid();
+          if (showMissingMessage) {
+            termoFeedback.textContent = 'Salve ou informe a credenciada para consultar os termos vinculados.';
+            termoFeedback.classList.add('dsc-feedback-error');
+          }
+          return;
+        }
+
+        termoTitle.textContent = nomeInput.value
+          ? `Termos vinculados - ${nomeInput.value}`
+          : 'Termos vinculados';
+        termoFeedback.textContent = 'Carregando termos vinculados...';
+        termoFeedback.className = 'dsc-feedback';
+
+        try {
+          const allItems = [];
+          let lookupPage = 1;
+          let lookupTotalPages = 1;
+
+          do {
+            const response = await fetch(`/api/termo?page=${lookupPage}&pageSize=50&search=${encodeURIComponent(searchValue)}`, {
+              headers: { Accept: 'application/json' },
+            });
+            const payload = await readJsonResponse(response);
+
+            if (!response.ok) {
+              throw new Error(payload.message || 'Falha ao consultar termos vinculados.');
+            }
+
+            (payload.items || []).forEach((item) => allItems.push(item));
+            lookupTotalPages = payload.totalPages || 1;
+            lookupPage += 1;
+          } while (lookupPage <= lookupTotalPages);
+
+          const filteredItems = allItems
+            .filter((item) => {
+              const itemName = normalizeSearchText(item?.credenciado || '');
+              const itemDocument = String(item?.cnpj_cpf || '').replace(/\D/g, '');
+
+              if (cnpjCpfDigits && itemDocument && itemDocument === cnpjCpfDigits) {
+                return true;
+              }
+
+              return Boolean(credenciado) && itemName === credenciado;
+            })
+            .sort((left, right) => {
+              const leftStart = left?.inicio_vigencia ? new Date(left.inicio_vigencia).getTime() : 0;
+              const rightStart = right?.inicio_vigencia ? new Date(right.inicio_vigencia).getTime() : 0;
+              return rightStart - leftStart;
+            });
+
+          renderLinkedTermoGrid(filteredItems);
+          termoFeedback.textContent = filteredItems.length ? '' : 'Nenhum termo vinculado encontrado para a credenciada informada.';
+        } catch (error) {
+          resetLinkedTermoGrid();
+          termoFeedback.textContent = getRequestErrorMessage(error, 'Falha ao consultar termos vinculados.');
+          termoFeedback.classList.add('dsc-feedback-error');
+        }
+      };
+
       const showBanner = (message, tone = 'success') => {
         if (bannerTimeoutId) {
           window.clearTimeout(bannerTimeoutId);
@@ -542,7 +898,7 @@
       };
 
       const setFormReadOnly = (isReadOnly) => {
-        [nomeInput, cnpjCpfInput, cepInput, numeroInput, complementoInput, emailInput, telefone1Input, telefone2Input, representanteInput, cpfRepresentanteInput, rgRepresentanteInput, statusInput].forEach((input) => {
+        [nomeInput, cnpjCpfInput, cepInput, numeroInput, complementoInput, emailInput, telefone1Input, telefone2Input, representanteInput, cpfRepresentanteInput, statusInput, tipoTermoInput].forEach((input) => {
           if ('readOnly' in input) {
             input.readOnly = isReadOnly;
           }
@@ -550,6 +906,11 @@
             input.disabled = isReadOnly;
           }
         });
+        if (!isReadOnly) {
+          syncTipoTermoByDocument();
+        } else {
+          syncRepresentanteFieldsState();
+        }
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
       };
 
@@ -580,6 +941,8 @@
         formTitle.textContent = 'CREDENCIADA';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar credenciada';
         setFormReadOnly(isReadOnly);
+        setActiveFormTab('cadastro');
+        void loadLinkedTermos();
       };
 
       const showImportForm = () => {
@@ -616,6 +979,8 @@
         editingCodigo = null;
         formMode = 'create';
         setFormReadOnly(false);
+        setActiveFormTab('cadastro');
+        resetLinkedTermoGrid();
         resetMessages();
       };
 
@@ -786,6 +1151,8 @@
       const startInsert = () => {
         editingCodigo = null;
         form.reset();
+        tipoTermoInput.value = '';
+        tipoTermoInput.disabled = true;
         resetMessages();
         showForm('create');
       };
@@ -794,6 +1161,7 @@
         editingCodigo = item.codigo;
         nomeInput.value = item.credenciado || '';
         cnpjCpfInput.value = normalizeCnpjCpf(item.cnpj_cpf || '');
+        tipoTermoInput.value = normalizeTipoTermoValue(item.tipo_pessoa || '');
         logradouroInput.value = item.logradouro || '';
         bairroInput.value = item.bairro || '';
         cepInput.value = item.cep || '';
@@ -805,7 +1173,6 @@
         telefone2Input.value = item.telefone_02 || '';
         representanteInput.value = item.representante || '';
         cpfRepresentanteInput.value = item.cpf_representante || '';
-        rgRepresentanteInput.value = item.rg_representante || '';
         statusInput.value = normalizeStatusValue(item.status);
         resetMessages();
         showForm('edit');
@@ -815,6 +1182,7 @@
         editingCodigo = item.codigo;
         nomeInput.value = item.credenciado || '';
         cnpjCpfInput.value = normalizeCnpjCpf(item.cnpj_cpf || '');
+        tipoTermoInput.value = normalizeTipoTermoValue(item.tipo_pessoa || '');
         logradouroInput.value = item.logradouro || '';
         bairroInput.value = item.bairro || '';
         cepInput.value = item.cep || '';
@@ -826,7 +1194,6 @@
         telefone2Input.value = item.telefone_02 || '';
         representanteInput.value = item.representante || '';
         cpfRepresentanteInput.value = item.cpf_representante || '';
-        rgRepresentanteInput.value = item.rg_representante || '';
         statusInput.value = normalizeStatusValue(item.status);
         resetMessages();
         showForm('view');
@@ -897,10 +1264,24 @@
 
       nomeInput.addEventListener('input', () => {
         nomeInput.value = normalizeText(nomeInput.value, 255);
+        syncRepresentanteFieldsValue();
+      });
+
+      nomeInput.addEventListener('blur', () => {
+        if (termoTabPanel.classList.contains('dsc-form-tab-panel-active')) {
+          void loadLinkedTermos(true);
+        }
       });
 
       cnpjCpfInput.addEventListener('input', () => {
         cnpjCpfInput.value = normalizeCnpjCpf(cnpjCpfInput.value);
+        syncTipoTermoByDocument();
+      });
+
+      cnpjCpfInput.addEventListener('blur', () => {
+        if (termoTabPanel.classList.contains('dsc-form-tab-panel-active')) {
+          void loadLinkedTermos(true);
+        }
       });
 
       cepInput.addEventListener('input', () => {
@@ -976,15 +1357,12 @@
         cpfRepresentanteInput.value = normalizeCpf(cpfRepresentanteInput.value);
       });
 
-      rgRepresentanteInput.addEventListener('input', () => {
-        rgRepresentanteInput.value = normalizeText(rgRepresentanteInput.value, 30);
-      });
-
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         const credenciado = normalizeText(nomeInput.value, 255);
         const cnpjCpf = normalizeCnpjCpf(cnpjCpfInput.value);
+        const tipoTermo = normalizeTipoTermoValue(tipoTermoInput.value);
         const cep = normalizeCep(cepInput.value);
         const numero = normalizeText(numeroInput.value, 30);
         const complemento = normalizeText(complementoInput.value, 30);
@@ -993,7 +1371,6 @@
         const telefone2 = normalizePhone(telefone2Input.value);
         const representante = normalizeText(representanteInput.value, 255);
         const cpfRepresentante = normalizeCpf(cpfRepresentanteInput.value);
-        const rgRepresentante = normalizeText(rgRepresentanteInput.value, 30);
         const status = normalizeStatusValue(statusInput.value);
         let hasError = false;
 
@@ -1006,6 +1383,7 @@
 
         nomeInput.value = credenciado;
         cnpjCpfInput.value = cnpjCpf;
+        syncTipoTermoByDocument();
         cepInput.value = cep;
         numeroInput.value = numero;
         complementoInput.value = complemento;
@@ -1014,8 +1392,8 @@
         telefone2Input.value = telefone2;
         representanteInput.value = representante;
         cpfRepresentanteInput.value = cpfRepresentante;
-        rgRepresentanteInput.value = rgRepresentante;
         statusInput.value = status;
+        syncRepresentanteFieldsValue();
 
         if (!credenciado) {
           nomeError.textContent = 'Informe a credenciada.';
@@ -1024,6 +1402,11 @@
 
         if (![11, 14].includes(cnpjCpf.replace(/\D/g, '').length)) {
           cnpjCpfError.textContent = 'CNPJ/CPF deve conter 11 ou 14 digitos.';
+          hasError = true;
+        }
+
+        if (cnpjCpf.replace(/\D/g, '').length === 14 && !['PESSOA JURIDICA', 'COOPERATIVA'].includes(tipoTermo)) {
+          tipoTermoError.textContent = 'Para CNPJ, selecione Pessoa Juridica ou Cooperativa.';
           hasError = true;
         }
 
@@ -1055,6 +1438,16 @@
         if (hasError) {
           feedback.textContent = 'Corrija os campos para continuar.';
           feedback.classList.add('dsc-feedback-error');
+          revealFirstFormError({
+            credenciado: nomeError.textContent,
+            cnpjCpf: cnpjCpfError.textContent,
+            tipoPessoa: tipoTermoError.textContent,
+            cep: cepError.textContent,
+            email: emailError.textContent,
+            telefone1: telefone1Error.textContent,
+            telefone2: telefone2Error.textContent,
+            cpfRepresentante: cpfRepresentanteError.textContent,
+          });
           return;
         }
 
@@ -1068,6 +1461,7 @@
             body: JSON.stringify({
               credenciado,
               cnpjCpf,
+              tipoPessoa: tipoTermo,
               cep,
               numero,
               complemento,
@@ -1076,7 +1470,6 @@
               telefone2,
               representante,
               cpfRepresentante,
-              rgRepresentante,
               status,
             }),
           });
@@ -1084,6 +1477,16 @@
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
+            if (payload.errors) {
+              Object.entries(payload.errors).forEach(([key, value]) => {
+                if (formErrors[key]) {
+                  formErrors[key].textContent = value;
+                }
+              });
+              feedback.textContent = payload.message || 'Falha ao gravar credenciada.';
+              feedback.classList.add('dsc-feedback-error');
+              revealFirstFormError(payload.errors);
+            }
             throw new Error(payload.message || 'Falha ao gravar credenciada.');
           }
 
@@ -1097,8 +1500,10 @@
           await loadItems();
         } catch (error) {
           const message = getRequestErrorMessage(error, 'Falha ao gravar credenciada.');
-          feedback.textContent = message;
-          feedback.classList.add('dsc-feedback-error');
+          if (!feedback.textContent.trim()) {
+            feedback.textContent = message;
+            feedback.classList.add('dsc-feedback-error');
+          }
           showBanner(message, 'error');
         }
       });
@@ -1137,6 +1542,15 @@
       cancelImportButton.addEventListener('click', hideImportForm);
       closeImportModalButton.addEventListener('click', hideImportForm);
       closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
+      formTabButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const targetTab = button.dataset.tabTarget || 'cadastro';
+          setActiveFormTab(targetTab);
+          if (targetTab === 'termos') {
+            void loadLinkedTermos(true);
+          }
+        });
+      });
       importModal.addEventListener('click', (event) => {
         if (event.target === importModal) {
           hideImportForm();

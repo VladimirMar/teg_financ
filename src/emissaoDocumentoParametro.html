@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Parametros de emissao</title>
+    <title>Parametros gerais</title>
 
     <link rel="stylesheet" href="css/login.css" />
   </head>
@@ -16,8 +16,8 @@
           <div class="dsc-access-management-layout">
             <div class="dsc-access-toolbar">
               <form class="dsc-access-filter-form" id="emissao-parametro-filter-form">
-                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-emissao-parametro-button">Inserir registro</button>
-                <input class="dsc-form-control dsc-access-filter-input" id="emissao-parametro-search" type="text" placeholder="Filtrar por data, edital, objeto ou observacoes" />
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-emissao-parametro-button">Inserir parametro geral</button>
+                <input class="dsc-form-control dsc-access-filter-input" id="emissao-parametro-search" type="text" placeholder="Filtrar por data de referencia" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-emissao-parametro-filter-button">Limpar</button>
               </form>
@@ -27,25 +27,23 @@
               <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="emissao-parametro-form-title">
                 <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="emissao-parametro-form">
                   <div class="dsc-popup-header dsc-popup-header-sticky">
-                    <h2 id="emissao-parametro-form-title">PARAMETRO DE EMISSAO</h2>
-                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-emissao-parametro-form-modal-button" aria-label="Fechar formulario de parametro de emissao">X</button>
+                    <h2 id="emissao-parametro-form-title">PARAMETROS GERAIS</h2>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-emissao-parametro-form-modal-button" aria-label="Fechar formulario de parametros gerais">X</button>
                   </div>
 
                   <div class="dsc-default-audit-panel dsc-hidden" id="emissao-parametro-default-audit-panel"></div>
 
-                  <div class="dsc-form-row">
-                    <label class="dsc-field-group" for="emissao-parametro-data-referencia">
-                      <span>Data referencia</span>
-                      <input class="dsc-form-control" id="emissao-parametro-data-referencia" type="text" inputmode="numeric" placeholder="22/04/2026" maxlength="10" />
-                      <div class="dsc-form-error" id="emissao-parametro-data-referencia-error"></div>
-                    </label>
+                  <label class="dsc-field-group" for="emissao-parametro-data-referencia">
+                    <span>Data referencia</span>
+                    <input class="dsc-form-control" id="emissao-parametro-data-referencia" type="text" inputmode="numeric" placeholder="22/04/2026" maxlength="10" />
+                    <div class="dsc-form-error" id="emissao-parametro-data-referencia-error"></div>
+                  </label>
 
-                    <label class="dsc-field-group" for="emissao-parametro-edital">
-                      <span>Edital de Chamamento Publico</span>
-                      <input class="dsc-form-control" id="emissao-parametro-edital" type="text" placeholder="001/2022" maxlength="50" />
-                      <div class="dsc-form-error" id="emissao-parametro-edital-error"></div>
-                    </label>
-                  </div>
+                  <label class="dsc-field-group" for="emissao-parametro-edital">
+                    <span>Edital de Chamamento Publico</span>
+                    <input class="dsc-form-control" id="emissao-parametro-edital" type="text" placeholder="001/2022" maxlength="50" />
+                    <div class="dsc-form-error" id="emissao-parametro-edital-error"></div>
+                  </label>
 
                   <label class="dsc-field-group" for="emissao-parametro-objeto">
                     <span>Objeto para emissao da OrdemServico</span>
@@ -95,6 +93,42 @@
                     <div class="dsc-form-error" id="emissao-parametro-assinaturas-aditivo-error"></div>
                   </label>
 
+                  <label class="dsc-field-group" for="emissao-parametro-descricao-contrato-pf">
+                    <span>Descricao do contrato PF</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-descricao-contrato-pf" placeholder="Descricao do contrato para pessoa fisica" maxlength="20000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-descricao-contrato-pf-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-descricao-contrato-pj">
+                    <span>Descricao do contrato PJ</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-descricao-contrato-pj" placeholder="Descricao do contrato para pessoa juridica" maxlength="20000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-descricao-contrato-pj-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-corpo-contrato-pf">
+                    <span>Corpo do contrato PF</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-corpo-contrato-pf" placeholder="Corpo do contrato para pessoa fisica" maxlength="250000" rows="24"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-corpo-contrato-pf-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-corpo-contrato-pj">
+                    <span>Corpo do contrato PJ</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-corpo-contrato-pj" placeholder="Corpo do contrato para pessoa juridica" maxlength="250000" rows="24"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-corpo-contrato-pj-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-link-modelo-relatorio-contrato-pf">
+                    <span>Link do modelo Word do relatorio de contrato PF</span>
+                    <input class="dsc-form-control" id="emissao-parametro-link-modelo-relatorio-contrato-pf" type="text" placeholder="Informe o link ou caminho do modelo Word para pessoa fisica" maxlength="4000" />
+                    <div class="dsc-form-error" id="emissao-parametro-link-modelo-relatorio-contrato-pf-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-link-modelo-relatorio-contrato-pj">
+                    <span>Link do modelo Word do relatorio de contrato PJ</span>
+                    <input class="dsc-form-control" id="emissao-parametro-link-modelo-relatorio-contrato-pj" type="text" placeholder="Informe o link ou caminho do modelo Word para pessoa juridica" maxlength="4000" />
+                    <div class="dsc-form-error" id="emissao-parametro-link-modelo-relatorio-contrato-pj-error"></div>
+                  </label>
+
                   <label class="dsc-field-group" for="emissao-parametro-obs-01">
                     <span>Obs 01 da emissao</span>
                     <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-obs-01" placeholder="Observacao 01" maxlength="4000"></textarea>
@@ -113,20 +147,18 @@
                     <div class="dsc-form-error" id="emissao-parametro-rodape-error"></div>
                   </label>
 
-                  <div class="dsc-form-row">
-                    <label class="dsc-field-group" for="emissao-parametro-imagem-prefeitura">
-                      <span>Imagem da prefeitura</span>
-                      <input class="dsc-form-control" id="emissao-parametro-imagem-prefeitura" type="file" accept="image/*" />
-                      <div class="dsc-form-error" id="emissao-parametro-imagem-prefeitura-error"></div>
-                    </label>
+                  <label class="dsc-field-group" for="emissao-parametro-imagem-prefeitura">
+                    <span>Imagem da prefeitura</span>
+                    <input class="dsc-form-control" id="emissao-parametro-imagem-prefeitura" type="file" accept="image/*" />
+                    <div class="dsc-form-error" id="emissao-parametro-imagem-prefeitura-error"></div>
+                  </label>
 
-                    <div class="dsc-field-group">
-                      <span>Pre-visualizacao da imagem</span>
-                      <div class="dsc-card" style="padding: 12px; min-height: 140px; display: flex; align-items: center; justify-content: center;">
-                        <img id="emissao-parametro-imagem-prefeitura-preview" alt="Pre-visualizacao da imagem da prefeitura" style="max-width: 100%; max-height: 180px; object-fit: contain; display: none;" />
-                      </div>
-                      <button type="button" class="dsc-btn dsc-btn-white dsc-mt20" id="clear-emissao-parametro-imagem-prefeitura-button">Remover imagem</button>
+                  <div class="dsc-field-group">
+                    <span>Pre-visualizacao da imagem</span>
+                    <div class="dsc-card" style="padding: 12px; min-height: 140px; display: flex; align-items: center; justify-content: center;">
+                      <img id="emissao-parametro-imagem-prefeitura-preview" alt="Pre-visualizacao da imagem da prefeitura" style="max-width: 100%; max-height: 180px; object-fit: contain; display: none;" />
                     </div>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-mt20" id="clear-emissao-parametro-imagem-prefeitura-button">Remover imagem</button>
                   </div>
 
                   <label class="dsc-field-group" for="emissao-parametro-titulo-emissao">
@@ -148,7 +180,7 @@
                   </label>
 
                   <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
-                    <button type="submit" class="dsc-btn dsc-btn-blue" id="save-emissao-parametro-button">Salvar parametro</button>
+                    <button type="submit" class="dsc-btn dsc-btn-blue" id="save-emissao-parametro-button">Salvar parametro geral</button>
                     <button type="button" class="dsc-btn dsc-btn-white" id="cancel-emissao-parametro-button">Cancelar</button>
                   </div>
 
@@ -159,7 +191,7 @@
 
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header">
-                <h2>Registros cadastrados</h2>
+                <h2>Parametros gerais cadastrados</h2>
                 <span id="emissao-parametro-total"></span>
               </div>
 
@@ -172,17 +204,13 @@
                           Data referencia <span id="sort-emissao-parametro-data-indicator">↓</span>
                         </button>
                       </th>
-                      <th>Edital</th>
-                      <th>Objeto</th>
-                      <th>Obs 01</th>
-                      <th>Validacao</th>
                       <th class="dsc-grid-actions-column">Acoes</th>
                     </tr>
                   </thead>
                   <tbody id="emissao-parametro-grid-body"></tbody>
                 </table>
 
-                <p class="dsc-empty-state dsc-hidden" id="emissao-parametro-empty-state">Nenhum parametro de emissao encontrado.</p>
+                <p class="dsc-empty-state dsc-hidden" id="emissao-parametro-empty-state">Nenhum parametro geral encontrado.</p>
               </div>
 
               <p class="dsc-feedback" id="emissao-parametro-grid-feedback"></p>
@@ -211,6 +239,12 @@
       const descricaoAditivoInput = document.getElementById('emissao-parametro-descricao-aditivo');
       const corpoAditivoInput = document.getElementById('emissao-parametro-corpo-aditivo');
       const assinaturasAditivoInput = document.getElementById('emissao-parametro-assinaturas-aditivo');
+      const descricaoContratoPfInput = document.getElementById('emissao-parametro-descricao-contrato-pf');
+      const descricaoContratoPjInput = document.getElementById('emissao-parametro-descricao-contrato-pj');
+      const corpoContratoPfInput = document.getElementById('emissao-parametro-corpo-contrato-pf');
+      const corpoContratoPjInput = document.getElementById('emissao-parametro-corpo-contrato-pj');
+      const linkModeloRelatorioContratoPfInput = document.getElementById('emissao-parametro-link-modelo-relatorio-contrato-pf');
+      const linkModeloRelatorioContratoPjInput = document.getElementById('emissao-parametro-link-modelo-relatorio-contrato-pj');
       const obs01Input = document.getElementById('emissao-parametro-obs-01');
       const obs02Input = document.getElementById('emissao-parametro-obs-02');
       const rodapeInput = document.getElementById('emissao-parametro-rodape');
@@ -230,6 +264,12 @@
       const descricaoAditivoError = document.getElementById('emissao-parametro-descricao-aditivo-error');
       const corpoAditivoError = document.getElementById('emissao-parametro-corpo-aditivo-error');
       const assinaturasAditivoError = document.getElementById('emissao-parametro-assinaturas-aditivo-error');
+      const descricaoContratoPfError = document.getElementById('emissao-parametro-descricao-contrato-pf-error');
+      const descricaoContratoPjError = document.getElementById('emissao-parametro-descricao-contrato-pj-error');
+      const corpoContratoPfError = document.getElementById('emissao-parametro-corpo-contrato-pf-error');
+      const corpoContratoPjError = document.getElementById('emissao-parametro-corpo-contrato-pj-error');
+      const linkModeloRelatorioContratoPfError = document.getElementById('emissao-parametro-link-modelo-relatorio-contrato-pf-error');
+      const linkModeloRelatorioContratoPjError = document.getElementById('emissao-parametro-link-modelo-relatorio-contrato-pj-error');
       const obs01Error = document.getElementById('emissao-parametro-obs-01-error');
       const obs02Error = document.getElementById('emissao-parametro-obs-02-error');
       const rodapeError = document.getElementById('emissao-parametro-rodape-error');
@@ -269,6 +309,9 @@
       let currentPrefeituraImagem = '';
       let defaultAuditTemplateItem = null;
       let defaultAuditTemplatePromise = null;
+      const contratoDescricaoMaxLength = 20000;
+      const contratoCorpoMaxLength = 250000;
+      const linkModeloRelatorioMaxLength = 4000;
       const defaultObjetoOrdemServico = `A prestacao de servicos de transporte escolar, nos termos do Edital de Chamamento Publico SMTT/DTP n 001/2022`;
       const defaultTituloEmissao = `SECRETARIA MUNICIPAL DE MOBILIDADE URBANA E TRANSPORTE\nDIVISAO DE TRANSPORTE ESCOLAR GRATUITO\nRua Joaquim Carlos, 655 - Bairro Pari - Sao Paulo/SP`;
       const defaultDiretorEmissao = `Leandro Gabrelon\nDiretor(a)\nEm 31/03/2026,`;
@@ -276,13 +319,32 @@
       const defaultCredenciante = `MUNICIPIO DE SAO PAULO, por intermedio da SECRETARIA MUNICIPAL DE MOBILIDADE URBANA E TRANSPORTE - SMT, por meio do DEPARTAMENTO DE TRANSPORTES PUBLICOS - DTP.`;
       const defaultTituloAditivo = `TERMO ADITIVO DE PRORROGACAO AO TERMO DE ADESAO AO CREDENCIAMENTO`;
       const defaultTermoSmt = `SMT/SETRAM/DTP/DTEG N. ________`;
-      const defaultDescricaoAditivo = `Aos <termo/inicio de vigencia/por extenso>, as partes qualificadas neste instrumento celebram o presente TERMO ADITIVO DE PRORROGACAO ao Termo de Adesao ao Credenciamento {{termo_adesao}}, vinculado ao Processo SEI {{processo}} e ao Edital de Chamamento Publico n {{edital}}.\n\nDe um lado, {{credenciante}}, doravante CREDENCIANTE. De outro, {{credenciado}}, inscrito(a) no CPF/CNPJ sob n {{cnpj_cpf}}, representado(a) por {{representante}}, CPF n {{cpf_representante}} e RG n {{rg_representante}}, doravante CREDENCIADO(A).\n\nAs partes ajustam a prorrogacao do instrumento originario, com eficacia condicionada a publicacao oficial, na forma das clausulas a seguir:`;
+      const defaultDescricaoAditivo = `Aos <termo/inicio de vigencia/por extenso>, as partes qualificadas neste instrumento celebram o presente TERMO ADITIVO DE PRORROGACAO ao Termo de Adesao ao Credenciamento {{termo_adesao}}, vinculado ao Processo SEI {{processo}} e ao Edital de Chamamento Publico n {{edital}}.\n\nDe um lado, {{credenciante}}, doravante CREDENCIANTE. De outro, {{credenciado}}, inscrito(a) no CPF/CNPJ sob n {{cnpj_cpf}}, representado(a) por {{representante}}, CPF n {{cpf_representante}}, doravante CREDENCIADO(A).\n\nAs partes ajustam a prorrogacao do instrumento originario, com eficacia condicionada a publicacao oficial, na forma das clausulas a seguir:`;
       const defaultCorpoAditivo = `CLAUSULA PRIMEIRA - DO OBJETO\n1.1. Constitui objeto do presente Termo Aditivo a prorrogacao da vigencia do Termo de Adesao ao Credenciamento {{termo_adesao}}, referente a {{objeto_licitacao}}.\n\nCLAUSULA SEGUNDA - DO PRAZO\n2.1. A vigencia do presente aditamento inicia-se em {{inicio_vigencia}}, observadas as condicoes do edital, do termo originario e da legislacao aplicavel.\n\nCLAUSULA TERCEIRA - DO VALOR E DOS RECURSOS ORCAMENTARIOS\n3.1. O valor previsto para o periodo prorrogado corresponde a {{valor_previsto}}.\n3.2. As despesas decorrentes deste instrumento correrao por conta das dotacoes orcamentarias proprias da Secretaria Municipal de Educacao, inclusive em exercicios subsequentes, se cabivel.\n\nCLAUSULA QUARTA - DA EFICACIA\n4.1. A eficacia deste Termo Aditivo fica condicionada a sua publicacao no Diario Oficial da Cidade.\n\nCLAUSULA QUINTA - DA RATIFICACAO\n5.1. Permanecem ratificadas as demais clausulas e condicoes do termo originario que nao conflitarem com o presente instrumento.`;
       const defaultAssinaturasAditivo = `(Assinado eletronicamente)\n{{credenciante}}\n\n______________________________________________________________________\n{{credenciado}}\n\n(Assinado eletronicamente)\nTESTEMUNHA\n\n(Assinado eletronicamente)\nTESTEMUNHA`;
       const defaultTextoDespacho = `I A vista dos elementos e documentos que instruem o processo SEI n {{processo}}, Edital de Chamamento Publico n {{edital}} e Anexos, nos termos da delegacao contida na Portaria n 38 - SMT.GAB, firmo, com fundamento no artigo 25, caput, da Lei Federal n 8.666/93, o presente TERMO DE ADITAMENTO a contar de {{inicio_vigencia}}, com o valor previsto de {{valor_previsto}}, com {{credenciado}}, CPF/CNPJ n {{cnpj_cpf}} para {{objeto_licitacao}}.\n\nII As despesas decorrentes deste Termo de Aditamento onerarao as dotacoes orcamentarias especificas da Secretaria Municipal de Educacao - SME para o exercicio de {{ano_publicacao}} abaixo referidas: 16.10.12.367.3010.2.848.33903900.00; 16.10.12.365.3025.2.849.33903900.00; 16.10.12.361.3010.2.850.33903900.00; 16.10.12.367.3010.2.848.33903600.00; 16.10.12.365.3025.2.849.33903600.00; 16.10.12.361.3010.2.850.33903600.00; 16.10.12.367.3010.2.848.33904700.00; 16.10.12.365.3025.2.849.33904700.00; 16.10.12.361.3010.2.850.33904700.00 e nos exercicios subsequentes onerarao as dotacoes orcamentarias proprias e especificas do Programa, da Secretaria Municipal da Educacao.\n\nIII Autorizo a emissao da respectiva Nota de Empenho.\n\nIV O DISPOSITIVO LEGAL baseia-se no Artigo 25, caput, da Lei Federal 8.666/93.`;
 
       const normalizeText = (value, maxLength = 4000) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
       const normalizeTextarea = (value, maxLength = 4000) => String(value ?? '').replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim().slice(0, maxLength);
+      const getTextareaMaxLength = (input) => {
+        if (input === textoDespachoInput) {
+          return 8000;
+        }
+
+        if (input === descricaoAditivoInput || input === corpoAditivoInput || input === assinaturasAditivoInput) {
+          return 12000;
+        }
+
+        if (input === descricaoContratoPfInput || input === descricaoContratoPjInput) {
+          return contratoDescricaoMaxLength;
+        }
+
+        if (input === corpoContratoPfInput || input === corpoContratoPjInput) {
+          return contratoCorpoMaxLength;
+        }
+
+        return 4000;
+      };
       const normalizeDefaultAuditText = (value, maxLength = 12000) => String(value ?? '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -314,6 +376,12 @@
         descricao_aditivo: descricaoAditivoInput.value,
         corpo_aditivo: corpoAditivoInput.value,
         assinaturas_aditivo: assinaturasAditivoInput.value,
+        descricao_contrato_pf: descricaoContratoPfInput.value,
+        descricao_contrato_pj: descricaoContratoPjInput.value,
+        corpo_contrato_pf: corpoContratoPfInput.value,
+        corpo_contrato_pj: corpoContratoPjInput.value,
+        link_modelo_relatorio_contrato_pf: linkModeloRelatorioContratoPfInput.value,
+        link_modelo_relatorio_contrato_pj: linkModeloRelatorioContratoPjInput.value,
         titulo_emissao: tituloEmissaoInput.value,
         diretor_emissao: diretorEmissaoInput.value,
         texto_despacho: textoDespachoInput.value,
@@ -465,6 +533,12 @@
         descricaoAditivoError.textContent = '';
         corpoAditivoError.textContent = '';
         assinaturasAditivoError.textContent = '';
+        descricaoContratoPfError.textContent = '';
+        descricaoContratoPjError.textContent = '';
+        corpoContratoPfError.textContent = '';
+        corpoContratoPjError.textContent = '';
+        linkModeloRelatorioContratoPfError.textContent = '';
+        linkModeloRelatorioContratoPjError.textContent = '';
         obs01Error.textContent = '';
         obs02Error.textContent = '';
         rodapeError.textContent = '';
@@ -504,7 +578,7 @@
       };
 
       const setFormReadOnly = (isReadOnly) => {
-        [dataReferenciaInput, editalInput, objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
+        [dataReferenciaInput, editalInput, objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, descricaoContratoPfInput, descricaoContratoPjInput, corpoContratoPfInput, corpoContratoPjInput, linkModeloRelatorioContratoPfInput, linkModeloRelatorioContratoPjInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
           input.readOnly = isReadOnly;
         });
         prefeituraImagemInput.disabled = isReadOnly;
@@ -520,8 +594,8 @@
         form.classList.remove('dsc-hidden');
         setPopupVisibility(formModal, true);
         syncPopupPageState();
-        formTitle.textContent = 'PARAMETRO DE EMISSAO';
-        saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar parametro';
+        formTitle.textContent = 'PARAMETROS GERAIS';
+        saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar parametro geral';
         setFormReadOnly(isReadOnly);
       };
 
@@ -539,6 +613,12 @@
         descricaoAditivoInput.value = defaultDescricaoAditivo;
         corpoAditivoInput.value = defaultCorpoAditivo;
         assinaturasAditivoInput.value = defaultAssinaturasAditivo;
+        descricaoContratoPfInput.value = '';
+        descricaoContratoPjInput.value = '';
+        corpoContratoPfInput.value = '';
+        corpoContratoPjInput.value = '';
+        linkModeloRelatorioContratoPfInput.value = '';
+        linkModeloRelatorioContratoPjInput.value = '';
         tituloEmissaoInput.value = defaultTituloEmissao;
         diretorEmissaoInput.value = defaultDiretorEmissao;
         textoDespachoInput.value = defaultTextoDespacho;
@@ -588,10 +668,6 @@
           const row = document.createElement('tr');
           row.innerHTML = `
             <td>${item.data_referencia || ''}</td>
-            <td>${item.edital_chamamento_publico || ''}</td>
-            <td>${getExcerpt(item.objeto || '')}</td>
-            <td>${getExcerpt(item.obs_01_emissao || '')}</td>
-            <td>${buildDefaultAuditBadge(item)}</td>
             <td>
               <div class="dsc-grid-actions">
                 <button type="button" class="dsc-grid-action-button" data-action="view" data-data-referencia="${item.data_referencia}">Consulta</button>
@@ -614,7 +690,7 @@
       };
 
       const loadItems = async () => {
-        setGridMessage('Carregando parametros de emissao...');
+        setGridMessage('Carregando parametros gerais...');
 
         try {
           await ensureDefaultAuditTemplateItem();
@@ -622,18 +698,18 @@
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
-            throw new Error(payload.message || 'Falha ao carregar parametros de emissao.');
+            throw new Error(payload.message || 'Falha ao carregar parametros gerais.');
           }
 
           totalPages = payload.totalPages || 1;
           currentPage = payload.page || 1;
           renderGrid(payload.items || []);
           updatePagination(payload.total || 0);
-          setGridMessage(payload.items && payload.items.length ? '' : 'Nenhum parametro de emissao encontrado.');
+          setGridMessage(payload.items && payload.items.length ? '' : 'Nenhum parametro geral encontrado.');
         } catch (error) {
           gridBody.innerHTML = '';
           emptyState.classList.remove('dsc-hidden');
-          setGridMessage(getRequestErrorMessage(error, 'Falha ao carregar parametros de emissao.'), 'error');
+          setGridMessage(getRequestErrorMessage(error, 'Falha ao carregar parametros gerais.'), 'error');
         }
       };
 
@@ -648,6 +724,12 @@
         descricaoAditivoInput.value = item.descricao_aditivo || defaultDescricaoAditivo;
         corpoAditivoInput.value = item.corpo_aditivo || defaultCorpoAditivo;
         assinaturasAditivoInput.value = item.assinaturas_aditivo || defaultAssinaturasAditivo;
+        descricaoContratoPfInput.value = item.descricao_contrato_pf || '';
+        descricaoContratoPjInput.value = item.descricao_contrato_pj || '';
+        corpoContratoPfInput.value = item.corpo_contrato_pf || '';
+        corpoContratoPjInput.value = item.corpo_contrato_pj || '';
+        linkModeloRelatorioContratoPfInput.value = item.link_modelo_relatorio_contrato_pf || '';
+        linkModeloRelatorioContratoPjInput.value = item.link_modelo_relatorio_contrato_pj || '';
         obs01Input.value = item.obs_01_emissao || '';
         obs02Input.value = item.obs_02_emissao || '';
         rodapeInput.value = item.rodape_emissao || '';
@@ -670,6 +752,12 @@
         descricaoAditivoInput.value = defaultDescricaoAditivo;
         corpoAditivoInput.value = defaultCorpoAditivo;
         assinaturasAditivoInput.value = defaultAssinaturasAditivo;
+        descricaoContratoPfInput.value = '';
+        descricaoContratoPjInput.value = '';
+        corpoContratoPfInput.value = '';
+        corpoContratoPjInput.value = '';
+        linkModeloRelatorioContratoPfInput.value = '';
+        linkModeloRelatorioContratoPjInput.value = '';
         tituloEmissaoInput.value = defaultTituloEmissao;
         diretorEmissaoInput.value = defaultDiretorEmissao;
         textoDespachoInput.value = defaultTextoDespacho;
@@ -709,17 +797,17 @@
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
-            throw new Error(payload.message || 'Falha ao excluir parametro de emissao.');
+            throw new Error(payload.message || 'Falha ao excluir parametro geral.');
           }
 
-          setGridMessage('Parametro de emissao excluido com sucesso.', 'success');
-          showBanner(`Parametro ${item.data_referencia} excluido com sucesso.`, 'success');
+          setGridMessage('Parametro geral excluido com sucesso.', 'success');
+          showBanner(`Parametro geral ${item.data_referencia} excluido com sucesso.`, 'success');
           if (editingDataReferencia === item.data_referencia) {
             hideForm();
           }
           await loadItems();
         } catch (error) {
-          const message = getRequestErrorMessage(error, 'Falha ao excluir parametro de emissao.');
+          const message = getRequestErrorMessage(error, 'Falha ao excluir parametro geral.');
           setGridMessage(message, 'error');
           showBanner(message, 'error');
         }
@@ -765,9 +853,15 @@
         editalInput.value = normalizeText(editalInput.value, 50);
       });
 
-      [objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
+      [linkModeloRelatorioContratoPfInput, linkModeloRelatorioContratoPjInput].forEach((input) => {
         input.addEventListener('input', () => {
-          input.value = normalizeTextarea(input.value, input === textoDespachoInput ? 8000 : (input === descricaoAditivoInput || input === corpoAditivoInput || input === assinaturasAditivoInput ? 12000 : 4000));
+          input.value = normalizeText(input.value, linkModeloRelatorioMaxLength);
+        });
+      });
+
+      [objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, descricaoContratoPfInput, descricaoContratoPjInput, corpoContratoPfInput, corpoContratoPjInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
+        input.addEventListener('input', () => {
+          input.value = normalizeTextarea(input.value, getTextareaMaxLength(input));
         });
       });
 
@@ -805,7 +899,7 @@
         renderDefaultAuditPanel();
       });
 
-      [objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
+      [objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, descricaoContratoPfInput, descricaoContratoPjInput, corpoContratoPfInput, corpoContratoPjInput, linkModeloRelatorioContratoPfInput, linkModeloRelatorioContratoPjInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
         input.addEventListener('input', () => {
           if (formMode !== 'create') {
             renderDefaultAuditPanel();
@@ -832,6 +926,12 @@
         const descricaoAditivo = normalizeTextarea(descricaoAditivoInput.value, 12000);
         const corpoAditivo = normalizeTextarea(corpoAditivoInput.value, 12000);
         const assinaturasAditivo = normalizeTextarea(assinaturasAditivoInput.value, 12000);
+        const descricaoContratoPf = normalizeTextarea(descricaoContratoPfInput.value, contratoDescricaoMaxLength);
+        const descricaoContratoPj = normalizeTextarea(descricaoContratoPjInput.value, contratoDescricaoMaxLength);
+        const corpoContratoPf = normalizeTextarea(corpoContratoPfInput.value, contratoCorpoMaxLength);
+        const corpoContratoPj = normalizeTextarea(corpoContratoPjInput.value, contratoCorpoMaxLength);
+        const linkModeloRelatorioContratoPf = normalizeText(linkModeloRelatorioContratoPfInput.value, linkModeloRelatorioMaxLength);
+        const linkModeloRelatorioContratoPj = normalizeText(linkModeloRelatorioContratoPjInput.value, linkModeloRelatorioMaxLength);
         const obs01Emissao = normalizeTextarea(obs01Input.value, 4000);
         const obs02Emissao = normalizeTextarea(obs02Input.value, 4000);
         const rodapeEmissao = normalizeTextarea(rodapeInput.value, 4000);
@@ -850,6 +950,12 @@
         descricaoAditivoInput.value = descricaoAditivo;
         corpoAditivoInput.value = corpoAditivo;
         assinaturasAditivoInput.value = assinaturasAditivo;
+        descricaoContratoPfInput.value = descricaoContratoPf;
+        descricaoContratoPjInput.value = descricaoContratoPj;
+        corpoContratoPfInput.value = corpoContratoPf;
+        corpoContratoPjInput.value = corpoContratoPj;
+        linkModeloRelatorioContratoPfInput.value = linkModeloRelatorioContratoPf;
+        linkModeloRelatorioContratoPjInput.value = linkModeloRelatorioContratoPj;
         obs01Input.value = obs01Emissao;
         obs02Input.value = obs02Emissao;
         rodapeInput.value = rodapeEmissao;
@@ -961,6 +1067,12 @@
               descricaoAditivo,
               corpoAditivo,
               assinaturasAditivo,
+              descricaoContratoPf,
+              descricaoContratoPj,
+              corpoContratoPf,
+              corpoContratoPj,
+              linkModeloRelatorioContratoPf,
+              linkModeloRelatorioContratoPj,
               obs01Emissao,
               obs02Emissao,
               rodapeEmissao,

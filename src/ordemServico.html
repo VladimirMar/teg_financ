@@ -843,7 +843,6 @@
         const representationSection = buildReadonlyTermoSectionHtml('Representacao', [
           buildReadonlyTermoFieldHtml('Representante', termoItem?.representante, { wide: true }),
           buildReadonlyTermoFieldHtml('CPF', termoItem?.cpf_representante),
-          buildReadonlyTermoFieldHtml('RG', termoItem?.rg_representante),
         ], { fullWidth: true });
 
         const addressSection = buildReadonlyTermoSectionHtml('Endereco', [
@@ -857,7 +856,6 @@
           buildReadonlyTermoFieldHtml('Especificacao SEI', termoItem?.especificacao_sei, { full: true }),
           buildReadonlyTermoFieldHtml('Valor contrato', formatSummaryCurrency(termoItem?.valor_contrato)),
           buildReadonlyTermoFieldHtml('Valor por extenso', termoItem?.valorContratoExtenso || termoItem?.valor_contrato_atualizado),
-          buildReadonlyTermoFieldHtml('Folhas', termoItem?.folhas),
           buildReadonlyTermoFieldHtml('Vencimento geral', formatSummaryDate(termoItem?.vencimento_geral)),
           buildReadonlyTermoFieldHtml('Info SEI', termoItem?.info_sei, { wide: true }),
         ], { fullWidth: true });

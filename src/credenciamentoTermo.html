@@ -6,10 +6,186 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cadastro de Termo</title>
 
-    <link rel="stylesheet" href="css/login.css?v=20260423-termo-despacho-1" />
+    <link rel="stylesheet" href="css/login.css?v=20260424-termo-aditivo-1" />
     <style>
       #login-section.dsc-container {
         max-width: 1600px;
+      }
+
+      #credenciamento-termo-aditivo-panel {
+        width: min(100%, 1080px);
+        max-height: min(82vh, 820px);
+        overflow: auto;
+        margin: 0;
+        padding: 24px 26px 0;
+        box-shadow: 0 24px 54px rgba(15, 23, 42, 0.22);
+      }
+
+      #credenciamento-termo-aditivo-panel .dsc-popup-footer-sticky {
+        position: static !important;
+        bottom: auto !important;
+        z-index: auto !important;
+        margin-top: 12px;
+        padding: 14px 0 10px;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        box-shadow: none;
+        background: #ffffff;
+        color: #111827;
+        font-family: Aptos, Arial, Helvetica, sans-serif;
+        font-size: 12pt;
+        line-height: 1.15;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-header {
+        display: grid;
+        gap: 8pt;
+        margin: 0 0 10pt;
+        text-align: center;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-logo-wrap {
+        text-align: center;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-logo {
+        max-width: 120pt;
+        max-height: 72pt;
+        object-fit: contain;
+        display: inline-block;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-title-line {
+        margin: 0;
+        font-size: 10pt;
+        font-weight: 700;
+        line-height: 1.15;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-centered-header {
+        display: grid;
+        gap: 2pt;
+        margin-top: 8pt;
+        text-align: center;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-centered-process {
+        margin: 0;
+        font-size: 12pt;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-centered-term {
+        margin: 0;
+        font-size: 10pt;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-centered-title {
+        margin: 6pt 0 0;
+        font-size: 11pt;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-opening-lead {
+        margin: 0 0 12pt;
+        padding: 10pt 12pt;
+        border: 1px solid #d4dde9;
+        background: #f8fafc;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight {
+        display: table;
+        width: 100%;
+        margin: 0 0 8pt;
+        border-collapse: separate;
+        border-spacing: 0 5pt;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-compact {
+        margin-bottom: 12pt;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-field {
+        display: table-row;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-field > span,
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-field > strong {
+        display: table-cell;
+        vertical-align: top;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-label,
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-field-label {
+        width: 180pt;
+        padding-right: 12pt;
+        font-size: 9.5pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0;
+        color: #111827;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-value,
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-field-value {
+        font-size: 12pt;
+        font-weight: 700;
+        line-height: 1.15;
+        color: #111827;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-paragraph {
+        margin: 0 0 8pt;
+        font-family: Aptos, Arial, Helvetica, sans-serif;
+        font-size: 12pt;
+        line-height: 1.15;
+        text-align: justify;
+        text-justify: inter-word;
+        color: #111827;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-opening-paragraph {
+        margin: 0;
+        font-weight: 600;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-legal-body .dsc-emissao-documento-paragraph {
+        margin-bottom: 10pt;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-block {
+        margin-top: 18pt;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-note {
+        margin: 0 0 2pt;
+        font-size: 10pt;
+        font-style: italic;
+        font-weight: 700;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-label {
+        margin: 0 0 10pt;
+        font-size: 10pt;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-spacer {
+        height: 18pt;
+      }
+
+      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-line {
+        height: 0;
+        margin: 10pt 0 6pt;
+        border-top: 1px solid #111827;
       }
 
       #credenciamento-termo-form {
@@ -34,6 +210,13 @@
         min-width: 130px;
         white-space: nowrap;
       }
+
+      @media (max-width: 768px) {
+        #credenciamento-termo-aditivo-panel {
+          width: 100%;
+          max-height: min(86vh, 700px);
+        }
+      }
     </style>
   </head>
   <body>
@@ -48,6 +231,12 @@
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-credenciamento-termo-import-button">Importar XML</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-credenciamento-termo-rejections-button">Recusas XML</button>
                 <input class="dsc-form-control dsc-access-filter-input" id="credenciamento-termo-search" type="text" placeholder="Filtrar por codigo, termo, credenciado, SEI ou aditivo" />
+                <input class="dsc-form-control dsc-access-filter-input" id="credenciamento-termo-status-filter" type="text" maxlength="100" placeholder="Status do termo" list="credenciamento-termo-status-filter-options" />
+                <datalist id="credenciamento-termo-status-filter-options">
+                  <option value="Ativo"></option>
+                  <option value="Inativo"></option>
+                  <option value="Rescindido"></option>
+                </datalist>
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-credenciamento-termo-filter-button">Limpar</button>
               </form>
@@ -155,19 +344,8 @@
 
                   <label class="dsc-field-group" for="credenciamento-termo-aditivo">
                     <span>Aditivo</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-aditivo" type="text" inputmode="numeric" maxlength="2" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-aditivo" type="text" inputmode="numeric" maxlength="2" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-aditivo-error"></div>
-                  </label>
-
-                  <label class="dsc-field-group" for="credenciamento-termo-tipo-termo">
-                    <span>Tipo de termo</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-tipo-termo" type="text" maxlength="100" list="credenciamento-termo-tipo-termo-options" />
-                    <datalist id="credenciamento-termo-tipo-termo-options">
-                      <option value="Pessoa F&#237;sica"></option>
-                      <option value="Pessoa Jur&#237;dica"></option>
-                      <option value="Cooperativa"></option>
-                    </datalist>
-                    <div class="dsc-form-error" id="credenciamento-termo-tipo-termo-error"></div>
                   </label>
                 </div>
               </section>
@@ -191,6 +369,17 @@
                     <span>CNPJ/CPF</span>
                     <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-cnpj-cpf" type="text" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-cnpj-cpf-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-tipo-termo">
+                    <span>Tipo de termo</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-tipo-termo" type="text" maxlength="100" list="credenciamento-termo-tipo-termo-options" readonly />
+                    <datalist id="credenciamento-termo-tipo-termo-options">
+                      <option value="Pessoa F&#237;sica"></option>
+                      <option value="Pessoa Jur&#237;dica"></option>
+                      <option value="Cooperativa"></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="credenciamento-termo-tipo-termo-error"></div>
                   </label>
                 </div>
               </section>
@@ -300,18 +489,12 @@
                     <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-cpf-representante" type="text" maxlength="14" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-cpf-representante-error"></div>
                   </label>
-
-                  <label class="dsc-field-group" for="credenciamento-termo-rg-representante">
-                    <span>RG representante</span>
-                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-rg-representante" type="text" maxlength="30" readonly />
-                    <div class="dsc-form-error" id="credenciamento-termo-rg-representante-error"></div>
-                  </label>
                 </div>
 
                 <div class="dsc-form-row">
                   <label class="dsc-field-group" for="credenciamento-termo-cep">
                     <span>CEP</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-cep" type="text" inputmode="numeric" placeholder="00000-000" maxlength="9" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-cep" type="text" inputmode="numeric" placeholder="00000-000" maxlength="9" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-cep-error"></div>
                   </label>
 
@@ -341,7 +524,7 @@
                 <div class="dsc-form-row">
                   <label class="dsc-field-group" for="credenciamento-termo-especificacao-sei">
                     <span>Especificacao SEI</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-especificacao-sei" type="text" maxlength="255" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-especificacao-sei" type="text" maxlength="255" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-especificacao-sei-error"></div>
                   </label>
 
@@ -353,14 +536,8 @@
 
                   <label class="dsc-field-group" for="credenciamento-termo-valor-contrato-atualizado">
                     <span>Valor contrato atualizado</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-valor-contrato-atualizado" type="text" inputmode="decimal" maxlength="20" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-valor-contrato-atualizado" type="text" maxlength="255" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-valor-contrato-atualizado-error"></div>
-                  </label>
-
-                  <label class="dsc-field-group" for="credenciamento-termo-folhas">
-                    <span>Folhas</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-folhas" type="text" maxlength="50" />
-                    <div class="dsc-form-error" id="credenciamento-termo-folhas-error"></div>
                   </label>
                 </div>
 
@@ -379,13 +556,18 @@
 
                   <label class="dsc-field-group" for="credenciamento-termo-mes-renovacao">
                     <span>Mes renovacao</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-mes-renovacao" type="text" maxlength="50" />
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-mes-renovacao" type="text" maxlength="50" readonly />
                     <div class="dsc-form-error" id="credenciamento-termo-mes-renovacao-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="credenciamento-termo-tp-optante">
-                    <span>Tp optante</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-tp-optante" type="text" maxlength="20" />
+                    <span>Tipo optante</span>
+                    <select class="dsc-form-control dsc-form-control-tall" id="credenciamento-termo-tp-optante" style="height: 36px; min-height: 36px; padding-top: 0; padding-bottom: 0;" required>
+                      <option value=""></option>
+                      <option value="O">Optante</option>
+                      <option value="N">Nao optante</option>
+                      <option value="C">Cooperativa</option>
+                    </select>
                     <div class="dsc-form-error" id="credenciamento-termo-tp-optante-error"></div>
                   </label>
                 </div>
@@ -468,7 +650,7 @@
                       <th>Aditivo</th>
                       <th>Inicio</th>
                       <th>Termino</th>
-                      <th>Status</th>
+                      <th>Status termo</th>
                       <th class="dsc-grid-actions-column">Acoes</th>
                     </tr>
                   </thead>
@@ -506,6 +688,7 @@
       const importFeedback = document.getElementById('credenciamento-termo-import-feedback');
       const rejectionGridFeedback = document.getElementById('credenciamento-termo-rejection-grid-feedback');
       const searchInput = document.getElementById('credenciamento-termo-search');
+      const statusFilterInput = document.getElementById('credenciamento-termo-status-filter');
       const clearFilterButton = document.getElementById('clear-credenciamento-termo-filter-button');
       const insertButton = document.getElementById('insert-credenciamento-termo-button');
       const saveButton = document.getElementById('save-credenciamento-termo-button');
@@ -559,7 +742,6 @@
       const tipoTermoInput = document.getElementById('credenciamento-termo-tipo-termo');
       const representanteInput = document.getElementById('credenciamento-termo-representante');
       const cpfRepresentanteInput = document.getElementById('credenciamento-termo-cpf-representante');
-      const rgRepresentanteInput = document.getElementById('credenciamento-termo-rg-representante');
       const logradouroInput = document.getElementById('credenciamento-termo-logradouro');
       const bairroInput = document.getElementById('credenciamento-termo-bairro');
       const cepEnderecoInput = document.getElementById('credenciamento-termo-cep');
@@ -567,7 +749,6 @@
       const especificacaoSeiInput = document.getElementById('credenciamento-termo-especificacao-sei');
       const valorContratoInput = document.getElementById('credenciamento-termo-valor-contrato');
       const valorContratoAtualizadoInput = document.getElementById('credenciamento-termo-valor-contrato-atualizado');
-      const folhasInput = document.getElementById('credenciamento-termo-folhas');
       const dataPublicacaoInput = document.getElementById('credenciamento-termo-data-publicacao');
       const vencimentoGeralInput = document.getElementById('credenciamento-termo-vencimento-geral');
       const mesRenovacaoInput = document.getElementById('credenciamento-termo-mes-renovacao');
@@ -612,7 +793,6 @@
         tipoTermo: document.getElementById('credenciamento-termo-tipo-termo-error'),
         representante: document.getElementById('credenciamento-termo-representante-error'),
         cpfRepresentante: document.getElementById('credenciamento-termo-cpf-representante-error'),
-        rgRepresentante: document.getElementById('credenciamento-termo-rg-representante-error'),
         cep: document.getElementById('credenciamento-termo-cep-error'),
         logradouro: document.getElementById('credenciamento-termo-logradouro-error'),
         bairro: document.getElementById('credenciamento-termo-bairro-error'),
@@ -620,11 +800,42 @@
         especificacaoSei: document.getElementById('credenciamento-termo-especificacao-sei-error'),
         valorContrato: document.getElementById('credenciamento-termo-valor-contrato-error'),
         valorContratoAtualizado: document.getElementById('credenciamento-termo-valor-contrato-atualizado-error'),
-        folhas: document.getElementById('credenciamento-termo-folhas-error'),
         dataPublicacao: document.getElementById('credenciamento-termo-data-publicacao-error'),
         vencimentoGeral: document.getElementById('credenciamento-termo-vencimento-geral-error'),
         mesRenovacao: document.getElementById('credenciamento-termo-mes-renovacao-error'),
         tpOptante: document.getElementById('credenciamento-termo-tp-optante-error'),
+      };
+      const errorTargets = {
+        codigoXml: codigoXmlInput,
+        aditivo: aditivoInput,
+        termoAdesao: termoAdesaoInput,
+        sei: seiInput,
+        credenciado: credenciadoInput,
+        credenciadaCodigo: credenciadaCodigoInput,
+        cnpjCpf: cnpjCpfInput,
+        situacaoPublicacao: situacaoPublicacaoInput,
+        situacaoEmissao: situacaoEmissaoInput,
+        statusTermo: statusTermoInput,
+        statusAditivo: statusAditivoInput,
+        checkAditivo: checkAditivoYesInput,
+        inicioVigencia: inicioVigenciaInput,
+        terminoVigencia: terminoVigenciaInput,
+        compDataAditivo: compDataAditivoInput,
+        dataPubAditivo: dataPubAditivoInput,
+        tipoTermo: tipoTermoInput,
+        representante: representanteInput,
+        cpfRepresentante: cpfRepresentanteInput,
+        cep: cepEnderecoInput,
+        logradouro: logradouroInput,
+        bairro: bairroInput,
+        municipio: municipioInput,
+        especificacaoSei: especificacaoSeiInput,
+        valorContrato: valorContratoInput,
+        valorContratoAtualizado: valorContratoAtualizadoInput,
+        dataPublicacao: dataPublicacaoInput,
+        vencimentoGeral: vencimentoGeralInput,
+        mesRenovacao: mesRenovacaoInput,
+        tpOptante: tpOptanteInput,
       };
 
       const pageSize = 20;
@@ -635,6 +846,7 @@
       let currentPage = 1;
       let totalPages = 1;
       let currentSearch = '';
+      let currentStatusTermoFilter = '';
       let currentSortBy = 'codigo';
       let currentSortDirection = 'asc';
       let currentRejectionPage = 1;
@@ -647,6 +859,8 @@
       let lastTermoAditivoMarkup = '';
       let lastTermoAditivoPrintMarkup = '';
       let lastTermoAditivoFileName = 'termo-aditivo.doc';
+      let nextAditivoRequestId = 0;
+      let inheritedAditivoTermoAdesao = '';
 
       const normalizeText = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trim().toUpperCase().slice(0, maxLength);
       const normalizeIntegerInput = (value, maxDigits = 10) => value.replace(/\D/g, '').slice(0, maxDigits);
@@ -770,12 +984,228 @@
         const digits = value.replace(/\D/g, '').slice(0, 16);
         return normalizeTermoAdesao(digits.slice(4, 15));
       };
+      const formatDateInputValue = (value) => {
+        const year = value.getFullYear();
+        const month = String(value.getMonth() + 1).padStart(2, '0');
+        const day = String(value.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      const addDaysToDate = (value, days) => {
+        const result = new Date(value);
+        result.setDate(result.getDate() + days);
+        return result;
+      };
+      const addYearsToDate = (value, years) => {
+        const result = new Date(value);
+        result.setFullYear(result.getFullYear() + years);
+        return result;
+      };
+      const syncDerivedTermoFields = () => {
+        valorContratoAtualizadoInput.value = formatCurrencyExtenso(valorContratoInput.value);
+        mesRenovacaoInput.value = formatMonthYearLabel(terminoVigenciaInput.value);
+      };
+      const syncAditivoDependentFieldState = () => {
+        const aditivoValue = Number.parseInt(aditivoInput.value || '0', 10);
+        const shouldLockByAditivo = Number.isInteger(aditivoValue) && aditivoValue > 0;
+        const isReadOnlyMode = formMode === 'view';
+
+        credenciadoInput.readOnly = isReadOnlyMode || shouldLockByAditivo;
+        vencimentoGeralInput.readOnly = isReadOnlyMode || shouldLockByAditivo;
+      };
+      const normalizeTipoTermoLabel = (value) => {
+        const normalized = String(value || '')
+          .trim()
+          .toUpperCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+
+        if (normalized === 'COOPERATIVA') {
+          return 'Cooperativa';
+        }
+
+        if (normalized === 'PESSOA JURIDICA' || normalized === 'PJ') {
+          return 'Pessoa Juridica';
+        }
+
+        if (normalized === 'PESSOA FISICA' || normalized === 'PF') {
+          return 'Pessoa Fisica';
+        }
+
+        return '';
+      };
+      const buildEspecificacaoSeiValue = (credenciado, cnpjCpf) => {
+        const normalizedCredenciado = normalizeText(credenciado || '', 255);
+        const normalizedCnpjCpf = normalizeText(cnpjCpf || '', 255);
+
+        if (!normalizedCredenciado || !normalizedCnpjCpf) {
+          return '';
+        }
+
+        return normalizeText(`Credenciamento TEG - ${normalizedCredenciado} - ${normalizedCnpjCpf}`, 255);
+      };
+      const syncEspecificacaoSei = () => {
+        especificacaoSeiInput.value = buildEspecificacaoSeiValue(credenciadoInput.value, cnpjCpfInput.value);
+      };
+      const applyCreateTermoDefaults = () => {
+        if (formMode !== 'create') {
+          return;
+        }
+
+        const today = new Date();
+        const inicioVigencia = formatDateInputValue(today);
+        const terminoVigencia = formatDateInputValue(addDaysToDate(today, 365));
+        const vencimentoGeral = formatDateInputValue(addYearsToDate(today, 5));
+
+        situacaoPublicacaoInput.value = 'Publicar';
+        situacaoEmissaoInput.value = 'Emitir';
+        statusTermoInput.value = 'Ativo';
+        statusAditivoInput.value = 'Publicar';
+        inicioVigenciaInput.value = inicioVigencia;
+        terminoVigenciaInput.value = terminoVigencia;
+        vencimentoGeralInput.value = vencimentoGeral;
+        syncDerivedTermoFields();
+        syncAditivoDependentFieldState();
+      };
+      const setSuggestedAditivo = (value = '') => {
+        if (formMode !== 'create') {
+          return;
+        }
+
+        aditivoInput.value = value === '' ? '' : normalizeIntegerInput(String(value), 2);
+      };
+      const clearInheritedAditivoFields = () => {
+        codigoXmlInput.value = '';
+        credenciadoInput.value = '';
+        credenciadaCodigoInput.value = '';
+        cnpjCpfInput.value = '';
+        situacaoPublicacaoInput.value = '';
+        situacaoEmissaoInput.value = '';
+        statusTermoInput.value = '';
+        statusAditivoInput.value = '';
+        inicioVigenciaInput.value = '';
+        terminoVigenciaInput.value = '';
+        compDataAditivoInput.value = '';
+        dataPubAditivoInput.value = '';
+        tipoTermoInput.value = '';
+        representanteInput.value = '';
+        cpfRepresentanteInput.value = '';
+        cepEnderecoInput.value = '';
+        logradouroInput.value = '';
+        bairroInput.value = '';
+        municipioInput.value = '';
+        especificacaoSeiInput.value = '';
+        valorContratoInput.value = '';
+        valorContratoAtualizadoInput.value = '';
+        dataPublicacaoInput.value = '';
+        vencimentoGeralInput.value = '';
+        mesRenovacaoInput.value = '';
+        tpOptanteInput.value = '';
+        checkAditivoYesInput.checked = true;
+        checkAditivoNoInput.checked = false;
+        inheritedAditivoTermoAdesao = '';
+        syncEspecificacaoSei();
+        applyCreateTermoDefaults();
+      };
+      const applyLatestAditivoToCreateForm = (item) => {
+        if (formMode !== 'create' || !item) {
+          return;
+        }
+
+        codigoXmlInput.value = item.codigo_xml || '';
+        credenciadoInput.value = item.credenciado || '';
+        credenciadaCodigoInput.value = item.credenciada_codigo || '';
+        cnpjCpfInput.value = item.cnpj_cpf || '';
+        situacaoPublicacaoInput.value = item.situacao_publicacao || '';
+        situacaoEmissaoInput.value = item.situacao_emissao || '';
+        statusTermoInput.value = item.status_termo || '';
+        statusAditivoInput.value = item.status_aditivo || '';
+        checkAditivoYesInput.checked = item.check_aditivo === '1';
+        checkAditivoNoInput.checked = item.check_aditivo !== '1';
+        inicioVigenciaInput.value = item.inicio_vigencia || '';
+        terminoVigenciaInput.value = item.termino_vigencia || '';
+        compDataAditivoInput.value = item.comp_data_aditivo || '';
+        dataPubAditivoInput.value = item.data_pub_aditivo || '';
+        tipoTermoInput.value = normalizeTipoTermoLabel(item.tipo_pessoa || item.tipo_termo || '');
+        representanteInput.value = item.representante || '';
+        cpfRepresentanteInput.value = item.cpf_representante || '';
+        cepEnderecoInput.value = item.credenciada_cep || '';
+        logradouroInput.value = item.logradouro || '';
+        bairroInput.value = item.bairro || '';
+        municipioInput.value = item.municipio || '';
+        syncEspecificacaoSei();
+        valorContratoInput.value = formatCurrencyInput(item.valor_contrato || '');
+        valorContratoAtualizadoInput.value = formatCurrencyExtenso(item.valor_contrato_atualizado || item.valor_contrato || '');
+        dataPublicacaoInput.value = item.data_publicacao || '';
+        vencimentoGeralInput.value = item.vencimento_geral || '';
+        mesRenovacaoInput.value = formatMonthYearLabel(item.termino_vigencia || '');
+        tpOptanteInput.value = item.tp_optante || '';
+        syncDerivedTermoFields();
+        inheritedAditivoTermoAdesao = normalizeTermoAdesao(item.termo_adesao || termoAdesaoInput.value);
+        applyCreateTermoDefaults();
+        syncAditivoDependentFieldState();
+      };
+      const syncNextAditivoByTermoAdesao = async () => {
+        if (formMode !== 'create') {
+          return;
+        }
+
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+        termoAdesaoInput.value = termoAdesao;
+        const requestId = ++nextAditivoRequestId;
+
+        if (!termoAdesao) {
+          if (inheritedAditivoTermoAdesao) {
+            clearInheritedAditivoFields();
+          }
+          setSuggestedAditivo('');
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, {
+            headers: { Accept: 'application/json' },
+          });
+
+          if (requestId !== nextAditivoRequestId || formMode !== 'create') {
+            return;
+          }
+
+          if (response.status === 404) {
+            if (inheritedAditivoTermoAdesao && inheritedAditivoTermoAdesao !== termoAdesao) {
+              clearInheritedAditivoFields();
+            }
+            setSuggestedAditivo('0');
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error('Falha ao consultar o proximo aditivo.');
+          }
+
+          const payload = await response.json();
+          applyLatestAditivoToCreateForm(payload.item || null);
+          const currentAditivo = Number(normalizeIntegerInput(String(payload.item?.aditivo ?? '0'), 2) || '0');
+          setSuggestedAditivo(String(currentAditivo + 1));
+        } catch (_) {
+          if (requestId === nextAditivoRequestId && formMode === 'create') {
+            setSuggestedAditivo('');
+          }
+        }
+      };
       const normalizeCpf = (value) => {
         const digits = value.replace(/\D/g, '').slice(0, 11);
         if (digits.length <= 3) return digits;
         if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
         if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
         return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+      };
+      const normalizeCnpj = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 14);
+        if (digits.length <= 2) return digits;
+        if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+        if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+        if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+        return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
       };
       const formatCurrencyInput = (value) => {
         const digits = value.replace(/\D/g, '').slice(0, 15);
@@ -977,6 +1407,23 @@
 
         return `${integerText} e ${numberToPortugueseWords(centsPart)} ${centsLabel}`;
       };
+      const formatMonthYearLabel = (value) => {
+        const normalizedValue = normalizeReportDateKey(value);
+
+        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return '';
+        }
+
+        const [day, month, year] = normalizedValue.split('/');
+        const parsed = new Date(Number(year), Number(month) - 1, Number(day));
+
+        if (Number.isNaN(parsed.getTime())) {
+          return '';
+        }
+
+        const monthLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(parsed);
+        return `${monthLabel}/${year}`;
+      };
       const formatTemplateValuePorExtenso = (value) => {
         const rawValue = String(value ?? '').trim();
 
@@ -1144,18 +1591,26 @@
 
         return resolvedText.map((paragraph) => `<p class="dsc-emissao-documento-paragraph">${escapeHtml(paragraph)}</p>`).join('');
       };
-      const buildAditivoParagraphsHtml = (template, replacements) => {
-        const resolvedTemplate = applyTemplateTokens(template, replacements)
+      const normalizeLegacyAditivoTemplate = (template) => String(template ?? '')
+        .replace(/<\s*termo\/logradouro\s*,\s*<\s*termo\/bairro\s*>,?\s*<\s*termo\/mi?nicipio\s*>/gi, '<termo/logradouro>, <termo/bairro>, <termo/municipio>')
+        .replace(/<\s*termo\/minicipio\s*>/gi, '<termo/municipio>')
+        .replace(/,\s*RG\s+n\s*<\s*termo\/cpf\s+representante\s*>/gi, '')
+        .replace(/,\s*CPF\s+n\s*\{\{\s*cpf_representante\s*\}\}\s*e\s*RG\s+n\s*\{\{\s*[^}]+\s*\}\}/gi, ', CPF n {{cpf_representante}}');
+      const resolveAditivoParagraphList = (template, replacements) => {
+        const resolvedTemplate = applyTemplateTokens(normalizeLegacyAditivoTemplate(template), replacements)
           .replace(/\r/g, '')
           .replace(/\s+(?=E por assim estarem\b)/gi, '\n\n')
           .replace(/\s+(?=(?:CL[ÁA]USULA|\d+\.\d+\.\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]))/g, '\n\n')
           .replace(/\s*\n\s*(?=(?:CL[ÁA]USULA|\d+\.\d+\.|\(Assinado eletronicamente\)|CREDENCIANTE|CREDENCIADO|TESTEMUNHA))/g, '\n\n');
-        const resolvedText = resolvedTemplate
+        return resolvedTemplate
+          .replace(/Processo\s+SEI\s*,\s*o\s+seguinte:/gi, 'o seguinte:')
           .split(/\n{2,}/)
-          .map((paragraph) => paragraph.replace(/\s*\n\s*/g, ' ').replace(/\s+/g, ' ').trim())
+          .map((paragraph) => paragraph.replace(/\s*\n\s*/g, ' ').replace(/\s+/g, ' ').replace(/\s+,/g, ',').trim())
           .filter(Boolean);
-
-        return resolvedText.map((paragraph) => `<p class="dsc-emissao-documento-paragraph">${escapeHtml(paragraph)}</p>`).join('');
+      };
+      const buildAditivoParagraphsHtml = (template, replacements) => {
+        return resolveAditivoParagraphList(template, replacements)
+          .map((paragraph) => `<p class="dsc-emissao-documento-paragraph">${escapeHtml(paragraph)}</p>`).join('');
       };
       const buildAditivoSignatureBlockHtml = (template, replacements) => {
         const resolvedTemplate = applyTemplateTokens(template, replacements).replace(/\r/g, '');
@@ -1380,6 +1835,11 @@
         aditivoPanel.classList.add('dsc-hidden');
         syncPopupPageState();
       };
+      const resetAditivoScrollPosition = () => {
+        aditivoModal.scrollTop = 0;
+        aditivoPanel.scrollTop = 0;
+        aditivoContent.scrollTop = 0;
+      };
       const buildDespachoMarkup = ({ parametroItem, includePrefeituraImage = false, requestedDate }) => {
         const termoAdesao = formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento');
         const natureza = 'Servicos comuns';
@@ -1476,12 +1936,11 @@
       const buildTermoAditivoMarkup = ({ parametroItem, includePrefeituraImage = false, requestedDate }) => {
         const termoAdesao = formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento');
         const numeroAditivo = formatSummaryValue(aditivoInput.value || '1');
-        const processo = formatSummaryValue(seiInput.value);
+        const processo = formatSummaryValue(seiInput.value, '');
         const credenciado = formatSummaryValue(credenciadoInput.value);
         const cnpjCpf = formatSummaryValue(cnpjCpfInput.value);
         const representante = formatSummaryValue(representanteInput.value);
         const cpfRepresentante = formatSummaryValue(cpfRepresentanteInput.value);
-        const rgRepresentante = formatSummaryValue(rgRepresentanteInput.value);
         const logradouro = formatSummaryValue(logradouroInput.value);
         const bairro = formatSummaryValue(bairroInput.value);
         const municipio = formatSummaryValue(municipioInput.value);
@@ -1502,6 +1961,30 @@
         const assinaturasAditivo = String(parametroItem?.assinaturas_aditivo || '').trim() || 'Assinaturas do aditivo nao informadas.';
         const tituloEmissao = String(parametroItem?.titulo_emissao || '').trim();
         const prefeituraImagem = String(parametroItem?.prefeitura_imagem || '').trim();
+        const descricaoAditivoParagraphs = resolveAditivoParagraphList(descricaoAditivo, {
+          processo,
+          edital: formatSummaryValue(parametroItem?.edital_chamamento_publico),
+          inicio_vigencia: formatSummaryValue(inicioVigencia, 'Nao informado'),
+          valor_previsto: valorPrevisto,
+          credenciado,
+          cnpj_cpf: cnpjCpf,
+          objeto_licitacao: objetoLicitacao,
+          termo_adesao: termoAdesao,
+          termo: termoAdesao,
+          aditivo: numeroAditivo,
+          representante,
+          cpf_representante: cpfRepresentante,
+          logradouro,
+          bairro,
+          municipio,
+          data_publicacao: formatSummaryValue(dataPublicacao),
+          data_comparencia: formatSummaryValue(dataComparencia),
+          credenciante,
+          titulo_aditivo: tituloAditivo,
+          termo_smt: termoSmt,
+          sei: processo,
+        });
+        const [openingParagraph, ...remainingDescricaoParagraphs] = descricaoAditivoParagraphs;
         const replacements = {
           processo,
           edital: formatSummaryValue(parametroItem?.edital_chamamento_publico),
@@ -1515,7 +1998,6 @@
           aditivo: numeroAditivo,
           representante,
           cpf_representante: cpfRepresentante,
-          rg_representante: rgRepresentante,
           logradouro,
           bairro,
           municipio,
@@ -1524,6 +2006,7 @@
           credenciante,
           titulo_aditivo: tituloAditivo,
           termo_smt: termoSmt,
+          sei: processo,
         };
 
         lastTermoAditivoFileName = buildTermoAditivoFileName(termoAdesao, numeroAditivo);
@@ -1534,7 +2017,7 @@
               ${includePrefeituraImage && prefeituraImagem ? `<div class="dsc-emissao-documento-logo-wrap"><img class="dsc-emissao-documento-logo" src="${escapeHtml(prefeituraImagem)}" alt="Imagem da Prefeitura" /></div>` : ''}
               ${tituloEmissao ? `<div class="dsc-emissao-documento-title-block">${buildTitleBlockHtml(tituloEmissao)}</div>` : ''}
               <div class="dsc-emissao-documento-centered-header">
-                <p class="dsc-emissao-documento-centered-process">PROCESSO ${escapeHtml(processo).toUpperCase()}</p>
+                ${processo ? `<p class="dsc-emissao-documento-centered-process">PROCESSO ${escapeHtml(processo).toUpperCase()}</p>` : ''}
                 <p class="dsc-emissao-documento-centered-term">${escapeHtml(termoSmt)}</p>
                 <p class="dsc-emissao-documento-centered-title">${escapeHtml(tituloAditivo)}</p>
               </div>
@@ -1551,9 +2034,16 @@
               </div>
             </div>
 
+            ${openingParagraph ? `
+            <section class="dsc-emissao-documento-section dsc-emissao-documento-opening-lead">
+              <div class="dsc-emissao-documento-section-body">
+                <p class="dsc-emissao-documento-paragraph dsc-emissao-documento-opening-paragraph">${escapeHtml(openingParagraph)}</p>
+              </div>
+            </section>` : ''}
+
             <section class="dsc-emissao-documento-section">
               <div class="dsc-emissao-documento-section-body dsc-emissao-documento-legal-body">
-                ${buildAditivoParagraphsHtml(descricaoAditivo, replacements)}
+                ${remainingDescricaoParagraphs.map((paragraph) => `<p class="dsc-emissao-documento-paragraph">${escapeHtml(paragraph)}</p>`).join('')}
                 ${buildAditivoParagraphsHtml(corpoAditivo, replacements)}
                 ${buildAditivoSignatureBlockHtml(assinaturasAditivo, replacements)}
               </div>
@@ -1577,7 +2067,7 @@
             return { label, value };
           })
           .filter((item) => item.label || item.value);
-        const paragraphs = Array.from(documentNode.querySelectorAll('.dsc-emissao-documento-legal-body .dsc-emissao-documento-paragraph'))
+        const paragraphs = Array.from(documentNode.querySelectorAll('.dsc-emissao-documento-opening-lead .dsc-emissao-documento-paragraph, .dsc-emissao-documento-legal-body .dsc-emissao-documento-paragraph'))
           .map((node) => node.textContent?.replace(/\s+/g, ' ').trim() || '')
           .filter(Boolean);
         const signatureLines = Array.from(documentNode.querySelectorAll('.dsc-aditivo-signature-note, .dsc-aditivo-signature-label'))
@@ -1632,6 +2122,7 @@
       .dsc-emissao-documento-centered-process { margin: 0; font-size: 12pt; font-weight: 700; text-transform: uppercase; }
       .dsc-emissao-documento-centered-term { margin: 0; font-size: 10pt; font-weight: 700; text-transform: uppercase; }
       .dsc-emissao-documento-centered-title { margin: 6pt 0 0; font-size: 11pt; font-weight: 700; text-transform: uppercase; }
+      .dsc-emissao-documento-opening-lead { margin: 0 0 12pt; padding: 10pt 12pt; border: 1px solid #d4dde9; background: #f8fafc; }
       .dsc-emissao-documento-highlight { display: table; width: 100%; margin: 0 0 8pt; border-collapse: separate; border-spacing: 0 5pt; }
       .dsc-emissao-documento-highlight-compact { margin-bottom: 12pt; }
       .dsc-emissao-documento-highlight-field { display: table-row; }
@@ -1639,6 +2130,7 @@
       .dsc-emissao-documento-highlight-label, .dsc-emissao-documento-field-label { width: 180pt; padding-right: 12pt; font-size: 9.5pt; font-weight: 700; text-transform: uppercase; }
       .dsc-emissao-documento-highlight-value, .dsc-emissao-documento-field-value { font-size: 12pt; font-weight: 700; }
       .dsc-emissao-documento-paragraph { margin: 0 0 8pt; text-align: justify; text-justify: inter-word; }
+      .dsc-emissao-documento-opening-paragraph { margin: 0; font-weight: 600; }
       .dsc-emissao-documento-legal-body .dsc-emissao-documento-paragraph { margin-bottom: 10pt; }
       .dsc-aditivo-signature-block { margin-top: 18pt; }
       .dsc-aditivo-signature-note { margin: 0 0 2pt; font-size: 10pt; font-style: italic; font-weight: 700; }
@@ -1773,6 +2265,7 @@
         aditivoModal.setAttribute('aria-hidden', 'false');
         aditivoPanel.classList.remove('dsc-hidden');
         syncPopupPageState();
+        resetAditivoScrollPosition();
 
         if (!requestedDate) {
           aditivoContent.innerHTML = '';
@@ -1802,6 +2295,16 @@
           lastTermoAditivoPrintMarkup = buildTermoAditivoMarkup({ parametroItem, includePrefeituraImage: true, requestedDate });
           aditivoSubtitle.textContent = `Termo aditivo pronto para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}.`;
           aditivoContent.innerHTML = lastTermoAditivoMarkup;
+          resetAditivoScrollPosition();
+          window.requestAnimationFrame(() => {
+            const openingParagraph = aditivoContent.querySelector('.dsc-emissao-documento-opening-paragraph');
+
+            if (openingParagraph instanceof HTMLElement) {
+              openingParagraph.scrollIntoView({ block: 'start' });
+            }
+
+            resetAditivoScrollPosition();
+          });
           aditivoFeedback.textContent = '';
           aditivoFeedback.className = 'dsc-feedback';
         } catch (error) {
@@ -1933,6 +2436,32 @@
         });
         feedback.textContent = '';
       };
+      const revealFirstFormError = (errorMap = {}) => {
+        const firstErrorEntry = Object.entries(errorMap).find(([key, value]) => errors[key] && value);
+
+        if (!firstErrorEntry) {
+          return;
+        }
+
+        const [firstErrorKey, firstErrorMessage] = firstErrorEntry;
+        const target = errorTargets[firstErrorKey];
+
+        if (firstErrorMessage && feedback.textContent.trim()) {
+          feedback.textContent = `${feedback.textContent.trim()} ${firstErrorMessage}`;
+        }
+
+        if (!target || typeof target.scrollIntoView !== 'function') {
+          return;
+        }
+
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        if (typeof target.focus === 'function') {
+          window.setTimeout(() => {
+            target.focus({ preventScroll: true });
+          }, 120);
+        }
+      };
 
       const getRequestErrorMessage = async (response, fallback) => {
         try {
@@ -1983,7 +2512,6 @@
         tipoTermoInput,
         representanteInput,
         cpfRepresentanteInput,
-        rgRepresentanteInput,
         logradouroInput,
         bairroInput,
         cepEnderecoInput,
@@ -1991,11 +2519,9 @@
         especificacaoSeiInput,
         valorContratoInput,
         valorContratoAtualizadoInput,
-        folhasInput,
         dataPublicacaoInput,
         vencimentoGeralInput,
         mesRenovacaoInput,
-        tpOptanteInput,
       ];
 
       const setFormReadOnly = (isReadOnly) => {
@@ -2003,9 +2529,17 @@
           input.readOnly = isReadOnly;
         });
         termoAdesaoInput.readOnly = true;
+        aditivoInput.readOnly = true;
+        tipoTermoInput.readOnly = true;
+        cepEnderecoInput.readOnly = true;
+        especificacaoSeiInput.readOnly = true;
+        valorContratoAtualizadoInput.readOnly = true;
+        mesRenovacaoInput.readOnly = true;
+        tpOptanteInput.disabled = isReadOnly;
         checkAditivoYesInput.disabled = isReadOnly;
         checkAditivoNoInput.disabled = isReadOnly;
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
+        syncAditivoDependentFieldState();
       };
 
       const setPopupVisibility = (modalElement, shouldShow) => {
@@ -2045,6 +2579,7 @@
         form.reset();
         credenciadaCodigoInput.value = '';
         cnpjCpfInput.value = '';
+        syncEspecificacaoSei();
         checkAditivoYesInput.checked = true;
         checkAditivoNoInput.checked = false;
         importFileNameInput.value = defaultImportFileName;
@@ -2052,6 +2587,8 @@
         resetMessages();
         resetDespachoState();
         resetAditivoState();
+        inheritedAditivoTermoAdesao = '';
+        applyCreateTermoDefaults();
       };
 
       const fillForm = (item) => {
@@ -2074,22 +2611,22 @@
         terminoVigenciaInput.value = item.termino_vigencia || '';
         compDataAditivoInput.value = item.comp_data_aditivo || '';
         dataPubAditivoInput.value = item.data_pub_aditivo || '';
-        tipoTermoInput.value = item.tipo_termo || '';
+        tipoTermoInput.value = normalizeTipoTermoLabel(item.tipo_pessoa || item.tipo_termo || '');
         representanteInput.value = item.representante || '';
         cpfRepresentanteInput.value = item.cpf_representante || '';
-        rgRepresentanteInput.value = item.rg_representante || '';
         cepEnderecoInput.value = item.credenciada_cep || '';
         logradouroInput.value = item.logradouro || '';
         bairroInput.value = item.bairro || '';
         municipioInput.value = item.municipio || '';
-        especificacaoSeiInput.value = item.especificacao_sei || '';
+        syncEspecificacaoSei();
         valorContratoInput.value = formatCurrencyInput(item.valor_contrato || '');
-        valorContratoAtualizadoInput.value = formatCurrencyInput(item.valor_contrato_atualizado || '');
-        folhasInput.value = item.folhas || '';
+        valorContratoAtualizadoInput.value = formatCurrencyExtenso(item.valor_contrato_atualizado || item.valor_contrato || '');
         dataPublicacaoInput.value = item.data_publicacao || '';
         vencimentoGeralInput.value = item.vencimento_geral || '';
-        mesRenovacaoInput.value = item.mes_renovacao || '';
+        mesRenovacaoInput.value = formatMonthYearLabel(item.termino_vigencia || '');
         tpOptanteInput.value = item.tp_optante || '';
+        syncDerivedTermoFields();
+        syncAditivoDependentFieldState();
       };
 
       const hideForm = () => {
@@ -2121,6 +2658,10 @@
 
         if (currentSearch) {
           params.set('search', currentSearch);
+        }
+
+        if (currentStatusTermoFilter) {
+          params.set('statusTermo', currentStatusTermoFilter);
         }
 
         return `/api/termo?${params.toString()}`;
@@ -2274,11 +2815,11 @@
           cnpjCpfInput.value = '';
           representanteInput.value = '';
           cpfRepresentanteInput.value = '';
-          rgRepresentanteInput.value = '';
           cepEnderecoInput.value = '';
           logradouroInput.value = '';
           bairroInput.value = '';
           municipioInput.value = '';
+          syncEspecificacaoSei();
           return;
         }
 
@@ -2298,9 +2839,10 @@
           credenciadoInput.value = payload.item.credenciado || credenciado;
           credenciadaCodigoInput.value = payload.item.codigo || '';
           cnpjCpfInput.value = payload.item.cnpj_cpf || '';
+          tipoTermoInput.value = normalizeTipoTermoLabel(payload.item.tipo_pessoa || payload.item.tipo_termo || '');
+          syncEspecificacaoSei();
           representanteInput.value = payload.item.representante || '';
           cpfRepresentanteInput.value = payload.item.cpf_representante || '';
-          rgRepresentanteInput.value = payload.item.rg_representante || '';
           cepEnderecoInput.value = normalizeCep(payload.item.cep || '');
           logradouroInput.value = payload.item.logradouro || '';
           bairroInput.value = payload.item.bairro || '';
@@ -2314,9 +2856,10 @@
         } catch (error) {
           credenciadaCodigoInput.value = '';
           cnpjCpfInput.value = '';
+          tipoTermoInput.value = '';
+          syncEspecificacaoSei();
           representanteInput.value = '';
           cpfRepresentanteInput.value = '';
-          rgRepresentanteInput.value = '';
           cepEnderecoInput.value = '';
           logradouroInput.value = '';
           bairroInput.value = '';
@@ -2375,34 +2918,6 @@
         return false;
       };
 
-      cepEnderecoInput.addEventListener('input', () => {
-        cepEnderecoInput.value = normalizeCep(cepEnderecoInput.value);
-        lastCepLookedUp = '';
-        errors.cep.textContent = '';
-      });
-
-      cepEnderecoInput.addEventListener('blur', async () => {
-        const cep = normalizeCep(cepEnderecoInput.value);
-        cepEnderecoInput.value = cep;
-
-        if (!/^\d{5}-\d{3}$/.test(cep)) {
-          lastCepLookedUp = '';
-          clearAddressFromCep();
-          errors.cep.textContent = cep ? 'Informe um CEP valido.' : '';
-          return;
-        }
-
-        if (cep === lastCepLookedUp) {
-          return;
-        }
-
-        try {
-          await lookupCepAndFillAddress(cep);
-        } catch (_) {
-          lastCepLookedUp = '';
-        }
-      });
-
       const collectPayload = () => ({
         codigoXml: normalizeIntegerInput(codigoXmlInput.value, 10),
         aditivo: normalizeIntegerInput(aditivoInput.value, 2),
@@ -2422,11 +2937,10 @@
         tipoTermo: normalizeText(tipoTermoInput.value, 100),
         especificacaoSei: normalizeText(especificacaoSeiInput.value, 255),
         valorContrato: normalizeDecimalInput(valorContratoInput.value),
-        valorContratoAtualizado: normalizeDecimalInput(valorContratoAtualizadoInput.value),
-        folhas: normalizeText(folhasInput.value, 50),
+        valorContratoAtualizado: normalizeDecimalInput(valorContratoInput.value),
         dataPublicacao: dataPublicacaoInput.value,
         vencimentoGeral: vencimentoGeralInput.value,
-        mesRenovacao: normalizeText(mesRenovacaoInput.value, 50),
+        mesRenovacao: normalizeText(formatMonthYearLabel(terminoVigenciaInput.value), 50),
         tpOptante: normalizeText(tpOptanteInput.value, 20),
       });
 
@@ -2442,6 +2956,15 @@
 
         if (!payload.credenciadaCodigo) {
           errors.credenciado.textContent = 'Informe o credenciado (codigo da credenciada e obrigatorio).';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          revealFirstFormError({ credenciado: errors.credenciado.textContent });
+          return;
+        }
+
+        if (!payload.tpOptante) {
+          errors.tpOptante.textContent = 'Tipo optante e obrigatorio.';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          revealFirstFormError({ tpOptante: errors.tpOptante.textContent });
           return;
         }
 
@@ -2465,6 +2988,8 @@
                   errors[key].textContent = value;
                 }
               });
+              feedback.textContent = responsePayload.message || 'Falha ao salvar o registro.';
+              revealFirstFormError(responsePayload.errors);
             }
             throw new Error(responsePayload.message || 'Falha ao salvar o registro.');
           }
@@ -2474,7 +2999,9 @@
           showBanner(editingCodigo ? 'Registro alterado com sucesso.' : 'Registro cadastrado com sucesso.');
           await loadItems();
         } catch (error) {
-          feedback.textContent = error instanceof Error ? error.message : 'Falha ao salvar o registro.';
+          if (!feedback.textContent.trim()) {
+            feedback.textContent = error instanceof Error ? error.message : 'Falha ao salvar o registro.';
+          }
         }
       });
 
@@ -2519,6 +3046,7 @@
         event.preventDefault();
         currentPage = 1;
         currentSearch = searchInput.value.trim();
+        currentStatusTermoFilter = statusFilterInput.value.trim();
         void loadItems();
       });
 
@@ -2531,7 +3059,9 @@
 
       clearFilterButton.addEventListener('click', () => {
         searchInput.value = '';
+        statusFilterInput.value = '';
         currentSearch = '';
+        currentStatusTermoFilter = '';
         currentPage = 1;
         void loadItems();
       });
@@ -2708,14 +3238,26 @@
       });
 
       codigoXmlInput.addEventListener('input', () => { codigoXmlInput.value = normalizeIntegerInput(codigoXmlInput.value, 10); });
-      aditivoInput.addEventListener('input', () => { aditivoInput.value = normalizeIntegerInput(aditivoInput.value, 2); });
+      aditivoInput.addEventListener('input', () => {
+        aditivoInput.value = normalizeIntegerInput(aditivoInput.value, 2);
+        syncAditivoDependentFieldState();
+      });
       seiInput.addEventListener('input', () => {
         seiInput.value = normalizeSei(seiInput.value);
         termoAdesaoInput.value = deriveTermoAdesaoFromSei(seiInput.value);
+        void syncNextAditivoByTermoAdesao();
+      });
+      seiInput.addEventListener('blur', () => {
+        void syncNextAditivoByTermoAdesao();
       });
       termoAdesaoInput.addEventListener('input', () => { termoAdesaoInput.value = normalizeTermoAdesao(termoAdesaoInput.value); });
-      valorContratoInput.addEventListener('input', () => { valorContratoInput.value = formatCurrencyInput(valorContratoInput.value); });
-      valorContratoAtualizadoInput.addEventListener('input', () => { valorContratoAtualizadoInput.value = normalizeDecimalInput(valorContratoAtualizadoInput.value); });
+      valorContratoInput.addEventListener('input', () => {
+        valorContratoInput.value = formatCurrencyInput(valorContratoInput.value);
+        syncDerivedTermoFields();
+      });
+      terminoVigenciaInput.addEventListener('input', () => {
+        syncDerivedTermoFields();
+      });
 
       gridBody.addEventListener('click', async (event) => {
         const button = event.target.closest('button[data-action]');

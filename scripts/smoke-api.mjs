@@ -306,6 +306,7 @@ const runCondutorSmoke = async () => {
 const runCredenciadaSmoke = async () => {
   console.log('Smoke test da API Credenciada')
   const suiteReport = recordSuite('credenciada')
+  const xmlFixtureCodes = ['3789', '3434', '4946', '5524', '5781']
 
   try {
     const listResponse = await requestJson('/api/credenciada?page=1&pageSize=5')
@@ -323,21 +324,30 @@ const runCredenciadaSmoke = async () => {
     )
     logStep('ordenacao asc/desc por credenciado ok')
 
-    const originalItem = await findPaginatedFixture({
-      resourcePath: '/api/credenciada',
-      predicate: (item) => {
-        return Boolean(String(item.codigo ?? '').trim())
-          && Boolean(String(item.credenciado ?? '').trim())
-          && Boolean(String(item.cnpj_cpf ?? '').trim())
-          && Boolean(String(item.email ?? '').trim())
-          && Boolean(String(item.telefone_01 ?? '').trim())
-          && Boolean(String(item.representante ?? '').trim())
-      },
-      description: 'credenciada existente com dados suficientes para edicao',
+    const validImport = await requestJson('/api/credenciada/import-xml', {
+      method: 'POST',
+      body: JSON.stringify({ fileName: 'Credenciados.xml' }),
     })
+    recordImport(suiteReport, 'valid-import', validImport)
+    assert(validImport.skipped === 0, 'Importacao valida de credenciada retornou recusas inesperadas.')
+    assert(validImport.processed === validImport.total, 'Importacao valida de credenciada nao processou todos os registros do XML.')
+    assert((validImport.inserted + validImport.updated) === validImport.processed, 'Importacao valida de credenciada retornou contagem inconsistente.')
+    logStep(`importacao valida da credenciada: ${validImport.processed} processado(s), ${validImport.updated} alterado(s), ${validImport.inserted} incluido(s), ${validImport.skipped} recusado(s)`)
+
+    const originalItem = (await Promise.all(xmlFixtureCodes.map((codigo) => findExactItemByCode('/api/credenciada', codigo))))
+      .find((item) => Boolean(item)
+        && Boolean(String(item.codigo ?? '').trim())
+        && Boolean(String(item.credenciado ?? '').trim())
+        && Boolean(String(item.cnpj_cpf ?? '').trim())
+        && Boolean(String(item.email ?? '').trim())
+        && Boolean(String(item.telefone_01 ?? '').trim())
+        && Boolean(String(item.representante ?? '').trim()))
+
+    assert(Boolean(originalItem), 'Nenhum fixture estavel foi encontrado para credenciada importada do XML com dados suficientes para edicao.')
     const targetCode = String(originalItem.codigo)
     const updatedRepresentante = 'ROSALI APARECIDA POLI GOMES TESTE API'
-    const updatedStatus = 'EM TESTE API'
+    const normalizedOriginalStatus = String(originalItem.status ?? '').trim().toUpperCase() === 'CANCELADO' ? 'CANCELADO' : 'ATIVO'
+    const updatedStatus = normalizedOriginalStatus === 'CANCELADO' ? 'ATIVO' : 'CANCELADO'
 
     await requestJson(`/api/credenciada/${encodeURIComponent(targetCode)}`, {
       method: 'PUT',
@@ -362,20 +372,20 @@ const runCredenciadaSmoke = async () => {
     assert(updatedItem.status === updatedStatus, 'Alteracao da credenciada nao persistiu status.')
     logStep(`edicao do registro importado ${targetCode} ok`)
 
-    const validImport = await requestJson('/api/credenciada/import-xml', {
+    const restoreImport = await requestJson('/api/credenciada/import-xml', {
       method: 'POST',
       body: JSON.stringify({ fileName: 'Credenciados.xml' }),
     })
-    recordImport(suiteReport, 'valid-import', validImport)
-    assert(validImport.skipped === 0, 'Importacao valida de credenciada retornou recusas inesperadas.')
-    assert(validImport.processed === validImport.total, 'Importacao valida de credenciada nao processou todos os registros do XML.')
-    assert((validImport.inserted + validImport.updated) === validImport.processed, 'Importacao valida de credenciada retornou contagem inconsistente.')
-    logStep(`importacao valida da credenciada: ${validImport.processed} processado(s), ${validImport.updated} alterado(s), ${validImport.inserted} incluido(s), ${validImport.skipped} recusado(s)`)
+    recordImport(suiteReport, 'restore-import', restoreImport)
+    assert(restoreImport.skipped === 0, 'Reimportacao valida de credenciada retornou recusas inesperadas.')
+    assert(restoreImport.processed === restoreImport.total, 'Reimportacao valida de credenciada nao processou todos os registros do XML.')
+    assert((restoreImport.inserted + restoreImport.updated) === restoreImport.processed, 'Reimportacao valida de credenciada retornou contagem inconsistente.')
+    logStep(`reimportacao valida da credenciada: ${restoreImport.processed} processado(s), ${restoreImport.updated} alterado(s), ${restoreImport.inserted} incluido(s), ${restoreImport.skipped} recusado(s)`)
 
     const restoredItem = await findExactItemByCode('/api/credenciada', targetCode)
     assert(Boolean(restoredItem), `Registro ${targetCode} nao foi restaurado apos reimportacao valida.`)
     assert(restoredItem.representante === originalItem.representante, 'Representante original nao foi restaurado apos reimportacao valida.')
-    assert(restoredItem.status === originalItem.status, 'Status original nao foi restaurado apos reimportacao valida.')
+    assert(restoredItem.status === normalizedOriginalStatus, 'Status original nao foi restaurado apos reimportacao valida.')
     logStep(`reimportacao valida e restauracao do registro ${targetCode} ok`)
 
     const invalidImport = await requestJson('/api/credenciada/import-xml', {

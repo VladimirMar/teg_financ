@@ -489,6 +489,44 @@
         feedback.textContent = '';
         feedback.className = 'dsc-feedback';
       };
+      const formErrors = {
+        condutor: nomeError,
+        cpfCondutor: cpfError,
+        crmc: crmcError,
+        validadeCrmc: validadeCrmcError,
+        validadeCurso: validadeCursoError,
+      };
+      const errorTargets = {
+        condutor: nomeInput,
+        cpfCondutor: cpfInput,
+        crmc: crmcInput,
+        validadeCrmc: validadeCrmcInput,
+        validadeCurso: validadeCursoInput,
+      };
+      const revealFirstFormError = (errorMap = {}) => {
+        const firstErrorEntry = Object.entries(errorMap).find(([key, value]) => formErrors[key] && value);
+
+        if (!firstErrorEntry) {
+          return;
+        }
+
+        const [firstErrorKey, firstErrorMessage] = firstErrorEntry;
+        const target = errorTargets[firstErrorKey];
+
+        if (firstErrorMessage && feedback.textContent.trim() && !feedback.textContent.includes(firstErrorMessage)) {
+          feedback.textContent = `${feedback.textContent.trim()} ${firstErrorMessage}`;
+        }
+
+        if (!target || typeof target.scrollIntoView !== 'function') {
+          return;
+        }
+
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        if (typeof target.focus === 'function') {
+          window.setTimeout(() => target.focus({ preventScroll: true }), 120);
+        }
+      };
 
       const resetImportMessages = () => {
         importFileNameError.textContent = '';
@@ -1052,6 +1090,13 @@
         if (hasError) {
           feedback.textContent = 'Corrija os campos para continuar.';
           feedback.classList.add('dsc-feedback-error');
+          revealFirstFormError({
+            condutor: nomeError.textContent,
+            cpfCondutor: cpfError.textContent,
+            crmc: crmcError.textContent,
+            validadeCrmc: validadeCrmcError.textContent,
+            validadeCurso: validadeCursoError.textContent,
+          });
           return;
         }
 
@@ -1077,6 +1122,16 @@
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
+            if (payload.errors) {
+              Object.entries(payload.errors).forEach(([key, value]) => {
+                if (formErrors[key]) {
+                  formErrors[key].textContent = value;
+                }
+              });
+              feedback.textContent = payload.message || 'Falha ao gravar condutor.';
+              feedback.classList.add('dsc-feedback-error');
+              revealFirstFormError(payload.errors);
+            }
             throw new Error(payload.message || 'Falha ao gravar condutor.');
           }
 
@@ -1090,8 +1145,10 @@
           await loadItems();
         } catch (error) {
           const message = getRequestErrorMessage(error, 'Falha ao gravar condutor.');
-          feedback.textContent = message;
-          feedback.classList.add('dsc-feedback-error');
+          if (!feedback.textContent.trim()) {
+            feedback.textContent = message;
+            feedback.classList.add('dsc-feedback-error');
+          }
           showBanner(message, 'error');
         }
       });

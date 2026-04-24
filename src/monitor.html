@@ -512,6 +512,48 @@
         feedback.textContent = '';
         feedback.className = 'dsc-feedback';
       };
+      const formErrors = {
+        codigo: codigoError,
+        monitor: nomeError,
+        cpfMonitor: cpfError,
+        rgMonitor: rgError,
+        cursoMonitor: cursoError,
+        validadeCurso: validadeCursoError,
+        nascimento: nascimentoError,
+      };
+      const errorTargets = {
+        codigo: codigoInput,
+        monitor: nomeInput,
+        cpfMonitor: cpfInput,
+        rgMonitor: rgInput,
+        cursoMonitor: cursoInput,
+        validadeCurso: validadeCursoInput,
+        nascimento: nascimentoInput,
+      };
+      const revealFirstFormError = (errorMap = {}) => {
+        const firstErrorEntry = Object.entries(errorMap).find(([key, value]) => formErrors[key] && value);
+
+        if (!firstErrorEntry) {
+          return;
+        }
+
+        const [firstErrorKey, firstErrorMessage] = firstErrorEntry;
+        const target = errorTargets[firstErrorKey];
+
+        if (firstErrorMessage && feedback.textContent.trim() && !feedback.textContent.includes(firstErrorMessage)) {
+          feedback.textContent = `${feedback.textContent.trim()} ${firstErrorMessage}`;
+        }
+
+        if (!target || typeof target.scrollIntoView !== 'function') {
+          return;
+        }
+
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        if (typeof target.focus === 'function') {
+          window.setTimeout(() => target.focus({ preventScroll: true }), 120);
+        }
+      };
 
       const resetImportMessages = () => {
         importFileNameError.textContent = '';
@@ -1093,6 +1135,15 @@
         if (hasError) {
           feedback.textContent = 'Corrija os campos para continuar.';
           feedback.classList.add('dsc-feedback-error');
+          revealFirstFormError({
+            codigo: codigoError.textContent,
+            monitor: nomeError.textContent,
+            cpfMonitor: cpfError.textContent,
+            rgMonitor: rgError.textContent,
+            nascimento: nascimentoError.textContent,
+            cursoMonitor: cursoError.textContent,
+            validadeCurso: validadeCursoError.textContent,
+          });
           return;
         }
 
@@ -1118,6 +1169,16 @@
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
+            if (payload.errors) {
+              Object.entries(payload.errors).forEach(([key, value]) => {
+                if (formErrors[key]) {
+                  formErrors[key].textContent = value;
+                }
+              });
+              feedback.textContent = payload.message || 'Falha ao gravar monitor.';
+              feedback.classList.add('dsc-feedback-error');
+              revealFirstFormError(payload.errors);
+            }
             throw new Error(payload.message || 'Falha ao gravar monitor.');
           }
 
@@ -1131,8 +1192,10 @@
           await loadItems();
         } catch (error) {
           const message = getRequestErrorMessage(error, 'Falha ao gravar monitor.');
-          feedback.textContent = message;
-          feedback.classList.add('dsc-feedback-error');
+          if (!feedback.textContent.trim()) {
+            feedback.textContent = message;
+            feedback.classList.add('dsc-feedback-error');
+          }
           showBanner(message, 'error');
         }
       });

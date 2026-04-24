@@ -306,6 +306,23 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   overflow: auto;
 }
 
+#emissao-parametro-form-modal .dsc-popup-shell-ordem-servico {
+  width: min(100%, 1820px);
+}
+
+#emissao-parametro-form-modal .dsc-access-form {
+  max-width: none;
+  width: min(100%, 1480px);
+  align-items: stretch;
+}
+
+#emissao-parametro-form .dsc-field-group,
+#emissao-parametro-form .dsc-form-control,
+#emissao-parametro-form .dsc-form-textarea,
+#emissao-parametro-form .dsc-card {
+  width: 100%;
+}
+
 #ordem-servico-form-modal {
   padding: 8px 12px;
 }
@@ -619,6 +636,22 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 .dsc-form-control-auto-filled {
   border-color: rgba(91, 133, 116, 0.42);
   background: linear-gradient(180deg, rgba(235, 244, 239, 0.96), rgba(225, 236, 230, 0.94));
+}
+
+.dsc-form-control-tall {
+  height: 36px;
+  min-height: 36px;
+  line-height: 36px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+#credenciamento-termo-tp-optante {
+  height: 36px;
+  min-height: 36px;
+  line-height: 36px;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .dsc-form-row-veiculo-datas {
@@ -1055,7 +1088,8 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 }
 
 #ordem-servico-emissao-panel,
-#credenciamento-termo-despacho-panel {
+#credenciamento-termo-despacho-panel,
+#credenciamento-termo-aditivo-panel {
   width: min(100%, 1080px);
   max-height: min(82vh, 820px);
   overflow: auto;
@@ -1065,7 +1099,8 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 }
 
 #ordem-servico-emissao-panel .dsc-popup-footer-sticky,
-#credenciamento-termo-despacho-panel .dsc-popup-footer-sticky {
+#credenciamento-termo-despacho-panel .dsc-popup-footer-sticky,
+#credenciamento-termo-aditivo-panel .dsc-popup-footer-sticky {
   position: static !important;
   bottom: auto !important;
   z-index: auto !important;
@@ -2257,7 +2292,8 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
   }
 
   #ordem-servico-emissao-panel,
-  #credenciamento-termo-despacho-panel {
+  #credenciamento-termo-despacho-panel,
+  #credenciamento-termo-aditivo-panel {
     width: 100%;
     max-height: min(86vh, 700px);
   }

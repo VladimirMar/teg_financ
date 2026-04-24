@@ -2076,7 +2076,6 @@ const parseCredenciadaXml = (xmlContent) => {
     telefone2: normalizeRequestValue(record?.Telefone_02),
     representante: normalizeRequestValue(record?.Representante),
     cpfRepresentante: normalizeRequestValue(record?.CPF_representante),
-    rgRepresentante: normalizeRequestValue(record?.RG_representante),
     status: normalizeRequestValue(record?.Status),
   }))
 }
@@ -2488,7 +2487,6 @@ const buildCredenciamentoTermoBaseRecord = (record, index) => {
     especificacaoSei: normalizeRequestValue(record.Especificacao_SEI).toUpperCase().slice(0, 255),
     valorContrato,
     objeto: normalizeRequestValue(record.Objeto).toUpperCase().slice(0, 1000),
-    folhas: normalizeRequestValue(record.Folhas).toUpperCase().slice(0, 50),
     dataPublicacao: normalizeXmlDateInput(record.Data_de_publicacao),
     infoSei: normalizeRequestValue(record.Info_SEI).toUpperCase().slice(0, 100),
     valorContratoAtualizado,
@@ -3023,6 +3021,7 @@ const titularUniqueIndexName = '"titularCrm_codigo_unique_idx"'
 const credenciadaSelectClause = `
   codigo::text AS codigo,
   BTRIM(credenciado) AS credenciado,
+  COALESCE(BTRIM(tipo_pessoa), '') AS tipo_pessoa,
   BTRIM(cnpj_cpf) AS cnpj_cpf,
   COALESCE(BTRIM(cep), '') AS cep,
   COALESCE(BTRIM(numero), '') AS numero,
@@ -3035,7 +3034,6 @@ const credenciadaSelectClause = `
   COALESCE(BTRIM(telefone_02), '') AS telefone_02,
   COALESCE(BTRIM(representante), '') AS representante,
   COALESCE(BTRIM(cpf_representante), '') AS cpf_representante,
-  COALESCE(BTRIM(rg_representante), '') AS rg_representante,
   CASE
     WHEN UPPER(BTRIM(COALESCE(status, ''))) = 'CANCELADO' THEN 'CANCELADO'
     ELSE 'ATIVO'
@@ -3110,17 +3108,13 @@ const credenciamentoTermoSelectClause = `
   COALESCE(BTRIM(tipo_termo), '') AS tipo_termo,
   COALESCE(BTRIM((SELECT cr.representante FROM credenciada cr WHERE cr.codigo = credenciada_codigo)), '') AS representante,
   COALESCE(BTRIM((SELECT cr.cpf_representante FROM credenciada cr WHERE cr.codigo = credenciada_codigo)), '') AS cpf_representante,
-  COALESCE(BTRIM((SELECT cr.rg_representante FROM credenciada cr WHERE cr.codigo = credenciada_codigo)), '') AS rg_representante,
   COALESCE(BTRIM((SELECT BTRIM(cr.cep) FROM credenciada cr WHERE cr.codigo = credenciada_codigo)), '') AS credenciada_cep,
   COALESCE((SELECT BTRIM(c.logradouro) FROM ceps c WHERE c.cep = BTRIM((SELECT cr.cep FROM credenciada cr WHERE cr.codigo = credenciada_codigo))), '') AS logradouro,
   COALESCE((SELECT BTRIM(c.bairro) FROM ceps c WHERE c.cep = BTRIM((SELECT cr.cep FROM credenciada cr WHERE cr.codigo = credenciada_codigo))), '') AS bairro,
   COALESCE((SELECT BTRIM(c.municipio) FROM ceps c WHERE c.cep = BTRIM((SELECT cr.cep FROM credenciada cr WHERE cr.codigo = credenciada_codigo))), '') AS municipio,
   ${credenciamentoTermoEspecificacaoSeiExpression} AS especificacao_sei,
   valor_contrato::text AS valor_contrato,
-  COALESCE(BTRIM(objeto), '') AS objeto,
-  COALESCE(BTRIM(folhas), '') AS folhas,
   TO_CHAR(data_publicacao::date, 'YYYY-MM-DD') AS data_publicacao,
-  COALESCE(BTRIM(info_sei), '') AS info_sei,
   valor_contrato_atualizado::text AS valor_contrato_atualizado,
   TO_CHAR(vencimento_geral::date, 'YYYY-MM-DD') AS vencimento_geral,
   ${credenciamentoTermoMesRenovacaoExpression} AS mes_renovacao,
@@ -4333,15 +4327,14 @@ const importCredenciamentoTermoXmlFile = async (fileName) => {
                especificacao_sei = NULLIF($19, ''),
                valor_contrato = $20,
                 objeto = NULLIF($21, ''),
-                folhas = NULLIF($22, ''),
-                data_publicacao = NULLIF($23, '')::date,
-                info_sei = NULLIF($24, ''),
-                valor_contrato_atualizado = $25,
-                vencimento_geral = NULLIF($26, '')::date,
-                mes_renovacao = NULLIF($27, ''),
-                tp_optante = NULLIF($28, ''),
+               data_publicacao = NULLIF($22, '')::date,
+               info_sei = NULLIF($23, ''),
+               valor_contrato_atualizado = $24,
+               vencimento_geral = NULLIF($25, '')::date,
+               mes_renovacao = NULLIF($26, ''),
+               tp_optante = NULLIF($27, ''),
                data_modificacao = NOW()
-              WHERE codigo = $29`,
+              WHERE codigo = $28`,
           [...values, existingResult.rows[0].codigo],
         )
         updated += 1
@@ -4371,7 +4364,6 @@ const importCredenciamentoTermoXmlFile = async (fileName) => {
            especificacao_sei,
            valor_contrato,
            objeto,
-           folhas,
            data_publicacao,
            info_sei,
            valor_contrato_atualizado,
@@ -4381,7 +4373,7 @@ const importCredenciamentoTermoXmlFile = async (fileName) => {
            data_inclusao,
            data_modificacao
          )
-         VALUES ($1, $2, $3, NULLIF($4, ''), $5, NULLIF($6, ''), NULLIF($7, ''), NULLIF($8, '')::date, NULLIF($9, '')::date, NULLIF($10, '')::date, NULLIF($11, ''), NULLIF($12, '')::date, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''), NULLIF($18, ''), NULLIF($19, ''), $20, NULLIF($21, ''), NULLIF($22, ''), NULLIF($23, '')::date, NULLIF($24, ''), $25, NULLIF($26, '')::date, NULLIF($27, ''), NULLIF($28, ''), NOW(), NOW())`,
+         VALUES ($1, $2, $3, NULLIF($4, ''), $5, NULLIF($6, ''), NULLIF($7, ''), NULLIF($8, '')::date, NULLIF($9, '')::date, NULLIF($10, '')::date, NULLIF($11, ''), NULLIF($12, '')::date, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''), NULLIF($18, ''), NULLIF($19, ''), $20, NULLIF($21, '')::date, NULLIF($22, ''), $23, NULLIF($24, '')::date, NULLIF($25, ''), NULLIF($26, ''), NOW(), NOW())`,
         values,
       )
       inserted += 1
@@ -5324,10 +5316,9 @@ const importCredenciadaXmlFile = async (fileName) => {
                telefone_02 = NULLIF($10, ''),
                representante = NULLIF($11, ''),
                cpf_representante = NULLIF($12, ''),
-               rg_representante = NULLIF($13, ''),
-               status = NULLIF($14, ''),
+                 status = NULLIF($13, ''),
                data_modificacao = NOW()
-           WHERE codigo = $15`,
+               WHERE codigo = $14`,
           [
             record.placa,
             record.empresa,
@@ -5341,7 +5332,6 @@ const importCredenciadaXmlFile = async (fileName) => {
             record.telefone2,
             record.representante,
             record.cpfRepresentante,
-            record.rgRepresentante,
             record.status,
             record.codigo,
           ],
@@ -5365,12 +5355,11 @@ const importCredenciadaXmlFile = async (fileName) => {
            telefone_02,
            representante,
            cpf_representante,
-           rg_representante,
            status,
            data_inclusao,
            data_modificacao
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NULLIF($8, ''), $9, NULLIF($10, ''), NULLIF($11, ''), NULLIF($12, ''), NULLIF($13, ''), NULLIF($14, ''), NULLIF($15, ''), NOW(), NOW())`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NULLIF($8, ''), $9, NULLIF($10, ''), NULLIF($11, ''), NULLIF($12, ''), NULLIF($13, ''), NULLIF($14, ''), NOW(), NOW())`,
         [
           record.codigo,
           record.placa,
@@ -5789,7 +5778,7 @@ const defaultEmissaoDocumentoTituloAditivo = 'TERMO ADITIVO DE PRORROGACAO AO TE
 const defaultEmissaoDocumentoTermoSmt = 'SMT/SETRAM/DTP/DTEG N. ________'
 const defaultEmissaoDocumentoDescricaoAditivo = `Aos <termo/inicio de vigencia/por extenso>, as partes qualificadas neste instrumento celebram o presente TERMO ADITIVO DE PRORROGACAO ao Termo de Adesao ao Credenciamento {{termo_adesao}}, vinculado ao Processo SEI {{processo}} e ao Edital de Chamamento Publico n {{edital}}.
 
-De um lado, {{credenciante}}, doravante CREDENCIANTE. De outro, {{credenciado}}, inscrito(a) no CPF/CNPJ sob n {{cnpj_cpf}}, representado(a) por {{representante}}, CPF n {{cpf_representante}} e RG n {{rg_representante}}, doravante CREDENCIADO(A).
+De um lado, {{credenciante}}, doravante CREDENCIANTE. De outro, {{credenciado}}, inscrito(a) no CPF/CNPJ sob n {{cnpj_cpf}}, representado(a) por {{representante}}, CPF n {{cpf_representante}}, doravante CREDENCIADO(A).
 
 As partes ajustam a prorrogacao do instrumento originario, com eficacia condicionada a publicacao oficial, na forma das clausulas a seguir:`
 const defaultEmissaoDocumentoCorpoAditivo = `CLAUSULA PRIMEIRA - DO OBJETO
@@ -5836,6 +5825,12 @@ const emissaoDocumentoParametroSelectClause = `
   COALESCE(BTRIM(descricao_aditivo), '') AS descricao_aditivo,
   COALESCE(BTRIM(corpo_aditivo), '') AS corpo_aditivo,
   COALESCE(BTRIM(assinaturas_aditivo), '') AS assinaturas_aditivo,
+  COALESCE(BTRIM(descricao_contrato_pf), '') AS descricao_contrato_pf,
+  COALESCE(BTRIM(descricao_contrato_pj), '') AS descricao_contrato_pj,
+  COALESCE(BTRIM(corpo_contrato_pf), '') AS corpo_contrato_pf,
+  COALESCE(BTRIM(corpo_contrato_pj), '') AS corpo_contrato_pj,
+  COALESCE(BTRIM(link_modelo_relatorio_contrato_pf), '') AS link_modelo_relatorio_contrato_pf,
+  COALESCE(BTRIM(link_modelo_relatorio_contrato_pj), '') AS link_modelo_relatorio_contrato_pj,
   COALESCE(BTRIM(texto_despacho), '') AS texto_despacho,
   COALESCE(BTRIM(edital_chamamento_publico), '') AS edital_chamamento_publico,
   COALESCE(BTRIM(obs_01_emissao), '') AS obs_01_emissao,
@@ -5855,6 +5850,12 @@ const validateEmissaoDocumentoParametroPayload = async ({
   descricaoAditivo,
   corpoAditivo,
   assinaturasAditivo,
+  descricaoContratoPf,
+  descricaoContratoPj,
+  corpoContratoPf,
+  corpoContratoPj,
+  linkModeloRelatorioContratoPf,
+  linkModeloRelatorioContratoPj,
   textoDespacho,
   editalChamamentoPublico,
   obs01Emissao,
@@ -5875,6 +5876,12 @@ const validateEmissaoDocumentoParametroPayload = async ({
   const normalizedDescricaoAditivo = normalizeEmissaoDocumentoParamMultilineText(descricaoAditivo, 12000)
   const normalizedCorpoAditivo = normalizeEmissaoDocumentoParamMultilineText(corpoAditivo, 12000)
   const normalizedAssinaturasAditivo = normalizeEmissaoDocumentoParamMultilineText(assinaturasAditivo, 12000)
+  const normalizedDescricaoContratoPf = normalizeEmissaoDocumentoParamMultilineText(descricaoContratoPf, 20000)
+  const normalizedDescricaoContratoPj = normalizeEmissaoDocumentoParamMultilineText(descricaoContratoPj, 20000)
+  const normalizedCorpoContratoPf = normalizeEmissaoDocumentoParamMultilineText(corpoContratoPf, 250000)
+  const normalizedCorpoContratoPj = normalizeEmissaoDocumentoParamMultilineText(corpoContratoPj, 250000)
+  const normalizedLinkModeloRelatorioContratoPf = normalizeEmissaoDocumentoParamText(linkModeloRelatorioContratoPf)
+  const normalizedLinkModeloRelatorioContratoPj = normalizeEmissaoDocumentoParamText(linkModeloRelatorioContratoPj)
   const normalizedTextoDespacho = normalizeEmissaoDocumentoParamMultilineText(textoDespacho, 8000)
   const normalizedEditalChamamentoPublico = normalizeEmissaoDocumentoParamText(editalChamamentoPublico, 50)
   const normalizedObs01Emissao = normalizeEmissaoDocumentoParamText(obs01Emissao)
@@ -5973,6 +5980,12 @@ const validateEmissaoDocumentoParametroPayload = async ({
       descricaoAditivo: normalizedDescricaoAditivo,
       corpoAditivo: normalizedCorpoAditivo,
       assinaturasAditivo: normalizedAssinaturasAditivo,
+      descricaoContratoPf: normalizedDescricaoContratoPf,
+      descricaoContratoPj: normalizedDescricaoContratoPj,
+      corpoContratoPf: normalizedCorpoContratoPf,
+      corpoContratoPj: normalizedCorpoContratoPj,
+      linkModeloRelatorioContratoPf: normalizedLinkModeloRelatorioContratoPf,
+      linkModeloRelatorioContratoPj: normalizedLinkModeloRelatorioContratoPj,
       textoDespacho: normalizedTextoDespacho,
       editalChamamentoPublico: normalizedEditalChamamentoPublico,
       obs01Emissao: normalizedObs01Emissao,
@@ -6479,6 +6492,7 @@ const validateTitularPayload = async ({
 const validateCredenciadaPayload = async ({
   codigo,
   credenciado,
+  tipoPessoa,
   cnpjCpf,
   cep,
   numero,
@@ -6488,13 +6502,15 @@ const validateCredenciadaPayload = async ({
   telefone2,
   representante,
   cpfRepresentante,
-  rgRepresentante,
   status,
   originalCodigo = null,
 }) => {
   const normalizedCodigo = normalizeCondutorCodigo(codigo)
   const normalizedCredenciado = normalizeCredenciadaText(credenciado, 255)
   const normalizedCnpjCpf = normalizeCnpjCpf(cnpjCpf)
+  const normalizedTipoPessoaSource = normalizeRequestValue(tipoPessoa).slice(0, 20)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
   const normalizedCep = normalizeCep(cep)
   const normalizedNumero = normalizeCredenciadaText(numero, 30)
   const normalizedComplemento = normalizeCredenciadaText(complemento, 30)
@@ -6503,7 +6519,6 @@ const validateCredenciadaPayload = async ({
   const normalizedTelefone2 = normalizePhoneNumber(telefone2)
   const normalizedRepresentante = normalizeCredenciadaText(representante, 120)
   const normalizedCpfRepresentante = normalizeCpf(cpfRepresentante)
-  const normalizedRgRepresentante = normalizeCredenciadaText(rgRepresentante, 30)
   const normalizedStatus = normalizeCredenciadaStatusValue(status)
 
   if (normalizedCodigo === null) {
@@ -6524,6 +6539,19 @@ const validateCredenciadaPayload = async ({
 
   if (!isCnpjCpfValid(normalizedCnpjCpf)) {
     return { status: 400, payload: { message: 'CNPJ/CPF deve conter 11 ou 14 digitos.' } }
+  }
+
+  const documentDigitsLength = extractDocumentDigits(normalizedCnpjCpf).length
+  const normalizedTipoPessoa = documentDigitsLength === 11
+    ? 'PESSOA FISICA'
+    : normalizedTipoPessoaSource === 'COOPERATIVA'
+      ? 'COOPERATIVA'
+      : normalizedTipoPessoaSource === 'PESSOA JURIDICA'
+        ? 'PESSOA JURIDICA'
+        : ''
+
+  if (documentDigitsLength === 14 && !normalizedTipoPessoa) {
+    return { status: 400, payload: { message: 'Para CNPJ, tipo de termo deve ser Pessoa Juridica ou Cooperativa.' } }
   }
 
   if (normalizedCep && !isCepValid(normalizedCep)) {
@@ -6559,11 +6587,25 @@ const validateCredenciadaPayload = async ({
     return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
   }
 
+  const duplicateDocumentResult = await pool.query(
+    `SELECT codigo
+     FROM credenciada
+     WHERE cnpj_cpf = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     LIMIT 1`,
+    [normalizedCnpjCpf, originalCodigo],
+  )
+
+  if (duplicateDocumentResult.rowCount > 0) {
+    return { status: 409, payload: { message: 'CNPJ/CPF ja cadastrado para outra credenciada.' } }
+  }
+
   return {
     status: 200,
     payload: {
       codigo: normalizedCodigo,
       credenciado: normalizedCredenciado,
+      tipoPessoa: normalizedTipoPessoa,
       cnpjCpf: normalizedCnpjCpf,
       cep: normalizedCep,
       numero: normalizedNumero,
@@ -6573,7 +6615,6 @@ const validateCredenciadaPayload = async ({
       telefone2: normalizedTelefone2,
       representante: normalizedRepresentante,
       cpfRepresentante: normalizedCpfRepresentante,
-      rgRepresentante: normalizedRgRepresentante,
       status: normalizedStatus,
       ...buildCredenciadaLegacyFields({
         codigo: normalizedCodigo,
@@ -6607,10 +6648,7 @@ const validateCredenciamentoTermoPayload = async ({
   municipio,
   especificacaoSei,
   valorContrato,
-  objeto,
-  folhas,
   dataPublicacao,
-  infoSei,
   valorContratoAtualizado,
   vencimentoGeral,
   mesRenovacao,
@@ -6639,17 +6677,14 @@ const validateCredenciamentoTermoPayload = async ({
   const normalizedMunicipio = normalizeCredenciadaText(municipio, 120)
   const normalizedEspecificacaoSei = normalizeRequestValue(especificacaoSei).toUpperCase().slice(0, 255)
   const normalizedValorContrato = normalizeDecimalValue(valorContrato)
-  const normalizedObjeto = normalizeRequestValue(objeto).toUpperCase().slice(0, 1000)
-  const normalizedFolhas = normalizeRequestValue(folhas).toUpperCase().slice(0, 50)
   const normalizedDataPublicacao = normalizeXmlDateInput(dataPublicacao) || normalizeRequestValue(dataPublicacao)
-  const normalizedInfoSei = normalizeRequestValue(infoSei).toUpperCase().slice(0, 100)
   const normalizedValorContratoAtualizado = normalizeDecimalValue(valorContratoAtualizado)
   const normalizedVencimentoGeral = normalizeXmlDateInput(vencimentoGeral) || normalizeRequestValue(vencimentoGeral)
   const normalizedMesRenovacao = normalizeRequestValue(mesRenovacao).toUpperCase().slice(0, 50)
   const normalizedTpOptante = normalizeRequestValue(tpOptante).toUpperCase().slice(0, 20)
 
-  if (!Number.isInteger(normalizedCodigoXml) || normalizedCodigoXml <= 0) {
-    errors.codigoXml = 'Codigo XML e obrigatorio.'
+  if (normalizedCodigoXml !== null && (!Number.isInteger(normalizedCodigoXml) || normalizedCodigoXml <= 0)) {
+    errors.codigoXml = 'Codigo XML invalido.'
   }
 
   if (!normalizedTermoAdesao) {
@@ -6700,6 +6735,12 @@ const validateCredenciamentoTermoPayload = async ({
     errors.valorContratoAtualizado = 'Valor do contrato atualizado invalido.'
   }
 
+  if (!normalizedTpOptante) {
+    errors.tpOptante = 'Tipo optante e obrigatorio.'
+  } else if (!['O', 'N', 'C'].includes(normalizedTpOptante)) {
+    errors.tpOptante = 'Tipo optante invalido.'
+  }
+
   let credenciadaItem = null
 
   if (Number.isInteger(normalizedCredenciadaCodigo) && normalizedCredenciadaCodigo > 0) {
@@ -6744,15 +6785,104 @@ const validateCredenciamentoTermoPayload = async ({
       municipio: normalizedMunicipio,
       especificacaoSei: normalizedEspecificacaoSei,
       valorContrato: normalizedValorContrato,
-      objeto: normalizedObjeto,
-      folhas: normalizedFolhas,
       dataPublicacao: normalizedDataPublicacao,
-      infoSei: normalizedInfoSei,
       valorContratoAtualizado: normalizedValorContratoAtualizado,
       vencimentoGeral: normalizedVencimentoGeral,
       mesRenovacao: normalizedMesRenovacao,
       tpOptante: normalizedTpOptante,
     },
+  }
+}
+
+const pickCredenciamentoTermoTextValue = (value, fallbackValue = '') => {
+  const normalizedValue = normalizeRequestValue(value)
+
+  if (normalizedValue) {
+    return normalizedValue
+  }
+
+  return normalizeRequestValue(fallbackValue)
+}
+
+const pickCredenciamentoTermoIntegerValue = (value, fallbackValue = null) => {
+  if (Number.isInteger(value)) {
+    return value
+  }
+
+  const normalizedValue = normalizeIntegerValue(value)
+
+  if (Number.isInteger(normalizedValue)) {
+    return normalizedValue
+  }
+
+  return Number.isInteger(fallbackValue) ? fallbackValue : normalizeIntegerValue(fallbackValue)
+}
+
+const pickCredenciamentoTermoDecimalValue = (value, fallbackValue = null) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+
+  const normalizedValue = normalizeDecimalValue(value)
+
+  if (typeof normalizedValue === 'number' && !Number.isNaN(normalizedValue)) {
+    return normalizedValue
+  }
+
+  const normalizedFallbackValue = normalizeDecimalValue(fallbackValue)
+  return typeof normalizedFallbackValue === 'number' && !Number.isNaN(normalizedFallbackValue)
+    ? normalizedFallbackValue
+    : null
+}
+
+const formatCredenciamentoTermoDateValue = (value) => {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const addDaysToCredenciamentoTermoDate = (value, days) => {
+  const result = new Date(value)
+  result.setDate(result.getDate() + days)
+  return result
+}
+
+const addYearsToCredenciamentoTermoDate = (value, years) => {
+  const result = new Date(value)
+  result.setFullYear(result.getFullYear() + years)
+  return result
+}
+
+const buildCredenciamentoTermoCreatePayload = (payload, latestTermoItem) => {
+  const today = new Date()
+  const inicioVigencia = formatCredenciamentoTermoDateValue(today)
+  const terminoVigencia = formatCredenciamentoTermoDateValue(addDaysToCredenciamentoTermoDate(today, 365))
+  const vencimentoGeral = formatCredenciamentoTermoDateValue(addYearsToCredenciamentoTermoDate(today, 5))
+
+  return {
+    codigoXml: pickCredenciamentoTermoIntegerValue(payload.codigoXml, latestTermoItem?.codigo_xml),
+    credenciadaCodigo: pickCredenciamentoTermoIntegerValue(payload.credenciadaCodigo, latestTermoItem?.credenciada_codigo),
+    termoAdesao: pickCredenciamentoTermoTextValue(payload.termoAdesao, latestTermoItem?.termo_adesao),
+    sei: pickCredenciamentoTermoTextValue(payload.sei, latestTermoItem?.sei),
+    situacaoPublicacao: 'PUBLICAR',
+    situacaoEmissao: 'EMITIR',
+    inicioVigencia,
+    terminoVigencia,
+    compDataAditivo: pickCredenciamentoTermoTextValue(payload.compDataAditivo, latestTermoItem?.comp_data_aditivo),
+    statusAditivo: 'PUBLICAR',
+    dataPubAditivo: pickCredenciamentoTermoTextValue(payload.dataPubAditivo, latestTermoItem?.data_pub_aditivo),
+    checkAditivo: pickCredenciamentoTermoIntegerValue(payload.checkAditivo, latestTermoItem?.check_aditivo),
+    statusTermo: 'ATIVO',
+    tipoTermo: pickCredenciamentoTermoTextValue(payload.tipoTermo, latestTermoItem?.tipo_termo),
+    especificacaoSei: pickCredenciamentoTermoTextValue(payload.especificacaoSei, latestTermoItem?.especificacao_sei),
+    valorContrato: pickCredenciamentoTermoDecimalValue(payload.valorContrato, latestTermoItem?.valor_contrato),
+    folhas: pickCredenciamentoTermoTextValue(payload.folhas, latestTermoItem?.folhas),
+    dataPublicacao: pickCredenciamentoTermoTextValue(payload.dataPublicacao, latestTermoItem?.data_publicacao),
+    valorContratoAtualizado: pickCredenciamentoTermoDecimalValue(payload.valorContratoAtualizado, latestTermoItem?.valor_contrato_atualizado),
+    vencimentoGeral,
+    mesRenovacao: pickCredenciamentoTermoTextValue(payload.mesRenovacao, latestTermoItem?.mes_renovacao),
+    tpOptante: pickCredenciamentoTermoTextValue(payload.tpOptante, latestTermoItem?.tp_optante),
   }
 }
 
@@ -7913,7 +8043,6 @@ const ensureDatabaseSchema = async () => {
       telefone_02 varchar(20),
       representante varchar(255),
       cpf_representante varchar(20),
-      rg_representante varchar(30),
       status varchar(50),
       data_inclusao timestamp without time zone NOT NULL DEFAULT NOW(),
       data_modificacao timestamp without time zone NOT NULL DEFAULT NOW()
@@ -7934,10 +8063,10 @@ const ensureDatabaseSchema = async () => {
   await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS telefone_02 varchar(20)')
   await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS representante varchar(255)')
   await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS cpf_representante varchar(20)')
-  await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS rg_representante varchar(30)')
   await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS status varchar(50)')
   await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone')
   await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone')
+  await pool.query('ALTER TABLE credenciada DROP COLUMN IF EXISTS rg_representante')
   await pool.query(`
     UPDATE credenciada
        SET status = CASE
@@ -8000,7 +8129,6 @@ const ensureDatabaseSchema = async () => {
       especificacao_sei varchar(255),
       valor_contrato numeric(14, 2),
       objeto text,
-      folhas varchar(50),
       data_publicacao date,
       info_sei varchar(100),
       valor_contrato_atualizado numeric(14, 2),
@@ -8037,7 +8165,6 @@ const ensureDatabaseSchema = async () => {
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS especificacao_sei varchar(255)`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS valor_contrato numeric(14, 2)`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS objeto text`)
-  await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS folhas varchar(50)`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS data_publicacao date`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS info_sei varchar(100)`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS valor_contrato_atualizado numeric(14, 2)`)
@@ -8054,6 +8181,7 @@ const ensureDatabaseSchema = async () => {
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ALTER COLUMN check_aditivo SET NOT NULL`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ALTER COLUMN aditivo SET NOT NULL`)
   await pool.query(`ALTER SEQUENCE ${credenciamentoTermoCodigoSequenceName} OWNED BY ${credenciamentoTermoTableName}.codigo`)
+  await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} DROP COLUMN IF EXISTS folhas`)
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS termo_codigo_xml_aditivo_uk ON ${credenciamentoTermoTableName} (codigo_xml, aditivo)`)
   await pool.query(`
     CREATE TABLE IF NOT EXISTS ${credenciamentoTermoImportRecusaTableName} (
@@ -8450,6 +8578,12 @@ const ensureDatabaseSchema = async () => {
       descricao_aditivo text NOT NULL DEFAULT '',
       corpo_aditivo text NOT NULL DEFAULT '',
       assinaturas_aditivo text NOT NULL DEFAULT '',
+      descricao_contrato_pf text NOT NULL DEFAULT '',
+      descricao_contrato_pj text NOT NULL DEFAULT '',
+      corpo_contrato_pf text NOT NULL DEFAULT '',
+      corpo_contrato_pj text NOT NULL DEFAULT '',
+      link_modelo_relatorio_contrato_pf text NOT NULL DEFAULT '',
+      link_modelo_relatorio_contrato_pj text NOT NULL DEFAULT '',
       texto_despacho text NOT NULL DEFAULT '',
       edital_chamamento_publico varchar(50) NOT NULL,
       obs_01_emissao text NOT NULL,
@@ -8471,6 +8605,12 @@ const ensureDatabaseSchema = async () => {
   await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS descricao_aditivo text NOT NULL DEFAULT ''`)
   await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS corpo_aditivo text NOT NULL DEFAULT ''`)
   await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS assinaturas_aditivo text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS descricao_contrato_pf text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS descricao_contrato_pj text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS corpo_contrato_pf text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS corpo_contrato_pj text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS link_modelo_relatorio_contrato_pf text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS link_modelo_relatorio_contrato_pj text NOT NULL DEFAULT ''`)
   await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS texto_despacho text NOT NULL DEFAULT ''`)
   await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS edital_chamamento_publico varchar(50)`)
   await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS obs_01_emissao text`)
@@ -8554,6 +8694,12 @@ const ensureDatabaseSchema = async () => {
        descricao_aditivo,
        corpo_aditivo,
        assinaturas_aditivo,
+      descricao_contrato_pf,
+      descricao_contrato_pj,
+      corpo_contrato_pf,
+      corpo_contrato_pj,
+      link_modelo_relatorio_contrato_pf,
+      link_modelo_relatorio_contrato_pj,
        texto_despacho,
        edital_chamamento_publico,
        obs_01_emissao,
@@ -8565,7 +8711,7 @@ const ensureDatabaseSchema = async () => {
        data_inclusao,
        data_modificacao
      )
-    SELECT CAST($1 AS varchar(10)), CAST($2 AS text), CAST($3 AS text), CAST($4 AS text), CAST($5 AS text), CAST($6 AS text), CAST($7 AS text), CAST($8 AS text), CAST($9 AS text), CAST($10 AS text), CAST($11 AS varchar(50)), CAST($12 AS text), CAST($13 AS text), CAST($14 AS text), CAST($15 AS text), CAST($16 AS text), CAST($17 AS text), NOW(), NOW()
+    SELECT CAST($1 AS varchar(10)), CAST($2 AS text), CAST($3 AS text), CAST($4 AS text), CAST($5 AS text), CAST($6 AS text), CAST($7 AS text), CAST($8 AS text), CAST($9 AS text), CAST($10 AS text), CAST($11 AS text), CAST($12 AS text), CAST($13 AS text), CAST($14 AS text), CAST($15 AS text), CAST($16 AS text), CAST($17 AS varchar(50)), CAST($18 AS text), CAST($19 AS text), CAST($20 AS text), CAST($21 AS text), CAST($22 AS text), CAST($23 AS text), NOW(), NOW()
      WHERE NOT EXISTS (
        SELECT 1
        FROM ${emissaoDocumentoParametroTableName}
@@ -8581,6 +8727,12 @@ const ensureDatabaseSchema = async () => {
       defaultEmissaoDocumentoDescricaoAditivo,
       defaultEmissaoDocumentoCorpoAditivo,
       defaultEmissaoDocumentoAssinaturasAditivo,
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
       defaultEmissaoDocumentoTextoDespacho,
       normalizeEmissaoDocumentoParamText('001/2022', 50),
       normalizeEmissaoDocumentoParamText('Faz parte desta Ordem de Servico a relacao de alunos transportados (em posse da DRE) conforme Termo de Autorizacao e de Ciencia de Demanda de Transporte Escolar.'),
@@ -9930,6 +10082,7 @@ const server = createServer(async (request, response) => {
   if (request.method === 'GET' && pathname === credenciamentoTermoCollectionPath) {
     try {
       const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const statusTermo = normalizeRequestValue(requestUrl.searchParams.get('statusTermo') ?? '')
       const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
       const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 20) || 20, 1), 50)
       const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
@@ -9963,6 +10116,11 @@ const server = createServer(async (request, response) => {
           values.push(`%${normalizedSearchTermoDigits}%`)
           filters.push(`${credenciamentoTermoNormalizedTermoExpression} ILIKE $${values.length}`)
         }
+      }
+
+      if (statusTermo) {
+        values.push(statusTermo)
+        filters.push(`UPPER(BTRIM(COALESCE(status_termo, ''))) = UPPER($${values.length})`)
       }
 
       const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
@@ -11300,6 +11458,12 @@ const server = createServer(async (request, response) => {
         descricaoAditivo: body.descricaoAditivo,
         corpoAditivo: body.corpoAditivo,
         assinaturasAditivo: body.assinaturasAditivo,
+        descricaoContratoPf: body.descricaoContratoPf,
+        descricaoContratoPj: body.descricaoContratoPj,
+        corpoContratoPf: body.corpoContratoPf,
+        corpoContratoPj: body.corpoContratoPj,
+        linkModeloRelatorioContratoPf: body.linkModeloRelatorioContratoPf,
+        linkModeloRelatorioContratoPj: body.linkModeloRelatorioContratoPj,
         textoDespacho: body.textoDespacho,
         editalChamamentoPublico: body.editalChamamentoPublico,
         obs01Emissao: body.obs01Emissao,
@@ -11326,6 +11490,12 @@ const server = createServer(async (request, response) => {
             descricao_aditivo,
             corpo_aditivo,
             assinaturas_aditivo,
+              descricao_contrato_pf,
+              descricao_contrato_pj,
+              corpo_contrato_pf,
+              corpo_contrato_pj,
+              link_modelo_relatorio_contrato_pf,
+              link_modelo_relatorio_contrato_pj,
             texto_despacho,
            edital_chamamento_publico,
            obs_01_emissao,
@@ -11337,7 +11507,7 @@ const server = createServer(async (request, response) => {
            data_inclusao,
            data_modificacao
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, NOW(), NOW())
          RETURNING ${emissaoDocumentoParametroSelectClause}`,
         [
           validationResult.payload.dataReferencia,
@@ -11349,6 +11519,12 @@ const server = createServer(async (request, response) => {
           validationResult.payload.descricaoAditivo,
           validationResult.payload.corpoAditivo,
           validationResult.payload.assinaturasAditivo,
+          validationResult.payload.descricaoContratoPf,
+          validationResult.payload.descricaoContratoPj,
+          validationResult.payload.corpoContratoPf,
+          validationResult.payload.corpoContratoPj,
+          validationResult.payload.linkModeloRelatorioContratoPf,
+          validationResult.payload.linkModeloRelatorioContratoPj,
           validationResult.payload.textoDespacho,
           validationResult.payload.editalChamamentoPublico,
           validationResult.payload.obs01Emissao,
@@ -11886,46 +12062,30 @@ const server = createServer(async (request, response) => {
       try {
         await client.query('BEGIN')
         await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [validationResult.payload.termoAdesao])
-        await client.query(
-          `UPDATE credenciada
-             SET cep = NULLIF($1, '')
-           WHERE codigo = $2`,
-          [validationResult.payload.cep, validationResult.payload.credenciadaCodigo],
+        const latestTermo = await findLatestCredenciamentoTermoByTermoAdesao(
+          validationResult.payload.termoAdesao,
+          client,
+          { forUpdate: true },
         )
-
-        const existingTermosResult = await client.query(
-          `SELECT
-              t.codigo,
-              t.aditivo,
-              COALESCE(BTRIM(t.status_termo), '') AS status_termo,
-              TO_CHAR(t.termino_vigencia::date, 'YYYY-MM-DD') AS termino_vigencia
-            FROM ${credenciamentoTermoTableName} t
-            WHERE UPPER(BTRIM(COALESCE(t.termo_adesao, ''))) = UPPER($1)
-            ORDER BY t.aditivo DESC, t.codigo DESC
-            FOR UPDATE`,
-          [validationResult.payload.termoAdesao],
-        )
-
-        const latestTermo = existingTermosResult.rows[0] ?? null
+        const latestTermoItem = latestTermo
+          ? await fetchCredenciamentoTermoItemByCodigo(client, latestTermo.codigo)
+          : null
+        const createPayload = buildCredenciamentoTermoCreatePayload(validationResult.payload, latestTermoItem)
         let nextAditivo = 0
 
         if (latestTermo) {
-          const hasPendingPreviousTermo = existingTermosResult.rows.some((item) => {
-            const previousStatus = normalizeRequestValue(item.status_termo).toUpperCase()
-            const previousHasTerminoVigencia = Boolean(normalizeRequestValue(item.termino_vigencia))
+          nextAditivo = Number.isInteger(Number(latestTermo.aditivo))
+            ? Number(latestTermo.aditivo) + 1
+            : 1
 
-            return !['INATIVO', 'RESCINDIDO'].includes(previousStatus) || !previousHasTerminoVigencia
-          })
-
-          if (hasPendingPreviousTermo) {
-            await client.query('ROLLBACK')
-            sendJson(response, 409, {
-              message: 'So e permitida nova inclusao para o mesmo termo quando todos os registros anteriores estiverem com status Inativo ou Rescindido e com termino de vigencia preenchido.',
-            })
-            return
-          }
-
-          nextAditivo = Number(latestTermo.aditivo) + 1
+          await client.query(
+            `UPDATE ${credenciamentoTermoTableName}
+               SET termino_vigencia = (CURRENT_DATE - INTERVAL '1 day')::date,
+                   status_aditivo = 'PUBLICAR',
+                   data_modificacao = NOW()
+             WHERE codigo = $1`,
+            [latestTermo.codigo],
+          )
         }
 
         const insertResult = await client.query(
@@ -11947,10 +12107,7 @@ const server = createServer(async (request, response) => {
              tipo_termo,
              especificacao_sei,
              valor_contrato,
-             objeto,
-             folhas,
              data_publicacao,
-             info_sei,
              valor_contrato_atualizado,
              vencimento_geral,
              mes_renovacao,
@@ -11958,34 +12115,31 @@ const server = createServer(async (request, response) => {
              data_inclusao,
              data_modificacao
            )
-           VALUES ($1, $2, $3, NULLIF($4, ''), $5, NULLIF($6, ''), NULLIF($7, ''), NULLIF($8, '')::date, NULLIF($9, '')::date, NULLIF($10, '')::date, NULLIF($11, ''), NULLIF($12, '')::date, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), $17, NULLIF($18, ''), NULLIF($19, ''), NULLIF($20, '')::date, NULLIF($21, ''), $22, NULLIF($23, '')::date, NULLIF($24, ''), NULLIF($25, ''), NOW(), NOW())
+           VALUES ($1, $2, $3, NULLIF($4, ''), $5, NULLIF($6, ''), NULLIF($7, ''), NULLIF($8, '')::date, NULLIF($9, '')::date, NULLIF($10, '')::date, NULLIF($11, ''), NULLIF($12, '')::date, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), $17, NULLIF($18, '')::date, $19, NULLIF($20, '')::date, NULLIF($21, ''), NULLIF($22, ''), NOW(), NOW())
            RETURNING codigo`,
           [
-            validationResult.payload.codigoXml,
-            validationResult.payload.credenciadaCodigo,
-            validationResult.payload.termoAdesao,
-            validationResult.payload.sei,
+              createPayload.codigoXml,
+              createPayload.credenciadaCodigo,
+              createPayload.termoAdesao,
+              createPayload.sei,
             nextAditivo,
-            validationResult.payload.situacaoPublicacao,
-            validationResult.payload.situacaoEmissao,
-            validationResult.payload.inicioVigencia,
-            validationResult.payload.terminoVigencia,
-            validationResult.payload.compDataAditivo,
-            validationResult.payload.statusAditivo,
-            validationResult.payload.dataPubAditivo,
-            validationResult.payload.checkAditivo,
-            validationResult.payload.statusTermo,
-            validationResult.payload.tipoTermo,
-            validationResult.payload.especificacaoSei,
-            validationResult.payload.valorContrato,
-            validationResult.payload.objeto,
-            validationResult.payload.folhas,
-            validationResult.payload.dataPublicacao,
-            validationResult.payload.infoSei,
-            validationResult.payload.valorContratoAtualizado,
-            validationResult.payload.vencimentoGeral,
-            validationResult.payload.mesRenovacao,
-            validationResult.payload.tpOptante,
+              createPayload.situacaoPublicacao,
+              createPayload.situacaoEmissao,
+              createPayload.inicioVigencia,
+              createPayload.terminoVigencia,
+              createPayload.compDataAditivo,
+              createPayload.statusAditivo,
+              createPayload.dataPubAditivo,
+              createPayload.checkAditivo,
+              createPayload.statusTermo,
+              createPayload.tipoTermo,
+              createPayload.especificacaoSei,
+              createPayload.valorContrato,
+              createPayload.dataPublicacao,
+              createPayload.valorContratoAtualizado,
+              createPayload.vencimentoGeral,
+              createPayload.mesRenovacao,
+              createPayload.tpOptante,
           ],
         )
 
@@ -12474,6 +12628,7 @@ const server = createServer(async (request, response) => {
       const validationResult = await validateCredenciadaPayload({
         codigo: generatedCodigo,
         credenciado: body.credenciado,
+        tipoPessoa: body.tipoPessoa,
         cnpjCpf: body.cnpjCpf,
         cep: body.cep,
         numero: body.numero,
@@ -12483,7 +12638,6 @@ const server = createServer(async (request, response) => {
         telefone2: body.telefone2,
         representante: body.representante,
         cpfRepresentante: body.cpfRepresentante,
-        rgRepresentante: body.rgRepresentante,
         status: body.status,
       })
 
@@ -12509,12 +12663,11 @@ const server = createServer(async (request, response) => {
            telefone_02,
            representante,
            cpf_representante,
-           rg_representante,
            status,
            data_inclusao,
            data_modificacao
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NULLIF($8, ''), NULLIF($9, ''), NULLIF($10, ''), NULLIF($11, ''), NULLIF($12, ''), NULLIF($13, ''), NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''), NOW(), NOW())
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NULLIF($8, ''), NULLIF($9, ''), NULLIF($10, ''), NULLIF($11, ''), NULLIF($12, ''), NULLIF($13, ''), NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NOW(), NOW())
          RETURNING ${credenciadaSelectClause}`,
         [
           validationResult.payload.codigo,
@@ -12532,7 +12685,6 @@ const server = createServer(async (request, response) => {
           validationResult.payload.telefone2,
           validationResult.payload.representante,
           validationResult.payload.cpfRepresentante,
-          validationResult.payload.rgRepresentante,
           validationResult.payload.status,
         ],
       )
@@ -12933,6 +13085,12 @@ const server = createServer(async (request, response) => {
         descricaoAditivo: body.descricaoAditivo,
         corpoAditivo: body.corpoAditivo,
         assinaturasAditivo: body.assinaturasAditivo,
+        descricaoContratoPf: body.descricaoContratoPf,
+        descricaoContratoPj: body.descricaoContratoPj,
+        corpoContratoPf: body.corpoContratoPf,
+        corpoContratoPj: body.corpoContratoPj,
+        linkModeloRelatorioContratoPf: body.linkModeloRelatorioContratoPf,
+        linkModeloRelatorioContratoPj: body.linkModeloRelatorioContratoPj,
         textoDespacho: body.textoDespacho,
         editalChamamentoPublico: body.editalChamamentoPublico,
         obs01Emissao: body.obs01Emissao,
@@ -12960,16 +13118,22 @@ const server = createServer(async (request, response) => {
              descricao_aditivo = $7,
              corpo_aditivo = $8,
              assinaturas_aditivo = $9,
-             texto_despacho = $10,
-             edital_chamamento_publico = $11,
-             obs_01_emissao = $12,
-             obs_02_emissao = $13,
-             rodape_emissao = $14,
-             prefeitura_imagem = $15,
-             titulo_emissao = $16,
-             diretor_emissao = $17,
+             descricao_contrato_pf = $10,
+             descricao_contrato_pj = $11,
+             corpo_contrato_pf = $12,
+             corpo_contrato_pj = $13,
+             link_modelo_relatorio_contrato_pf = $14,
+             link_modelo_relatorio_contrato_pj = $15,
+             texto_despacho = $16,
+             edital_chamamento_publico = $17,
+             obs_01_emissao = $18,
+             obs_02_emissao = $19,
+             rodape_emissao = $20,
+             prefeitura_imagem = $21,
+             titulo_emissao = $22,
+             diretor_emissao = $23,
              data_modificacao = NOW()
-         WHERE BTRIM(data_referencia) = $18
+           WHERE BTRIM(data_referencia) = $24
          RETURNING ${emissaoDocumentoParametroSelectClause}`,
         [
           validationResult.payload.dataReferencia,
@@ -12981,6 +13145,12 @@ const server = createServer(async (request, response) => {
           validationResult.payload.descricaoAditivo,
           validationResult.payload.corpoAditivo,
           validationResult.payload.assinaturasAditivo,
+          validationResult.payload.descricaoContratoPf,
+          validationResult.payload.descricaoContratoPj,
+          validationResult.payload.corpoContratoPf,
+          validationResult.payload.corpoContratoPj,
+          validationResult.payload.linkModeloRelatorioContratoPf,
+          validationResult.payload.linkModeloRelatorioContratoPj,
           validationResult.payload.textoDespacho,
           validationResult.payload.editalChamamentoPublico,
           validationResult.payload.obs01Emissao,
@@ -13468,16 +13638,13 @@ const server = createServer(async (request, response) => {
              tipo_termo = NULLIF($15, ''),
              especificacao_sei = NULLIF($16, ''),
              valor_contrato = $17,
-            objeto = NULLIF($18, ''),
-            folhas = NULLIF($19, ''),
-            data_publicacao = NULLIF($20, '')::date,
-            info_sei = NULLIF($21, ''),
-            valor_contrato_atualizado = $22,
-            vencimento_geral = NULLIF($23, '')::date,
-            mes_renovacao = NULLIF($24, ''),
-            tp_optante = NULLIF($25, ''),
+            data_publicacao = NULLIF($18, '')::date,
+            valor_contrato_atualizado = $19,
+            vencimento_geral = NULLIF($20, '')::date,
+            mes_renovacao = NULLIF($21, ''),
+            tp_optante = NULLIF($22, ''),
              data_modificacao = NOW()
-          WHERE codigo = $26
+           WHERE codigo = $23
          RETURNING codigo`,
         [
           validationResult.payload.codigoXml,
@@ -13497,10 +13664,7 @@ const server = createServer(async (request, response) => {
           validationResult.payload.tipoTermo,
           validationResult.payload.especificacaoSei,
           validationResult.payload.valorContrato,
-          validationResult.payload.objeto,
-          validationResult.payload.folhas,
           validationResult.payload.dataPublicacao,
-          validationResult.payload.infoSei,
           validationResult.payload.valorContratoAtualizado,
           validationResult.payload.vencimentoGeral,
           validationResult.payload.mesRenovacao,
@@ -13513,13 +13677,6 @@ const server = createServer(async (request, response) => {
         sendJson(response, 404, { message: 'Credenciamento termo nao encontrado.' })
         return
       }
-
-      await pool.query(
-        `UPDATE credenciada
-           SET cep = NULLIF($1, '')
-         WHERE codigo = $2`,
-        [validationResult.payload.cep, validationResult.payload.credenciadaCodigo],
-      )
 
       const item = await fetchCredenciamentoTermoItemByCodigo(pool, originalCodigo)
       sendJson(response, 200, { item })
@@ -13686,6 +13843,7 @@ const server = createServer(async (request, response) => {
       const validationResult = await validateCredenciadaPayload({
         codigo: originalCodigo,
         credenciado: body.credenciado,
+        tipoPessoa: body.tipoPessoa,
         cnpjCpf: body.cnpjCpf,
         cep: body.cep,
         numero: body.numero,
@@ -13695,7 +13853,6 @@ const server = createServer(async (request, response) => {
         telefone2: body.telefone2,
         representante: body.representante,
         cpfRepresentante: body.cpfRepresentante,
-        rgRepresentante: body.rgRepresentante,
         status: body.status,
         originalCodigo,
       })
@@ -13721,10 +13878,9 @@ const server = createServer(async (request, response) => {
            telefone_02 = NULLIF($12, ''),
            representante = NULLIF($13, ''),
            cpf_representante = NULLIF($14, ''),
-           rg_representante = NULLIF($15, ''),
-           status = NULLIF($16, ''),
+           status = NULLIF($15, ''),
              data_modificacao = NOW()
-         WHERE codigo = $17
+         WHERE codigo = $16
          RETURNING ${credenciadaSelectClause}`,
         [
           validationResult.payload.placa,
@@ -13741,7 +13897,6 @@ const server = createServer(async (request, response) => {
           validationResult.payload.telefone2,
           validationResult.payload.representante,
           validationResult.payload.cpfRepresentante,
-          validationResult.payload.rgRepresentante,
           validationResult.payload.status,
           originalCodigo,
         ],
