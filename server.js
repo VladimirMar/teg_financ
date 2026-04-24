@@ -536,6 +536,16 @@ const normalizeCredenciadaText = (value, maxLength = 255) => {
     .slice(0, maxLength)
 }
 
+const normalizeCredenciadaStatusValue = (value) => {
+  const normalizedValue = normalizeCredenciadaText(value, 50)
+
+  if (!normalizedValue) {
+    return 'ATIVO'
+  }
+
+  return normalizedValue === 'CANCELADO' ? 'CANCELADO' : 'ATIVO'
+}
+
 const normalizeTrocaText = (value, maxLength = 255) => {
   return normalizeRequestValue(value)
     .replace(/\s+/g, ' ')
@@ -2172,7 +2182,7 @@ const normalizeImportedCredenciadaRecord = (record, index) => {
   const representante = normalizeCredenciadaText(record.representante, 255)
   const cpfRepresentante = normalizeCpf(record.cpfRepresentante)
   const rgRepresentante = normalizeCredenciadaText(record.rgRepresentante, 30)
-  const status = normalizeCredenciadaText(record.status, 50)
+  const status = normalizeCredenciadaStatusValue(record.status)
   const itemLabel = `Registro ${index + 1}`
 
   if (codigo === null || Number.isNaN(codigo)) {
@@ -3026,7 +3036,10 @@ const credenciadaSelectClause = `
   COALESCE(BTRIM(representante), '') AS representante,
   COALESCE(BTRIM(cpf_representante), '') AS cpf_representante,
   COALESCE(BTRIM(rg_representante), '') AS rg_representante,
-  COALESCE(BTRIM(status), '') AS status,
+  CASE
+    WHEN UPPER(BTRIM(COALESCE(status, ''))) = 'CANCELADO' THEN 'CANCELADO'
+    ELSE 'ATIVO'
+  END AS status,
   TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
   TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
 
@@ -5770,9 +5783,60 @@ const defaultEmissaoDocumentoDiretor = `Leandro Gabrelon
 Diretor(a)
 Em 31/03/2026,`
 
+const defaultEmissaoDocumentoObjetoLicitacao = 'TERMO de Adesao ao Credenciamento, respectivos aditivos e atos correlatos, destinados a formalizacao da prestacao do Transporte Escolar Gratuito - TEG.'
+const defaultEmissaoDocumentoCredenciante = 'MUNICIPIO DE SAO PAULO, por intermedio da SECRETARIA MUNICIPAL DE MOBILIDADE URBANA E TRANSPORTE - SMT, por meio do DEPARTAMENTO DE TRANSPORTES PUBLICOS - DTP.'
+const defaultEmissaoDocumentoTituloAditivo = 'TERMO ADITIVO DE PRORROGACAO AO TERMO DE ADESAO AO CREDENCIAMENTO'
+const defaultEmissaoDocumentoTermoSmt = 'SMT/SETRAM/DTP/DTEG N. ________'
+const defaultEmissaoDocumentoDescricaoAditivo = `Aos <termo/inicio de vigencia/por extenso>, as partes qualificadas neste instrumento celebram o presente TERMO ADITIVO DE PRORROGACAO ao Termo de Adesao ao Credenciamento {{termo_adesao}}, vinculado ao Processo SEI {{processo}} e ao Edital de Chamamento Publico n {{edital}}.
+
+De um lado, {{credenciante}}, doravante CREDENCIANTE. De outro, {{credenciado}}, inscrito(a) no CPF/CNPJ sob n {{cnpj_cpf}}, representado(a) por {{representante}}, CPF n {{cpf_representante}} e RG n {{rg_representante}}, doravante CREDENCIADO(A).
+
+As partes ajustam a prorrogacao do instrumento originario, com eficacia condicionada a publicacao oficial, na forma das clausulas a seguir:`
+const defaultEmissaoDocumentoCorpoAditivo = `CLAUSULA PRIMEIRA - DO OBJETO
+1.1. Constitui objeto do presente Termo Aditivo a prorrogacao da vigencia do Termo de Adesao ao Credenciamento {{termo_adesao}}, referente a {{objeto_licitacao}}.
+
+CLAUSULA SEGUNDA - DO PRAZO
+2.1. A vigencia do presente aditamento inicia-se em {{inicio_vigencia}}, observadas as condicoes do edital, do termo originario e da legislacao aplicavel.
+
+CLAUSULA TERCEIRA - DO VALOR E DOS RECURSOS ORCAMENTARIOS
+3.1. O valor previsto para o periodo prorrogado corresponde a {{valor_previsto}}.
+3.2. As despesas decorrentes deste instrumento correrao por conta das dotacoes orcamentarias proprias da Secretaria Municipal de Educacao, inclusive em exercicios subsequentes, se cabivel.
+
+CLAUSULA QUARTA - DA EFICACIA
+4.1. A eficacia deste Termo Aditivo fica condicionada a sua publicacao no Diario Oficial da Cidade.
+
+CLAUSULA QUINTA - DA RATIFICACAO
+5.1. Permanecem ratificadas as demais clausulas e condicoes do termo originario que nao conflitarem com o presente instrumento.`
+const defaultEmissaoDocumentoAssinaturasAditivo = `(Assinado eletronicamente)
+{{credenciante}}
+
+______________________________________________________________________
+{{credenciado}}
+
+(Assinado eletronicamente)
+TESTEMUNHA
+
+(Assinado eletronicamente)
+TESTEMUNHA`
+const defaultEmissaoDocumentoTextoDespacho = `I A vista dos elementos e documentos que instruem o processo SEI n {{processo}}, Edital de Chamamento Publico n {{edital}} e Anexos, nos termos da delegacao contida na Portaria n 38 - SMT.GAB, firmo, com fundamento no artigo 25, caput, da Lei Federal n 8.666/93, o presente TERMO DE ADITAMENTO a contar de {{inicio_vigencia}}, com o valor previsto de {{valor_previsto}}, com {{credenciado}}, CPF/CNPJ n {{cnpj_cpf}} para {{objeto_licitacao}}.
+
+II As despesas decorrentes deste Termo de Aditamento onerarao as dotacoes orcamentarias especificas da Secretaria Municipal de Educacao - SME para o exercicio de {{ano_publicacao}} abaixo referidas: 16.10.12.367.3010.2.848.33903900.00; 16.10.12.365.3025.2.849.33903900.00; 16.10.12.361.3010.2.850.33903900.00; 16.10.12.367.3010.2.848.33903600.00; 16.10.12.365.3025.2.849.33903600.00; 16.10.12.361.3010.2.850.33903600.00; 16.10.12.367.3010.2.848.33904700.00; 16.10.12.365.3025.2.849.33904700.00; 16.10.12.361.3010.2.850.33904700.00 e nos exercicios subsequentes onerarao as dotacoes orcamentarias proprias e especificas do Programa, da Secretaria Municipal da Educacao.
+
+III Autorizo a emissao da respectiva Nota de Empenho.
+
+IV O DISPOSITIVO LEGAL baseia-se no Artigo 25, caput, da Lei Federal 8.666/93.`
+
 const emissaoDocumentoParametroSelectClause = `
   BTRIM(data_referencia) AS data_referencia,
   COALESCE(BTRIM(objeto), '') AS objeto,
+  COALESCE(BTRIM(objeto_licitacao), '') AS objeto_licitacao,
+  COALESCE(BTRIM(credenciante), '') AS credenciante,
+  COALESCE(BTRIM(titulo_aditivo), '') AS titulo_aditivo,
+  COALESCE(BTRIM(termo_smt), '') AS termo_smt,
+  COALESCE(BTRIM(descricao_aditivo), '') AS descricao_aditivo,
+  COALESCE(BTRIM(corpo_aditivo), '') AS corpo_aditivo,
+  COALESCE(BTRIM(assinaturas_aditivo), '') AS assinaturas_aditivo,
+  COALESCE(BTRIM(texto_despacho), '') AS texto_despacho,
   COALESCE(BTRIM(edital_chamamento_publico), '') AS edital_chamamento_publico,
   COALESCE(BTRIM(obs_01_emissao), '') AS obs_01_emissao,
   COALESCE(BTRIM(obs_02_emissao), '') AS obs_02_emissao,
@@ -5784,6 +5848,14 @@ const emissaoDocumentoParametroSelectClause = `
 const validateEmissaoDocumentoParametroPayload = async ({
   dataReferencia,
   objeto,
+  objetoLicitacao,
+  credenciante,
+  tituloAditivo,
+  termoSmt,
+  descricaoAditivo,
+  corpoAditivo,
+  assinaturasAditivo,
+  textoDespacho,
   editalChamamentoPublico,
   obs01Emissao,
   obs02Emissao,
@@ -5796,6 +5868,14 @@ const validateEmissaoDocumentoParametroPayload = async ({
   const normalizedDataReferencia = normalizeEmissaoDocumentoDateKey(dataReferencia)
   const normalizedOriginalDataReferencia = normalizeEmissaoDocumentoDateKey(originalDataReferencia)
   const normalizedObjeto = normalizeEmissaoDocumentoParamText(objeto)
+  const normalizedObjetoLicitacao = normalizeEmissaoDocumentoParamText(objetoLicitacao)
+  const normalizedCredenciante = normalizeEmissaoDocumentoParamMultilineText(credenciante)
+  const normalizedTituloAditivo = normalizeEmissaoDocumentoParamMultilineText(tituloAditivo)
+  const normalizedTermoSmt = normalizeEmissaoDocumentoParamMultilineText(termoSmt)
+  const normalizedDescricaoAditivo = normalizeEmissaoDocumentoParamMultilineText(descricaoAditivo, 12000)
+  const normalizedCorpoAditivo = normalizeEmissaoDocumentoParamMultilineText(corpoAditivo, 12000)
+  const normalizedAssinaturasAditivo = normalizeEmissaoDocumentoParamMultilineText(assinaturasAditivo, 12000)
+  const normalizedTextoDespacho = normalizeEmissaoDocumentoParamMultilineText(textoDespacho, 8000)
   const normalizedEditalChamamentoPublico = normalizeEmissaoDocumentoParamText(editalChamamentoPublico, 50)
   const normalizedObs01Emissao = normalizeEmissaoDocumentoParamText(obs01Emissao)
   const normalizedObs02Emissao = normalizeEmissaoDocumentoParamText(obs02Emissao)
@@ -5814,6 +5894,38 @@ const validateEmissaoDocumentoParametroPayload = async ({
 
   if (!normalizedEditalChamamentoPublico) {
     return { status: 400, payload: { message: 'Edital de Chamamento Publico e obrigatorio.' } }
+  }
+
+  if (!normalizedObjetoLicitacao) {
+    return { status: 400, payload: { message: 'Objeto da licitacao e obrigatorio.' } }
+  }
+
+  if (!normalizedCredenciante) {
+    return { status: 400, payload: { message: 'Credenciante e obrigatorio.' } }
+  }
+
+  if (!normalizedTituloAditivo) {
+    return { status: 400, payload: { message: 'Titulo do aditivo e obrigatorio.' } }
+  }
+
+  if (!normalizedTermoSmt) {
+    return { status: 400, payload: { message: 'Termo SMT e obrigatorio.' } }
+  }
+
+  if (!normalizedDescricaoAditivo) {
+    return { status: 400, payload: { message: 'Descricao do aditivo e obrigatoria.' } }
+  }
+
+  if (!normalizedCorpoAditivo) {
+    return { status: 400, payload: { message: 'Corpo do aditivo e obrigatorio.' } }
+  }
+
+  if (!normalizedAssinaturasAditivo) {
+    return { status: 400, payload: { message: 'Assinaturas do aditivo sao obrigatorias.' } }
+  }
+
+  if (!normalizedTextoDespacho) {
+    return { status: 400, payload: { message: 'Texto do despacho e obrigatorio.' } }
   }
 
   if (!normalizedObs01Emissao) {
@@ -5854,6 +5966,14 @@ const validateEmissaoDocumentoParametroPayload = async ({
     payload: {
       dataReferencia: normalizedDataReferencia,
       objeto: normalizedObjeto,
+      objetoLicitacao: normalizedObjetoLicitacao,
+      credenciante: normalizedCredenciante,
+      tituloAditivo: normalizedTituloAditivo,
+      termoSmt: normalizedTermoSmt,
+      descricaoAditivo: normalizedDescricaoAditivo,
+      corpoAditivo: normalizedCorpoAditivo,
+      assinaturasAditivo: normalizedAssinaturasAditivo,
+      textoDespacho: normalizedTextoDespacho,
       editalChamamentoPublico: normalizedEditalChamamentoPublico,
       obs01Emissao: normalizedObs01Emissao,
       obs02Emissao: normalizedObs02Emissao,
@@ -6384,7 +6504,7 @@ const validateCredenciadaPayload = async ({
   const normalizedRepresentante = normalizeCredenciadaText(representante, 120)
   const normalizedCpfRepresentante = normalizeCpf(cpfRepresentante)
   const normalizedRgRepresentante = normalizeCredenciadaText(rgRepresentante, 30)
-  const normalizedStatus = normalizeCredenciadaText(status, 50)
+  const normalizedStatus = normalizeCredenciadaStatusValue(status)
 
   if (normalizedCodigo === null) {
     return { status: 400, payload: { message: 'Codigo e obrigatorio.' } }
@@ -6468,6 +6588,7 @@ const validateCredenciadaPayload = async ({
 const validateCredenciamentoTermoPayload = async ({
   codigoXml,
   credenciadaCodigo,
+  cep,
   termoAdesao,
   sei,
   aditivo,
@@ -6499,6 +6620,7 @@ const validateCredenciamentoTermoPayload = async ({
   const requireAditivo = options.requireAditivo !== false
   const normalizedCodigoXml = normalizeCondutorCodigo(codigoXml)
   const normalizedCredenciadaCodigo = normalizeCondutorCodigo(credenciadaCodigo)
+  const normalizedCep = normalizeCep(cep)
   const normalizedTermoAdesao = normalizeRequestValue(termoAdesao).toUpperCase().slice(0, 255)
   const normalizedSei = normalizeRequestValue(sei).toUpperCase().slice(0, 255)
   const normalizedAditivo = normalizeIntegerValue(aditivo)
@@ -6540,6 +6662,10 @@ const validateCredenciamentoTermoPayload = async ({
 
   if (!Number.isInteger(normalizedCheckAditivo)) {
     errors.checkAditivo = 'Check do aditivo deve ser um inteiro.'
+  }
+
+  if (normalizedCep && !isCepValid(normalizedCep)) {
+    errors.cep = 'CEP invalido.'
   }
 
   if (normalizedInicioVigencia && !isDateInputValid(normalizedInicioVigencia)) {
@@ -6599,6 +6725,7 @@ const validateCredenciamentoTermoPayload = async ({
     payload: {
       codigoXml: normalizedCodigoXml,
       credenciadaCodigo: Number(credenciadaItem.codigo),
+      cep: normalizedCep,
       termoAdesao: normalizedTermoAdesao,
       sei: normalizedSei,
       aditivo: normalizedAditivo,
@@ -7811,6 +7938,17 @@ const ensureDatabaseSchema = async () => {
   await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS status varchar(50)')
   await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone')
   await pool.query('ALTER TABLE credenciada ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone')
+  await pool.query(`
+    UPDATE credenciada
+       SET status = CASE
+         WHEN UPPER(BTRIM(COALESCE(status, ''))) = 'CANCELADO' THEN 'CANCELADO'
+         ELSE 'ATIVO'
+       END
+     WHERE status IS NULL
+        OR BTRIM(COALESCE(status, '')) = ''
+        OR UPPER(BTRIM(COALESCE(status, ''))) <> 'ATIVO'
+           AND UPPER(BTRIM(COALESCE(status, ''))) <> 'CANCELADO'
+  `)
   await pool.query('ALTER TABLE credenciada ALTER COLUMN codigo SET DEFAULT nextval(\'credenciada_codigo_seq\')')
   await pool.query('ALTER TABLE credenciada ALTER COLUMN data_inclusao SET DEFAULT NOW()')
   await pool.query('ALTER TABLE credenciada ALTER COLUMN data_modificacao SET DEFAULT NOW()')
@@ -8305,6 +8443,14 @@ const ensureDatabaseSchema = async () => {
     CREATE TABLE IF NOT EXISTS ${emissaoDocumentoParametroTableName} (
       data_referencia varchar(10) PRIMARY KEY,
       objeto text NOT NULL,
+      objeto_licitacao text NOT NULL DEFAULT '',
+      credenciante text NOT NULL DEFAULT '',
+      titulo_aditivo text NOT NULL DEFAULT '',
+      termo_smt text NOT NULL DEFAULT '',
+      descricao_aditivo text NOT NULL DEFAULT '',
+      corpo_aditivo text NOT NULL DEFAULT '',
+      assinaturas_aditivo text NOT NULL DEFAULT '',
+      texto_despacho text NOT NULL DEFAULT '',
       edital_chamamento_publico varchar(50) NOT NULL,
       obs_01_emissao text NOT NULL,
       obs_02_emissao text NOT NULL,
@@ -8318,6 +8464,14 @@ const ensureDatabaseSchema = async () => {
   `)
   await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS data_referencia varchar(10)`)
   await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS objeto text`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS objeto_licitacao text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS credenciante text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS titulo_aditivo text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS termo_smt text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS descricao_aditivo text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS corpo_aditivo text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS assinaturas_aditivo text NOT NULL DEFAULT ''`)
+  await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS texto_despacho text NOT NULL DEFAULT ''`)
   await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS edital_chamamento_publico varchar(50)`)
   await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS obs_01_emissao text`)
   await pool.query(`ALTER TABLE ${emissaoDocumentoParametroTableName} ADD COLUMN IF NOT EXISTS obs_02_emissao text`)
@@ -8342,9 +8496,65 @@ const ensureDatabaseSchema = async () => {
     [defaultEmissaoDocumentoDiretor],
   )
   await pool.query(
+    `UPDATE ${emissaoDocumentoParametroTableName}
+     SET objeto_licitacao = $1
+     WHERE COALESCE(BTRIM(objeto_licitacao), '') = ''`,
+    [defaultEmissaoDocumentoObjetoLicitacao],
+  )
+  await pool.query(
+    `UPDATE ${emissaoDocumentoParametroTableName}
+     SET credenciante = $1
+     WHERE COALESCE(BTRIM(credenciante), '') = ''`,
+    [defaultEmissaoDocumentoCredenciante],
+  )
+  await pool.query(
+    `UPDATE ${emissaoDocumentoParametroTableName}
+     SET titulo_aditivo = $1
+     WHERE COALESCE(BTRIM(titulo_aditivo), '') = ''`,
+    [defaultEmissaoDocumentoTituloAditivo],
+  )
+  await pool.query(
+    `UPDATE ${emissaoDocumentoParametroTableName}
+     SET termo_smt = $1
+     WHERE COALESCE(BTRIM(termo_smt), '') = ''`,
+    [defaultEmissaoDocumentoTermoSmt],
+  )
+  await pool.query(
+    `UPDATE ${emissaoDocumentoParametroTableName}
+     SET descricao_aditivo = $1
+     WHERE COALESCE(BTRIM(descricao_aditivo), '') = ''`,
+    [defaultEmissaoDocumentoDescricaoAditivo],
+  )
+  await pool.query(
+    `UPDATE ${emissaoDocumentoParametroTableName}
+     SET corpo_aditivo = $1
+     WHERE COALESCE(BTRIM(corpo_aditivo), '') = ''`,
+    [defaultEmissaoDocumentoCorpoAditivo],
+  )
+  await pool.query(
+    `UPDATE ${emissaoDocumentoParametroTableName}
+     SET assinaturas_aditivo = $1
+     WHERE COALESCE(BTRIM(assinaturas_aditivo), '') = ''`,
+    [defaultEmissaoDocumentoAssinaturasAditivo],
+  )
+  await pool.query(
+    `UPDATE ${emissaoDocumentoParametroTableName}
+     SET texto_despacho = $1
+     WHERE COALESCE(BTRIM(texto_despacho), '') = ''`,
+    [defaultEmissaoDocumentoTextoDespacho],
+  )
+  await pool.query(
     `INSERT INTO ${emissaoDocumentoParametroTableName} (
        data_referencia,
        objeto,
+       objeto_licitacao,
+       credenciante,
+       titulo_aditivo,
+       termo_smt,
+       descricao_aditivo,
+       corpo_aditivo,
+       assinaturas_aditivo,
+       texto_despacho,
        edital_chamamento_publico,
        obs_01_emissao,
        obs_02_emissao,
@@ -8355,7 +8565,7 @@ const ensureDatabaseSchema = async () => {
        data_inclusao,
        data_modificacao
      )
-     SELECT CAST($1 AS varchar(10)), CAST($2 AS text), CAST($3 AS varchar(50)), CAST($4 AS text), CAST($5 AS text), CAST($6 AS text), CAST($7 AS text), CAST($8 AS text), CAST($9 AS text), NOW(), NOW()
+    SELECT CAST($1 AS varchar(10)), CAST($2 AS text), CAST($3 AS text), CAST($4 AS text), CAST($5 AS text), CAST($6 AS text), CAST($7 AS text), CAST($8 AS text), CAST($9 AS text), CAST($10 AS text), CAST($11 AS varchar(50)), CAST($12 AS text), CAST($13 AS text), CAST($14 AS text), CAST($15 AS text), CAST($16 AS text), CAST($17 AS text), NOW(), NOW()
      WHERE NOT EXISTS (
        SELECT 1
        FROM ${emissaoDocumentoParametroTableName}
@@ -8364,6 +8574,14 @@ const ensureDatabaseSchema = async () => {
     [
       '01/01/2022',
       normalizeEmissaoDocumentoParamText('A prestacao de servicos de transporte escolar, nos termos do Edital de Chamamento Publico SMTT/DTP n 001/2022 e do TERMO de Adesao ao Credenciamento e seus respectivos aditivos, visando ao atendimento aos educandos devidamente matriculados na rede municipal de ensino.'),
+      defaultEmissaoDocumentoObjetoLicitacao,
+      defaultEmissaoDocumentoCredenciante,
+      defaultEmissaoDocumentoTituloAditivo,
+      defaultEmissaoDocumentoTermoSmt,
+      defaultEmissaoDocumentoDescricaoAditivo,
+      defaultEmissaoDocumentoCorpoAditivo,
+      defaultEmissaoDocumentoAssinaturasAditivo,
+      defaultEmissaoDocumentoTextoDespacho,
       normalizeEmissaoDocumentoParamText('001/2022', 50),
       normalizeEmissaoDocumentoParamText('Faz parte desta Ordem de Servico a relacao de alunos transportados (em posse da DRE) conforme Termo de Autorizacao e de Ciencia de Demanda de Transporte Escolar.'),
       normalizeEmissaoDocumentoParamText('Esta Ordem de Servico e emitida estritamente em virtude de:'),
@@ -11075,6 +11293,14 @@ const server = createServer(async (request, response) => {
       const validationResult = await validateEmissaoDocumentoParametroPayload({
         dataReferencia: body.dataReferencia,
         objeto: body.objeto,
+        objetoLicitacao: body.objetoLicitacao,
+        credenciante: body.credenciante,
+        tituloAditivo: body.tituloAditivo,
+        termoSmt: body.termoSmt,
+        descricaoAditivo: body.descricaoAditivo,
+        corpoAditivo: body.corpoAditivo,
+        assinaturasAditivo: body.assinaturasAditivo,
+        textoDespacho: body.textoDespacho,
         editalChamamentoPublico: body.editalChamamentoPublico,
         obs01Emissao: body.obs01Emissao,
         obs02Emissao: body.obs02Emissao,
@@ -11093,6 +11319,14 @@ const server = createServer(async (request, response) => {
         `INSERT INTO ${emissaoDocumentoParametroTableName} (
            data_referencia,
            objeto,
+            objeto_licitacao,
+            credenciante,
+            titulo_aditivo,
+            termo_smt,
+            descricao_aditivo,
+            corpo_aditivo,
+            assinaturas_aditivo,
+            texto_despacho,
            edital_chamamento_publico,
            obs_01_emissao,
            obs_02_emissao,
@@ -11103,11 +11337,19 @@ const server = createServer(async (request, response) => {
            data_inclusao,
            data_modificacao
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
          RETURNING ${emissaoDocumentoParametroSelectClause}`,
         [
           validationResult.payload.dataReferencia,
           validationResult.payload.objeto,
+          validationResult.payload.objetoLicitacao,
+          validationResult.payload.credenciante,
+          validationResult.payload.tituloAditivo,
+          validationResult.payload.termoSmt,
+          validationResult.payload.descricaoAditivo,
+          validationResult.payload.corpoAditivo,
+          validationResult.payload.assinaturasAditivo,
+          validationResult.payload.textoDespacho,
           validationResult.payload.editalChamamentoPublico,
           validationResult.payload.obs01Emissao,
           validationResult.payload.obs02Emissao,
@@ -11644,6 +11886,12 @@ const server = createServer(async (request, response) => {
       try {
         await client.query('BEGIN')
         await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [validationResult.payload.termoAdesao])
+        await client.query(
+          `UPDATE credenciada
+             SET cep = NULLIF($1, '')
+           WHERE codigo = $2`,
+          [validationResult.payload.cep, validationResult.payload.credenciadaCodigo],
+        )
 
         const existingTermosResult = await client.query(
           `SELECT
@@ -12678,6 +12926,14 @@ const server = createServer(async (request, response) => {
       const validationResult = await validateEmissaoDocumentoParametroPayload({
         dataReferencia: body.dataReferencia,
         objeto: body.objeto,
+        objetoLicitacao: body.objetoLicitacao,
+        credenciante: body.credenciante,
+        tituloAditivo: body.tituloAditivo,
+        termoSmt: body.termoSmt,
+        descricaoAditivo: body.descricaoAditivo,
+        corpoAditivo: body.corpoAditivo,
+        assinaturasAditivo: body.assinaturasAditivo,
+        textoDespacho: body.textoDespacho,
         editalChamamentoPublico: body.editalChamamentoPublico,
         obs01Emissao: body.obs01Emissao,
         obs02Emissao: body.obs02Emissao,
@@ -12697,19 +12953,35 @@ const server = createServer(async (request, response) => {
         `UPDATE ${emissaoDocumentoParametroTableName}
          SET data_referencia = $1,
              objeto = $2,
-             edital_chamamento_publico = $3,
-             obs_01_emissao = $4,
-             obs_02_emissao = $5,
-             rodape_emissao = $6,
-             prefeitura_imagem = $7,
-             titulo_emissao = $8,
-             diretor_emissao = $9,
+             objeto_licitacao = $3,
+             credenciante = $4,
+             titulo_aditivo = $5,
+             termo_smt = $6,
+             descricao_aditivo = $7,
+             corpo_aditivo = $8,
+             assinaturas_aditivo = $9,
+             texto_despacho = $10,
+             edital_chamamento_publico = $11,
+             obs_01_emissao = $12,
+             obs_02_emissao = $13,
+             rodape_emissao = $14,
+             prefeitura_imagem = $15,
+             titulo_emissao = $16,
+             diretor_emissao = $17,
              data_modificacao = NOW()
-         WHERE BTRIM(data_referencia) = $10
+         WHERE BTRIM(data_referencia) = $18
          RETURNING ${emissaoDocumentoParametroSelectClause}`,
         [
           validationResult.payload.dataReferencia,
           validationResult.payload.objeto,
+          validationResult.payload.objetoLicitacao,
+          validationResult.payload.credenciante,
+          validationResult.payload.tituloAditivo,
+          validationResult.payload.termoSmt,
+          validationResult.payload.descricaoAditivo,
+          validationResult.payload.corpoAditivo,
+          validationResult.payload.assinaturasAditivo,
+          validationResult.payload.textoDespacho,
           validationResult.payload.editalChamamentoPublico,
           validationResult.payload.obs01Emissao,
           validationResult.payload.obs02Emissao,
@@ -13241,6 +13513,13 @@ const server = createServer(async (request, response) => {
         sendJson(response, 404, { message: 'Credenciamento termo nao encontrado.' })
         return
       }
+
+      await pool.query(
+        `UPDATE credenciada
+           SET cep = NULLIF($1, '')
+         WHERE codigo = $2`,
+        [validationResult.payload.cep, validationResult.payload.credenciadaCodigo],
+      )
 
       const item = await fetchCredenciamentoTermoItemByCodigo(pool, originalCodigo)
       sendJson(response, 200, { item })

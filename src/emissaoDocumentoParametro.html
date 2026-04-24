@@ -31,6 +31,8 @@
                     <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-emissao-parametro-form-modal-button" aria-label="Fechar formulario de parametro de emissao">X</button>
                   </div>
 
+                  <div class="dsc-default-audit-panel dsc-hidden" id="emissao-parametro-default-audit-panel"></div>
+
                   <div class="dsc-form-row">
                     <label class="dsc-field-group" for="emissao-parametro-data-referencia">
                       <span>Data referencia</span>
@@ -46,9 +48,51 @@
                   </div>
 
                   <label class="dsc-field-group" for="emissao-parametro-objeto">
-                    <span>Objeto</span>
-                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-objeto" placeholder="Texto do objeto" maxlength="4000"></textarea>
+                    <span>Objeto para emissao da OrdemServico</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-objeto" placeholder="Texto do objeto da emissao da OrdemServico" maxlength="4000"></textarea>
                     <div class="dsc-form-error" id="emissao-parametro-objeto-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-objeto-licitacao">
+                    <span>Objeto para emissao do despacho</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-objeto-licitacao" placeholder="Texto do objeto da emissao do despacho" maxlength="4000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-objeto-licitacao-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-credenciante">
+                    <span>Credenciante</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-credenciante" placeholder="Texto do credenciante" maxlength="4000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-credenciante-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-titulo-aditivo">
+                    <span>Titulo aditivo</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-titulo-aditivo" placeholder="Titulo do termo aditivo" maxlength="4000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-titulo-aditivo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-termo-smt">
+                    <span>Termo SMT</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-termo-smt" placeholder="Identificacao do termo SMT" maxlength="4000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-termo-smt-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-descricao-aditivo">
+                    <span>Descricao do aditivo</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-descricao-aditivo" placeholder="Descricao do aditivo" maxlength="12000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-descricao-aditivo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-corpo-aditivo">
+                    <span>Corpo do aditivo</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-corpo-aditivo" placeholder="Corpo do aditivo" maxlength="12000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-corpo-aditivo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-assinaturas-aditivo">
+                    <span>Assinaturas do aditivo</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-assinaturas-aditivo" placeholder="Bloco final do termo aditivo com linhas e assinaturas" maxlength="12000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-assinaturas-aditivo-error"></div>
                   </label>
 
                   <label class="dsc-field-group" for="emissao-parametro-obs-01">
@@ -86,8 +130,8 @@
                   </div>
 
                   <label class="dsc-field-group" for="emissao-parametro-titulo-emissao">
-                    <span>Titulo da emissao</span>
-                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-titulo-emissao" placeholder="Titulo da emissao" maxlength="4000"></textarea>
+                    <span>Titulo dos relatorios</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-titulo-emissao" placeholder="Titulo dos relatorios" maxlength="4000"></textarea>
                     <div class="dsc-form-error" id="emissao-parametro-titulo-emissao-error"></div>
                   </label>
 
@@ -95,6 +139,12 @@
                     <span>Diretor da emissao</span>
                     <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-diretor-emissao" placeholder="Nome e assinatura do diretor" maxlength="4000"></textarea>
                     <div class="dsc-form-error" id="emissao-parametro-diretor-emissao-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="emissao-parametro-texto-despacho">
+                    <span>Texto do despacho</span>
+                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-texto-despacho" placeholder="Texto-base do despacho com suporte a placeholders como {{processo}}, {{edital}}, {{inicio_vigencia}}, {{valor_previsto}}, {{credenciado}}, {{cnpj_cpf}}, {{objeto_licitacao}} e {{ano_publicacao}}" maxlength="8000"></textarea>
+                    <div class="dsc-form-error" id="emissao-parametro-texto-despacho-error"></div>
                   </label>
 
                   <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
@@ -125,6 +175,7 @@
                       <th>Edital</th>
                       <th>Objeto</th>
                       <th>Obs 01</th>
+                      <th>Validacao</th>
                       <th class="dsc-grid-actions-column">Acoes</th>
                     </tr>
                   </thead>
@@ -153,6 +204,13 @@
       const dataReferenciaInput = document.getElementById('emissao-parametro-data-referencia');
       const editalInput = document.getElementById('emissao-parametro-edital');
       const objetoInput = document.getElementById('emissao-parametro-objeto');
+      const objetoLicitacaoInput = document.getElementById('emissao-parametro-objeto-licitacao');
+      const credencianteInput = document.getElementById('emissao-parametro-credenciante');
+      const tituloAditivoInput = document.getElementById('emissao-parametro-titulo-aditivo');
+      const termoSmtInput = document.getElementById('emissao-parametro-termo-smt');
+      const descricaoAditivoInput = document.getElementById('emissao-parametro-descricao-aditivo');
+      const corpoAditivoInput = document.getElementById('emissao-parametro-corpo-aditivo');
+      const assinaturasAditivoInput = document.getElementById('emissao-parametro-assinaturas-aditivo');
       const obs01Input = document.getElementById('emissao-parametro-obs-01');
       const obs02Input = document.getElementById('emissao-parametro-obs-02');
       const rodapeInput = document.getElementById('emissao-parametro-rodape');
@@ -161,15 +219,24 @@
       const clearPrefeituraImagemButton = document.getElementById('clear-emissao-parametro-imagem-prefeitura-button');
       const tituloEmissaoInput = document.getElementById('emissao-parametro-titulo-emissao');
       const diretorEmissaoInput = document.getElementById('emissao-parametro-diretor-emissao');
+      const textoDespachoInput = document.getElementById('emissao-parametro-texto-despacho');
       const dataReferenciaError = document.getElementById('emissao-parametro-data-referencia-error');
       const editalError = document.getElementById('emissao-parametro-edital-error');
       const objetoError = document.getElementById('emissao-parametro-objeto-error');
+      const objetoLicitacaoError = document.getElementById('emissao-parametro-objeto-licitacao-error');
+      const credencianteError = document.getElementById('emissao-parametro-credenciante-error');
+      const tituloAditivoError = document.getElementById('emissao-parametro-titulo-aditivo-error');
+      const termoSmtError = document.getElementById('emissao-parametro-termo-smt-error');
+      const descricaoAditivoError = document.getElementById('emissao-parametro-descricao-aditivo-error');
+      const corpoAditivoError = document.getElementById('emissao-parametro-corpo-aditivo-error');
+      const assinaturasAditivoError = document.getElementById('emissao-parametro-assinaturas-aditivo-error');
       const obs01Error = document.getElementById('emissao-parametro-obs-01-error');
       const obs02Error = document.getElementById('emissao-parametro-obs-02-error');
       const rodapeError = document.getElementById('emissao-parametro-rodape-error');
       const prefeituraImagemError = document.getElementById('emissao-parametro-imagem-prefeitura-error');
       const tituloEmissaoError = document.getElementById('emissao-parametro-titulo-emissao-error');
       const diretorEmissaoError = document.getElementById('emissao-parametro-diretor-emissao-error');
+      const textoDespachoError = document.getElementById('emissao-parametro-texto-despacho-error');
       const feedback = document.getElementById('emissao-parametro-form-feedback');
       const gridFeedback = document.getElementById('emissao-parametro-grid-feedback');
       const insertButton = document.getElementById('insert-emissao-parametro-button');
@@ -189,6 +256,7 @@
       const formTitle = document.getElementById('emissao-parametro-form-title');
       const saveButton = document.getElementById('save-emissao-parametro-button');
       const statusBanner = document.getElementById('status-banner');
+      const defaultAuditPanel = document.getElementById('emissao-parametro-default-audit-panel');
 
       const pageSize = 10;
       let currentPage = 1;
@@ -199,11 +267,127 @@
       let formMode = 'create';
       let bannerTimeoutId = null;
       let currentPrefeituraImagem = '';
+      let defaultAuditTemplateItem = null;
+      let defaultAuditTemplatePromise = null;
+      const defaultObjetoOrdemServico = `A prestacao de servicos de transporte escolar, nos termos do Edital de Chamamento Publico SMTT/DTP n 001/2022`;
       const defaultTituloEmissao = `SECRETARIA MUNICIPAL DE MOBILIDADE URBANA E TRANSPORTE\nDIVISAO DE TRANSPORTE ESCOLAR GRATUITO\nRua Joaquim Carlos, 655 - Bairro Pari - Sao Paulo/SP`;
       const defaultDiretorEmissao = `Leandro Gabrelon\nDiretor(a)\nEm 31/03/2026,`;
+      const defaultObjetoLicitacao = `TERMO de Adesao ao Credenciamento, respectivos aditivos e atos correlatos, destinados a formalizacao da prestacao do Transporte Escolar Gratuito - TEG.`;
+      const defaultCredenciante = `MUNICIPIO DE SAO PAULO, por intermedio da SECRETARIA MUNICIPAL DE MOBILIDADE URBANA E TRANSPORTE - SMT, por meio do DEPARTAMENTO DE TRANSPORTES PUBLICOS - DTP.`;
+      const defaultTituloAditivo = `TERMO ADITIVO DE PRORROGACAO AO TERMO DE ADESAO AO CREDENCIAMENTO`;
+      const defaultTermoSmt = `SMT/SETRAM/DTP/DTEG N. ________`;
+      const defaultDescricaoAditivo = `Aos <termo/inicio de vigencia/por extenso>, as partes qualificadas neste instrumento celebram o presente TERMO ADITIVO DE PRORROGACAO ao Termo de Adesao ao Credenciamento {{termo_adesao}}, vinculado ao Processo SEI {{processo}} e ao Edital de Chamamento Publico n {{edital}}.\n\nDe um lado, {{credenciante}}, doravante CREDENCIANTE. De outro, {{credenciado}}, inscrito(a) no CPF/CNPJ sob n {{cnpj_cpf}}, representado(a) por {{representante}}, CPF n {{cpf_representante}} e RG n {{rg_representante}}, doravante CREDENCIADO(A).\n\nAs partes ajustam a prorrogacao do instrumento originario, com eficacia condicionada a publicacao oficial, na forma das clausulas a seguir:`;
+      const defaultCorpoAditivo = `CLAUSULA PRIMEIRA - DO OBJETO\n1.1. Constitui objeto do presente Termo Aditivo a prorrogacao da vigencia do Termo de Adesao ao Credenciamento {{termo_adesao}}, referente a {{objeto_licitacao}}.\n\nCLAUSULA SEGUNDA - DO PRAZO\n2.1. A vigencia do presente aditamento inicia-se em {{inicio_vigencia}}, observadas as condicoes do edital, do termo originario e da legislacao aplicavel.\n\nCLAUSULA TERCEIRA - DO VALOR E DOS RECURSOS ORCAMENTARIOS\n3.1. O valor previsto para o periodo prorrogado corresponde a {{valor_previsto}}.\n3.2. As despesas decorrentes deste instrumento correrao por conta das dotacoes orcamentarias proprias da Secretaria Municipal de Educacao, inclusive em exercicios subsequentes, se cabivel.\n\nCLAUSULA QUARTA - DA EFICACIA\n4.1. A eficacia deste Termo Aditivo fica condicionada a sua publicacao no Diario Oficial da Cidade.\n\nCLAUSULA QUINTA - DA RATIFICACAO\n5.1. Permanecem ratificadas as demais clausulas e condicoes do termo originario que nao conflitarem com o presente instrumento.`;
+      const defaultAssinaturasAditivo = `(Assinado eletronicamente)\n{{credenciante}}\n\n______________________________________________________________________\n{{credenciado}}\n\n(Assinado eletronicamente)\nTESTEMUNHA\n\n(Assinado eletronicamente)\nTESTEMUNHA`;
+      const defaultTextoDespacho = `I A vista dos elementos e documentos que instruem o processo SEI n {{processo}}, Edital de Chamamento Publico n {{edital}} e Anexos, nos termos da delegacao contida na Portaria n 38 - SMT.GAB, firmo, com fundamento no artigo 25, caput, da Lei Federal n 8.666/93, o presente TERMO DE ADITAMENTO a contar de {{inicio_vigencia}}, com o valor previsto de {{valor_previsto}}, com {{credenciado}}, CPF/CNPJ n {{cnpj_cpf}} para {{objeto_licitacao}}.\n\nII As despesas decorrentes deste Termo de Aditamento onerarao as dotacoes orcamentarias especificas da Secretaria Municipal de Educacao - SME para o exercicio de {{ano_publicacao}} abaixo referidas: 16.10.12.367.3010.2.848.33903900.00; 16.10.12.365.3025.2.849.33903900.00; 16.10.12.361.3010.2.850.33903900.00; 16.10.12.367.3010.2.848.33903600.00; 16.10.12.365.3025.2.849.33903600.00; 16.10.12.361.3010.2.850.33903600.00; 16.10.12.367.3010.2.848.33904700.00; 16.10.12.365.3025.2.849.33904700.00; 16.10.12.361.3010.2.850.33904700.00 e nos exercicios subsequentes onerarao as dotacoes orcamentarias proprias e especificas do Programa, da Secretaria Municipal da Educacao.\n\nIII Autorizo a emissao da respectiva Nota de Empenho.\n\nIV O DISPOSITIVO LEGAL baseia-se no Artigo 25, caput, da Lei Federal 8.666/93.`;
 
       const normalizeText = (value, maxLength = 4000) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
       const normalizeTextarea = (value, maxLength = 4000) => String(value ?? '').replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim().slice(0, maxLength);
+      const normalizeDefaultAuditText = (value, maxLength = 12000) => String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\r/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, maxLength)
+        .toUpperCase();
+      const defaultAuditFieldDefinitions = [
+        { key: 'objeto', label: 'Objeto da OrdemServico', maxLength: 4000, getDefaultValue: () => defaultObjetoOrdemServico },
+        { key: 'objeto_licitacao', label: 'Objeto do despacho', maxLength: 4000, getDefaultValue: () => defaultObjetoLicitacao },
+        { key: 'credenciante', label: 'Credenciante', maxLength: 4000, getDefaultValue: () => defaultCredenciante },
+        { key: 'titulo_aditivo', label: 'Titulo do aditivo', maxLength: 4000, getDefaultValue: () => defaultTituloAditivo },
+        { key: 'termo_smt', label: 'Termo SMT', maxLength: 4000, getDefaultValue: () => defaultTermoSmt },
+        { key: 'descricao_aditivo', label: 'Descricao do aditivo', maxLength: 12000, getDefaultValue: () => defaultDescricaoAditivo },
+        { key: 'corpo_aditivo', label: 'Corpo do aditivo', maxLength: 12000, getDefaultValue: () => defaultCorpoAditivo },
+        { key: 'assinaturas_aditivo', label: 'Assinaturas do aditivo', maxLength: 12000, getDefaultValue: () => defaultAssinaturasAditivo },
+        { key: 'titulo_emissao', label: 'Titulo dos relatorios', maxLength: 4000, getDefaultValue: () => defaultTituloEmissao },
+        { key: 'diretor_emissao', label: 'Diretor da emissao', maxLength: 4000, getDefaultValue: () => defaultDiretorEmissao },
+        { key: 'texto_despacho', label: 'Texto do despacho', maxLength: 8000, getDefaultValue: () => defaultTextoDespacho },
+      ];
+      const buildDefaultAuditDraftItem = () => ({
+        objeto: objetoInput.value,
+        objeto_licitacao: objetoLicitacaoInput.value,
+        credenciante: credencianteInput.value,
+        titulo_aditivo: tituloAditivoInput.value,
+        termo_smt: termoSmtInput.value,
+        descricao_aditivo: descricaoAditivoInput.value,
+        corpo_aditivo: corpoAditivoInput.value,
+        assinaturas_aditivo: assinaturasAditivoInput.value,
+        titulo_emissao: tituloEmissaoInput.value,
+        diretor_emissao: diretorEmissaoInput.value,
+        texto_despacho: textoDespachoInput.value,
+      });
+      const ensureDefaultAuditTemplateItem = async () => {
+        if (defaultAuditTemplateItem) {
+          return defaultAuditTemplateItem;
+        }
+
+        if (!defaultAuditTemplatePromise) {
+          defaultAuditTemplatePromise = fetch('/api/emissao-documento-parametro/resolve?dataReferencia=01/01/2022', {
+            headers: { Accept: 'application/json' },
+          })
+            .then((response) => response.ok ? readJsonResponse(response) : null)
+            .then((payload) => {
+              defaultAuditTemplateItem = payload?.item || null;
+              return defaultAuditTemplateItem;
+            })
+            .catch(() => null)
+            .finally(() => {
+              defaultAuditTemplatePromise = null;
+            });
+        }
+
+        return defaultAuditTemplatePromise;
+      };
+      const getDefaultAuditMatches = (item) => defaultAuditFieldDefinitions
+        .filter((definition) => {
+          const currentValue = normalizeDefaultAuditText(item?.[definition.key], definition.maxLength);
+
+          if (!currentValue) {
+            return false;
+          }
+
+          const currentDefaultValue = normalizeDefaultAuditText(definition.getDefaultValue(), definition.maxLength);
+          const baselineValue = normalizeDefaultAuditText(defaultAuditTemplateItem?.[definition.key], definition.maxLength);
+
+          return [currentDefaultValue, baselineValue]
+            .filter(Boolean)
+            .some((candidate) => candidate === currentValue);
+        })
+        .map((definition) => definition.label);
+      const renderDefaultAuditPanel = (item = null) => {
+        if (!defaultAuditPanel) {
+          return;
+        }
+
+        const auditSource = item || buildDefaultAuditDraftItem();
+        const matches = getDefaultAuditMatches(auditSource);
+
+        if (!matches.length || formMode === 'create') {
+          defaultAuditPanel.className = 'dsc-default-audit-panel dsc-hidden';
+          defaultAuditPanel.innerHTML = '';
+          return;
+        }
+
+        defaultAuditPanel.className = 'dsc-default-audit-panel';
+        defaultAuditPanel.innerHTML = `
+          <p class="dsc-default-audit-title">Texto base pendente de revisao</p>
+          <p class="dsc-default-audit-description">Este registro ainda usa o texto default do sistema nos campos abaixo:</p>
+          <div class="dsc-default-audit-chip-list">${matches.map((label) => `<span class="dsc-default-audit-chip">${label}</span>`).join('')}</div>
+        `;
+      };
+      const buildDefaultAuditBadge = (item) => {
+        const matches = getDefaultAuditMatches(item);
+
+        if (!matches.length) {
+          return '<span class="dsc-default-audit-badge dsc-default-audit-badge-ok">Revisado</span>';
+        }
+
+        const label = matches.length === 1 ? '1 campo em default' : `${matches.length} campos em default`;
+        const title = matches.join(', ');
+        return `<span class="dsc-default-audit-badge dsc-default-audit-badge-warning" title="${title}">${label}</span>`;
+      };
       const normalizeDataReferencia = (value) => {
         const normalizedValue = String(value ?? '').trim();
 
@@ -274,12 +458,20 @@
         dataReferenciaError.textContent = '';
         editalError.textContent = '';
         objetoError.textContent = '';
+        objetoLicitacaoError.textContent = '';
+        credencianteError.textContent = '';
+        tituloAditivoError.textContent = '';
+        termoSmtError.textContent = '';
+        descricaoAditivoError.textContent = '';
+        corpoAditivoError.textContent = '';
+        assinaturasAditivoError.textContent = '';
         obs01Error.textContent = '';
         obs02Error.textContent = '';
         rodapeError.textContent = '';
         prefeituraImagemError.textContent = '';
         tituloEmissaoError.textContent = '';
         diretorEmissaoError.textContent = '';
+        textoDespachoError.textContent = '';
         feedback.textContent = '';
         feedback.className = 'dsc-feedback';
       };
@@ -312,7 +504,7 @@
       };
 
       const setFormReadOnly = (isReadOnly) => {
-        [dataReferenciaInput, editalInput, objetoInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput].forEach((input) => {
+        [dataReferenciaInput, editalInput, objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
           input.readOnly = isReadOnly;
         });
         prefeituraImagemInput.disabled = isReadOnly;
@@ -339,12 +531,23 @@
         syncPopupPageState();
         form.reset();
         currentPrefeituraImagem = '';
+        objetoInput.value = defaultObjetoOrdemServico;
+        objetoLicitacaoInput.value = defaultObjetoLicitacao;
+        credencianteInput.value = defaultCredenciante;
+        tituloAditivoInput.value = defaultTituloAditivo;
+        termoSmtInput.value = defaultTermoSmt;
+        descricaoAditivoInput.value = defaultDescricaoAditivo;
+        corpoAditivoInput.value = defaultCorpoAditivo;
+        assinaturasAditivoInput.value = defaultAssinaturasAditivo;
         tituloEmissaoInput.value = defaultTituloEmissao;
         diretorEmissaoInput.value = defaultDiretorEmissao;
+        textoDespachoInput.value = defaultTextoDespacho;
         syncPrefeituraImagemPreview();
         editingDataReferencia = null;
         formMode = 'create';
         setFormReadOnly(false);
+        defaultAuditPanel.className = 'dsc-default-audit-panel dsc-hidden';
+        defaultAuditPanel.innerHTML = '';
         resetMessages();
       };
 
@@ -388,6 +591,7 @@
             <td>${item.edital_chamamento_publico || ''}</td>
             <td>${getExcerpt(item.objeto || '')}</td>
             <td>${getExcerpt(item.obs_01_emissao || '')}</td>
+            <td>${buildDefaultAuditBadge(item)}</td>
             <td>
               <div class="dsc-grid-actions">
                 <button type="button" class="dsc-grid-action-button" data-action="view" data-data-referencia="${item.data_referencia}">Consulta</button>
@@ -413,6 +617,7 @@
         setGridMessage('Carregando parametros de emissao...');
 
         try {
+          await ensureDefaultAuditTemplateItem();
           const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
           const payload = await readJsonResponse(response);
 
@@ -435,13 +640,21 @@
       const fillForm = (item) => {
         dataReferenciaInput.value = item.data_referencia || '';
         editalInput.value = item.edital_chamamento_publico || '';
-        objetoInput.value = item.objeto || '';
+        objetoInput.value = item.objeto || defaultObjetoOrdemServico;
+        objetoLicitacaoInput.value = item.objeto_licitacao || defaultObjetoLicitacao;
+        credencianteInput.value = item.credenciante || defaultCredenciante;
+        tituloAditivoInput.value = item.titulo_aditivo || defaultTituloAditivo;
+        termoSmtInput.value = item.termo_smt || defaultTermoSmt;
+        descricaoAditivoInput.value = item.descricao_aditivo || defaultDescricaoAditivo;
+        corpoAditivoInput.value = item.corpo_aditivo || defaultCorpoAditivo;
+        assinaturasAditivoInput.value = item.assinaturas_aditivo || defaultAssinaturasAditivo;
         obs01Input.value = item.obs_01_emissao || '';
         obs02Input.value = item.obs_02_emissao || '';
         rodapeInput.value = item.rodape_emissao || '';
         currentPrefeituraImagem = item.prefeitura_imagem || '';
         tituloEmissaoInput.value = item.titulo_emissao || defaultTituloEmissao;
         diretorEmissaoInput.value = item.diretor_emissao || defaultDiretorEmissao;
+        textoDespachoInput.value = item.texto_despacho || defaultTextoDespacho;
         syncPrefeituraImagemPreview();
       };
 
@@ -449,8 +662,17 @@
         editingDataReferencia = null;
         form.reset();
         currentPrefeituraImagem = '';
+        objetoInput.value = defaultObjetoOrdemServico;
+        objetoLicitacaoInput.value = defaultObjetoLicitacao;
+        credencianteInput.value = defaultCredenciante;
+        tituloAditivoInput.value = defaultTituloAditivo;
+        termoSmtInput.value = defaultTermoSmt;
+        descricaoAditivoInput.value = defaultDescricaoAditivo;
+        corpoAditivoInput.value = defaultCorpoAditivo;
+        assinaturasAditivoInput.value = defaultAssinaturasAditivo;
         tituloEmissaoInput.value = defaultTituloEmissao;
         diretorEmissaoInput.value = defaultDiretorEmissao;
+        textoDespachoInput.value = defaultTextoDespacho;
         syncPrefeituraImagemPreview();
         resetMessages();
         showForm('create');
@@ -461,6 +683,7 @@
         fillForm(item);
         resetMessages();
         showForm('edit');
+        renderDefaultAuditPanel(item);
       };
 
       const startView = (item) => {
@@ -468,6 +691,7 @@
         fillForm(item);
         resetMessages();
         showForm('view');
+        renderDefaultAuditPanel(item);
       };
 
       const handleDelete = async (item) => {
@@ -541,9 +765,9 @@
         editalInput.value = normalizeText(editalInput.value, 50);
       });
 
-      [objetoInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput].forEach((input) => {
+      [objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
         input.addEventListener('input', () => {
-          input.value = normalizeTextarea(input.value, 4000);
+          input.value = normalizeTextarea(input.value, input === textoDespachoInput ? 8000 : (input === descricaoAditivoInput || input === corpoAditivoInput || input === assinaturasAditivoInput ? 12000 : 4000));
         });
       });
 
@@ -578,6 +802,15 @@
         currentPrefeituraImagem = '';
         prefeituraImagemInput.value = '';
         syncPrefeituraImagemPreview();
+        renderDefaultAuditPanel();
+      });
+
+      [objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
+        input.addEventListener('input', () => {
+          if (formMode !== 'create') {
+            renderDefaultAuditPanel();
+          }
+        });
       });
 
       form.addEventListener('submit', async (event) => {
@@ -592,21 +825,37 @@
         const dataReferencia = normalizeDataReferencia(dataReferenciaInput.value);
         const editalChamamentoPublico = normalizeText(editalInput.value, 50);
         const objeto = normalizeTextarea(objetoInput.value, 4000);
+        const objetoLicitacao = normalizeTextarea(objetoLicitacaoInput.value, 4000);
+        const credenciante = normalizeTextarea(credencianteInput.value, 4000);
+        const tituloAditivo = normalizeTextarea(tituloAditivoInput.value, 4000);
+        const termoSmt = normalizeTextarea(termoSmtInput.value, 4000);
+        const descricaoAditivo = normalizeTextarea(descricaoAditivoInput.value, 12000);
+        const corpoAditivo = normalizeTextarea(corpoAditivoInput.value, 12000);
+        const assinaturasAditivo = normalizeTextarea(assinaturasAditivoInput.value, 12000);
         const obs01Emissao = normalizeTextarea(obs01Input.value, 4000);
         const obs02Emissao = normalizeTextarea(obs02Input.value, 4000);
         const rodapeEmissao = normalizeTextarea(rodapeInput.value, 4000);
         const tituloEmissao = normalizeTextarea(tituloEmissaoInput.value, 4000);
         const diretorEmissao = normalizeTextarea(diretorEmissaoInput.value, 4000);
+        const textoDespacho = normalizeTextarea(textoDespachoInput.value, 8000);
         let hasError = false;
 
         dataReferenciaInput.value = dataReferencia;
         editalInput.value = editalChamamentoPublico;
         objetoInput.value = objeto;
+        objetoLicitacaoInput.value = objetoLicitacao;
+        credencianteInput.value = credenciante;
+        tituloAditivoInput.value = tituloAditivo;
+        termoSmtInput.value = termoSmt;
+        descricaoAditivoInput.value = descricaoAditivo;
+        corpoAditivoInput.value = corpoAditivo;
+        assinaturasAditivoInput.value = assinaturasAditivo;
         obs01Input.value = obs01Emissao;
         obs02Input.value = obs02Emissao;
         rodapeInput.value = rodapeEmissao;
         tituloEmissaoInput.value = tituloEmissao;
         diretorEmissaoInput.value = diretorEmissao;
+        textoDespachoInput.value = textoDespacho;
 
         if (!dataReferencia || !isDataReferenciaValida(dataReferencia)) {
           dataReferenciaError.textContent = 'Informe uma data valida em dd/mm/yyyy.';
@@ -620,6 +869,41 @@
 
         if (!objeto) {
           objetoError.textContent = 'Informe o objeto.';
+          hasError = true;
+        }
+
+        if (!objetoLicitacao) {
+          objetoLicitacaoError.textContent = 'Informe o objeto da licitacao.';
+          hasError = true;
+        }
+
+        if (!credenciante) {
+          credencianteError.textContent = 'Informe o credenciante.';
+          hasError = true;
+        }
+
+        if (!tituloAditivo) {
+          tituloAditivoError.textContent = 'Informe o titulo do aditivo.';
+          hasError = true;
+        }
+
+        if (!termoSmt) {
+          termoSmtError.textContent = 'Informe o termo SMT.';
+          hasError = true;
+        }
+
+        if (!descricaoAditivo) {
+          descricaoAditivoError.textContent = 'Informe a descricao do aditivo.';
+          hasError = true;
+        }
+
+        if (!corpoAditivo) {
+          corpoAditivoError.textContent = 'Informe o corpo do aditivo.';
+          hasError = true;
+        }
+
+        if (!assinaturasAditivo) {
+          assinaturasAditivoError.textContent = 'Informe as assinaturas do aditivo.';
           hasError = true;
         }
 
@@ -648,6 +932,11 @@
           hasError = true;
         }
 
+        if (!textoDespacho) {
+          textoDespachoError.textContent = 'Informe o texto do despacho.';
+          hasError = true;
+        }
+
         if (hasError) {
           feedback.textContent = 'Corrija os campos para continuar.';
           feedback.classList.add('dsc-feedback-error');
@@ -665,12 +954,20 @@
               dataReferencia,
               editalChamamentoPublico,
               objeto,
+              objetoLicitacao,
+              credenciante,
+              tituloAditivo,
+              termoSmt,
+              descricaoAditivo,
+              corpoAditivo,
+              assinaturasAditivo,
               obs01Emissao,
               obs02Emissao,
               rodapeEmissao,
               prefeituraImagem: currentPrefeituraImagem,
               tituloEmissao,
               diretorEmissao,
+              textoDespacho,
             }),
           });
 

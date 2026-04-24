@@ -514,6 +514,49 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   max-width: 1320px;
 }
 
+#emissao-parametro-form .dsc-default-audit-panel {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid #d8b24f;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 248, 220, 0.96), rgba(252, 238, 197, 0.92));
+  color: #6b4a00;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+#emissao-parametro-form .dsc-default-audit-title {
+  margin: 0 0 6px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+#emissao-parametro-form .dsc-default-audit-description {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+#emissao-parametro-form .dsc-default-audit-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+#emissao-parametro-form .dsc-default-audit-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(163, 110, 0, 0.24);
+  background: rgba(255, 255, 255, 0.76);
+  color: #7a4b00;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 #emissao-parametro-form .dsc-form-row {
   grid-template-columns: minmax(220px, 0.45fr) minmax(220px, 0.55fr);
 }
@@ -645,6 +688,16 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   font-weight: 700;
   line-height: 1.45;
   letter-spacing: 0;
+  color: #17202a;
+}
+
+.dsc-emissao-documento-subtitle {
+  margin: -6px 0 0;
+  text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.35;
   color: #17202a;
 }
 
@@ -1001,7 +1054,8 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   box-shadow: 0 24px 54px rgba(15, 23, 42, 0.18);
 }
 
-#ordem-servico-emissao-panel {
+#ordem-servico-emissao-panel,
+#credenciamento-termo-despacho-panel {
   width: min(100%, 1080px);
   max-height: min(82vh, 820px);
   overflow: auto;
@@ -1010,7 +1064,8 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   box-shadow: 0 24px 54px rgba(15, 23, 42, 0.22);
 }
 
-#ordem-servico-emissao-panel .dsc-popup-footer-sticky {
+#ordem-servico-emissao-panel .dsc-popup-footer-sticky,
+#credenciamento-termo-despacho-panel .dsc-popup-footer-sticky {
   position: static !important;
   bottom: auto !important;
   z-index: auto !important;
@@ -1258,6 +1313,16 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   grid-template-columns: minmax(220px, 1.35fr) minmax(130px, 0.7fr) minmax(130px, 0.7fr) minmax(140px, 0.8fr);
 }
 
+#credenciada-form .dsc-form-control {
+  min-height: 56px;
+}
+
+#credenciada-status {
+  line-height: 1.25;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
 .dsc-form-row .dsc-field-group,
 .dsc-form-row .dsc-form-control {
   min-width: 0;
@@ -1495,6 +1560,35 @@ body:has(#ordem-servico-grid-body) #ordem-servico-pagination-info {
   border-collapse: collapse;
 }
 
+body:has(#emissao-parametro-grid-body) .dsc-access-grid {
+  min-width: 1280px;
+}
+
+body:has(#emissao-parametro-grid-body) .dsc-default-audit-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+body:has(#emissao-parametro-grid-body) .dsc-default-audit-badge-warning {
+  border: 1px solid rgba(153, 92, 0, 0.24);
+  background: rgba(255, 239, 199, 0.96);
+  color: #8b4e00;
+}
+
+body:has(#emissao-parametro-grid-body) .dsc-default-audit-badge-ok {
+  border: 1px solid rgba(22, 101, 52, 0.2);
+  background: rgba(232, 245, 233, 0.96);
+  color: #1f6b38;
+}
+
 body:has(#condutor-grid-body) .dsc-access-grid {
   min-width: 1360px;
 }
@@ -1600,7 +1694,9 @@ body:has(#condutor-grid-body) .dsc-access-grid:not(.dsc-vinculo-grid) td:nth-chi
 }
 
 body:has(#credenciada-grid-body) .dsc-access-grid {
-  min-width: 1120px;
+  width: 100%;
+  min-width: 1080px;
+  table-layout: fixed;
 }
 
 body:has(#ordem-servico-grid-body) .dsc-access-grid {
@@ -1703,26 +1799,62 @@ body:has(#vinculo-grid-body) .dsc-access-grid-actions .dsc-btn {
 
 body:has(#credenciada-grid-body) .dsc-access-grid th:nth-child(2),
 body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(2) {
-  width: 65ch;
-  max-width: 65ch;
+  width: 42ch;
+  max-width: 42ch;
 }
 
 body:has(#credenciada-grid-body) .dsc-access-grid th:nth-child(1),
 body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(1) {
-  width: 10ch;
-  max-width: 10ch;
+  width: 7%;
+  max-width: 7%;
 }
 
 body:has(#credenciada-grid-body) .dsc-access-grid th:nth-child(3),
 body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(3) {
-  width: 18ch;
-  max-width: 18ch;
+  width: 16%;
+  max-width: 16%;
 }
 
 body:has(#credenciada-grid-body) .dsc-access-grid th:nth-child(4),
 body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(4) {
-  width: 24ch;
-  max-width: 24ch;
+  width: 21%;
+  max-width: 21%;
+}
+
+body:has(#credenciada-grid-body) .dsc-access-grid th:nth-child(5),
+body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(5) {
+  width: 10%;
+  max-width: 10%;
+}
+
+body:has(#credenciada-grid-body) .dsc-access-grid th:nth-child(6),
+body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(6) {
+  width: 16%;
+  max-width: 16%;
+}
+
+body:has(#credenciada-grid-body) .dsc-access-grid th,
+body:has(#credenciada-grid-body) .dsc-access-grid td {
+  padding: 6px 6px;
+}
+
+body:has(#credenciada-grid-body) .dsc-grid-actions {
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+body:has(#credenciada-grid-body) .dsc-grid-action-button {
+  min-width: 0;
+  padding: 4px 6px;
+  font-size: 0.68rem;
+}
+
+body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(2),
+body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(3),
+body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(4),
+body:has(#credenciada-grid-body) .dsc-access-grid td:nth-child(5) {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 body:has(#condutor-rejection-grid-body) .dsc-access-grid {
@@ -2124,7 +2256,8 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
     max-height: min(86vh, 700px);
   }
 
-  #ordem-servico-emissao-panel {
+  #ordem-servico-emissao-panel,
+  #credenciamento-termo-despacho-panel {
     width: 100%;
     max-height: min(86vh, 700px);
   }

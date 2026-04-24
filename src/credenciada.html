@@ -143,7 +143,10 @@
 
                 <label class="dsc-field-group" for="credenciada-status">
                   <span>Status</span>
-                  <input class="dsc-form-control" id="credenciada-status" type="text" placeholder="STATUS" maxlength="50" />
+                  <select class="dsc-form-control" id="credenciada-status">
+                    <option value="ATIVO">ATIVO</option>
+                    <option value="CANCELADO">CANCELADO</option>
+                  </select>
                   <div class="dsc-form-error" id="credenciada-status-error"></div>
                 </label>
               </div>
@@ -246,6 +249,7 @@
                       </th>
                       <th>CNPJ/CPF</th>
                       <th>Representante</th>
+                      <th>Status</th>
                       <th class="dsc-grid-actions-column">Acoes</th>
                     </tr>
                   </thead>
@@ -450,6 +454,11 @@
         return timePart ? `${formattedDate} ${timePart.slice(0, 5)}` : formattedDate;
       };
 
+      const normalizeStatusValue = (value) => {
+        const normalized = normalizeText(value, 50).toUpperCase();
+        return normalized === 'CANCELADO' ? 'CANCELADO' : 'ATIVO';
+      };
+
       const readJsonResponse = async (response) => {
         const rawBody = await response.text();
 
@@ -534,7 +543,12 @@
 
       const setFormReadOnly = (isReadOnly) => {
         [nomeInput, cnpjCpfInput, cepInput, numeroInput, complementoInput, emailInput, telefone1Input, telefone2Input, representanteInput, cpfRepresentanteInput, rgRepresentanteInput, statusInput].forEach((input) => {
-          input.readOnly = isReadOnly;
+          if ('readOnly' in input) {
+            input.readOnly = isReadOnly;
+          }
+          if (input instanceof HTMLSelectElement) {
+            input.disabled = isReadOnly;
+          }
         });
         saveButton.classList.toggle('dsc-hidden', isReadOnly);
       };
@@ -667,6 +681,7 @@
             <td>${item.credenciado}</td>
             <td>${item.cnpj_cpf}</td>
             <td>${item.representante || ''}</td>
+            <td>${item.status || ''}</td>
             <td>
               <div class="dsc-grid-actions">
                 <button type="button" class="dsc-grid-action-button" data-action="view" data-codigo="${item.codigo}">Consulta</button>
@@ -791,7 +806,7 @@
         representanteInput.value = item.representante || '';
         cpfRepresentanteInput.value = item.cpf_representante || '';
         rgRepresentanteInput.value = item.rg_representante || '';
-        statusInput.value = item.status || '';
+        statusInput.value = normalizeStatusValue(item.status);
         resetMessages();
         showForm('edit');
       };
@@ -812,7 +827,7 @@
         representanteInput.value = item.representante || '';
         cpfRepresentanteInput.value = item.cpf_representante || '';
         rgRepresentanteInput.value = item.rg_representante || '';
-        statusInput.value = item.status || '';
+        statusInput.value = normalizeStatusValue(item.status);
         resetMessages();
         showForm('view');
       };
@@ -965,10 +980,6 @@
         rgRepresentanteInput.value = normalizeText(rgRepresentanteInput.value, 30);
       });
 
-      statusInput.addEventListener('input', () => {
-        statusInput.value = normalizeText(statusInput.value, 50);
-      });
-
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
@@ -983,7 +994,7 @@
         const representante = normalizeText(representanteInput.value, 255);
         const cpfRepresentante = normalizeCpf(cpfRepresentanteInput.value);
         const rgRepresentante = normalizeText(rgRepresentanteInput.value, 30);
-        const status = normalizeText(statusInput.value, 50);
+        const status = normalizeStatusValue(statusInput.value);
         let hasError = false;
 
         resetMessages();

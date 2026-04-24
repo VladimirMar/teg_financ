@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cadastro de Termo</title>
 
-    <link rel="stylesheet" href="css/login.css" />
+    <link rel="stylesheet" href="css/login.css?v=20260423-termo-despacho-1" />
     <style>
       #login-section.dsc-container {
         max-width: 1600px;
@@ -311,7 +311,7 @@
                 <div class="dsc-form-row">
                   <label class="dsc-field-group" for="credenciamento-termo-cep">
                     <span>CEP</span>
-                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-cep" type="text" inputmode="numeric" placeholder="00000-000" maxlength="9" readonly />
+                    <input class="dsc-form-control" id="credenciamento-termo-cep" type="text" inputmode="numeric" placeholder="00000-000" maxlength="9" />
                     <div class="dsc-form-error" id="credenciamento-termo-cep-error"></div>
                   </label>
 
@@ -390,29 +390,62 @@
                   </label>
                 </div>
 
-                <div class="dsc-form-row">
-                  <label class="dsc-field-group" for="credenciamento-termo-info-sei">
-                    <span>Info SEI</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-info-sei" type="text" maxlength="100" />
-                    <div class="dsc-form-error" id="credenciamento-termo-info-sei-error"></div>
-                  </label>
-                </div>
-
-                <label class="dsc-field-group" for="credenciamento-termo-objeto">
-                  <span>Objeto</span>
-                  <textarea class="dsc-form-control" id="credenciamento-termo-objeto" rows="3" maxlength="1000"></textarea>
-                  <div class="dsc-form-error" id="credenciamento-termo-objeto-error"></div>
-                </label>
               </section>
 
               <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-credenciamento-termo-button">Salvar credenciamento termo</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="show-credenciamento-termo-despacho-button">Despacho da Publicacao</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="show-credenciamento-termo-aditivo-button">Termo Aditivo</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-credenciamento-termo-button">Cancelar</button>
               </div>
 
               <p class="dsc-feedback" id="credenciamento-termo-form-feedback"></p>
             </form>
               </div>
+            </div>
+
+            <div class="dsc-summary-overlay dsc-hidden" id="credenciamento-termo-despacho-modal" aria-hidden="true">
+              <section class="dsc-card dsc-hidden" id="credenciamento-termo-despacho-panel" role="dialog" aria-modal="true" aria-labelledby="credenciamento-termo-despacho-title">
+                <div class="dsc-ordem-servico-summary-header">
+                  <div>
+                    <h2 id="credenciamento-termo-despacho-title">Despacho da Publicacao</h2>
+                    <p class="dsc-ordem-servico-summary-subtitle" id="credenciamento-termo-despacho-subtitle">Despacho ainda nao gerado.</p>
+                  </div>
+                  <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-credenciamento-termo-despacho-button" aria-label="Fechar despacho da publicacao">X</button>
+                </div>
+
+                <div id="credenciamento-termo-despacho-content"></div>
+
+                <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
+                  <button type="button" class="dsc-btn dsc-btn-blue" id="print-credenciamento-termo-despacho-button">Imprimir</button>
+                  <button type="button" class="dsc-btn dsc-btn-white" id="download-credenciamento-termo-despacho-doc-button">Gerar .doc</button>
+                  <button type="button" class="dsc-btn dsc-btn-white" id="dismiss-credenciamento-termo-despacho-button">Fechar</button>
+                </div>
+
+                <p class="dsc-feedback" id="credenciamento-termo-despacho-feedback"></p>
+              </section>
+            </div>
+
+            <div class="dsc-summary-overlay dsc-hidden" id="credenciamento-termo-aditivo-modal" aria-hidden="true">
+              <section class="dsc-card dsc-hidden" id="credenciamento-termo-aditivo-panel" role="dialog" aria-modal="true" aria-labelledby="credenciamento-termo-aditivo-title">
+                <div class="dsc-ordem-servico-summary-header">
+                  <div>
+                    <h2 id="credenciamento-termo-aditivo-title">Termo Aditivo</h2>
+                    <p class="dsc-ordem-servico-summary-subtitle" id="credenciamento-termo-aditivo-subtitle">Termo aditivo ainda nao gerado.</p>
+                  </div>
+                  <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-credenciamento-termo-aditivo-button" aria-label="Fechar termo aditivo">X</button>
+                </div>
+
+                <div id="credenciamento-termo-aditivo-content"></div>
+
+                <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
+                  <button type="button" class="dsc-btn dsc-btn-blue" id="print-credenciamento-termo-aditivo-button">Imprimir</button>
+                  <button type="button" class="dsc-btn dsc-btn-white" id="download-credenciamento-termo-aditivo-doc-button">Gerar .doc</button>
+                  <button type="button" class="dsc-btn dsc-btn-white" id="dismiss-credenciamento-termo-aditivo-button">Fechar</button>
+                </div>
+
+                <p class="dsc-feedback" id="credenciamento-termo-aditivo-feedback"></p>
+              </section>
             </div>
 
             <div class="dsc-card dsc-access-grid-card">
@@ -477,6 +510,8 @@
       const insertButton = document.getElementById('insert-credenciamento-termo-button');
       const saveButton = document.getElementById('save-credenciamento-termo-button');
       const cancelButton = document.getElementById('cancel-credenciamento-termo-button');
+      const showDespachoButton = document.getElementById('show-credenciamento-termo-despacho-button');
+      const showAditivoButton = document.getElementById('show-credenciamento-termo-aditivo-button');
       const closeFormModalButton = document.getElementById('close-credenciamento-termo-form-modal-button');
       const importButton = document.getElementById('open-credenciamento-termo-import-button');
       const rejectionButton = document.getElementById('open-credenciamento-termo-rejections-button');
@@ -537,8 +572,25 @@
       const vencimentoGeralInput = document.getElementById('credenciamento-termo-vencimento-geral');
       const mesRenovacaoInput = document.getElementById('credenciamento-termo-mes-renovacao');
       const tpOptanteInput = document.getElementById('credenciamento-termo-tp-optante');
-      const infoSeiInput = document.getElementById('credenciamento-termo-info-sei');
-      const objetoInput = document.getElementById('credenciamento-termo-objeto');
+      const despachoModal = document.getElementById('credenciamento-termo-despacho-modal');
+      const despachoPanel = document.getElementById('credenciamento-termo-despacho-panel');
+      const despachoSubtitle = document.getElementById('credenciamento-termo-despacho-subtitle');
+      const despachoContent = document.getElementById('credenciamento-termo-despacho-content');
+      const despachoFeedback = document.getElementById('credenciamento-termo-despacho-feedback');
+      const closeDespachoButton = document.getElementById('close-credenciamento-termo-despacho-button');
+      const dismissDespachoButton = document.getElementById('dismiss-credenciamento-termo-despacho-button');
+      const printDespachoButton = document.getElementById('print-credenciamento-termo-despacho-button');
+      const downloadDespachoDocButton = document.getElementById('download-credenciamento-termo-despacho-doc-button');
+      const aditivoModal = document.getElementById('credenciamento-termo-aditivo-modal');
+      const aditivoPanel = document.getElementById('credenciamento-termo-aditivo-panel');
+      const aditivoTitle = document.getElementById('credenciamento-termo-aditivo-title');
+      const aditivoSubtitle = document.getElementById('credenciamento-termo-aditivo-subtitle');
+      const aditivoContent = document.getElementById('credenciamento-termo-aditivo-content');
+      const aditivoFeedback = document.getElementById('credenciamento-termo-aditivo-feedback');
+      const closeAditivoButton = document.getElementById('close-credenciamento-termo-aditivo-button');
+      const dismissAditivoButton = document.getElementById('dismiss-credenciamento-termo-aditivo-button');
+      const printAditivoButton = document.getElementById('print-credenciamento-termo-aditivo-button');
+      const downloadAditivoDocButton = document.getElementById('download-credenciamento-termo-aditivo-doc-button');
 
       const errors = {
         codigoXml: document.getElementById('credenciamento-termo-codigo-xml-error'),
@@ -561,6 +613,7 @@
         representante: document.getElementById('credenciamento-termo-representante-error'),
         cpfRepresentante: document.getElementById('credenciamento-termo-cpf-representante-error'),
         rgRepresentante: document.getElementById('credenciamento-termo-rg-representante-error'),
+        cep: document.getElementById('credenciamento-termo-cep-error'),
         logradouro: document.getElementById('credenciamento-termo-logradouro-error'),
         bairro: document.getElementById('credenciamento-termo-bairro-error'),
         municipio: document.getElementById('credenciamento-termo-municipio-error'),
@@ -572,8 +625,6 @@
         vencimentoGeral: document.getElementById('credenciamento-termo-vencimento-geral-error'),
         mesRenovacao: document.getElementById('credenciamento-termo-mes-renovacao-error'),
         tpOptante: document.getElementById('credenciamento-termo-tp-optante-error'),
-        infoSei: document.getElementById('credenciamento-termo-info-sei-error'),
-        objeto: document.getElementById('credenciamento-termo-objeto-error'),
       };
 
       const pageSize = 20;
@@ -590,6 +641,12 @@
       let totalRejectionPages = 1;
       let currentRejectionSearch = '';
       let bannerTimeoutId = null;
+      let lastTermoDespachoMarkup = '';
+      let lastTermoDespachoPrintMarkup = '';
+      let lastTermoDespachoFileName = 'despacho-termo.doc';
+      let lastTermoAditivoMarkup = '';
+      let lastTermoAditivoPrintMarkup = '';
+      let lastTermoAditivoFileName = 'termo-aditivo.doc';
 
       const normalizeText = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trim().toUpperCase().slice(0, maxLength);
       const normalizeIntegerInput = (value, maxDigits = 10) => value.replace(/\D/g, '').slice(0, maxDigits);
@@ -619,6 +676,96 @@
 
         return `${digits.slice(0, 4)}/${digits.slice(4)}`;
       };
+      const normalizeCep = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 8);
+
+        if (digits.length <= 5) {
+          return digits;
+        }
+
+        return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+      };
+      const normalizeReportDateKey = (value) => {
+        const normalizedValue = String(value ?? '').trim();
+
+        if (!normalizedValue) {
+          return '';
+        }
+
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return normalizedValue;
+        }
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+          const [year, month, day] = normalizedValue.split('-');
+          return `${day}/${month}/${year}`;
+        }
+
+        return normalizedValue;
+      };
+      const toComparableReportDateValue = (value) => {
+        const normalizedValue = normalizeReportDateKey(value);
+
+        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return Number.NaN;
+        }
+
+        const [day, month, year] = normalizedValue.split('/');
+        return Number(`${year}${month}${day}`);
+      };
+      const resolveEmissaoParametroByReferenceDate = async (requestedDate) => {
+        const resolveResponse = await fetch(`/api/emissao-documento-parametro/resolve?dataReferencia=${encodeURIComponent(requestedDate)}`, {
+          headers: { Accept: 'application/json' },
+        });
+
+        if (resolveResponse.ok) {
+          const payload = await resolveResponse.json();
+          return payload.item || null;
+        }
+
+        const resolveMessage = await getRequestErrorMessage(resolveResponse, 'Parametro de emissao nao encontrado.');
+
+        if (resolveResponse.status !== 404) {
+          throw new Error(resolveMessage);
+        }
+
+        const requestedDateValue = toComparableReportDateValue(requestedDate);
+
+        if (!Number.isFinite(requestedDateValue)) {
+          throw new Error(resolveMessage);
+        }
+
+        let page = 1;
+        const pageSize = 50;
+
+        while (true) {
+          const response = await fetch(`/api/emissao-documento-parametro?page=${page}&pageSize=${pageSize}&sortDirection=desc`, {
+            headers: { Accept: 'application/json' },
+          });
+
+          if (!response.ok) {
+            throw new Error(await getRequestErrorMessage(response, resolveMessage));
+          }
+
+          const payload = await response.json();
+          const items = Array.isArray(payload.items) ? payload.items : [];
+          const matchedItem = items.find((item) => toComparableReportDateValue(item?.data_referencia) <= requestedDateValue);
+
+          if (matchedItem) {
+            return matchedItem;
+          }
+
+          const totalPages = Math.max(Number(payload.totalPages) || 0, 0);
+
+          if (!totalPages || page >= totalPages) {
+            break;
+          }
+
+          page += 1;
+        }
+
+        throw new Error(resolveMessage);
+      };
       const deriveTermoAdesaoFromSei = (value) => {
         const digits = value.replace(/\D/g, '').slice(0, 16);
         return normalizeTermoAdesao(digits.slice(4, 15));
@@ -647,6 +794,1136 @@
         }).format(amount);
       };
       const normalizeDecimalInput = (value) => value.replace(/[^0-9,.-]/g, '').replace(/(,.*),/g, '$1').slice(0, 20);
+      const escapeHtml = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+      const formatSummaryValue = (value, fallback = 'Nao informado') => {
+        const normalizedValue = String(value ?? '').replace(/\s+/g, ' ').trim();
+        return normalizedValue || fallback;
+      };
+      const formatCurrencyDisplay = (value) => {
+        const rawValue = String(value ?? '').trim();
+
+        if (!rawValue) {
+          return 'R$ 0,00';
+        }
+
+        if (/^R\$/i.test(rawValue)) {
+          return rawValue;
+        }
+
+        const normalizedNumber = rawValue.includes(',')
+          ? rawValue.replace(/\./g, '').replace(',', '.')
+          : rawValue;
+        const amount = Number(normalizedNumber);
+
+        if (!Number.isFinite(amount)) {
+          return rawValue;
+        }
+
+        return new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(amount);
+      };
+      const formatLongDate = (value) => {
+        const normalizedValue = normalizeReportDateKey(value);
+
+        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return formatSummaryValue(normalizedValue);
+        }
+
+        const [day, month, year] = normalizedValue.split('/').map(Number);
+        const parsed = new Date(year, month - 1, day);
+
+        if (Number.isNaN(parsed.getTime())) {
+          return normalizedValue;
+        }
+
+        return new Intl.DateTimeFormat('pt-BR', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }).format(parsed);
+      };
+      const formatLongDatePreservingDay = (value) => {
+        const normalizedValue = normalizeReportDateKey(value);
+
+        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return formatSummaryValue(normalizedValue);
+        }
+
+        const [day, month, year] = normalizedValue.split('/');
+        const parsed = new Date(Number(year), Number(month) - 1, Number(day));
+
+        if (Number.isNaN(parsed.getTime())) {
+          return normalizedValue;
+        }
+
+        const monthLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(parsed);
+        return `${day} de ${monthLabel} de ${year}`;
+      };
+      const numberToPortugueseWords = (value) => {
+        const units = ['zero', 'um', 'dois', 'tres', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+        const teens = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+        const tens = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+        const hundreds = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+
+        const convertHundreds = (number) => {
+          if (number === 0) {
+            return '';
+          }
+
+          if (number < 10) {
+            return units[number];
+          }
+
+          if (number < 20) {
+            return teens[number - 10];
+          }
+
+          if (number < 100) {
+            const ten = Math.floor(number / 10);
+            const remainder = number % 10;
+            return remainder ? `${tens[ten]} e ${convertHundreds(remainder)}` : tens[ten];
+          }
+
+          if (number === 100) {
+            return 'cem';
+          }
+
+          const hundred = Math.floor(number / 100);
+          const remainder = number % 100;
+          return remainder ? `${hundreds[hundred]} e ${convertHundreds(remainder)}` : hundreds[hundred];
+        };
+
+        const convertLargeNumber = (number) => {
+          if (number === 0) {
+            return 'zero';
+          }
+
+          const scales = [
+            { value: 1000000000, singular: 'bilhao', plural: 'bilhoes' },
+            { value: 1000000, singular: 'milhao', plural: 'milhoes' },
+            { value: 1000, singular: 'mil', plural: 'mil' },
+          ];
+
+          let remainder = number;
+          const parts = [];
+
+          for (const scale of scales) {
+            if (remainder < scale.value) {
+              continue;
+            }
+
+            const scaleAmount = Math.floor(remainder / scale.value);
+            remainder %= scale.value;
+
+            if (scale.value === 1000 && scaleAmount === 1) {
+              parts.push(scale.singular);
+            } else {
+              parts.push(`${convertHundreds(scaleAmount)} ${scaleAmount === 1 ? scale.singular : scale.plural}`);
+            }
+          }
+
+          if (remainder) {
+            parts.push(convertHundreds(remainder));
+          }
+
+          if (parts.length === 1) {
+            return parts[0];
+          }
+
+          if (parts.length === 2) {
+            return `${parts[0]} e ${parts[1]}`;
+          }
+
+          return `${parts.slice(0, -1).join(', ')} e ${parts[parts.length - 1]}`;
+        };
+
+        return convertLargeNumber(value);
+      };
+      const formatCurrencyExtenso = (value) => {
+        const rawValue = String(value ?? '').trim();
+
+        if (!rawValue) {
+          return '';
+        }
+
+        const normalizedValue = rawValue
+          .replace(/^R\$\s*/i, '')
+          .replace(/\./g, '')
+          .replace(',', '.');
+        const parsed = Number(normalizedValue);
+
+        if (!Number.isFinite(parsed)) {
+          return rawValue;
+        }
+
+        const integerPart = Math.trunc(parsed);
+        const centsPart = Math.round((parsed - integerPart) * 100);
+        const integerLabel = integerPart === 1 ? 'real' : 'reais';
+        const centsLabel = centsPart === 1 ? 'centavo' : 'centavos';
+        const integerText = `${numberToPortugueseWords(integerPart)} ${integerLabel}`;
+
+        if (!centsPart) {
+          return integerText;
+        }
+
+        return `${integerText} e ${numberToPortugueseWords(centsPart)} ${centsLabel}`;
+      };
+      const formatTemplateValuePorExtenso = (value) => {
+        const rawValue = String(value ?? '').trim();
+
+        if (!rawValue) {
+          return '';
+        }
+
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalizeReportDateKey(rawValue)) || /^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
+          return formatLongDatePreservingDay(rawValue);
+        }
+
+        if (/^R?\$?\s*[\d.]+,\d{2}$/.test(rawValue) || /^\d+$/.test(rawValue.replace(/\D/g, ''))) {
+          return formatCurrencyExtenso(rawValue);
+        }
+
+        return rawValue;
+      };
+      const extractYear = (value) => {
+        const normalizedValue = normalizeReportDateKey(value);
+        return /^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue) ? normalizedValue.slice(-4) : '';
+      };
+      const buildDespachoFileName = (termoAdesao) => {
+        const cleanedTermo = String(termoAdesao ?? '').trim().replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '');
+        return `${cleanedTermo || 'despacho-termo'}.doc`;
+      };
+      const buildTermoAditivoFileName = (termoAdesao, aditivo) => {
+        const cleanedTermo = String(termoAdesao ?? '').trim().replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '');
+        const cleanedAditivo = String(aditivo ?? '').trim().replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '');
+        return `${cleanedTermo || 'termo'}${cleanedAditivo ? `-aditivo-${cleanedAditivo}` : '-aditivo'}.doc`;
+      };
+      const getTemplateLookupKey = (value) => String(value || '')
+        .replace(/[<>]/g, '')
+        .replace(/[_/]+/g, ' ')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '');
+      const getTemplateFieldValue = (fieldElement, fieldGroup) => {
+        if (fieldElement instanceof HTMLInputElement) {
+          if (fieldElement.type === 'radio') {
+            return fieldElement.checked ? fieldElement.value : '';
+          }
+
+          if (fieldElement.type === 'date') {
+            return normalizeReportDateKey(fieldElement.value);
+          }
+
+          return String(fieldElement.value || '').trim();
+        }
+
+        if (fieldElement instanceof HTMLSelectElement || fieldElement instanceof HTMLTextAreaElement) {
+          return String(fieldElement.value || '').trim();
+        }
+
+        if (fieldGroup) {
+          const checkedRadio = fieldGroup.querySelector('input[type="radio"]:checked');
+
+          if (checkedRadio instanceof HTMLInputElement) {
+            const optionLabel = checkedRadio.closest('label')?.querySelector('span');
+            return String(optionLabel?.textContent || checkedRadio.value || '').trim();
+          }
+        }
+
+        return '';
+      };
+      const getTemplateLookupCandidates = (value) => {
+        const normalizedKey = getTemplateLookupKey(value);
+
+        if (!normalizedKey) {
+          return [];
+        }
+
+        return Array.from(new Set([
+          normalizedKey,
+          normalizedKey === 'minicipio' ? 'municipio' : '',
+        ].filter(Boolean)));
+      };
+      const buildTemplateSourceLookup = (sourceName) => {
+        if (getTemplateLookupKey(sourceName) !== 'termo' || !(form instanceof HTMLFormElement)) {
+          return {};
+        }
+
+        return Array.from(form.querySelectorAll('.dsc-field-group')).reduce((lookup, fieldGroup) => {
+          const labelElement = fieldGroup.querySelector(':scope > span');
+          const labelText = String(labelElement?.textContent || '').trim();
+          const fieldId = fieldGroup.getAttribute('for') || '';
+          const fieldElement = fieldId ? document.getElementById(fieldId) : null;
+          const fieldValue = getTemplateFieldValue(fieldElement, fieldGroup);
+
+          if (labelText && fieldValue) {
+            lookup[getTemplateLookupKey(labelText)] = fieldValue;
+          }
+
+          if (fieldId && fieldValue) {
+            lookup[getTemplateLookupKey(fieldId.replace(/^credenciamento-termo-/, ''))] = fieldValue;
+          }
+
+          return lookup;
+        }, {});
+      };
+      const applyTemplateTokens = (template, replacements) => {
+        const termoLookup = buildTemplateSourceLookup('termo');
+        const normalizedReplacementLookup = Object.entries(replacements || {}).reduce((lookup, [key, value]) => {
+          const normalizedKey = getTemplateLookupKey(key);
+
+          if (normalizedKey && value != null && value !== '') {
+            lookup[normalizedKey] = value;
+          }
+
+          return lookup;
+        }, {});
+        const normalizedTemplate = String(template ?? '').replace(/<\s*([^<>,]+?)\s*,/g, '<$1>,');
+        const resolvedCurlyTokens = normalizedTemplate.replace(/\{\{\s*([a-z_]+)\s*\}\}/gi, (_, token) => {
+          const replacement = replacements[token.toLowerCase()];
+          return replacement == null || replacement === '' ? '' : String(replacement);
+        });
+
+        return resolvedCurlyTokens.replace(/<\s*([A-Za-zÀ-ÿ0-9_\-/\s]+?)\s*>/g, (_, token) => {
+          const normalizedToken = String(token || '').trim();
+
+          if (!normalizedToken) {
+            return '';
+          }
+
+          const tokenParts = normalizedToken.split('/').map((part) => part.trim()).filter(Boolean);
+          const normalizedParts = tokenParts.map((part) => getTemplateLookupKey(part));
+          const hasPorExtenso = normalizedParts[normalizedParts.length - 1] === 'porextenso';
+          const effectiveParts = hasPorExtenso ? tokenParts.slice(0, -1) : tokenParts;
+
+          if (effectiveParts.length >= 2) {
+            const [sourceName, ...fieldParts] = effectiveParts;
+            const sourceLookup = getTemplateLookupKey(sourceName) === 'termo' ? termoLookup : {};
+            const replacement = getTemplateLookupCandidates(fieldParts.join(' '))
+              .map((fieldKey) => sourceLookup[fieldKey] ?? normalizedReplacementLookup[fieldKey])
+              .find((value) => value != null && value !== '');
+            if (replacement == null || replacement === '') {
+              return '';
+            }
+
+            return hasPorExtenso ? formatTemplateValuePorExtenso(replacement) : String(replacement);
+          }
+
+          const directToken = effectiveParts.join(' ');
+          const directReplacementKey = directToken.toLowerCase().replace(/\s+/g, '_');
+          const replacement = getTemplateLookupCandidates(normalizedToken)
+            .map((fieldKey) => termoLookup[fieldKey] ?? normalizedReplacementLookup[fieldKey])
+            .find((value) => value != null && value !== '')
+            ?? replacements[directReplacementKey];
+
+          if (replacement == null || replacement === '') {
+            return '';
+          }
+
+          return hasPorExtenso ? formatTemplateValuePorExtenso(replacement) : String(replacement);
+        });
+      };
+      const buildDespachoParagraphsHtml = (template, replacements) => {
+        const resolvedTemplate = applyTemplateTokens(template, replacements).replace(/\r/g, '');
+        const paragraphsSource = resolvedTemplate.replace(/\s+(?=(?:II|III|IV|V|VI|VII|VIII|IX|X)\s)/g, '\n\n');
+        const resolvedText = paragraphsSource
+          .split(/\n{2,}/)
+          .map((paragraph) => paragraph.replace(/\s*\n\s*/g, ' ').replace(/\s+/g, ' ').trim())
+          .filter(Boolean);
+
+        return resolvedText.map((paragraph) => `<p class="dsc-emissao-documento-paragraph">${escapeHtml(paragraph)}</p>`).join('');
+      };
+      const buildAditivoParagraphsHtml = (template, replacements) => {
+        const resolvedTemplate = applyTemplateTokens(template, replacements)
+          .replace(/\r/g, '')
+          .replace(/\s+(?=E por assim estarem\b)/gi, '\n\n')
+          .replace(/\s+(?=(?:CL[ÁA]USULA|\d+\.\d+\.\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]))/g, '\n\n')
+          .replace(/\s*\n\s*(?=(?:CL[ÁA]USULA|\d+\.\d+\.|\(Assinado eletronicamente\)|CREDENCIANTE|CREDENCIADO|TESTEMUNHA))/g, '\n\n');
+        const resolvedText = resolvedTemplate
+          .split(/\n{2,}/)
+          .map((paragraph) => paragraph.replace(/\s*\n\s*/g, ' ').replace(/\s+/g, ' ').trim())
+          .filter(Boolean);
+
+        return resolvedText.map((paragraph) => `<p class="dsc-emissao-documento-paragraph">${escapeHtml(paragraph)}</p>`).join('');
+      };
+      const buildAditivoSignatureBlockHtml = (template, replacements) => {
+        const resolvedTemplate = applyTemplateTokens(template, replacements).replace(/\r/g, '');
+        const lines = resolvedTemplate.split('\n');
+
+        return `<div class="dsc-aditivo-signature-block">${lines.map((line) => {
+          const trimmedLine = line.trim();
+
+          if (!trimmedLine) {
+            return '<div class="dsc-aditivo-signature-spacer"></div>';
+          }
+
+          if (/^_{10,}$/.test(trimmedLine)) {
+            return '<div class="dsc-aditivo-signature-line"></div>';
+          }
+
+          if (/^\(Assinado eletronicamente\)$/i.test(trimmedLine)) {
+            return `<p class="dsc-aditivo-signature-note">${escapeHtml(trimmedLine)}</p>`;
+          }
+
+          return `<p class="dsc-aditivo-signature-label">${escapeHtml(trimmedLine)}</p>`;
+        }).join('')}</div>`;
+      };
+      const buildTitleBlockHtml = (title) => String(title || '').trim()
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => `<p class="dsc-emissao-documento-title-line">${escapeHtml(line)}</p>`)
+        .join('');
+      const buildDirectorBlockHtml = (director) => String(director || '').trim()
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => `<p class="dsc-emissao-documento-director-line">${escapeHtml(line)}</p>`)
+        .join('');
+      const buildDespachoWordMarkup = (markup) => {
+        const parser = new DOMParser();
+        const documentNode = parser.parseFromString(markup, 'text/html');
+        const textOf = (selector) => documentNode.querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim() || '';
+        const titleLines = Array.from(documentNode.querySelectorAll('.dsc-emissao-documento-title-line'))
+          .map((node) => node.textContent?.replace(/\s+/g, ' ').trim() || '')
+          .filter(Boolean);
+        const despachoParagraphs = Array.from(documentNode.querySelectorAll('.dsc-emissao-documento-section:nth-of-type(2) .dsc-emissao-documento-paragraph'))
+          .map((node) => node.textContent?.replace(/\s+/g, ' ').trim() || '')
+          .filter(Boolean);
+        const directorLines = Array.from(documentNode.querySelectorAll('.dsc-emissao-documento-director-line'))
+          .map((node) => node.textContent?.replace(/\s+/g, ' ').trim() || '')
+          .filter(Boolean);
+        const metaFields = Array.from(documentNode.querySelectorAll('.dsc-emissao-documento-highlight-field'))
+          .map((fieldNode) => {
+            const label = fieldNode.querySelector('span')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+            const value = fieldNode.querySelector('strong')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+            return { label, value };
+          })
+          .filter((item) => item.label || item.value);
+        const dataLinha = textOf('.dsc-emissao-documento-date-line');
+
+        return `
+          <article class="dsc-despacho-doc-model">
+            ${titleLines.length ? `<div class="dsc-despacho-doc-title-block">${titleLines.map((line) => `<p class="dsc-despacho-doc-title-line">${escapeHtml(line)}</p>`).join('')}</div>` : ''}
+            <p class="dsc-despacho-doc-meta-title">DADOS DA LICITACAO</p>
+            <div class="dsc-despacho-doc-meta">
+              ${metaFields.map((item) => `<p class="dsc-despacho-doc-meta-line"><strong>${escapeHtml(item.label || 'Campo')}:</strong> ${escapeHtml(item.value || 'Nao informado')}</p>`).join('')}
+            </div>
+            <p class="dsc-despacho-doc-heading">DESPACHO</p>
+            <div class="dsc-despacho-doc-body">
+              ${despachoParagraphs.map((paragraph) => `<p class="dsc-despacho-doc-paragraph">${escapeHtml(paragraph)}</p>`).join('')}
+            </div>
+            ${directorLines.length ? `<div class="dsc-despacho-doc-director">${directorLines.map((line) => `<p class="dsc-despacho-doc-director-line">${escapeHtml(line)}</p>`).join('')}</div>` : ''}
+            ${dataLinha ? `<p class="dsc-despacho-doc-date">${escapeHtml(dataLinha)}</p>` : ''}
+          </article>
+        `;
+      };
+      const buildDespachoDocumentHtml = (markup) => `<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Despacho da Publicacao</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        padding: 12px;
+        background: #ffffff;
+        color: #111827;
+        font-family: Aptos, Arial, Helvetica, sans-serif;
+        font-size: 12pt;
+        line-height: 1.15;
+      }
+      .dsc-emissao-documento { max-width: none; margin: 0; padding: 0; border: 0; box-shadow: none; background: #ffffff; }
+      .dsc-emissao-documento-header { display: grid; gap: 8pt; margin: 0 0 10pt; text-align: center; }
+      .dsc-emissao-documento-logo-wrap { text-align: center; }
+      .dsc-emissao-documento-logo { max-width: 120pt; max-height: 72pt; object-fit: contain; display: inline-block; }
+      .dsc-emissao-documento-title-line { margin: 0; font-size: 10pt; font-weight: 700; line-height: 1.15; }
+      .dsc-emissao-documento-section-title { margin: 9pt 0 4pt; font-size: 10pt; font-weight: 700; text-transform: uppercase; text-align: center; }
+      .dsc-emissao-documento-highlight { display: table; width: 100%; margin: 0 0 8pt; border-collapse: separate; border-spacing: 0 5pt; }
+      .dsc-emissao-documento-highlight-field { display: table-row; }
+      .dsc-emissao-documento-highlight-field > span, .dsc-emissao-documento-highlight-field > strong { display: table-cell; vertical-align: top; }
+      .dsc-emissao-documento-highlight-label, .dsc-emissao-documento-field-label { width: 180pt; padding-right: 12pt; font-size: 9.5pt; font-weight: 700; text-transform: uppercase; }
+      .dsc-emissao-documento-highlight-value, .dsc-emissao-documento-field-value { font-size: 12pt; font-weight: 700; }
+      .dsc-emissao-documento-paragraph { margin: 0 0 8pt; text-align: justify; text-justify: inter-word; }
+      .dsc-emissao-documento-director-block { margin: 10pt 0 6pt; }
+      .dsc-emissao-documento-director-line { margin: 0 0 2pt; text-align: center; font-size: 10pt; font-weight: 700; }
+      .dsc-emissao-documento-date-line { margin: 8pt 0 0; text-align: center; font-size: 10pt; }
+      @page { margin: 0.635cm; }
+      @media print { body { padding: 0; } }
+    </style>
+  </head>
+  <body>
+    ${markup}
+  </body>
+</html>`;
+      const buildDespachoDocExportHtml = (markup) => {
+        const wordMarkup = buildDespachoWordMarkup(markup);
+
+        return `<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Despacho da Publicacao</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        color: #000000;
+        font-family: Tahoma, Arial, Helvetica, sans-serif;
+        font-size: 9pt;
+        line-height: 1.15;
+      }
+      .dsc-despacho-doc-model {
+        margin: 0;
+        padding: 0;
+      }
+      .dsc-despacho-doc-title-block {
+        margin: 0 0 12pt;
+      }
+      .dsc-despacho-doc-title-line {
+        margin: 0;
+        font-family: Tahoma, Arial, Helvetica, sans-serif;
+        font-size: 9pt;
+        font-weight: 700;
+        text-align: left;
+      }
+      .dsc-despacho-doc-meta {
+        margin: 0 0 10pt;
+      }
+      .dsc-despacho-doc-meta-title {
+        margin: 0 0 8pt;
+        font-family: Tahoma, Arial, Helvetica, sans-serif;
+        font-size: 9pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        text-align: left;
+      }
+      .dsc-despacho-doc-meta-line {
+        margin: 0 0 4pt;
+        font-family: Tahoma, Arial, Helvetica, sans-serif;
+        font-size: 9pt;
+        text-align: left;
+      }
+      .dsc-despacho-doc-heading {
+        margin: 10pt 0 10pt;
+        font-family: Tahoma, Arial, Helvetica, sans-serif;
+        font-size: 9pt;
+        font-weight: 700;
+        text-align: center;
+      }
+      .dsc-despacho-doc-body {
+        margin: 0;
+      }
+      .dsc-despacho-doc-paragraph {
+        margin: 0 0 8pt;
+        font-family: Tahoma, Arial, Helvetica, sans-serif;
+        font-size: 9pt;
+        text-align: justify;
+        text-justify: inter-word;
+      }
+      .dsc-despacho-doc-director {
+        margin: 14pt 0 0;
+      }
+      .dsc-despacho-doc-director-line,
+      .dsc-despacho-doc-date {
+        margin: 0 0 3pt;
+        font-family: Tahoma, Arial, Helvetica, sans-serif;
+        font-size: 9pt;
+        text-align: left;
+      }
+      @page {
+        margin-top: 0.635cm;
+        margin-right: 0.635cm;
+        margin-bottom: 1.43cm;
+        margin-left: 0.635cm;
+      }
+    </style>
+  </head>
+  <body>
+    ${wordMarkup}
+  </body>
+</html>`;
+      };
+      const resetDespachoState = () => {
+        lastTermoDespachoMarkup = '';
+        lastTermoDespachoPrintMarkup = '';
+        lastTermoDespachoFileName = 'despacho-termo.doc';
+      };
+      const resetAditivoState = () => {
+        lastTermoAditivoMarkup = '';
+        lastTermoAditivoPrintMarkup = '';
+        lastTermoAditivoFileName = 'termo-aditivo.doc';
+      };
+      const hideDespacho = () => {
+        despachoModal.classList.add('dsc-hidden');
+        despachoModal.setAttribute('aria-hidden', 'true');
+        despachoPanel.classList.add('dsc-hidden');
+        syncPopupPageState();
+      };
+      const hideAditivo = () => {
+        aditivoModal.classList.add('dsc-hidden');
+        aditivoModal.setAttribute('aria-hidden', 'true');
+        aditivoPanel.classList.add('dsc-hidden');
+        syncPopupPageState();
+      };
+      const buildDespachoMarkup = ({ parametroItem, includePrefeituraImage = false, requestedDate }) => {
+        const termoAdesao = formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento');
+        const natureza = 'Servicos comuns';
+        const descricaoNatureza = 'Transporte Escolar';
+        const processo = formatSummaryValue(seiInput.value);
+        const localExecucao = 'Sao Paulo - SP';
+        const dataPublicacao = normalizeReportDateKey(dataPublicacaoInput.value);
+        const credenciado = formatSummaryValue(credenciadoInput.value);
+        const cnpjCpf = formatSummaryValue(cnpjCpfInput.value);
+        const valorContratoAtualizado = String(valorContratoAtualizadoInput.value || '').trim();
+        const valorPrevistoBase = valorContratoAtualizado && !/[A-Za-zÀ-ÿ]/.test(valorContratoAtualizado)
+          ? valorContratoAtualizado
+          : valorContratoInput.value;
+        const valorPrevisto = formatCurrencyDisplay(valorPrevistoBase);
+        const inicioVigencia = normalizeReportDateKey(inicioVigenciaInput.value);
+        const textoDespacho = formatSummaryValue(parametroItem?.texto_despacho, 'Texto do despacho nao informado.');
+        const objetoLicitacao = formatSummaryValue(parametroItem?.objeto_licitacao);
+        const tituloEmissao = String(parametroItem?.titulo_emissao || '').trim();
+        const diretorEmissao = String(parametroItem?.diretor_emissao || '').trim();
+        const prefeituraImagem = String(parametroItem?.prefeitura_imagem || '').trim();
+        const replacements = {
+          processo,
+          edital: formatSummaryValue(parametroItem?.edital_chamamento_publico),
+          inicio_vigencia: formatSummaryValue(inicioVigencia, 'Nao informado'),
+          valor_previsto: valorPrevisto,
+          credenciado,
+          cnpj_cpf: cnpjCpf,
+          objeto_licitacao: objetoLicitacao,
+          ano_publicacao: extractYear(dataPublicacao) || extractYear(requestedDate) || new Date().getFullYear(),
+          numero: termoAdesao,
+          data_publicacao: formatSummaryValue(dataPublicacao),
+        };
+
+        lastTermoDespachoFileName = buildDespachoFileName(termoAdesao);
+
+        return `
+          <article class="dsc-emissao-documento">
+            <header class="dsc-emissao-documento-header">
+              ${includePrefeituraImage && prefeituraImagem ? `<div class="dsc-emissao-documento-logo-wrap"><img class="dsc-emissao-documento-logo" src="${escapeHtml(prefeituraImagem)}" alt="Imagem da Prefeitura" /></div>` : ''}
+              ${tituloEmissao ? `<div class="dsc-emissao-documento-title-block">${buildTitleBlockHtml(tituloEmissao)}</div>` : ''}
+            </header>
+
+            <section class="dsc-emissao-documento-section">
+              <h4 class="dsc-emissao-documento-section-title">Despacho da Publicacao</h4>
+            </section>
+
+            <p class="dsc-emissao-documento-section-title">DADOS DA LICITACAO</p>
+
+            <div class="dsc-emissao-documento-highlight">
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-highlight-label">Numero</span>
+                <strong class="dsc-emissao-documento-highlight-value">${escapeHtml(termoAdesao)}</strong>
+              </div>
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-field-label">Natureza</span>
+                <strong class="dsc-emissao-documento-field-value">${escapeHtml(natureza)}</strong>
+              </div>
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-field-label">Descricao da natureza</span>
+                <strong class="dsc-emissao-documento-field-value">${escapeHtml(descricaoNatureza)}</strong>
+              </div>
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-field-label">Objeto da licitacao</span>
+                <strong class="dsc-emissao-documento-field-value">${escapeHtml(objetoLicitacao)}</strong>
+              </div>
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-field-label">Processo</span>
+                <strong class="dsc-emissao-documento-field-value">${escapeHtml(processo)}</strong>
+              </div>
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-field-label">Local da execucao</span>
+                <strong class="dsc-emissao-documento-field-value">${escapeHtml(localExecucao)}</strong>
+              </div>
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-field-label">Data da publicacao</span>
+                <strong class="dsc-emissao-documento-field-value">${escapeHtml(formatSummaryValue(dataPublicacao))}</strong>
+              </div>
+            </div>
+
+            <section class="dsc-emissao-documento-section">
+              <h4 class="dsc-emissao-documento-section-title">Texto do despacho</h4>
+              <div class="dsc-emissao-documento-section-body">
+                ${buildDespachoParagraphsHtml(textoDespacho, replacements)}
+              </div>
+            </section>
+
+            <footer class="dsc-emissao-documento-footer">
+              ${diretorEmissao ? `<div class="dsc-emissao-documento-director-block">${buildDirectorBlockHtml(diretorEmissao)}</div>` : ''}
+              <p class="dsc-emissao-documento-date-line">Sao Paulo, ${escapeHtml(formatLongDate(dataPublicacao || requestedDate))}</p>
+            </footer>
+          </article>
+        `;
+      };
+      const buildTermoAditivoMarkup = ({ parametroItem, includePrefeituraImage = false, requestedDate }) => {
+        const termoAdesao = formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento');
+        const numeroAditivo = formatSummaryValue(aditivoInput.value || '1');
+        const processo = formatSummaryValue(seiInput.value);
+        const credenciado = formatSummaryValue(credenciadoInput.value);
+        const cnpjCpf = formatSummaryValue(cnpjCpfInput.value);
+        const representante = formatSummaryValue(representanteInput.value);
+        const cpfRepresentante = formatSummaryValue(cpfRepresentanteInput.value);
+        const rgRepresentante = formatSummaryValue(rgRepresentanteInput.value);
+        const logradouro = formatSummaryValue(logradouroInput.value);
+        const bairro = formatSummaryValue(bairroInput.value);
+        const municipio = formatSummaryValue(municipioInput.value);
+        const inicioVigencia = normalizeReportDateKey(inicioVigenciaInput.value);
+        const dataPublicacao = normalizeReportDateKey(dataPubAditivoInput.value || dataPublicacaoInput.value || requestedDate);
+        const dataComparencia = normalizeReportDateKey(compDataAditivoInput.value || dataPublicacao || requestedDate);
+        const valorContratoAtualizado = String(valorContratoAtualizadoInput.value || '').trim();
+        const valorPrevistoBase = valorContratoAtualizado && !/[A-Za-zÀ-ÿ]/.test(valorContratoAtualizado)
+          ? valorContratoAtualizado
+          : valorContratoInput.value;
+        const valorPrevisto = formatCurrencyDisplay(valorPrevistoBase);
+        const objetoLicitacao = formatSummaryValue(parametroItem?.objeto_licitacao);
+        const credenciante = formatSummaryValue(parametroItem?.credenciante, 'Credenciante nao informado.');
+        const tituloAditivo = formatSummaryValue(parametroItem?.titulo_aditivo, 'Titulo do aditivo nao informado.');
+        const termoSmt = formatSummaryValue(parametroItem?.termo_smt, 'Termo SMT nao informado.');
+        const descricaoAditivo = formatSummaryValue(parametroItem?.descricao_aditivo, 'Descricao do aditivo nao informada.');
+        const corpoAditivo = formatSummaryValue(parametroItem?.corpo_aditivo, 'Corpo do aditivo nao informado.');
+        const assinaturasAditivo = String(parametroItem?.assinaturas_aditivo || '').trim() || 'Assinaturas do aditivo nao informadas.';
+        const tituloEmissao = String(parametroItem?.titulo_emissao || '').trim();
+        const prefeituraImagem = String(parametroItem?.prefeitura_imagem || '').trim();
+        const replacements = {
+          processo,
+          edital: formatSummaryValue(parametroItem?.edital_chamamento_publico),
+          inicio_vigencia: formatSummaryValue(inicioVigencia, 'Nao informado'),
+          valor_previsto: valorPrevisto,
+          credenciado,
+          cnpj_cpf: cnpjCpf,
+          objeto_licitacao: objetoLicitacao,
+          termo_adesao: termoAdesao,
+          termo: termoAdesao,
+          aditivo: numeroAditivo,
+          representante,
+          cpf_representante: cpfRepresentante,
+          rg_representante: rgRepresentante,
+          logradouro,
+          bairro,
+          municipio,
+          data_publicacao: formatSummaryValue(dataPublicacao),
+          data_comparencia: formatSummaryValue(dataComparencia),
+          credenciante,
+          titulo_aditivo: tituloAditivo,
+          termo_smt: termoSmt,
+        };
+
+        lastTermoAditivoFileName = buildTermoAditivoFileName(termoAdesao, numeroAditivo);
+
+        return `
+          <article class="dsc-emissao-documento">
+            <header class="dsc-emissao-documento-header">
+              ${includePrefeituraImage && prefeituraImagem ? `<div class="dsc-emissao-documento-logo-wrap"><img class="dsc-emissao-documento-logo" src="${escapeHtml(prefeituraImagem)}" alt="Imagem da Prefeitura" /></div>` : ''}
+              ${tituloEmissao ? `<div class="dsc-emissao-documento-title-block">${buildTitleBlockHtml(tituloEmissao)}</div>` : ''}
+              <div class="dsc-emissao-documento-centered-header">
+                <p class="dsc-emissao-documento-centered-process">PROCESSO ${escapeHtml(processo).toUpperCase()}</p>
+                <p class="dsc-emissao-documento-centered-term">${escapeHtml(termoSmt)}</p>
+                <p class="dsc-emissao-documento-centered-title">${escapeHtml(tituloAditivo)}</p>
+              </div>
+            </header>
+
+            <div class="dsc-emissao-documento-highlight dsc-emissao-documento-highlight-compact">
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-field-label">Credenciante</span>
+                <strong class="dsc-emissao-documento-field-value">${escapeHtml(credenciante)}</strong>
+              </div>
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-field-label">Credenciado</span>
+                <strong class="dsc-emissao-documento-field-value">${escapeHtml(credenciado)}</strong>
+              </div>
+            </div>
+
+            <section class="dsc-emissao-documento-section">
+              <div class="dsc-emissao-documento-section-body dsc-emissao-documento-legal-body">
+                ${buildAditivoParagraphsHtml(descricaoAditivo, replacements)}
+                ${buildAditivoParagraphsHtml(corpoAditivo, replacements)}
+                ${buildAditivoSignatureBlockHtml(assinaturasAditivo, replacements)}
+              </div>
+            </section>
+          </article>
+        `;
+      };
+      const buildTermoAditivoWordMarkup = (markup) => {
+        const parser = new DOMParser();
+        const documentNode = parser.parseFromString(markup, 'text/html');
+        const titleLines = Array.from(documentNode.querySelectorAll('.dsc-emissao-documento-title-line'))
+          .map((node) => node.textContent?.replace(/\s+/g, ' ').trim() || '')
+          .filter(Boolean);
+        const heading = documentNode.querySelector('.dsc-emissao-documento-centered-title')?.textContent?.replace(/\s+/g, ' ').trim() || 'TERMO ADITIVO';
+        const processLine = documentNode.querySelector('.dsc-emissao-documento-centered-process')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+        const termoSmt = documentNode.querySelector('.dsc-emissao-documento-centered-term')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+        const metaFields = Array.from(documentNode.querySelectorAll('.dsc-emissao-documento-highlight-field'))
+          .map((fieldNode) => {
+            const label = fieldNode.querySelector('span')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+            const value = fieldNode.querySelector('strong')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+            return { label, value };
+          })
+          .filter((item) => item.label || item.value);
+        const paragraphs = Array.from(documentNode.querySelectorAll('.dsc-emissao-documento-legal-body .dsc-emissao-documento-paragraph'))
+          .map((node) => node.textContent?.replace(/\s+/g, ' ').trim() || '')
+          .filter(Boolean);
+        const signatureLines = Array.from(documentNode.querySelectorAll('.dsc-aditivo-signature-note, .dsc-aditivo-signature-label'))
+          .map((node) => ({
+            text: node.textContent?.replace(/\s+/g, ' ').trim() || '',
+            type: node.classList.contains('dsc-aditivo-signature-note') ? 'note' : 'label',
+          }))
+          .filter((item) => item.text);
+        const signatureLineCount = documentNode.querySelectorAll('.dsc-aditivo-signature-line').length;
+
+        return `
+          <article class="dsc-despacho-doc-model">
+            ${titleLines.length ? `<div class="dsc-despacho-doc-title-block">${titleLines.map((line) => `<p class="dsc-despacho-doc-title-line">${escapeHtml(line)}</p>`).join('')}</div>` : ''}
+            <div class="dsc-aditivo-doc-header">
+              ${processLine ? `<p class="dsc-aditivo-doc-process-line">${escapeHtml(processLine)}</p>` : ''}
+              ${termoSmt ? `<p class="dsc-aditivo-doc-term-line">${escapeHtml(termoSmt)}</p>` : ''}
+              <p class="dsc-aditivo-doc-title">${escapeHtml(heading)}</p>
+            </div>
+            <div class="dsc-despacho-doc-meta dsc-aditivo-doc-meta">
+              ${metaFields.map((item) => `<p class="dsc-aditivo-doc-meta-line"><span class="dsc-aditivo-doc-meta-label">${escapeHtml(item.label || 'Campo')}</span><span class="dsc-aditivo-doc-meta-value">${escapeHtml(item.value || 'Nao informado')}</span></p>`).join('')}
+            </div>
+            <div class="dsc-despacho-doc-body">
+              ${paragraphs.map((paragraph) => `<p class="dsc-despacho-doc-paragraph">${escapeHtml(paragraph)}</p>`).join('')}
+            </div>
+            ${(signatureLines.length || signatureLineCount) ? `<div class="dsc-despacho-doc-director">${signatureLines.map((line) => `<p class="dsc-despacho-doc-director-line${line.type === 'note' ? ' dsc-despacho-doc-signature-note' : ''}">${escapeHtml(line.text)}</p>`).join('')}${Array.from({ length: signatureLineCount }).map(() => '<p class="dsc-despacho-doc-signature-line"></p>').join('')}</div>` : ''}
+          </article>
+        `;
+      };
+      const buildTermoAditivoDocumentHtml = (markup) => `<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Termo Aditivo</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        padding: 12px;
+        background: #ffffff;
+        color: #111827;
+        font-family: Aptos, Arial, Helvetica, sans-serif;
+        font-size: 12pt;
+        line-height: 1.15;
+      }
+      .dsc-emissao-documento { max-width: none; margin: 0; padding: 0; border: 0; box-shadow: none; background: #ffffff; }
+      .dsc-emissao-documento-header { display: grid; gap: 8pt; margin: 0 0 10pt; text-align: center; }
+      .dsc-emissao-documento-logo-wrap { text-align: center; }
+      .dsc-emissao-documento-logo { max-width: 120pt; max-height: 72pt; object-fit: contain; display: inline-block; }
+      .dsc-emissao-documento-title-line { margin: 0; font-size: 10pt; font-weight: 700; line-height: 1.15; }
+      .dsc-emissao-documento-section-title { margin: 9pt 0 4pt; font-size: 10pt; font-weight: 700; text-transform: uppercase; text-align: center; }
+      .dsc-emissao-documento-centered-header { display: grid; gap: 2pt; margin-top: 8pt; text-align: center; }
+      .dsc-emissao-documento-centered-process { margin: 0; font-size: 12pt; font-weight: 700; text-transform: uppercase; }
+      .dsc-emissao-documento-centered-term { margin: 0; font-size: 10pt; font-weight: 700; text-transform: uppercase; }
+      .dsc-emissao-documento-centered-title { margin: 6pt 0 0; font-size: 11pt; font-weight: 700; text-transform: uppercase; }
+      .dsc-emissao-documento-highlight { display: table; width: 100%; margin: 0 0 8pt; border-collapse: separate; border-spacing: 0 5pt; }
+      .dsc-emissao-documento-highlight-compact { margin-bottom: 12pt; }
+      .dsc-emissao-documento-highlight-field { display: table-row; }
+      .dsc-emissao-documento-highlight-field > span, .dsc-emissao-documento-highlight-field > strong { display: table-cell; vertical-align: top; }
+      .dsc-emissao-documento-highlight-label, .dsc-emissao-documento-field-label { width: 180pt; padding-right: 12pt; font-size: 9.5pt; font-weight: 700; text-transform: uppercase; }
+      .dsc-emissao-documento-highlight-value, .dsc-emissao-documento-field-value { font-size: 12pt; font-weight: 700; }
+      .dsc-emissao-documento-paragraph { margin: 0 0 8pt; text-align: justify; text-justify: inter-word; }
+      .dsc-emissao-documento-legal-body .dsc-emissao-documento-paragraph { margin-bottom: 10pt; }
+      .dsc-aditivo-signature-block { margin-top: 18pt; }
+      .dsc-aditivo-signature-note { margin: 0 0 2pt; font-size: 10pt; font-style: italic; font-weight: 700; }
+      .dsc-aditivo-signature-label { margin: 0 0 10pt; font-size: 10pt; }
+      .dsc-aditivo-signature-spacer { height: 18pt; }
+      .dsc-aditivo-signature-line { height: 0; margin: 10pt 0 6pt; border-top: 1px solid #111827; }
+      @page { margin: 0.635cm; }
+      @media print { body { padding: 0; } }
+    </style>
+  </head>
+  <body>
+    ${markup}
+  </body>
+</html>`;
+      const buildTermoAditivoDocExportHtml = (markup) => {
+        const wordMarkup = buildTermoAditivoWordMarkup(markup);
+
+        return `<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Termo Aditivo</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        color: #000000;
+        font-family: Tahoma, Arial, Helvetica, sans-serif;
+        font-size: 9pt;
+        line-height: 1.15;
+      }
+      .dsc-despacho-doc-model { margin: 0; padding: 0; }
+      .dsc-despacho-doc-title-block { margin: 0 0 12pt; }
+      .dsc-despacho-doc-title-line { margin: 0; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 9pt; font-weight: 700; text-align: left; }
+      .dsc-despacho-doc-meta { margin: 0 0 10pt; }
+      .dsc-despacho-doc-meta-line { margin: 0 0 4pt; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 9pt; text-align: left; }
+      .dsc-despacho-doc-heading { margin: 10pt 0 10pt; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 9pt; font-weight: 700; text-align: center; }
+      .dsc-aditivo-doc-header { margin: 0 0 12pt; }
+      .dsc-aditivo-doc-process-line { margin: 0 0 4pt; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 10.5pt; font-weight: 700; text-align: center; text-transform: uppercase; }
+      .dsc-aditivo-doc-term-line { margin: 0 0 4pt; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 9pt; font-weight: 700; text-align: center; text-transform: uppercase; }
+      .dsc-aditivo-doc-title { margin: 6pt 0 0; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 9pt; font-weight: 700; text-align: center; text-transform: uppercase; }
+      .dsc-aditivo-doc-meta { margin: 0 0 12pt; }
+      .dsc-aditivo-doc-meta-line { margin: 0 0 4pt; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 9pt; text-align: left; }
+      .dsc-aditivo-doc-meta-label { display: inline-block; min-width: 110pt; font-weight: 700; text-transform: uppercase; }
+      .dsc-aditivo-doc-meta-value { display: inline; font-weight: 700; }
+      .dsc-despacho-doc-body { margin: 0; }
+      .dsc-despacho-doc-paragraph { margin: 0 0 8pt; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 9pt; text-align: justify; text-justify: inter-word; }
+      .dsc-despacho-doc-director { margin: 14pt 0 0; }
+      .dsc-despacho-doc-director-line, .dsc-despacho-doc-date { margin: 0 0 3pt; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 9pt; text-align: left; }
+      .dsc-despacho-doc-signature-note { font-style: italic; font-weight: 700; }
+      .dsc-despacho-doc-signature-line { margin: 8pt 0 6pt; border-top: 1px solid #000000; height: 0; }
+      @page {
+        margin-top: 0.635cm;
+        margin-right: 0.635cm;
+        margin-bottom: 1.43cm;
+        margin-left: 0.635cm;
+      }
+    </style>
+  </head>
+  <body>
+    ${wordMarkup}
+  </body>
+</html>`;
+      };
+      const downloadTermoAditivoAsDoc = () => {
+        if (!lastTermoAditivoMarkup) {
+          aditivoFeedback.textContent = 'Gere o termo aditivo antes de exportar o arquivo .doc.';
+          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        const documentContent = buildTermoAditivoDocExportHtml(lastTermoAditivoMarkup);
+        const blob = new Blob(['\ufeff', documentContent], { type: 'application/msword' });
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = downloadUrl;
+        link.download = lastTermoAditivoFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+        aditivoFeedback.textContent = `Arquivo ${lastTermoAditivoFileName} gerado com sucesso.`;
+        aditivoFeedback.className = 'dsc-feedback dsc-feedback-success';
+      };
+      const handlePrintAditivo = () => {
+        if (!lastTermoAditivoMarkup) {
+          aditivoFeedback.textContent = 'Gere o termo aditivo antes de imprimir.';
+          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        let printFrame = document.getElementById('credenciamento-termo-aditivo-print-frame');
+
+        if (!(printFrame instanceof HTMLIFrameElement)) {
+          printFrame = document.createElement('iframe');
+          printFrame.id = 'credenciamento-termo-aditivo-print-frame';
+          printFrame.style.position = 'fixed';
+          printFrame.style.right = '0';
+          printFrame.style.bottom = '0';
+          printFrame.style.width = '0';
+          printFrame.style.height = '0';
+          printFrame.style.border = '0';
+          printFrame.style.opacity = '0';
+          printFrame.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(printFrame);
+        }
+
+        printFrame.onload = () => {
+          const printWindow = printFrame.contentWindow;
+
+          if (!printWindow) {
+            aditivoFeedback.textContent = 'Nao foi possivel abrir a visualizacao de impressao.';
+            aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
+            return;
+          }
+
+          printWindow.focus();
+          printWindow.print();
+          aditivoFeedback.textContent = 'Visualizacao de impressao preparada.';
+          aditivoFeedback.className = 'dsc-feedback dsc-feedback-success';
+        };
+
+        printFrame.srcdoc = buildTermoAditivoDocumentHtml(lastTermoAditivoPrintMarkup || lastTermoAditivoMarkup);
+      };
+      const handleShowAditivo = async () => {
+        const requestedDate = normalizeReportDateKey(inicioVigenciaInput.value || dataPubAditivoInput.value || dataPublicacaoInput.value);
+
+        aditivoModal.classList.remove('dsc-hidden');
+        aditivoModal.setAttribute('aria-hidden', 'false');
+        aditivoPanel.classList.remove('dsc-hidden');
+        syncPopupPageState();
+
+        if (!requestedDate) {
+          aditivoContent.innerHTML = '';
+          aditivoSubtitle.textContent = 'Informe a data de inicio de vigencia para gerar o termo aditivo.';
+          aditivoFeedback.textContent = 'Data de inicio de vigencia obrigatoria.';
+          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          resetAditivoState();
+          return;
+        }
+
+        showAditivoButton.disabled = true;
+        showAditivoButton.textContent = 'Gerando termo aditivo...';
+        aditivoSubtitle.textContent = `Montando termo aditivo para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}...`;
+        aditivoFeedback.textContent = 'Buscando parametro de emissao...';
+        aditivoFeedback.className = 'dsc-feedback';
+        aditivoContent.innerHTML = '';
+
+        try {
+          const parametroItem = await resolveEmissaoParametroByReferenceDate(requestedDate);
+
+          if (!parametroItem) {
+            throw new Error('Parametro de emissao nao encontrado.');
+          }
+
+          aditivoTitle.textContent = 'Termo Aditivo';
+          lastTermoAditivoMarkup = buildTermoAditivoMarkup({ parametroItem, includePrefeituraImage: false, requestedDate });
+          lastTermoAditivoPrintMarkup = buildTermoAditivoMarkup({ parametroItem, includePrefeituraImage: true, requestedDate });
+          aditivoSubtitle.textContent = `Termo aditivo pronto para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}.`;
+          aditivoContent.innerHTML = lastTermoAditivoMarkup;
+          aditivoFeedback.textContent = '';
+          aditivoFeedback.className = 'dsc-feedback';
+        } catch (error) {
+          aditivoContent.innerHTML = '';
+          aditivoFeedback.textContent = error instanceof Error ? error.message : 'Falha ao gerar o termo aditivo.';
+          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          aditivoSubtitle.textContent = 'Nao foi possivel gerar o termo aditivo.';
+          resetAditivoState();
+        } finally {
+          showAditivoButton.disabled = false;
+          showAditivoButton.textContent = 'Termo Aditivo';
+        }
+      };
+      const downloadDespachoAsDoc = () => {
+        if (!lastTermoDespachoMarkup) {
+          despachoFeedback.textContent = 'Gere o despacho antes de exportar o arquivo .doc.';
+          despachoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        const documentContent = buildDespachoDocExportHtml(lastTermoDespachoMarkup);
+        const blob = new Blob(['\ufeff', documentContent], { type: 'application/msword' });
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = downloadUrl;
+        link.download = lastTermoDespachoFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+        despachoFeedback.textContent = `Arquivo ${lastTermoDespachoFileName} gerado com sucesso.`;
+        despachoFeedback.className = 'dsc-feedback dsc-feedback-success';
+      };
+      const handlePrintDespacho = () => {
+        if (!lastTermoDespachoMarkup) {
+          despachoFeedback.textContent = 'Gere o despacho antes de imprimir.';
+          despachoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        let printFrame = document.getElementById('credenciamento-termo-despacho-print-frame');
+
+        if (!(printFrame instanceof HTMLIFrameElement)) {
+          printFrame = document.createElement('iframe');
+          printFrame.id = 'credenciamento-termo-despacho-print-frame';
+          printFrame.style.position = 'fixed';
+          printFrame.style.right = '0';
+          printFrame.style.bottom = '0';
+          printFrame.style.width = '0';
+          printFrame.style.height = '0';
+          printFrame.style.border = '0';
+          printFrame.style.opacity = '0';
+          printFrame.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(printFrame);
+        }
+
+        printFrame.onload = () => {
+          const printWindow = printFrame.contentWindow;
+
+          if (!printWindow) {
+            despachoFeedback.textContent = 'Nao foi possivel abrir a visualizacao de impressao.';
+            despachoFeedback.className = 'dsc-feedback dsc-feedback-error';
+            return;
+          }
+
+          printWindow.focus();
+          printWindow.print();
+          despachoFeedback.textContent = 'Visualizacao de impressao preparada.';
+          despachoFeedback.className = 'dsc-feedback dsc-feedback-success';
+        };
+
+        printFrame.srcdoc = buildDespachoDocumentHtml(lastTermoDespachoPrintMarkup || lastTermoDespachoMarkup);
+      };
+      const handleShowDespacho = async () => {
+        const requestedDate = normalizeReportDateKey(inicioVigenciaInput.value || dataPubAditivoInput.value || dataPublicacaoInput.value);
+
+        despachoModal.classList.remove('dsc-hidden');
+        despachoModal.setAttribute('aria-hidden', 'false');
+        despachoPanel.classList.remove('dsc-hidden');
+        syncPopupPageState();
+
+        if (!requestedDate) {
+          despachoContent.innerHTML = '';
+          despachoSubtitle.textContent = 'Informe a data de inicio de vigencia para gerar o despacho.';
+          despachoFeedback.textContent = 'Data de inicio de vigencia obrigatoria.';
+          despachoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          resetDespachoState();
+          return;
+        }
+
+        showDespachoButton.disabled = true;
+        showDespachoButton.textContent = 'Gerando despacho...';
+        despachoSubtitle.textContent = `Montando despacho para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}...`;
+        despachoFeedback.textContent = 'Buscando parametro de emissao...';
+        despachoFeedback.className = 'dsc-feedback';
+        despachoContent.innerHTML = '';
+
+        try {
+          const parametroItem = await resolveEmissaoParametroByReferenceDate(requestedDate);
+
+          if (!parametroItem) {
+            throw new Error('Parametro de emissao nao encontrado.');
+          }
+
+          lastTermoDespachoMarkup = buildDespachoMarkup({ parametroItem, includePrefeituraImage: false, requestedDate });
+          lastTermoDespachoPrintMarkup = buildDespachoMarkup({ parametroItem, includePrefeituraImage: true, requestedDate });
+          despachoSubtitle.textContent = `Despacho pronto para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}.`;
+          despachoContent.innerHTML = lastTermoDespachoMarkup;
+          despachoFeedback.textContent = '';
+          despachoFeedback.className = 'dsc-feedback';
+        } catch (error) {
+          despachoContent.innerHTML = '';
+          despachoFeedback.textContent = error instanceof Error ? error.message : 'Falha ao gerar o despacho da publicacao.';
+          despachoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          despachoSubtitle.textContent = 'Nao foi possivel gerar o despacho.';
+          resetDespachoState();
+        } finally {
+          showDespachoButton.disabled = false;
+          showDespachoButton.textContent = 'Despacho da Publicacao';
+        }
+      };
 
       const resetMessages = () => {
         Object.values(errors).forEach((element) => {
@@ -719,8 +1996,6 @@
         vencimentoGeralInput,
         mesRenovacaoInput,
         tpOptanteInput,
-        infoSeiInput,
-        objetoInput,
       ];
 
       const setFormReadOnly = (isReadOnly) => {
@@ -741,7 +2016,9 @@
       const syncPopupPageState = () => {
         const isPopupVisible = !formModal.classList.contains('dsc-hidden')
           || !importModal.classList.contains('dsc-hidden')
-          || !rejectionModal.classList.contains('dsc-hidden');
+          || !rejectionModal.classList.contains('dsc-hidden')
+          || !despachoModal.classList.contains('dsc-hidden')
+          || !aditivoModal.classList.contains('dsc-hidden');
         document.body.classList.toggle('dsc-popup-open', isPopupVisible);
       };
 
@@ -773,6 +2050,8 @@
         importFileNameInput.value = defaultImportFileName;
         setFormReadOnly(false);
         resetMessages();
+        resetDespachoState();
+        resetAditivoState();
       };
 
       const fillForm = (item) => {
@@ -805,14 +2084,12 @@
         municipioInput.value = item.municipio || '';
         especificacaoSeiInput.value = item.especificacao_sei || '';
         valorContratoInput.value = formatCurrencyInput(item.valor_contrato || '');
-        valorContratoAtualizadoInput.value = item.valorContratoExtenso || item.valor_contrato_atualizado || '';
+        valorContratoAtualizadoInput.value = formatCurrencyInput(item.valor_contrato_atualizado || '');
         folhasInput.value = item.folhas || '';
         dataPublicacaoInput.value = item.data_publicacao || '';
         vencimentoGeralInput.value = item.vencimento_geral || '';
         mesRenovacaoInput.value = item.mes_renovacao || '';
         tpOptanteInput.value = item.tp_optante || '';
-        infoSeiInput.value = item.info_sei || '';
-        objetoInput.value = item.objeto || '';
       };
 
       const hideForm = () => {
@@ -1024,10 +2301,15 @@
           representanteInput.value = payload.item.representante || '';
           cpfRepresentanteInput.value = payload.item.cpf_representante || '';
           rgRepresentanteInput.value = payload.item.rg_representante || '';
-          cepEnderecoInput.value = payload.item.cep || '';
+          cepEnderecoInput.value = normalizeCep(payload.item.cep || '');
           logradouroInput.value = payload.item.logradouro || '';
           bairroInput.value = payload.item.bairro || '';
           municipioInput.value = payload.item.municipio || '';
+
+          if (cepEnderecoInput.value && (!logradouroInput.value || !bairroInput.value || !municipioInput.value)) {
+            await lookupCepAndFillAddress(cepEnderecoInput.value);
+          }
+
           errors.credenciado.textContent = '';
         } catch (error) {
           credenciadaCodigoInput.value = '';
@@ -1043,12 +2325,91 @@
         }
       };
 
+      const fillAddressFromCep = (item) => {
+        logradouroInput.value = item.logradouro || '';
+        bairroInput.value = item.bairro || '';
+        municipioInput.value = item.municipio || '';
+      };
+
+      const clearAddressFromCep = () => {
+        logradouroInput.value = '';
+        bairroInput.value = '';
+        municipioInput.value = '';
+      };
+
+      let lastCepLookedUp = '';
+
+      const lookupCepAndFillAddress = async (cep) => {
+        errors.cep.textContent = '';
+        const response = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}`);
+
+        if (response.ok) {
+          const payload = await response.json();
+
+          if (payload.item) {
+            fillAddressFromCep(payload.item);
+            lastCepLookedUp = cep;
+            return true;
+          }
+
+          return false;
+        }
+
+        if (response.status === 404) {
+          const cloudResponse = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}&cloud=true`);
+
+          if (cloudResponse.ok) {
+            const cloudPayload = await cloudResponse.json();
+
+            if (cloudPayload.item) {
+              fillAddressFromCep(cloudPayload.item);
+              lastCepLookedUp = cep;
+              return true;
+            }
+          }
+        }
+
+        lastCepLookedUp = '';
+        clearAddressFromCep();
+        errors.cep.textContent = 'CEP nao encontrado.';
+        return false;
+      };
+
+      cepEnderecoInput.addEventListener('input', () => {
+        cepEnderecoInput.value = normalizeCep(cepEnderecoInput.value);
+        lastCepLookedUp = '';
+        errors.cep.textContent = '';
+      });
+
+      cepEnderecoInput.addEventListener('blur', async () => {
+        const cep = normalizeCep(cepEnderecoInput.value);
+        cepEnderecoInput.value = cep;
+
+        if (!/^\d{5}-\d{3}$/.test(cep)) {
+          lastCepLookedUp = '';
+          clearAddressFromCep();
+          errors.cep.textContent = cep ? 'Informe um CEP valido.' : '';
+          return;
+        }
+
+        if (cep === lastCepLookedUp) {
+          return;
+        }
+
+        try {
+          await lookupCepAndFillAddress(cep);
+        } catch (_) {
+          lastCepLookedUp = '';
+        }
+      });
+
       const collectPayload = () => ({
         codigoXml: normalizeIntegerInput(codigoXmlInput.value, 10),
         aditivo: normalizeIntegerInput(aditivoInput.value, 2),
         termoAdesao: normalizeTermoAdesao(termoAdesaoInput.value),
         sei: normalizeText(seiInput.value, 255),
         credenciadaCodigo: normalizeIntegerInput(credenciadaCodigoInput.value, 10),
+        cep: normalizeCep(cepEnderecoInput.value),
         situacaoPublicacao: normalizeText(situacaoPublicacaoInput.value, 100),
         situacaoEmissao: normalizeText(situacaoEmissaoInput.value, 100),
         statusTermo: normalizeText(statusTermoInput.value, 100),
@@ -1067,8 +2428,6 @@
         vencimentoGeral: vencimentoGeralInput.value,
         mesRenovacao: normalizeText(mesRenovacaoInput.value, 50),
         tpOptante: normalizeText(tpOptanteInput.value, 20),
-        infoSei: normalizeText(infoSeiInput.value, 100),
-        objeto: normalizeText(objetoInput.value, 1000),
       });
 
       form.addEventListener('submit', async (event) => {
@@ -1190,7 +2549,21 @@
       });
 
       cancelButton.addEventListener('click', hideForm);
+      showDespachoButton.addEventListener('click', () => {
+        void handleShowDespacho();
+      });
+      showAditivoButton.addEventListener('click', () => {
+        void handleShowAditivo();
+      });
       closeFormModalButton.addEventListener('click', hideForm);
+      closeDespachoButton.addEventListener('click', hideDespacho);
+      dismissDespachoButton.addEventListener('click', hideDespacho);
+      printDespachoButton.addEventListener('click', handlePrintDespacho);
+      downloadDespachoDocButton.addEventListener('click', downloadDespachoAsDoc);
+      closeAditivoButton.addEventListener('click', hideAditivo);
+      dismissAditivoButton.addEventListener('click', hideAditivo);
+      printAditivoButton.addEventListener('click', handlePrintAditivo);
+      downloadAditivoDocButton.addEventListener('click', downloadTermoAditivoAsDoc);
 
       importButton.addEventListener('click', () => {
         hidePanels();
@@ -1220,6 +2593,18 @@
         }
       });
 
+      despachoModal.addEventListener('click', (event) => {
+        if (event.target === despachoModal) {
+          hideDespacho();
+        }
+      });
+
+      aditivoModal.addEventListener('click', (event) => {
+        if (event.target === aditivoModal) {
+          hideAditivo();
+        }
+      });
+
       document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') {
           return;
@@ -1237,6 +2622,16 @@
 
         if (!rejectionModal.classList.contains('dsc-hidden')) {
           hideRejectionPanel();
+          return;
+        }
+
+        if (!despachoModal.classList.contains('dsc-hidden')) {
+          hideDespacho();
+          return;
+        }
+
+        if (!aditivoModal.classList.contains('dsc-hidden')) {
+          hideAditivo();
         }
       });
 

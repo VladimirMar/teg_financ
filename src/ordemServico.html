@@ -414,6 +414,7 @@
                     <div class="dsc-login-form-buttons dsc-access-form-buttons dsc-popup-footer-sticky">
                       <button type="button" class="dsc-btn dsc-btn-white" id="print-ordem-servico-emissao-button">Imprimir</button>
                       <button type="button" class="dsc-btn dsc-btn-blue" id="download-ordem-servico-emissao-doc-button">Gerar .doc</button>
+                      <button type="button" class="dsc-btn dsc-btn-white" id="dismiss-ordem-servico-emissao-button">Fechar</button>
                     </div>
                   </section>
                 </div>
@@ -578,6 +579,7 @@
       const emissaoModal = document.getElementById('ordem-servico-emissao-modal');
       const emissaoPanel = document.getElementById('ordem-servico-emissao-panel');
       const closeEmissaoButton = document.getElementById('close-ordem-servico-emissao-button');
+      const dismissEmissaoButton = document.getElementById('dismiss-ordem-servico-emissao-button');
       const printEmissaoButton = document.getElementById('print-ordem-servico-emissao-button');
       const downloadEmissaoDocButton = document.getElementById('download-ordem-servico-emissao-doc-button');
       const emissaoSubtitle = document.getElementById('ordem-servico-emissao-subtitle');
@@ -1423,6 +1425,15 @@
         line-height: 1.1;
         color: #111827;
       }
+      .dsc-emissao-documento-subtitle {
+        margin: 2pt 0 0;
+        text-align: center;
+        font-family: Aptos, Arial, Helvetica, sans-serif;
+        font-size: 11.5pt;
+        font-weight: 700;
+        line-height: 1.15;
+        color: #111827;
+      }
       .dsc-emissao-documento-kicker {
         margin: 0 0 4pt;
         text-align: left;
@@ -1684,7 +1695,10 @@
           <article class="dsc-emissao-documento">
             <header class="dsc-emissao-documento-header">
               ${includePrefeituraImage && prefeituraImagem ? `<div class="dsc-emissao-documento-logo-wrap"><img class="dsc-emissao-documento-logo" src="${escapeHtml(prefeituraImagem)}" alt="Imagem da Prefeitura" /></div>` : ''}
-              ${tituloEmissao ? `<div class="dsc-emissao-documento-title-block">${tituloEmissao.split(/\n+/).map((line) => `<p class="dsc-emissao-documento-title-line">${escapeHtml(line)}</p>`).join('')}</div>` : ''}
+              <div class="dsc-emissao-documento-title-block">
+                ${tituloEmissao ? tituloEmissao.split(/\n+/).map((line) => `<p class="dsc-emissao-documento-title-line">${escapeHtml(line)}</p>`).join('') : ''}
+                <p class="dsc-emissao-documento-subtitle">EMISSAO DE ORDEM DE SERVICO,</p>
+              </div>
             </header>
 
             <div class="dsc-emissao-documento-highlight">
@@ -4135,6 +4149,7 @@
       closeTermoButton.addEventListener('click', clearOrdemServicoTermo);
       closeSummaryButton.addEventListener('click', clearOrdemServicoSummary);
       closeEmissaoButton.addEventListener('click', clearOrdemServicoEmissao);
+      dismissEmissaoButton.addEventListener('click', clearOrdemServicoEmissao);
       showTermoButton.addEventListener('click', () => {
         void handleShowOrdemServicoTermo();
       });
