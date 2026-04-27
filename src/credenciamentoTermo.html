@@ -261,12 +261,6 @@
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-credenciamento-termo-import-button">Importar XML</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-credenciamento-termo-rejections-button">Recusas XML</button>
                 <input class="dsc-form-control dsc-access-filter-input" id="credenciamento-termo-search" type="text" placeholder="Filtrar por codigo, termo, credenciado, SEI ou aditivo" />
-                <input class="dsc-form-control dsc-access-filter-input" id="credenciamento-termo-status-filter" type="text" maxlength="100" placeholder="Status do termo" list="credenciamento-termo-status-filter-options" />
-                <datalist id="credenciamento-termo-status-filter-options">
-                  <option value="Ativo"></option>
-                  <option value="Inativo"></option>
-                  <option value="Rescindido"></option>
-                </datalist>
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-credenciamento-termo-filter-button">Limpar</button>
               </form>
@@ -319,6 +313,43 @@
               </div>
             </div>
 
+            <div class="dsc-popup-overlay dsc-hidden" id="credenciamento-termo-linked-aditivos-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="credenciamento-termo-linked-aditivos-title">
+            <section class="dsc-card dsc-hidden" id="credenciamento-termo-linked-aditivos-panel">
+              <div class="dsc-popup-header dsc-popup-header-sticky dsc-popup-header-with-compact-close">
+                <div class="dsc-popup-header-copy">
+                  <h2 id="credenciamento-termo-linked-aditivos-title">Aditivos vinculados ao termo</h2>
+                  <span id="credenciamento-termo-linked-aditivos-subtitle"></span>
+                </div>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-credenciamento-termo-linked-aditivos-modal-button" aria-label="Fechar lista de aditivos vinculados">X</button>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>Aditivo</th>
+                      <th>Inicio</th>
+                      <th>Termino</th>
+                      <th>Status termo</th>
+                    </tr>
+                  </thead>
+                  <tbody id="credenciamento-termo-linked-aditivos-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="credenciamento-termo-linked-aditivos-empty-state">Nenhum aditivo vinculado encontrado para este termo.</p>
+              </div>
+
+              <div class="dsc-login-form-buttons dsc-access-form-buttons dsc-mt20">
+                <button type="button" class="dsc-btn dsc-btn-blue" id="insert-credenciamento-termo-linked-aditivo-button">Inserir novo aditivo</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="delete-credenciamento-termo-linked-aditivo-button">Excluir ultimo aditivo</button>
+              </div>
+
+              <p class="dsc-feedback" id="credenciamento-termo-linked-aditivos-feedback"></p>
+            </section>
+              </div>
+            </div>
+
             <div class="dsc-popup-overlay dsc-hidden" id="credenciamento-termo-import-modal" aria-hidden="true">
               <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="credenciamento-termo-import-title">
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciamento-termo-import-form">
@@ -354,6 +385,46 @@
               </div>
 
               <section class="dsc-form-section-card">
+                <h3 class="dsc-form-section-title">Credenciada</h3>
+
+                <div class="dsc-form-row">
+                  <input id="credenciamento-termo-credenciada-codigo" type="hidden" />
+                  <div class="dsc-form-error dsc-hidden" id="credenciamento-termo-credenciada-codigo-error"></div>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-cnpj-cpf">
+                    <span>CNPJ/CPF</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-cnpj-cpf" type="text" maxlength="18" autocomplete="off" list="credenciamento-termo-cnpj-cpf-options" />
+                    <datalist id="credenciamento-termo-cnpj-cpf-options"></datalist>
+                    <div class="dsc-form-error" id="credenciamento-termo-cnpj-cpf-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-credenciado">
+                    <span>Credenciado</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-credenciado" type="text" maxlength="255" list="credenciamento-termo-credenciado-options" autocomplete="off" readonly />
+                    <datalist id="credenciamento-termo-credenciado-options"></datalist>
+                    <p class="dsc-form-hint">Ao informar o CNPJ/CPF, a tela localiza a credenciada ativa correspondente.</p>
+                    <div class="dsc-form-error" id="credenciamento-termo-credenciado-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-tipo-termo">
+                    <span>Tipo de termo</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-tipo-termo" type="text" maxlength="100" list="credenciamento-termo-tipo-termo-options" readonly />
+                    <datalist id="credenciamento-termo-tipo-termo-options">
+                      <option value="Pessoa F&#237;sica"></option>
+                      <option value="Pessoa Jur&#237;dica"></option>
+                      <option value="Cooperativa"></option>
+                    </datalist>
+                    <div class="dsc-form-error" id="credenciamento-termo-tipo-termo-error"></div>
+                  </label>
+                  <label class="dsc-field-group" for="credenciamento-termo-especificacao-sei">
+                    <span>Especificacao SEI</span>
+                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-especificacao-sei" type="text" maxlength="255" readonly />
+                    <div class="dsc-form-error" id="credenciamento-termo-especificacao-sei-error"></div>
+                  </label>
+                </div>
+              </section>
+
+              <section class="dsc-form-section-card">
                 <h3 class="dsc-form-section-title">Identificacao</h3>
 
                 <div class="dsc-form-row">
@@ -381,44 +452,10 @@
               </section>
 
               <section class="dsc-form-section-card">
-                <h3 class="dsc-form-section-title">Credenciada</h3>
-
-                <div class="dsc-form-row">
-                  <label class="dsc-field-group" for="credenciamento-termo-credenciado">
-                    <span>Credenciado</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-credenciado" type="text" maxlength="255" list="credenciamento-termo-credenciado-options" autocomplete="off" />
-                    <datalist id="credenciamento-termo-credenciado-options"></datalist>
-                    <p class="dsc-form-hint">Ao sair do campo, a tela localiza a credenciada ativa pelo nome.</p>
-                    <div class="dsc-form-error" id="credenciamento-termo-credenciado-error"></div>
-                  </label>
-
-                  <input id="credenciamento-termo-credenciada-codigo" type="hidden" />
-                  <div class="dsc-form-error dsc-hidden" id="credenciamento-termo-credenciada-codigo-error"></div>
-
-                  <label class="dsc-field-group" for="credenciamento-termo-cnpj-cpf">
-                    <span>CNPJ/CPF</span>
-                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-cnpj-cpf" type="text" readonly />
-                    <div class="dsc-form-error" id="credenciamento-termo-cnpj-cpf-error"></div>
-                  </label>
-
-                  <label class="dsc-field-group" for="credenciamento-termo-tipo-termo">
-                    <span>Tipo de termo</span>
-                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-tipo-termo" type="text" maxlength="100" list="credenciamento-termo-tipo-termo-options" readonly />
-                    <datalist id="credenciamento-termo-tipo-termo-options">
-                      <option value="Pessoa F&#237;sica"></option>
-                      <option value="Pessoa Jur&#237;dica"></option>
-                      <option value="Cooperativa"></option>
-                    </datalist>
-                    <div class="dsc-form-error" id="credenciamento-termo-tipo-termo-error"></div>
-                  </label>
-                </div>
-              </section>
-
-              <section class="dsc-form-section-card">
                 <h3 class="dsc-form-section-title">Vigencia e status</h3>
 
                 <div class="dsc-form-row">
-                  <label class="dsc-field-group" for="credenciamento-termo-situacao-publicacao">
+                  <label class="dsc-field-group dsc-hidden" for="credenciamento-termo-situacao-publicacao">
                     <span>Situacao de publicacao</span>
                     <input class="dsc-form-control" id="credenciamento-termo-situacao-publicacao" type="text" maxlength="100" list="credenciamento-termo-situacao-publicacao-options" />
                     <datalist id="credenciamento-termo-situacao-publicacao-options">
@@ -429,7 +466,7 @@
                     <div class="dsc-form-error" id="credenciamento-termo-situacao-publicacao-error"></div>
                   </label>
 
-                  <label class="dsc-field-group" for="credenciamento-termo-situacao-emissao">
+                  <label class="dsc-field-group dsc-hidden" for="credenciamento-termo-situacao-emissao">
                     <span>Situacao de emissao</span>
                     <input class="dsc-form-control" id="credenciamento-termo-situacao-emissao" type="text" maxlength="100" list="credenciamento-termo-situacao-emissao-options" />
                     <datalist id="credenciamento-termo-situacao-emissao-options">
@@ -445,6 +482,7 @@
                     <datalist id="credenciamento-termo-status-termo-options">
                       <option value="Ativo"></option>
                       <option value="Inativo"></option>
+                      <option value="Substituido"></option>
                       <option value="Rescindido"></option>
                     </datalist>
                     <div class="dsc-form-error" id="credenciamento-termo-status-termo-error"></div>
@@ -461,7 +499,7 @@
                     <div class="dsc-form-error" id="credenciamento-termo-status-aditivo-error"></div>
                   </label>
 
-                  <div class="dsc-field-group">
+                  <div class="dsc-field-group dsc-hidden">
                     <span>Check aditivo</span>
                     <div class="dsc-radio-field-group">
                       <label>
@@ -496,11 +534,6 @@
                     <div class="dsc-form-error" id="credenciamento-termo-comp-data-aditivo-error"></div>
                   </label>
 
-                  <label class="dsc-field-group" for="credenciamento-termo-data-pub-aditivo">
-                    <span>Data de publicacao</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-data-pub-aditivo" type="date" />
-                    <div class="dsc-form-error" id="credenciamento-termo-data-pub-aditivo-error"></div>
-                  </label>
                 </div>
               </section>
 
@@ -552,12 +585,6 @@
                 <h3 class="dsc-form-section-title">Complementos</h3>
 
                 <div class="dsc-form-row">
-                  <label class="dsc-field-group" for="credenciamento-termo-especificacao-sei">
-                    <span>Especificacao SEI</span>
-                    <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-especificacao-sei" type="text" maxlength="255" readonly />
-                    <div class="dsc-form-error" id="credenciamento-termo-especificacao-sei-error"></div>
-                  </label>
-
                   <label class="dsc-field-group" for="credenciamento-termo-valor-contrato">
                     <span>Valor contrato</span>
                     <input class="dsc-form-control" id="credenciamento-termo-valor-contrato" type="text" inputmode="decimal" maxlength="20" />
@@ -606,6 +633,7 @@
 
               <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-credenciamento-termo-button">Salvar credenciamento termo</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="edit-credenciamento-termo-last-aditivo-button">Alterar ultimo aditivo</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="show-credenciamento-termo-despacho-button">Despacho da Publicacao</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="show-credenciamento-termo-aditivo-button">Termo Aditivo</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="emit-credenciamento-termo-contrato-button">Emiss&atilde;o Contrato</button>
@@ -614,6 +642,70 @@
 
               <p class="dsc-feedback" id="credenciamento-termo-form-feedback"></p>
             </form>
+              </div>
+            </div>
+
+            <div class="dsc-popup-overlay dsc-hidden" id="credenciamento-termo-last-aditivo-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="credenciamento-termo-last-aditivo-title">
+                <section class="dsc-card dsc-hidden" id="credenciamento-termo-last-aditivo-panel">
+                  <div class="dsc-popup-header dsc-popup-header-sticky">
+                    <h2 id="credenciamento-termo-last-aditivo-title">Alterar ultimo aditivo</h2>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-credenciamento-termo-last-aditivo-button" aria-label="Fechar alteracao do ultimo aditivo">X</button>
+                  </div>
+
+                  <form id="credenciamento-termo-last-aditivo-form" class="dsc-access-form" novalidate>
+                    <section class="dsc-form-section-card">
+                      <h3 class="dsc-form-section-title">Ultimo aditivo do termo</h3>
+
+                      <div class="dsc-form-row">
+                        <label class="dsc-field-group" for="credenciamento-termo-last-aditivo-termo">
+                          <span>Termo de adesao</span>
+                          <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-last-aditivo-termo" type="text" readonly />
+                        </label>
+
+                        <label class="dsc-field-group" for="credenciamento-termo-last-aditivo-numero">
+                          <span>Aditivo</span>
+                          <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-last-aditivo-numero" type="text" readonly />
+                        </label>
+
+                        <label class="dsc-field-group" for="credenciamento-termo-last-aditivo-situacao-publicacao">
+                          <span>Situacao de publicacao</span>
+                          <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-last-aditivo-situacao-publicacao" type="text" readonly />
+                        </label>
+                      </div>
+
+                      <div class="dsc-form-row">
+                        <div class="dsc-field-group">
+                          <span>Check aditivo</span>
+                          <div class="dsc-radio-field-group">
+                            <label>
+                              <input id="credenciamento-termo-last-aditivo-check-sim" name="credenciamento-termo-last-aditivo-check" type="radio" value="1" />
+                              <span>Sim</span>
+                            </label>
+                            <label>
+                              <input id="credenciamento-termo-last-aditivo-check-nao" name="credenciamento-termo-last-aditivo-check" type="radio" value="0" />
+                              <span>Nao</span>
+                            </label>
+                          </div>
+                          <div class="dsc-form-error" id="credenciamento-termo-last-aditivo-check-error"></div>
+                        </div>
+
+                        <label class="dsc-field-group" for="credenciamento-termo-last-aditivo-data-publicacao">
+                          <span>Data de publicacao</span>
+                          <input class="dsc-form-control" id="credenciamento-termo-last-aditivo-data-publicacao" type="date" />
+                          <div class="dsc-form-error" id="credenciamento-termo-last-aditivo-data-publicacao-error"></div>
+                        </label>
+                      </div>
+                    </section>
+
+                    <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
+                      <button type="submit" class="dsc-btn dsc-btn-blue" id="save-credenciamento-termo-last-aditivo-button">Salvar ultimo aditivo</button>
+                      <button type="button" class="dsc-btn dsc-btn-white" id="cancel-credenciamento-termo-last-aditivo-button">Fechar</button>
+                    </div>
+
+                    <p class="dsc-feedback" id="credenciamento-termo-last-aditivo-feedback"></p>
+                  </form>
+                </section>
               </div>
             </div>
 
@@ -701,9 +793,11 @@
                       </th>
                       <th>Credenciado</th>
                       <th>Aditivo</th>
-                      <th>Inicio</th>
-                      <th>Termino</th>
-                      <th>Status termo</th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-credenciamento-termo-status-button">
+                          Status termo <span id="sort-credenciamento-termo-status-indicator">↕</span>
+                        </button>
+                      </th>
                       <th class="dsc-grid-actions-column">Acoes</th>
                     </tr>
                   </thead>
@@ -730,6 +824,7 @@
       const formModal = document.getElementById('credenciamento-termo-form-modal');
       const importModal = document.getElementById('credenciamento-termo-import-modal');
       const rejectionModal = document.getElementById('credenciamento-termo-rejection-modal');
+      const linkedAditivosModal = document.getElementById('credenciamento-termo-linked-aditivos-modal');
       const form = document.getElementById('credenciamento-termo-form');
       const importForm = document.getElementById('credenciamento-termo-import-form');
       const filterForm = document.getElementById('credenciamento-termo-filter-form');
@@ -741,11 +836,11 @@
       const importFeedback = document.getElementById('credenciamento-termo-import-feedback');
       const rejectionGridFeedback = document.getElementById('credenciamento-termo-rejection-grid-feedback');
       const searchInput = document.getElementById('credenciamento-termo-search');
-      const statusFilterInput = document.getElementById('credenciamento-termo-status-filter');
       const clearFilterButton = document.getElementById('clear-credenciamento-termo-filter-button');
       const insertButton = document.getElementById('insert-credenciamento-termo-button');
       const saveButton = document.getElementById('save-credenciamento-termo-button');
       const cancelButton = document.getElementById('cancel-credenciamento-termo-button');
+      const editLastAditivoButton = document.getElementById('edit-credenciamento-termo-last-aditivo-button');
       const showDespachoButton = document.getElementById('show-credenciamento-termo-despacho-button');
       const showAditivoButton = document.getElementById('show-credenciamento-termo-aditivo-button');
       const emitContratoButton = document.getElementById('emit-credenciamento-termo-contrato-button');
@@ -756,10 +851,13 @@
       const closeImportModalButton = document.getElementById('close-credenciamento-termo-import-modal-button');
       const gridBody = document.getElementById('credenciamento-termo-grid-body');
       const rejectionGridBody = document.getElementById('credenciamento-termo-rejection-grid-body');
+      const linkedAditivosGridBody = document.getElementById('credenciamento-termo-linked-aditivos-grid-body');
       const emptyState = document.getElementById('credenciamento-termo-empty-state');
       const rejectionEmptyState = document.getElementById('credenciamento-termo-rejection-empty-state');
+      const linkedAditivosEmptyState = document.getElementById('credenciamento-termo-linked-aditivos-empty-state');
       const totalLabel = document.getElementById('credenciamento-termo-total');
       const rejectionTotalLabel = document.getElementById('credenciamento-termo-rejection-total');
+      const linkedAditivosSubtitle = document.getElementById('credenciamento-termo-linked-aditivos-subtitle');
       const paginationInfo = document.getElementById('credenciamento-termo-pagination-info');
       const rejectionPaginationInfo = document.getElementById('credenciamento-termo-rejection-pagination-info');
       const previousPageButton = document.getElementById('previous-credenciamento-termo-page-button');
@@ -770,8 +868,15 @@
       const rejectionSearchInput = document.getElementById('credenciamento-termo-rejection-search');
       const clearRejectionFilterButton = document.getElementById('clear-credenciamento-termo-rejection-filter-button');
       const closeRejectionPanelButton = document.getElementById('close-credenciamento-termo-rejection-modal-button');
+      const linkedAditivosPanel = document.getElementById('credenciamento-termo-linked-aditivos-panel');
+      const linkedAditivosFeedback = document.getElementById('credenciamento-termo-linked-aditivos-feedback');
+      const closeLinkedAditivosModalButton = document.getElementById('close-credenciamento-termo-linked-aditivos-modal-button');
+      const insertLinkedAditivoButton = document.getElementById('insert-credenciamento-termo-linked-aditivo-button');
+      const deleteLinkedAditivoButton = document.getElementById('delete-credenciamento-termo-linked-aditivo-button');
       const sortButton = document.getElementById('sort-credenciamento-termo-button');
       const sortIndicator = document.getElementById('sort-credenciamento-termo-indicator');
+      const sortStatusButton = document.getElementById('sort-credenciamento-termo-status-button');
+      const sortStatusIndicator = document.getElementById('sort-credenciamento-termo-status-indicator');
       const importFileNameInput = document.getElementById('credenciamento-termo-import-file-name');
       const importFileNameError = document.getElementById('credenciamento-termo-import-file-name-error');
 
@@ -783,16 +888,17 @@
       const credenciadoOptions = document.getElementById('credenciamento-termo-credenciado-options');
       const credenciadaCodigoInput = document.getElementById('credenciamento-termo-credenciada-codigo');
       const cnpjCpfInput = document.getElementById('credenciamento-termo-cnpj-cpf');
+      const cnpjCpfOptions = document.getElementById('credenciamento-termo-cnpj-cpf-options');
       const situacaoPublicacaoInput = document.getElementById('credenciamento-termo-situacao-publicacao');
       const situacaoEmissaoInput = document.getElementById('credenciamento-termo-situacao-emissao');
       const statusTermoInput = document.getElementById('credenciamento-termo-status-termo');
       const statusAditivoInput = document.getElementById('credenciamento-termo-status-aditivo');
+      const statusAditivoFieldGroup = statusAditivoInput.closest('.dsc-field-group');
       const checkAditivoYesInput = document.getElementById('credenciamento-termo-check-aditivo-sim');
       const checkAditivoNoInput = document.getElementById('credenciamento-termo-check-aditivo-nao');
       const inicioVigenciaInput = document.getElementById('credenciamento-termo-inicio-vigencia');
       const terminoVigenciaInput = document.getElementById('credenciamento-termo-termino-vigencia');
       const compDataAditivoInput = document.getElementById('credenciamento-termo-comp-data-aditivo');
-      const dataPubAditivoInput = document.getElementById('credenciamento-termo-data-pub-aditivo');
       const tipoTermoInput = document.getElementById('credenciamento-termo-tipo-termo');
       const representanteInput = document.getElementById('credenciamento-termo-representante');
       const cpfRepresentanteInput = document.getElementById('credenciamento-termo-cpf-representante');
@@ -801,12 +907,29 @@
       const cepEnderecoInput = document.getElementById('credenciamento-termo-cep');
       const municipioInput = document.getElementById('credenciamento-termo-municipio');
       const especificacaoSeiInput = document.getElementById('credenciamento-termo-especificacao-sei');
+      const textoCopiaInput = especificacaoSeiInput;
       const valorContratoInput = document.getElementById('credenciamento-termo-valor-contrato');
       const valorContratoAtualizadoInput = document.getElementById('credenciamento-termo-valor-contrato-atualizado');
       const dataPublicacaoInput = document.getElementById('credenciamento-termo-data-publicacao');
+      const dataPublicacaoFieldGroup = dataPublicacaoInput.closest('.dsc-field-group');
       const vencimentoGeralInput = document.getElementById('credenciamento-termo-vencimento-geral');
       const mesRenovacaoInput = document.getElementById('credenciamento-termo-mes-renovacao');
       const tpOptanteInput = document.getElementById('credenciamento-termo-tp-optante');
+      const lastAditivoModal = document.getElementById('credenciamento-termo-last-aditivo-modal');
+      const lastAditivoPanel = document.getElementById('credenciamento-termo-last-aditivo-panel');
+      const lastAditivoForm = document.getElementById('credenciamento-termo-last-aditivo-form');
+      const closeLastAditivoButton = document.getElementById('close-credenciamento-termo-last-aditivo-button');
+      const cancelLastAditivoButton = document.getElementById('cancel-credenciamento-termo-last-aditivo-button');
+      const saveLastAditivoButton = document.getElementById('save-credenciamento-termo-last-aditivo-button');
+      const lastAditivoFeedback = document.getElementById('credenciamento-termo-last-aditivo-feedback');
+      const lastAditivoTermoInput = document.getElementById('credenciamento-termo-last-aditivo-termo');
+      const lastAditivoNumeroInput = document.getElementById('credenciamento-termo-last-aditivo-numero');
+      const lastAditivoSituacaoPublicacaoInput = document.getElementById('credenciamento-termo-last-aditivo-situacao-publicacao');
+      const lastAditivoCheckYesInput = document.getElementById('credenciamento-termo-last-aditivo-check-sim');
+      const lastAditivoCheckNoInput = document.getElementById('credenciamento-termo-last-aditivo-check-nao');
+      const lastAditivoDataPublicacaoInput = document.getElementById('credenciamento-termo-last-aditivo-data-publicacao');
+      const lastAditivoCheckError = document.getElementById('credenciamento-termo-last-aditivo-check-error');
+      const lastAditivoDataPublicacaoError = document.getElementById('credenciamento-termo-last-aditivo-data-publicacao-error');
       const despachoModal = document.getElementById('credenciamento-termo-despacho-modal');
       const despachoPanel = document.getElementById('credenciamento-termo-despacho-panel');
       const despachoSubtitle = document.getElementById('credenciamento-termo-despacho-subtitle');
@@ -853,7 +976,6 @@
         inicioVigencia: document.getElementById('credenciamento-termo-inicio-vigencia-error'),
         terminoVigencia: document.getElementById('credenciamento-termo-termino-vigencia-error'),
         compDataAditivo: document.getElementById('credenciamento-termo-comp-data-aditivo-error'),
-        dataPubAditivo: document.getElementById('credenciamento-termo-data-pub-aditivo-error'),
         tipoTermo: document.getElementById('credenciamento-termo-tipo-termo-error'),
         representante: document.getElementById('credenciamento-termo-representante-error'),
         cpfRepresentante: document.getElementById('credenciamento-termo-cpf-representante-error'),
@@ -885,7 +1007,6 @@
         inicioVigencia: inicioVigenciaInput,
         terminoVigencia: terminoVigenciaInput,
         compDataAditivo: compDataAditivoInput,
-        dataPubAditivo: dataPubAditivoInput,
         tipoTermo: tipoTermoInput,
         representante: representanteInput,
         cpfRepresentante: cpfRepresentanteInput,
@@ -910,13 +1031,18 @@
       let currentPage = 1;
       let totalPages = 1;
       let currentSearch = '';
-      let currentStatusTermoFilter = '';
       let currentSortBy = 'codigo';
       let currentSortDirection = 'asc';
       let currentRejectionPage = 1;
       let totalRejectionPages = 1;
       let currentRejectionSearch = '';
+      let currentLinkedAditivosTermoAdesao = '';
+      let currentLinkedAditivosSourceItem = null;
+      let currentLinkedAditivosItems = [];
+      let currentLastAditivoItem = null;
+      let currentLastAditivoOriginalDataPublicacao = '';
       let bannerTimeoutId = null;
+      let defaultCreateInicioVigenciaDate = new Date();
       let lastTermoDespachoMarkup = '';
       let lastTermoDespachoPrintMarkup = '';
       let lastTermoDespachoFileName = 'despacho-termo.doc';
@@ -926,8 +1052,10 @@
       let lastTermoContratoMarkup = '';
       let lastTermoContratoPrintMarkup = '';
       let lastTermoContratoFileName = 'contrato-termo.docx';
+      let isExistingTermCreateBlocked = false;
       let lastTermoContratoRequestPayload = null;
       let nextAditivoRequestId = 0;
+      let credenciadaSuggestionRequestId = 0;
       let inheritedAditivoTermoAdesao = '';
 
       const normalizeText = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trim().toUpperCase().slice(0, maxLength);
@@ -1058,6 +1186,18 @@
         const day = String(value.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
       };
+      const parseReportDateToDate = (value) => {
+        const normalizedValue = normalizeReportDateKey(value);
+
+        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return null;
+        }
+
+        const [day, month, year] = normalizedValue.split('/').map(Number);
+        const parsed = new Date(year, month - 1, day);
+
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      };
       const addDaysToDate = (value, days) => {
         const result = new Date(value);
         result.setDate(result.getDate() + days);
@@ -1068,17 +1208,149 @@
         result.setFullYear(result.getFullYear() + years);
         return result;
       };
+      const resolveNextInicioVigenciaDate = (item) => {
+        const referenceDate = parseReportDateToDate(item?.termino_vigencia || item?.inicio_vigencia || '');
+        return referenceDate ? addDaysToDate(referenceDate, 1) : new Date();
+      };
+      const setDefaultCreateInicioVigenciaDate = (value) => {
+        const nextDate = value instanceof Date ? new Date(value) : new Date();
+
+        if (Number.isNaN(nextDate.getTime())) {
+          defaultCreateInicioVigenciaDate = new Date();
+          return;
+        }
+
+        defaultCreateInicioVigenciaDate = nextDate;
+      };
+      const fetchLatestCredenciamentoTermoItem = async () => {
+        const response = await fetch('/api/termo?page=1&pageSize=1&sortBy=codigo&sortDirection=desc', {
+          headers: { Accept: 'application/json' },
+        });
+
+        if (!response.ok) {
+          throw new Error(await getRequestErrorMessage(response, 'Falha ao consultar o ultimo termo.'));
+        }
+
+        const payload = await response.json();
+        return payload.items?.[0] || null;
+      };
+      const fetchLatestCredenciamentoTermoItemByTermoAdesao = async (termoAdesao) => {
+        const normalizedTermoAdesao = normalizeTermoAdesao(String(termoAdesao || ''));
+
+        if (!normalizedTermoAdesao) {
+          return null;
+        }
+
+        const response = await fetch(`/api/termo/lookup?termoAdesao=${encodeURIComponent(normalizedTermoAdesao)}`, {
+          headers: { Accept: 'application/json' },
+        });
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        if (!response.ok) {
+          throw new Error(await getRequestErrorMessage(response, 'Falha ao consultar o ultimo aditivo do termo.'));
+        }
+
+        const payload = await response.json();
+        return payload.item || null;
+      };
+      const captureFormFieldState = () => ({
+        editingCodigo,
+        formMode,
+        isExistingTermCreateBlocked,
+        formTitle: formTitle.textContent,
+        saveButtonText: saveButton.textContent,
+        fieldStates: Array.from(form.querySelectorAll('input, select, textarea')).map((field) => ({
+          id: field.id,
+          value: 'value' in field ? field.value : '',
+          checked: field instanceof HTMLInputElement ? field.checked : false,
+        })),
+      });
+      const restoreFormFieldState = (state) => {
+        if (!state) {
+          return;
+        }
+
+        editingCodigo = state.editingCodigo;
+        formMode = state.formMode;
+        isExistingTermCreateBlocked = state.isExistingTermCreateBlocked;
+        formTitle.textContent = state.formTitle || 'CADASTRO DE TERMO';
+        saveButton.textContent = state.saveButtonText || 'Salvar credenciamento termo';
+
+        state.fieldStates.forEach((fieldState) => {
+          const field = document.getElementById(fieldState.id);
+
+          if (!field) {
+            return;
+          }
+
+          if ('value' in field) {
+            field.value = fieldState.value;
+          }
+
+          if (field instanceof HTMLInputElement) {
+            field.checked = fieldState.checked;
+          }
+        });
+
+        syncEspecificacaoSei();
+        syncTextoCopia();
+        syncDerivedTermoFields();
+        syncCreateOnlyFieldVisibility();
+        setFormReadOnly(formMode === 'view');
+        syncSaveButtonState();
+        syncAditivoDependentFieldState();
+        void syncDespachoButtonState();
+        void syncLastAditivoEditorButtonState();
+      };
+      const withLatestTermoItemOnForm = async (callback) => {
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+
+        if (!termoAdesao) {
+          throw new Error('Informe o termo para localizar o ultimo aditivo.');
+        }
+
+        const latestItem = await fetchLatestCredenciamentoTermoItemByTermoAdesao(termoAdesao);
+
+        if (!latestItem) {
+          throw new Error('Ultimo aditivo do termo nao encontrado.');
+        }
+
+        const currentState = captureFormFieldState();
+
+        try {
+          fillForm(latestItem);
+          return await callback(latestItem);
+        } finally {
+          restoreFormFieldState(currentState);
+        }
+      };
       const syncDerivedTermoFields = () => {
         valorContratoAtualizadoInput.value = formatCurrencyExtenso(valorContratoInput.value);
         mesRenovacaoInput.value = formatMonthYearLabel(terminoVigenciaInput.value);
+      };
+      const syncCreateOnlyFieldVisibility = () => {
+        const shouldHidePublicationDates = formMode === 'create';
+
+        dataPublicacaoFieldGroup?.classList.toggle('dsc-hidden', shouldHidePublicationDates);
+      };
+      const syncSaveButtonState = () => {
+        const isReadOnlyMode = formMode === 'view';
+        saveButton.classList.toggle('dsc-hidden', isReadOnlyMode);
+        saveButton.disabled = !isReadOnlyMode && formMode === 'create' && isExistingTermCreateBlocked;
       };
       const syncAditivoDependentFieldState = () => {
         const aditivoValue = Number.parseInt(aditivoInput.value || '0', 10);
         const shouldLockByAditivo = Number.isInteger(aditivoValue) && aditivoValue > 0;
         const isReadOnlyMode = formMode === 'view';
+        const shouldHideStatusAditivo = formMode === 'create' && !shouldLockByAditivo;
 
-        credenciadoInput.readOnly = isReadOnlyMode || shouldLockByAditivo;
+        credenciadoInput.readOnly = true;
+        cnpjCpfInput.readOnly = formMode !== 'create' || shouldLockByAditivo;
         vencimentoGeralInput.readOnly = isReadOnlyMode || shouldLockByAditivo;
+        statusAditivoFieldGroup?.classList.toggle('dsc-hidden', shouldHideStatusAditivo);
       };
       const normalizeTipoTermoLabel = (value) => {
         const normalized = String(value || '')
@@ -1102,34 +1374,51 @@
         return '';
       };
       const buildEspecificacaoSeiValue = (credenciado, cnpjCpf) => {
-        const normalizedCredenciado = normalizeText(credenciado || '', 255);
-        const normalizedCnpjCpf = normalizeText(cnpjCpf || '', 255);
+        const normalizedCredenciado = String(credenciado || '').replace(/\s+/g, ' ').trim().slice(0, 255);
+        const normalizedCnpjCpf = String(cnpjCpf || '').replace(/\s+/g, ' ').trim().slice(0, 255);
 
         if (!normalizedCredenciado || !normalizedCnpjCpf) {
           return '';
         }
 
-        return normalizeText(`Credenciamento TEG - ${normalizedCredenciado} - ${normalizedCnpjCpf}`, 255);
+        return `Credenciamento TEG - ${normalizedCredenciado} -  CNPJ/CPF: ${normalizedCnpjCpf}`;
+      };
+      const buildTextoCopiaValue = (credenciado, cnpjCpf) => {
+        const normalizedCredenciado = String(credenciado || '').replace(/\s+/g, ' ').trim().slice(0, 255);
+        const normalizedCnpjCpf = String(cnpjCpf || '').replace(/\s+/g, ' ').trim().slice(0, 255);
+
+        if (!normalizedCredenciado || !normalizedCnpjCpf) {
+          return '';
+        }
+
+        return `Credenciamento TEG - ${normalizedCredenciado} -  CNPJ/CPF: ${normalizedCnpjCpf}`;
       };
       const syncEspecificacaoSei = () => {
         especificacaoSeiInput.value = buildEspecificacaoSeiValue(credenciadoInput.value, cnpjCpfInput.value);
       };
-      const applyCreateTermoDefaults = () => {
+      const syncTextoCopia = () => {
+        textoCopiaInput.value = buildTextoCopiaValue(credenciadoInput.value, cnpjCpfInput.value);
+      };
+      const applyCreateTermoDefaults = (baseDate = defaultCreateInicioVigenciaDate) => {
         if (formMode !== 'create') {
           return;
         }
 
-        const today = new Date();
-        const inicioVigencia = formatDateInputValue(today);
-        const terminoVigencia = formatDateInputValue(addDaysToDate(today, 365));
-        const vencimentoGeral = formatDateInputValue(addYearsToDate(today, 5));
+        const normalizedBaseDate = baseDate instanceof Date ? new Date(baseDate) : new Date();
+        const safeBaseDate = Number.isNaN(normalizedBaseDate.getTime()) ? new Date() : normalizedBaseDate;
+        const inicioVigencia = formatDateInputValue(safeBaseDate);
+        const terminoVigencia = formatDateInputValue(addDaysToDate(safeBaseDate, 365));
+        const vencimentoGeral = formatDateInputValue(addYearsToDate(safeBaseDate, 5));
 
         situacaoPublicacaoInput.value = 'Publicar';
         situacaoEmissaoInput.value = 'Emitir';
         statusTermoInput.value = 'Ativo';
         statusAditivoInput.value = 'Publicar';
+        setSuggestedAditivo('0');
         inicioVigenciaInput.value = inicioVigencia;
         terminoVigenciaInput.value = terminoVigencia;
+        compDataAditivoInput.value = formatDateInputValue(new Date());
+        dataPublicacaoInput.value = '';
         vencimentoGeralInput.value = vencimentoGeral;
         syncDerivedTermoFields();
         syncAditivoDependentFieldState();
@@ -1146,6 +1435,7 @@
         credenciadoInput.value = '';
         credenciadaCodigoInput.value = '';
         cnpjCpfInput.value = '';
+        syncTextoCopia();
         situacaoPublicacaoInput.value = '';
         situacaoEmissaoInput.value = '';
         statusTermoInput.value = '';
@@ -1153,7 +1443,6 @@
         inicioVigenciaInput.value = '';
         terminoVigenciaInput.value = '';
         compDataAditivoInput.value = '';
-        dataPubAditivoInput.value = '';
         tipoTermoInput.value = '';
         representanteInput.value = '';
         cpfRepresentanteInput.value = '';
@@ -1172,6 +1461,7 @@
         checkAditivoNoInput.checked = false;
         inheritedAditivoTermoAdesao = '';
         syncEspecificacaoSei();
+        syncTextoCopia();
         applyCreateTermoDefaults();
       };
       const applyLatestAditivoToCreateForm = (item) => {
@@ -1183,6 +1473,7 @@
         credenciadoInput.value = item.credenciado || '';
         credenciadaCodigoInput.value = item.credenciada_codigo || '';
         cnpjCpfInput.value = item.cnpj_cpf || '';
+        syncTextoCopia();
         situacaoPublicacaoInput.value = item.situacao_publicacao || '';
         situacaoEmissaoInput.value = item.situacao_emissao || '';
         statusTermoInput.value = item.status_termo || '';
@@ -1192,7 +1483,6 @@
         inicioVigenciaInput.value = item.inicio_vigencia || '';
         terminoVigenciaInput.value = item.termino_vigencia || '';
         compDataAditivoInput.value = item.comp_data_aditivo || '';
-        dataPubAditivoInput.value = item.data_pub_aditivo || '';
         tipoTermoInput.value = normalizeTipoTermoLabel(item.tipo_pessoa || item.tipo_termo || '');
         representanteInput.value = item.representante || '';
         cpfRepresentanteInput.value = item.cpf_representante || '';
@@ -1209,7 +1499,8 @@
         tpOptanteInput.value = item.tp_optante || '';
         syncDerivedTermoFields();
         inheritedAditivoTermoAdesao = normalizeTermoAdesao(item.termo_adesao || termoAdesaoInput.value);
-        applyCreateTermoDefaults();
+        applyCreateTermoDefaults(resolveNextInicioVigenciaDate(item));
+        syncTextoCopia();
         syncAditivoDependentFieldState();
       };
       const syncNextAditivoByTermoAdesao = async () => {
@@ -1222,6 +1513,8 @@
         const requestId = ++nextAditivoRequestId;
 
         if (!termoAdesao) {
+          isExistingTermCreateBlocked = false;
+          syncSaveButtonState();
           if (inheritedAditivoTermoAdesao) {
             clearInheritedAditivoFields();
           }
@@ -1239,6 +1532,8 @@
           }
 
           if (response.status === 404) {
+            isExistingTermCreateBlocked = false;
+            syncSaveButtonState();
             if (inheritedAditivoTermoAdesao && inheritedAditivoTermoAdesao !== termoAdesao) {
               clearInheritedAditivoFields();
             }
@@ -1250,12 +1545,16 @@
             throw new Error('Falha ao consultar o proximo aditivo.');
           }
 
-          const payload = await response.json();
-          applyLatestAditivoToCreateForm(payload.item || null);
-          const currentAditivo = Number(normalizeIntegerInput(String(payload.item?.aditivo ?? '0'), 2) || '0');
-          setSuggestedAditivo(String(currentAditivo + 1));
+          isExistingTermCreateBlocked = true;
+          errors.termoAdesao.textContent = 'O cadastro principal aceita somente termo novo com aditivo 0.';
+          feedback.textContent = 'Este termo ja existe. Para incluir aditivo, use o botao Aditivos no grid.';
+          setSuggestedAditivo('0');
+          syncAditivoDependentFieldState();
+          syncSaveButtonState();
         } catch (_) {
           if (requestId === nextAditivoRequestId && formMode === 'create') {
+            isExistingTermCreateBlocked = false;
+            syncSaveButtonState();
             setSuggestedAditivo('');
           }
         }
@@ -1275,6 +1574,16 @@
         if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
         return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
       };
+      const getDocumentDigits = (value) => String(value || '').replace(/\D/g, '');
+      const normalizeCnpjCpf = (value) => {
+        const digits = getDocumentDigits(value);
+
+        if (digits.length <= 11) {
+          return normalizeCpf(digits);
+        }
+
+        return normalizeCnpj(digits);
+      };
       const formatCurrencyInput = (value) => {
         const digits = value.replace(/\D/g, '').slice(0, 15);
 
@@ -1290,6 +1599,68 @@
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }).format(amount);
+      };
+      const getValorContratoAmount = () => {
+        const digits = String(valorContratoInput.value || '').replace(/\D/g, '');
+
+        if (!digits) {
+          return 0;
+        }
+
+        return Number(digits) / 100;
+      };
+      const syncEmitContratoButtonState = () => {
+        const isBusy = emitContratoButton.textContent === 'Gerando contrato...';
+
+        if (isBusy) {
+          return;
+        }
+
+        emitContratoButton.disabled = getValorContratoAmount() <= 0;
+      };
+      const syncLastAditivoEditorButtonState = async () => {
+        const isBusy = editLastAditivoButton.textContent === 'Carregando ultimo aditivo...'
+          || saveLastAditivoButton.textContent === 'Salvando ultimo aditivo...';
+
+        if (isBusy) {
+          return;
+        }
+
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+
+        if (!termoAdesao || formMode === 'create') {
+          editLastAditivoButton.disabled = true;
+          return;
+        }
+
+        try {
+          const latestItem = await fetchLatestCredenciamentoTermoItemByTermoAdesao(termoAdesao);
+          const latestAditivo = Number(normalizeIntegerInput(String(latestItem?.aditivo ?? ''), 2) || '0');
+          editLastAditivoButton.disabled = !latestItem || latestAditivo <= 0;
+        } catch {
+          editLastAditivoButton.disabled = true;
+        }
+      };
+      const syncDespachoButtonState = async () => {
+        const isBusy = showDespachoButton.textContent === 'Gerando despacho...';
+
+        if (isBusy) {
+          return;
+        }
+
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+
+        if (!termoAdesao || formMode === 'create') {
+          showDespachoButton.disabled = true;
+          return;
+        }
+
+        try {
+          const latestItem = await fetchLatestCredenciamentoTermoItemByTermoAdesao(termoAdesao);
+          showDespachoButton.disabled = !normalizeReportDateKey(latestItem?.data_publicacao || '');
+        } catch {
+          showDespachoButton.disabled = true;
+        }
       };
       const normalizeDecimalInput = (value) => value.replace(/[^0-9,.-]/g, '').replace(/(,.*),/g, '$1').slice(0, 20);
       const escapeHtml = (value) => String(value ?? '')
@@ -1546,7 +1917,6 @@
         inicioVigencia: normalizeReportDateKey(inicioVigenciaInput.value),
         terminoVigencia: normalizeReportDateKey(terminoVigenciaInput.value),
         compDataAditivo: normalizeReportDateKey(compDataAditivoInput.value),
-        dataPubAditivo: normalizeReportDateKey(dataPubAditivoInput.value),
         dataPublicacao: normalizeReportDateKey(dataPublicacaoInput.value),
         vencimentoGeral: normalizeReportDateKey(vencimentoGeralInput.value),
         mesRenovacao: String(mesRenovacaoInput.value || '').trim(),
@@ -2111,7 +2481,7 @@
         const bairro = formatSummaryValue(bairroInput.value);
         const municipio = formatSummaryValue(municipioInput.value);
         const inicioVigencia = normalizeReportDateKey(inicioVigenciaInput.value);
-        const dataPublicacao = normalizeReportDateKey(dataPubAditivoInput.value || dataPublicacaoInput.value || requestedDate);
+        const dataPublicacao = normalizeReportDateKey(dataPublicacaoInput.value || requestedDate);
         const dataComparencia = normalizeReportDateKey(compDataAditivoInput.value || dataPublicacao || requestedDate);
         const valorContratoAtualizado = String(valorContratoAtualizadoInput.value || '').trim();
         const valorPrevistoBase = valorContratoAtualizado && !/[A-Za-zÀ-ÿ]/.test(valorContratoAtualizado)
@@ -2730,22 +3100,11 @@
         printFrame.srcdoc = buildTermoContratoDocumentHtml(lastTermoContratoPrintMarkup || lastTermoContratoMarkup);
       };
       const handleShowAditivo = async () => {
-        const requestedDate = normalizeReportDateKey(inicioVigenciaInput.value || dataPubAditivoInput.value || dataPublicacaoInput.value);
-
         aditivoModal.classList.remove('dsc-hidden');
         aditivoModal.setAttribute('aria-hidden', 'false');
         aditivoPanel.classList.remove('dsc-hidden');
         syncPopupPageState();
         resetAditivoScrollPosition();
-
-        if (!requestedDate) {
-          aditivoContent.innerHTML = '';
-          aditivoSubtitle.textContent = 'Informe a data de inicio de vigencia para gerar o termo aditivo.';
-          aditivoFeedback.textContent = 'Data de inicio de vigencia obrigatoria.';
-          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
-          resetAditivoState();
-          return;
-        }
 
         showAditivoButton.disabled = true;
         showAditivoButton.textContent = 'Gerando termo aditivo...';
@@ -2755,26 +3114,34 @@
         aditivoContent.innerHTML = '';
 
         try {
-          const parametroItem = await resolveEmissaoParametroByReferenceDate(requestedDate);
+          await withLatestTermoItemOnForm(async (latestItem) => {
+            const requestedDate = normalizeReportDateKey(inicioVigenciaInput.value || dataPublicacaoInput.value);
 
-          if (!parametroItem) {
-            throw new Error('Parametro de emissao nao encontrado.');
-          }
-
-          aditivoTitle.textContent = 'Termo Aditivo';
-          lastTermoAditivoMarkup = buildTermoAditivoMarkup({ parametroItem, includePrefeituraImage: false, requestedDate });
-          lastTermoAditivoPrintMarkup = buildTermoAditivoMarkup({ parametroItem, includePrefeituraImage: true, requestedDate });
-          aditivoSubtitle.textContent = `Termo aditivo pronto para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}.`;
-          aditivoContent.innerHTML = lastTermoAditivoMarkup;
-          resetAditivoScrollPosition();
-          window.requestAnimationFrame(() => {
-            const openingParagraph = aditivoContent.querySelector('.dsc-emissao-documento-opening-paragraph');
-
-            if (openingParagraph instanceof HTMLElement) {
-              openingParagraph.scrollIntoView({ block: 'start' });
+            if (!requestedDate) {
+              throw new Error('Data de inicio de vigencia obrigatoria.');
             }
 
+            const parametroItem = await resolveEmissaoParametroByReferenceDate(requestedDate);
+
+            if (!parametroItem) {
+              throw new Error('Parametro de emissao nao encontrado.');
+            }
+
+            aditivoTitle.textContent = 'Termo Aditivo';
+            lastTermoAditivoMarkup = buildTermoAditivoMarkup({ parametroItem, includePrefeituraImage: false, requestedDate });
+            lastTermoAditivoPrintMarkup = buildTermoAditivoMarkup({ parametroItem, includePrefeituraImage: true, requestedDate });
+            aditivoSubtitle.textContent = `Termo aditivo pronto para ${formatSummaryValue(latestItem?.termo_adesao, 'Termo em preenchimento')}.`;
+            aditivoContent.innerHTML = lastTermoAditivoMarkup;
             resetAditivoScrollPosition();
+            window.requestAnimationFrame(() => {
+              const openingParagraph = aditivoContent.querySelector('.dsc-emissao-documento-opening-paragraph');
+
+              if (openingParagraph instanceof HTMLElement) {
+                openingParagraph.scrollIntoView({ block: 'start' });
+              }
+
+              resetAditivoScrollPosition();
+            });
           });
           aditivoFeedback.textContent = '';
           aditivoFeedback.className = 'dsc-feedback';
@@ -2790,21 +3157,10 @@
         }
       };
       const handleShowDespacho = async () => {
-        const requestedDate = normalizeReportDateKey(inicioVigenciaInput.value || dataPubAditivoInput.value || dataPublicacaoInput.value);
-
         despachoModal.classList.remove('dsc-hidden');
         despachoModal.setAttribute('aria-hidden', 'false');
         despachoPanel.classList.remove('dsc-hidden');
         syncPopupPageState();
-
-        if (!requestedDate) {
-          despachoContent.innerHTML = '';
-          despachoSubtitle.textContent = 'Informe a data de inicio de vigencia para gerar o despacho.';
-          despachoFeedback.textContent = 'Data de inicio de vigencia obrigatoria.';
-          despachoFeedback.className = 'dsc-feedback dsc-feedback-error';
-          resetDespachoState();
-          return;
-        }
 
         showDespachoButton.disabled = true;
         showDespachoButton.textContent = 'Gerando despacho...';
@@ -2814,16 +3170,30 @@
         despachoContent.innerHTML = '';
 
         try {
-          const parametroItem = await resolveEmissaoParametroByReferenceDate(requestedDate);
+          await withLatestTermoItemOnForm(async (latestItem) => {
+            const latestAditivoPublicationDate = normalizeReportDateKey(dataPublicacaoInput.value);
 
-          if (!parametroItem) {
-            throw new Error('Parametro de emissao nao encontrado.');
-          }
+            if (!latestAditivoPublicationDate) {
+              throw new Error('Data de publicacao do ultimo aditivo obrigatoria.');
+            }
 
-          lastTermoDespachoMarkup = buildDespachoMarkup({ parametroItem, includePrefeituraImage: false, requestedDate });
-          lastTermoDespachoPrintMarkup = buildDespachoMarkup({ parametroItem, includePrefeituraImage: true, requestedDate });
-          despachoSubtitle.textContent = `Despacho pronto para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}.`;
-          despachoContent.innerHTML = lastTermoDespachoMarkup;
+            const requestedDate = normalizeReportDateKey(dataPublicacaoInput.value || inicioVigenciaInput.value);
+
+            if (!requestedDate) {
+              throw new Error('Data de publicacao obrigatoria.');
+            }
+
+            const parametroItem = await resolveEmissaoParametroByReferenceDate(requestedDate);
+
+            if (!parametroItem) {
+              throw new Error('Parametro de emissao nao encontrado.');
+            }
+
+            lastTermoDespachoMarkup = buildDespachoMarkup({ parametroItem, includePrefeituraImage: false, requestedDate });
+            lastTermoDespachoPrintMarkup = buildDespachoMarkup({ parametroItem, includePrefeituraImage: true, requestedDate });
+            despachoSubtitle.textContent = `Despacho pronto para ${formatSummaryValue(latestItem?.termo_adesao, 'Termo em preenchimento')}.`;
+            despachoContent.innerHTML = lastTermoDespachoMarkup;
+          });
           despachoFeedback.textContent = '';
           despachoFeedback.className = 'dsc-feedback';
         } catch (error) {
@@ -2833,15 +3203,24 @@
           despachoSubtitle.textContent = 'Nao foi possivel gerar o despacho.';
           resetDespachoState();
         } finally {
-          showDespachoButton.disabled = false;
           showDespachoButton.textContent = 'Despacho da Publicacao';
+          void syncDespachoButtonState();
         }
       };
       const handleEmitContrato = async () => {
-        const requestedDate = normalizeReportDateKey(inicioVigenciaInput.value || dataPubAditivoInput.value || dataPublicacaoInput.value);
+        const requestedDate = normalizeReportDateKey(inicioVigenciaInput.value || dataPublicacaoInput.value);
         const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+        const valorContrato = getValorContratoAmount();
 
         resetMessages();
+
+        if (valorContrato <= 0) {
+          errors.valorContrato.textContent = 'Informe um valor de contrato maior que zero para emitir o contrato.';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          revealFirstFormError({ valorContrato: errors.valorContrato.textContent });
+          return;
+        }
+
         contratoModal.classList.remove('dsc-hidden');
         contratoModal.setAttribute('aria-hidden', 'false');
         contratoPanel.classList.remove('dsc-hidden');
@@ -2906,7 +3285,7 @@
           contratoSubtitle.textContent = 'Nao foi possivel gerar o contrato.';
           resetContratoState();
         } finally {
-          emitContratoButton.disabled = false;
+          syncEmitContratoButtonState();
           emitContratoButton.textContent = 'Emissao Contrato';
         }
       };
@@ -2974,6 +3353,7 @@
         form.classList.add('dsc-hidden');
         importForm.classList.add('dsc-hidden');
         rejectionPanel.classList.add('dsc-hidden');
+        linkedAditivosPanel.classList.add('dsc-hidden');
       };
 
       const formInputs = [
@@ -2991,7 +3371,6 @@
         inicioVigenciaInput,
         terminoVigenciaInput,
         compDataAditivoInput,
-        dataPubAditivoInput,
         tipoTermoInput,
         representanteInput,
         cpfRepresentanteInput,
@@ -3013,16 +3392,21 @@
         });
         termoAdesaoInput.readOnly = true;
         aditivoInput.readOnly = true;
+        credenciadoInput.readOnly = true;
         tipoTermoInput.readOnly = true;
         cepEnderecoInput.readOnly = true;
         especificacaoSeiInput.readOnly = true;
+        valorContratoInput.readOnly = true;
         valorContratoAtualizadoInput.readOnly = true;
         mesRenovacaoInput.readOnly = true;
         tpOptanteInput.disabled = isReadOnly;
         checkAditivoYesInput.disabled = isReadOnly;
         checkAditivoNoInput.disabled = isReadOnly;
-        saveButton.classList.toggle('dsc-hidden', isReadOnly);
+        syncSaveButtonState();
         syncAditivoDependentFieldState();
+        syncEmitContratoButtonState();
+        void syncDespachoButtonState();
+        void syncLastAditivoEditorButtonState();
       };
 
       const setPopupVisibility = (modalElement, shouldShow) => {
@@ -3032,8 +3416,10 @@
 
       const syncPopupPageState = () => {
         const isPopupVisible = !formModal.classList.contains('dsc-hidden')
+          || !lastAditivoModal.classList.contains('dsc-hidden')
           || !importModal.classList.contains('dsc-hidden')
           || !rejectionModal.classList.contains('dsc-hidden')
+          || !linkedAditivosModal.classList.contains('dsc-hidden')
           || !despachoModal.classList.contains('dsc-hidden')
           || !aditivoModal.classList.contains('dsc-hidden')
           || !contratoModal.classList.contains('dsc-hidden');
@@ -3049,24 +3435,29 @@
         form.classList.remove('dsc-hidden');
         setPopupVisibility(importModal, false);
         setPopupVisibility(rejectionModal, false);
+        setPopupVisibility(linkedAditivosModal, false);
         setPopupVisibility(formModal, true);
         syncPopupPageState();
         formTitle.textContent = 'CADASTRO DE TERMO';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar credenciamento termo';
+        syncCreateOnlyFieldVisibility();
         setFormReadOnly(isReadOnly);
       };
 
       const clearForm = () => {
         editingCodigo = null;
         formMode = 'create';
+        isExistingTermCreateBlocked = false;
         formTitle.textContent = 'CADASTRO DE TERMO';
         form.reset();
         credenciadaCodigoInput.value = '';
         cnpjCpfInput.value = '';
         syncEspecificacaoSei();
+        syncTextoCopia();
         checkAditivoYesInput.checked = true;
         checkAditivoNoInput.checked = false;
         importFileNameInput.value = defaultImportFileName;
+        syncCreateOnlyFieldVisibility();
         setFormReadOnly(false);
         resetMessages();
         resetDespachoState();
@@ -3074,9 +3465,13 @@
         resetContratoState();
         inheritedAditivoTermoAdesao = '';
         applyCreateTermoDefaults();
+        syncSaveButtonState();
+        void syncDespachoButtonState();
+        void syncLastAditivoEditorButtonState();
       };
 
       const fillForm = (item) => {
+        isExistingTermCreateBlocked = false;
         editingCodigo = item.codigo;
         formTitle.textContent = 'CADASTRO DE TERMO';
         codigoXmlInput.value = item.codigo_xml || '';
@@ -3086,6 +3481,7 @@
         credenciadoInput.value = item.credenciado || '';
         credenciadaCodigoInput.value = item.credenciada_codigo || '';
         cnpjCpfInput.value = item.cnpj_cpf || '';
+        syncTextoCopia();
         situacaoPublicacaoInput.value = item.situacao_publicacao || '';
         situacaoEmissaoInput.value = item.situacao_emissao || '';
         statusTermoInput.value = item.status_termo || '';
@@ -3095,7 +3491,6 @@
         inicioVigenciaInput.value = item.inicio_vigencia || '';
         terminoVigenciaInput.value = item.termino_vigencia || '';
         compDataAditivoInput.value = item.comp_data_aditivo || '';
-        dataPubAditivoInput.value = item.data_pub_aditivo || '';
         tipoTermoInput.value = normalizeTipoTermoLabel(item.tipo_pessoa || item.tipo_termo || '');
         representanteInput.value = item.representante || '';
         cpfRepresentanteInput.value = item.cpf_representante || '';
@@ -3104,6 +3499,7 @@
         bairroInput.value = item.bairro || '';
         municipioInput.value = item.municipio || '';
         syncEspecificacaoSei();
+        syncTextoCopia();
         valorContratoInput.value = formatCurrencyInput(item.valor_contrato || '');
         valorContratoAtualizadoInput.value = formatCurrencyExtenso(item.valor_contrato_atualizado || item.valor_contrato || '');
         dataPublicacaoInput.value = item.data_publicacao || '';
@@ -3112,6 +3508,93 @@
         tpOptanteInput.value = item.tp_optante || '';
         syncDerivedTermoFields();
         syncAditivoDependentFieldState();
+        void syncDespachoButtonState();
+        void syncLastAditivoEditorButtonState();
+      };
+
+      const resetLastAditivoEditorForm = () => {
+        currentLastAditivoItem = null;
+        currentLastAditivoOriginalDataPublicacao = '';
+        lastAditivoForm.reset();
+        lastAditivoTermoInput.value = '';
+        lastAditivoNumeroInput.value = '';
+        lastAditivoSituacaoPublicacaoInput.value = '';
+        lastAditivoCheckYesInput.checked = true;
+        lastAditivoCheckNoInput.checked = false;
+        lastAditivoCheckError.textContent = '';
+        lastAditivoDataPublicacaoError.textContent = '';
+        lastAditivoFeedback.textContent = '';
+        lastAditivoFeedback.className = 'dsc-feedback';
+        saveLastAditivoButton.disabled = false;
+        saveLastAditivoButton.textContent = 'Salvar ultimo aditivo';
+      };
+
+      const syncLastAditivoSituacaoPublicacao = () => {
+        const currentDate = normalizeReportDateKey(lastAditivoDataPublicacaoInput.value);
+        const originalDate = normalizeReportDateKey(currentLastAditivoOriginalDataPublicacao);
+
+        if (currentDate && currentDate !== originalDate) {
+          lastAditivoSituacaoPublicacaoInput.value = 'PUBLICADO';
+          return;
+        }
+
+        lastAditivoSituacaoPublicacaoInput.value = currentLastAditivoItem?.situacao_publicacao || '';
+      };
+
+      const populateLastAditivoEditorForm = (item) => {
+        currentLastAditivoItem = item || null;
+        currentLastAditivoOriginalDataPublicacao = item?.data_publicacao || '';
+        lastAditivoTermoInput.value = item?.termo_adesao || '';
+        lastAditivoNumeroInput.value = item?.aditivo || '';
+        lastAditivoCheckYesInput.checked = item?.check_aditivo === '1';
+        lastAditivoCheckNoInput.checked = item?.check_aditivo !== '1';
+        lastAditivoDataPublicacaoInput.value = item?.data_publicacao || '';
+        syncLastAditivoSituacaoPublicacao();
+        lastAditivoCheckError.textContent = '';
+        lastAditivoDataPublicacaoError.textContent = '';
+        lastAditivoFeedback.textContent = '';
+        lastAditivoFeedback.className = 'dsc-feedback';
+      };
+
+      const hideLastAditivoEditor = () => {
+        resetLastAditivoEditorForm();
+        lastAditivoModal.classList.add('dsc-hidden');
+        lastAditivoModal.setAttribute('aria-hidden', 'true');
+        lastAditivoPanel.classList.add('dsc-hidden');
+        syncPopupPageState();
+      };
+
+      const handleOpenLastAditivoEditor = async () => {
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+
+        if (!termoAdesao || formMode === 'create') {
+          editLastAditivoButton.disabled = true;
+          return;
+        }
+
+        editLastAditivoButton.disabled = true;
+        editLastAditivoButton.textContent = 'Carregando ultimo aditivo...';
+
+        try {
+          const latestItem = await fetchLatestCredenciamentoTermoItemByTermoAdesao(termoAdesao);
+          const latestAditivo = Number(normalizeIntegerInput(String(latestItem?.aditivo ?? ''), 2) || '0');
+
+          if (!latestItem || latestAditivo <= 0) {
+            throw new Error('Este termo nao possui aditivo para alterar.');
+          }
+
+          resetLastAditivoEditorForm();
+          populateLastAditivoEditorForm(latestItem);
+          lastAditivoModal.classList.remove('dsc-hidden');
+          lastAditivoModal.setAttribute('aria-hidden', 'false');
+          lastAditivoPanel.classList.remove('dsc-hidden');
+          syncPopupPageState();
+        } catch (error) {
+          showBanner(error instanceof Error ? error.message : 'Falha ao localizar o ultimo aditivo.', 'error');
+        } finally {
+          editLastAditivoButton.textContent = 'Alterar ultimo aditivo';
+          void syncLastAditivoEditorButtonState();
+        }
       };
 
       const hideForm = () => {
@@ -3133,20 +3616,24 @@
         syncPopupPageState();
       };
 
+      const hideLinkedAditivos = () => {
+        linkedAditivosPanel.classList.add('dsc-hidden');
+        currentLinkedAditivosSourceItem = null;
+        setPopupVisibility(linkedAditivosModal, false);
+        syncPopupPageState();
+      };
+
       const buildUrl = () => {
         const params = new URLSearchParams({
           page: String(currentPage),
           pageSize: String(pageSize),
           sortBy: currentSortBy,
           sortDirection: currentSortDirection,
+          aditivo: '0',
         });
 
         if (currentSearch) {
           params.set('search', currentSearch);
-        }
-
-        if (currentStatusTermoFilter) {
-          params.set('statusTermo', currentStatusTermoFilter);
         }
 
         return `/api/termo?${params.toString()}`;
@@ -3165,6 +3652,28 @@
         return `/api/termo/import-rejections?${params.toString()}`;
       };
 
+      const buildLinkedAditivosUrl = (termoAdesao) => {
+        const params = new URLSearchParams({
+          page: '1',
+          pageSize: '50',
+          sortBy: 'aditivo',
+          sortDirection: 'asc',
+          termoAdesao,
+          somenteAditivos: 'true',
+        });
+
+        return `/api/termo?${params.toString()}`;
+      };
+
+      const syncSortIndicators = () => {
+        sortIndicator.textContent = currentSortBy === 'termo_adesao'
+          ? (currentSortDirection === 'desc' ? '↓' : '↑')
+          : '↕';
+        sortStatusIndicator.textContent = currentSortBy === 'status_termo'
+          ? (currentSortDirection === 'desc' ? '↓' : '↑')
+          : '↕';
+      };
+
       const renderGrid = (items) => {
         gridBody.innerHTML = '';
 
@@ -3181,13 +3690,12 @@
             <td>${item.termo_adesao || ''}</td>
             <td>${item.credenciado || ''}</td>
             <td>${item.aditivo || ''}</td>
-            <td>${item.inicio_vigencia || ''}</td>
-            <td>${item.termino_vigencia || ''}</td>
-            <td>${item.status_aditivo || ''}</td>
+            <td>${item.status_termo || ''}</td>
             <td>
               <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button" data-action="linked-aditivos" data-codigo="${item.codigo}">Aditivos</button>
                 <button type="button" class="dsc-grid-action-button" data-action="view" data-codigo="${item.codigo}">Consulta</button>
-                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Alterar</button>
+                <button type="button" class="dsc-grid-action-button dsc-grid-action-edit" data-action="edit" data-codigo="${item.codigo}">Corrigir</button>
                 <button type="button" class="dsc-grid-action-button dsc-grid-action-delete" data-action="delete" data-codigo="${item.codigo}">Excluir</button>
               </div>
             </td>
@@ -3195,6 +3703,196 @@
           row.dataset.item = JSON.stringify(item);
           gridBody.appendChild(row);
         });
+      };
+
+      const renderLinkedAditivosGrid = (items) => {
+        currentLinkedAditivosItems = Array.isArray(items) ? items : [];
+        linkedAditivosGridBody.innerHTML = '';
+
+        if (!currentLinkedAditivosItems.length) {
+          linkedAditivosEmptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        linkedAditivosEmptyState.classList.add('dsc-hidden');
+        linkedAditivosGridBody.innerHTML = currentLinkedAditivosItems.map((item) => `
+          <tr>
+            <td>${item.aditivo || ''}</td>
+            <td>${item.inicio_vigencia || ''}</td>
+            <td>${item.termino_vigencia || ''}</td>
+            <td>${item.status_termo || ''}</td>
+          </tr>
+        `).join('');
+      };
+
+      const loadLinkedAditivos = async (termoAdesao) => {
+        const normalizedTermoAdesao = normalizeTermoAdesao(String(termoAdesao || ''));
+        currentLinkedAditivosTermoAdesao = normalizedTermoAdesao;
+        currentLinkedAditivosItems = [];
+        linkedAditivosSubtitle.textContent = normalizedTermoAdesao ? `Termo ${normalizedTermoAdesao}` : '';
+        linkedAditivosFeedback.textContent = 'Carregando aditivos vinculados...';
+        linkedAditivosGridBody.innerHTML = '';
+        linkedAditivosEmptyState.classList.add('dsc-hidden');
+
+        try {
+          const response = await fetch(buildLinkedAditivosUrl(normalizedTermoAdesao), { headers: { Accept: 'application/json' } });
+          if (!response.ok) {
+            throw new Error(await getRequestErrorMessage(response, 'Falha ao consultar aditivos vinculados.'));
+          }
+
+          const payload = await response.json();
+          const items = payload.items || [];
+          renderLinkedAditivosGrid(items);
+          linkedAditivosSubtitle.textContent = normalizedTermoAdesao
+            ? `Termo ${normalizedTermoAdesao} - ${items.length} aditivo(s)`
+            : `${items.length} aditivo(s)`;
+          linkedAditivosFeedback.textContent = '';
+        } catch (error) {
+          linkedAditivosGridBody.innerHTML = '';
+          linkedAditivosEmptyState.classList.remove('dsc-hidden');
+          linkedAditivosFeedback.textContent = error instanceof Error ? error.message : 'Falha ao consultar aditivos vinculados.';
+        }
+      };
+
+      const handleDeleteLastLinkedAditivo = async () => {
+        const termoAdesao = normalizeTermoAdesao(currentLinkedAditivosTermoAdesao);
+        const lastItem = Array.isArray(currentLinkedAditivosItems) ? currentLinkedAditivosItems.at(-1) : null;
+
+        if (!termoAdesao || !lastItem?.codigo) {
+          linkedAditivosFeedback.textContent = 'Nenhum ultimo aditivo disponivel para exclusao.';
+          return;
+        }
+
+        const confirmed = window.confirm(`Confirma a exclusao do ultimo aditivo ${lastItem.aditivo} do termo ${termoAdesao}?`);
+        if (!confirmed) {
+          linkedAditivosFeedback.textContent = '';
+          return;
+        }
+
+        linkedAditivosFeedback.textContent = 'Excluindo ultimo aditivo...';
+
+        try {
+          const response = await fetch(`/api/termo/${encodeURIComponent(lastItem.codigo)}`, { method: 'DELETE' });
+          if (!response.ok) {
+            throw new Error(await getRequestErrorMessage(response, 'Falha ao excluir o ultimo aditivo.'));
+          }
+
+          linkedAditivosFeedback.textContent = '';
+          showBanner('Ultimo aditivo excluido com sucesso.');
+          await loadItems();
+          await loadLinkedAditivos(termoAdesao);
+        } catch (error) {
+          linkedAditivosFeedback.textContent = error instanceof Error ? error.message : 'Falha ao excluir o ultimo aditivo.';
+        }
+      };
+
+      const showLinkedAditivos = async (item) => {
+        const termoAdesao = normalizeTermoAdesao(String(item?.termo_adesao || ''));
+        if (!termoAdesao) {
+          showBanner('Numero do termo nao informado para consultar aditivos.', 'error');
+          return;
+        }
+
+        currentLinkedAditivosSourceItem = item || null;
+        hidePanels();
+        linkedAditivosPanel.classList.remove('dsc-hidden');
+        setPopupVisibility(formModal, false);
+        setPopupVisibility(importModal, false);
+        setPopupVisibility(rejectionModal, false);
+        setPopupVisibility(linkedAditivosModal, true);
+        syncPopupPageState();
+        await loadLinkedAditivos(termoAdesao);
+      };
+
+      const handleInsertLinkedAditivo = async () => {
+        const termoAdesao = normalizeTermoAdesao(currentLinkedAditivosTermoAdesao);
+
+        if (!termoAdesao) {
+          linkedAditivosFeedback.textContent = 'Numero do termo nao informado para gerar novo aditivo.';
+          return;
+        }
+
+        linkedAditivosFeedback.textContent = 'Preparando novo aditivo...';
+
+        try {
+          const response = await fetch(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, {
+            headers: { Accept: 'application/json' },
+          });
+
+          if (response.status === 404) {
+            throw new Error('Nenhum registro encontrado para este termo.');
+          }
+
+          if (!response.ok) {
+            throw new Error(await getRequestErrorMessage(response, 'Falha ao preparar o novo aditivo.'));
+          }
+
+          const lookupPayload = await response.json();
+          const latestItem = lookupPayload.item || null;
+
+          if (!latestItem) {
+            throw new Error('Nenhum registro encontrado para este termo.');
+          }
+
+          const currentAditivo = Number(normalizeIntegerInput(String(latestItem.aditivo ?? '0'), 2) || '0');
+          const nextInicioVigenciaDate = resolveNextInicioVigenciaDate(latestItem);
+          const inheritedStatusTermo = currentLinkedAditivosSourceItem?.status_termo || latestItem.status_termo || '';
+          const draftItem = {
+            ...latestItem,
+            codigo: '',
+            aditivo: String(currentAditivo + 1),
+            status_termo: inheritedStatusTermo,
+            inicio_vigencia: formatDateInputValue(nextInicioVigenciaDate),
+            termino_vigencia: formatDateInputValue(addDaysToDate(nextInicioVigenciaDate, 365)),
+          };
+
+          const confirmationMessage = `Confirma a inclusao do aditivo ${draftItem.aditivo} para o termo ${termoAdesao}, com inicio de vigencia em ${draftItem.inicio_vigencia} e termino de vigencia em ${draftItem.termino_vigencia}?`;
+          if (!window.confirm(confirmationMessage)) {
+            linkedAditivosFeedback.textContent = '';
+            return;
+          }
+
+          clearForm();
+          fillForm(draftItem);
+          editingCodigo = null;
+
+          const createPayload = collectPayload();
+          if (!createPayload.credenciadaCodigo) {
+            throw new Error('Codigo da credenciada nao encontrado para o novo aditivo.');
+          }
+
+          if (!createPayload.tpOptante) {
+            throw new Error('Tipo optante nao encontrado para o novo aditivo.');
+          }
+
+          linkedAditivosFeedback.textContent = 'Gravando novo aditivo...';
+
+          const saveResponse = await fetch('/api/termo', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({
+              ...createPayload,
+              allowExistingTermAditivo: true,
+            }),
+          });
+
+          if (!saveResponse.ok) {
+            const responsePayload = await saveResponse.json().catch(() => ({}));
+            throw new Error(responsePayload.message || 'Falha ao gravar o novo aditivo.');
+          }
+
+          clearForm();
+          linkedAditivosFeedback.textContent = '';
+          showBanner('Novo aditivo cadastrado com sucesso.');
+          await loadItems();
+          await loadLinkedAditivos(termoAdesao);
+        } catch (error) {
+          clearForm();
+          linkedAditivosFeedback.textContent = error instanceof Error ? error.message : 'Falha ao preparar o novo aditivo.';
+        }
       };
 
       const renderRejectionGrid = (items) => {
@@ -3234,7 +3932,7 @@
           paginationInfo.textContent = `Pagina ${payload.page || 1} de ${totalPages}`;
           currentSortBy = payload.sortBy || 'codigo';
           currentSortDirection = payload.sortDirection || 'asc';
-          sortIndicator.textContent = currentSortDirection === 'desc' ? '↓' : '↑';
+          syncSortIndicators();
           previousPageButton.disabled = currentPage <= 1;
           nextPageButton.disabled = currentPage >= totalPages;
           gridFeedback.textContent = '';
@@ -3291,6 +3989,49 @@
         }
       };
 
+      const populateCredenciadaDocumentOptions = async (searchValue = '') => {
+        const requestId = ++credenciadaSuggestionRequestId;
+        const normalizedSearch = normalizeCnpjCpf(String(searchValue || ''));
+
+        if (!getDocumentDigits(normalizedSearch).length) {
+          cnpjCpfOptions.innerHTML = '<option value=""></option>';
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/credenciada?page=1&pageSize=8&sortBy=credenciado&sortDirection=asc&search=${encodeURIComponent(normalizedSearch)}`, {
+            headers: { Accept: 'application/json' },
+          });
+
+          if (!response.ok) {
+            throw new Error(await getRequestErrorMessage(response, 'Falha ao carregar credenciadas.'));
+          }
+
+          const payload = await response.json();
+
+          if (requestId !== credenciadaSuggestionRequestId) {
+            return;
+          }
+
+          const options = (payload.items || [])
+            .filter((item) => normalizeText(item.status || '', 50) === 'ATIVO')
+            .map((item) => {
+              const cnpjCpf = String(item.cnpj_cpf || '').trim();
+              const credenciado = String(item.credenciado || '').trim();
+              return `<option value="${cnpjCpf}" label="${credenciado}"></option>`;
+            })
+            .join('');
+
+          cnpjCpfOptions.innerHTML = '<option value=""></option>' + options;
+        } catch {
+          if (requestId !== credenciadaSuggestionRequestId) {
+            return;
+          }
+
+          cnpjCpfOptions.innerHTML = '<option value=""></option>';
+        }
+      };
+
       const syncCredenciadaByName = async () => {
         const credenciado = normalizeText(credenciadoInput.value, 255);
         credenciadoInput.value = credenciado;
@@ -3305,6 +4046,7 @@
           bairroInput.value = '';
           municipioInput.value = '';
           syncEspecificacaoSei();
+          syncTextoCopia();
           return;
         }
 
@@ -3326,6 +4068,7 @@
           cnpjCpfInput.value = payload.item.cnpj_cpf || '';
           tipoTermoInput.value = normalizeTipoTermoLabel(payload.item.tipo_pessoa || payload.item.tipo_termo || '');
           syncEspecificacaoSei();
+          syncTextoCopia();
           representanteInput.value = payload.item.representante || '';
           cpfRepresentanteInput.value = payload.item.cpf_representante || '';
           cepEnderecoInput.value = normalizeCep(payload.item.cep || '');
@@ -3350,6 +4093,79 @@
           bairroInput.value = '';
           municipioInput.value = '';
           errors.credenciado.textContent = error instanceof Error ? error.message : 'Falha ao localizar credenciada.';
+          syncTextoCopia();
+        }
+      };
+
+      const syncCredenciadaByDocument = async () => {
+        const cnpjCpf = normalizeCnpjCpf(cnpjCpfInput.value);
+        cnpjCpfInput.value = cnpjCpf;
+
+        if (!getDocumentDigits(cnpjCpf)) {
+          credenciadaCodigoInput.value = '';
+          credenciadoInput.value = '';
+          tipoTermoInput.value = '';
+          representanteInput.value = '';
+          cpfRepresentanteInput.value = '';
+          cepEnderecoInput.value = '';
+          logradouroInput.value = '';
+          bairroInput.value = '';
+          municipioInput.value = '';
+          syncEspecificacaoSei();
+          syncTextoCopia();
+          errors.cnpjCpf.textContent = '';
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/credenciada/lookup?cnpjCpf=${encodeURIComponent(cnpjCpf)}`);
+          if (!response.ok) {
+            throw new Error(await getRequestErrorMessage(response, 'Falha ao localizar credenciada.'));
+          }
+
+          const payload = await response.json();
+          const credenciadaStatus = normalizeText(payload.item?.status || '', 50);
+
+          if (!payload.item || credenciadaStatus !== 'ATIVO') {
+            throw new Error('Somente credenciadas ativas podem ser selecionadas.');
+          }
+
+          credenciadoInput.value = payload.item.credenciado || '';
+          credenciadaCodigoInput.value = payload.item.codigo || '';
+          cnpjCpfInput.value = payload.item.cnpj_cpf || cnpjCpf;
+          tipoTermoInput.value = normalizeTipoTermoLabel(payload.item.tipo_pessoa || payload.item.tipo_termo || '');
+          syncEspecificacaoSei();
+          syncTextoCopia();
+          representanteInput.value = payload.item.representante || '';
+          cpfRepresentanteInput.value = payload.item.cpf_representante || '';
+          cepEnderecoInput.value = normalizeCep(payload.item.cep || '');
+          logradouroInput.value = payload.item.logradouro || '';
+          bairroInput.value = payload.item.bairro || '';
+          municipioInput.value = payload.item.municipio || '';
+
+          if (cepEnderecoInput.value && (!logradouroInput.value || !bairroInput.value || !municipioInput.value)) {
+            await lookupCepAndFillAddress(cepEnderecoInput.value);
+          }
+
+          errors.cnpjCpf.textContent = '';
+          errors.credenciado.textContent = '';
+
+          if (formMode === 'create') {
+            seiInput.focus();
+          }
+        } catch (error) {
+          credenciadaCodigoInput.value = '';
+          credenciadoInput.value = '';
+          tipoTermoInput.value = '';
+          representanteInput.value = '';
+          cpfRepresentanteInput.value = '';
+          cepEnderecoInput.value = '';
+          logradouroInput.value = '';
+          bairroInput.value = '';
+          municipioInput.value = '';
+          syncEspecificacaoSei();
+          syncTextoCopia();
+          errors.cnpjCpf.textContent = error instanceof Error ? error.message : 'Falha ao localizar credenciada.';
         }
       };
 
@@ -3369,7 +4185,7 @@
 
       const lookupCepAndFillAddress = async (cep) => {
         errors.cep.textContent = '';
-        const response = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}`);
+        const response = await fetch(`/api/cep/lookup?cep=${encodeURIComponent(cep)}`);
 
         if (response.ok) {
           const payload = await response.json();
@@ -3384,7 +4200,7 @@
         }
 
         if (response.status === 404) {
-          const cloudResponse = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}&cloud=true`);
+          const cloudResponse = await fetch(`/api/cep/lookup?cep=${encodeURIComponent(cep)}&cloud=true`);
 
           if (cloudResponse.ok) {
             const cloudPayload = await cloudResponse.json();
@@ -3418,12 +4234,11 @@
         inicioVigencia: inicioVigenciaInput.value,
         terminoVigencia: terminoVigenciaInput.value,
         compDataAditivo: compDataAditivoInput.value,
-        dataPubAditivo: dataPubAditivoInput.value,
         tipoTermo: normalizeText(tipoTermoInput.value, 100),
         especificacaoSei: normalizeText(especificacaoSeiInput.value, 255),
         valorContrato: normalizeDecimalInput(valorContratoInput.value),
         valorContratoAtualizado: normalizeDecimalInput(valorContratoInput.value),
-        dataPublicacao: dataPublicacaoInput.value,
+        dataPublicacao: formMode === 'create' ? '' : dataPublicacaoInput.value,
         vencimentoGeral: vencimentoGeralInput.value,
         mesRenovacao: normalizeText(formatMonthYearLabel(terminoVigenciaInput.value), 50),
         tpOptante: normalizeText(tpOptanteInput.value, 20),
@@ -3438,6 +4253,20 @@
 
         resetMessages();
         const payload = collectPayload();
+
+        if (formMode === 'create' && isExistingTermCreateBlocked) {
+          errors.termoAdesao.textContent = 'O cadastro principal aceita somente termo novo com aditivo 0.';
+          feedback.textContent = 'Este termo ja existe. Para incluir aditivo, use o botao Aditivos no grid.';
+          revealFirstFormError({ termoAdesao: errors.termoAdesao.textContent });
+          return;
+        }
+
+        if (formMode === 'create' && payload.aditivo !== '0') {
+          errors.aditivo.textContent = 'Inserir registro aceita somente termo novo com aditivo 0. Para incluir aditivo, use o botao Aditivos.';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          revealFirstFormError({ aditivo: errors.aditivo.textContent });
+          return;
+        }
 
         if (!payload.credenciadaCodigo) {
           errors.credenciado.textContent = 'Informe o credenciado (codigo da credenciada e obrigatorio).';
@@ -3531,7 +4360,6 @@
         event.preventDefault();
         currentPage = 1;
         currentSearch = searchInput.value.trim();
-        currentStatusTermoFilter = statusFilterInput.value.trim();
         void loadItems();
       });
 
@@ -3544,9 +4372,7 @@
 
       clearFilterButton.addEventListener('click', () => {
         searchInput.value = '';
-        statusFilterInput.value = '';
         currentSearch = '';
-        currentStatusTermoFilter = '';
         currentPage = 1;
         void loadItems();
       });
@@ -3558,12 +4384,33 @@
         void loadRejections();
       });
 
-      insertButton.addEventListener('click', () => {
+      insertButton.addEventListener('click', async () => {
         clearForm();
         showForm('create');
+        cnpjCpfInput.focus();
+
+        try {
+          const latestItem = await fetchLatestCredenciamentoTermoItem();
+
+          if (formMode !== 'create') {
+            return;
+          }
+
+          const nextInicioVigenciaDate = resolveNextInicioVigenciaDate(latestItem);
+          setDefaultCreateInicioVigenciaDate(nextInicioVigenciaDate);
+          applyCreateTermoDefaults(nextInicioVigenciaDate);
+        } catch {
+          if (formMode === 'create') {
+            setDefaultCreateInicioVigenciaDate(new Date());
+            applyCreateTermoDefaults();
+          }
+        }
       });
 
       cancelButton.addEventListener('click', hideForm);
+      editLastAditivoButton.addEventListener('click', () => {
+        void handleOpenLastAditivoEditor();
+      });
       showDespachoButton.addEventListener('click', () => {
         void handleShowDespacho();
       });
@@ -3574,6 +4421,8 @@
         void handleEmitContrato();
       });
       closeFormModalButton.addEventListener('click', hideForm);
+      closeLastAditivoButton.addEventListener('click', hideLastAditivoEditor);
+      cancelLastAditivoButton.addEventListener('click', hideLastAditivoEditor);
       closeDespachoButton.addEventListener('click', hideDespacho);
       dismissDespachoButton.addEventListener('click', hideDespacho);
       printDespachoButton.addEventListener('click', handlePrintDespacho);
@@ -3586,6 +4435,13 @@
       dismissContratoButton.addEventListener('click', hideContrato);
       printContratoButton.addEventListener('click', handlePrintContrato);
       downloadContratoDocButton.addEventListener('click', downloadTermoContratoAsDoc);
+      closeLinkedAditivosModalButton.addEventListener('click', hideLinkedAditivos);
+      insertLinkedAditivoButton.addEventListener('click', () => {
+        void handleInsertLinkedAditivo();
+      });
+      deleteLinkedAditivoButton.addEventListener('click', () => {
+        void handleDeleteLastLinkedAditivo();
+      });
 
       importButton.addEventListener('click', () => {
         hidePanels();
@@ -3603,6 +4459,12 @@
         }
       });
 
+      lastAditivoModal.addEventListener('click', (event) => {
+        if (event.target === lastAditivoModal) {
+          hideLastAditivoEditor();
+        }
+      });
+
       importModal.addEventListener('click', (event) => {
         if (event.target === importModal) {
           hideImportForm();
@@ -3612,6 +4474,12 @@
       rejectionModal.addEventListener('click', (event) => {
         if (event.target === rejectionModal) {
           hideRejectionPanel();
+        }
+      });
+
+      linkedAditivosModal.addEventListener('click', (event) => {
+        if (event.target === linkedAditivosModal) {
+          hideLinkedAditivos();
         }
       });
 
@@ -3638,6 +4506,11 @@
           return;
         }
 
+        if (!lastAditivoModal.classList.contains('dsc-hidden')) {
+          hideLastAditivoEditor();
+          return;
+        }
+
         if (!formModal.classList.contains('dsc-hidden')) {
           hideForm();
           return;
@@ -3650,6 +4523,11 @@
 
         if (!rejectionModal.classList.contains('dsc-hidden')) {
           hideRejectionPanel();
+          return;
+        }
+
+        if (!linkedAditivosModal.classList.contains('dsc-hidden')) {
+          hideLinkedAditivos();
           return;
         }
 
@@ -3721,15 +4599,34 @@
         void loadItems();
       });
 
+      sortStatusButton.addEventListener('click', () => {
+        if (currentSortBy === 'status_termo') {
+          currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          currentSortBy = 'status_termo';
+          currentSortDirection = 'asc';
+        }
+        currentPage = 1;
+        void loadItems();
+      });
+
       credenciadoInput.addEventListener('blur', () => {
-        void syncCredenciadaByName();
+        if (formMode !== 'create') {
+          void syncCredenciadaByName();
+        }
       });
 
       credenciadoInput.addEventListener('focus', () => {
-        void populateCredenciadaOptions(credenciadoInput.value.trim());
+        if (formMode !== 'create') {
+          void populateCredenciadaOptions(credenciadoInput.value.trim());
+        }
       });
 
       credenciadoInput.addEventListener('input', () => {
+        if (formMode === 'create') {
+          return;
+        }
+
         credenciadaCodigoInput.value = '';
 
         if (credenciadoInput.value.trim().length >= 2) {
@@ -3738,6 +4635,40 @@
         }
 
         credenciadoOptions.innerHTML = '<option value=""></option>';
+      });
+
+      cnpjCpfInput.addEventListener('input', () => {
+        cnpjCpfInput.value = normalizeCnpjCpf(cnpjCpfInput.value);
+
+        if (formMode !== 'create') {
+          return;
+        }
+
+        credenciadaCodigoInput.value = '';
+        credenciadoInput.value = '';
+        tipoTermoInput.value = '';
+        representanteInput.value = '';
+        cpfRepresentanteInput.value = '';
+        cepEnderecoInput.value = '';
+        logradouroInput.value = '';
+        bairroInput.value = '';
+        municipioInput.value = '';
+        syncEspecificacaoSei();
+        syncTextoCopia();
+        errors.cnpjCpf.textContent = '';
+
+        if (getDocumentDigits(cnpjCpfInput.value).length >= 3) {
+          void populateCredenciadaDocumentOptions(cnpjCpfInput.value);
+          return;
+        }
+
+        cnpjCpfOptions.innerHTML = '<option value=""></option>';
+      });
+
+      cnpjCpfInput.addEventListener('blur', () => {
+        if (formMode === 'create') {
+          void syncCredenciadaByDocument();
+        }
       });
 
       codigoXmlInput.addEventListener('input', () => { codigoXmlInput.value = normalizeIntegerInput(codigoXmlInput.value, 10); });
@@ -3753,13 +4684,112 @@
       seiInput.addEventListener('blur', () => {
         void syncNextAditivoByTermoAdesao();
       });
-      termoAdesaoInput.addEventListener('input', () => { termoAdesaoInput.value = normalizeTermoAdesao(termoAdesaoInput.value); });
+      termoAdesaoInput.addEventListener('input', () => {
+        termoAdesaoInput.value = normalizeTermoAdesao(termoAdesaoInput.value);
+        void syncNextAditivoByTermoAdesao();
+      });
+      termoAdesaoInput.addEventListener('blur', () => {
+        void syncNextAditivoByTermoAdesao();
+      });
       valorContratoInput.addEventListener('input', () => {
         valorContratoInput.value = formatCurrencyInput(valorContratoInput.value);
         syncDerivedTermoFields();
+        syncEmitContratoButtonState();
       });
       terminoVigenciaInput.addEventListener('input', () => {
         syncDerivedTermoFields();
+      });
+      lastAditivoDataPublicacaoInput.addEventListener('input', syncLastAditivoSituacaoPublicacao);
+
+      lastAditivoForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        lastAditivoCheckError.textContent = '';
+        lastAditivoDataPublicacaoError.textContent = '';
+        lastAditivoFeedback.textContent = '';
+        lastAditivoFeedback.className = 'dsc-feedback';
+
+        if (!currentLastAditivoItem?.codigo) {
+          lastAditivoFeedback.textContent = 'Ultimo aditivo nao carregado.';
+          lastAditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        if (!lastAditivoCheckYesInput.checked && !lastAditivoCheckNoInput.checked) {
+          lastAditivoCheckError.textContent = 'Selecione o check aditivo.';
+          return;
+        }
+
+        saveLastAditivoButton.disabled = true;
+        saveLastAditivoButton.textContent = 'Salvando ultimo aditivo...';
+        lastAditivoFeedback.textContent = 'Salvando alteracao do ultimo aditivo...';
+
+        try {
+          let updatedItem = null;
+
+          await withLatestTermoItemOnForm(async (latestItem) => {
+            const latestAditivo = Number(normalizeIntegerInput(String(latestItem?.aditivo ?? ''), 2) || '0');
+
+            if (!latestItem || latestAditivo <= 0) {
+              throw new Error('Este termo nao possui aditivo para alterar.');
+            }
+
+            const payload = collectPayload();
+            const nextPublicationDate = String(lastAditivoDataPublicacaoInput.value || '').trim();
+            const originalPublicationDate = normalizeReportDateKey(currentLastAditivoOriginalDataPublicacao);
+
+            payload.checkAditivo = lastAditivoCheckYesInput.checked ? 1 : 0;
+            payload.dataPublicacao = nextPublicationDate;
+
+            if (normalizeReportDateKey(nextPublicationDate) && normalizeReportDateKey(nextPublicationDate) !== originalPublicationDate) {
+              payload.situacaoPublicacao = 'PUBLICADO';
+            }
+
+            const response = await fetch(`/api/termo/${encodeURIComponent(latestItem.codigo)}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+              const responsePayload = await response.json().catch(() => ({}));
+              const requestMessage = responsePayload.message || 'Falha ao alterar o ultimo aditivo.';
+
+              if (responsePayload.errors?.checkAditivo) {
+                lastAditivoCheckError.textContent = responsePayload.errors.checkAditivo;
+              }
+
+              if (responsePayload.errors?.dataPublicacao) {
+                lastAditivoDataPublicacaoError.textContent = responsePayload.errors.dataPublicacao;
+              }
+
+              throw new Error(requestMessage);
+            }
+
+            const responsePayload = await response.json();
+            updatedItem = responsePayload.item || latestItem;
+          });
+
+          if (updatedItem && String(editingCodigo || '') === String(updatedItem.codigo || '')) {
+            fillForm(updatedItem);
+            setFormReadOnly(formMode === 'view');
+          }
+
+          void syncDespachoButtonState();
+          void syncLastAditivoEditorButtonState();
+          await loadItems();
+          showBanner('Ultimo aditivo alterado com sucesso.');
+          hideLastAditivoEditor();
+        } catch (error) {
+          lastAditivoFeedback.textContent = error instanceof Error ? error.message : 'Falha ao alterar o ultimo aditivo.';
+          lastAditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
+        } finally {
+          saveLastAditivoButton.disabled = false;
+          saveLastAditivoButton.textContent = 'Salvar ultimo aditivo';
+        }
       });
 
       gridBody.addEventListener('click', async (event) => {
@@ -3771,6 +4801,14 @@
         const row = button.closest('tr');
         const item = row?.dataset.item ? JSON.parse(row.dataset.item) : null;
         const { action, codigo } = button.dataset;
+
+        if (action === 'linked-aditivos') {
+          if (!item) {
+            return;
+          }
+          await showLinkedAditivos(item);
+          return;
+        }
 
         if (action === 'view') {
           if (!item) {
@@ -3811,8 +4849,8 @@
         }
       });
 
-clearForm();
-  void populateCredenciadaOptions('');
+      clearForm();
+      void populateCredenciadaOptions('');
       void loadItems();
     </script>
   </body>

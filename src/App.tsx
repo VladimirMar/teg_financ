@@ -229,6 +229,7 @@ function getSmokeReportFileName(result: SmokeRunResponse | null) {
 }
 
 function App() {
+  const environmentName = import.meta.env.VITE_APP_ENV_NAME?.trim() ?? ''
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState('')
@@ -572,6 +573,12 @@ function App() {
   useEffect(() => {
     setMarcaModeloPage(1)
   }, [deferredMarcaModeloSearch])
+
+  useEffect(() => {
+    document.title = environmentName
+      ? `${environmentName} - TEG Financ`
+      : 'TEG Financ'
+  }, [environmentName])
 
   const validateEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
@@ -1729,6 +1736,7 @@ function App() {
         <section className="login-panel" aria-labelledby="login-title">
           <div className="login-copy">
             <p className="login-kicker">TEG Financ</p>
+            {environmentName ? <p className="environment-pill environment-pill-login">{environmentName}</p> : null}
             <h1 id="login-title">Acesse o painel administrativo</h1>
             <p className="login-description">
               Informe email e senha para validar o acesso. Quando a autenticacao
@@ -1819,6 +1827,7 @@ function App() {
       <aside className="sidebar-menu" aria-label="Menu principal">
         <div>
           <p className="sidebar-brand">TEG Financ</p>
+          {environmentName ? <p className="environment-pill environment-pill-sidebar">{environmentName}</p> : null}
           <h1 className="sidebar-title">Painel Financeiro</h1>
         </div>
 

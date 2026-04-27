@@ -45,6 +45,27 @@
   font-size: 1.04rem;
 }
 
+.environment-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 248, 220, 0.34);
+  background: linear-gradient(135deg, rgba(244, 190, 42, 0.26), rgba(226, 120, 37, 0.3));
+  color: #fff8df;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.environment-pill-login {
+  margin-top: 4px;
+}
+
 .login-card {
   padding: 32px;
   border-radius: 32px;
@@ -202,6 +223,10 @@
   letter-spacing: 0.24em;
   font-size: 0.78rem;
   color: rgba(238, 247, 244, 0.68);
+}
+
+.environment-pill-sidebar {
+  margin-top: 12px;
 }
 
 .sidebar-title {

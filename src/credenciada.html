@@ -1307,7 +1307,7 @@
         if (cep === lastCepLookedUp) return;
 
         try {
-          const res = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}`);
+          const res = await fetch(`/api/cep/lookup?cep=${encodeURIComponent(cep)}`);
           if (res.ok) {
             const data = await res.json();
             if (data.item) {
@@ -1317,7 +1317,7 @@
             return;
           }
           if (res.status === 404) {
-            const resCloud = await fetch(`http://localhost:3001/api/cep/lookup?cep=${encodeURIComponent(cep)}&cloud=true`);
+            const resCloud = await fetch(`/api/cep/lookup?cep=${encodeURIComponent(cep)}&cloud=true`);
             if (resCloud.ok) {
               const dataCloud = await resCloud.json();
               if (dataCloud.item) {

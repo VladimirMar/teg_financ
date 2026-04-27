@@ -302,7 +302,7 @@
 
                   <label class="dsc-field-group" for="ordem-servico-tipo-troca">
                     <span>Tipo de troca</span>
-                    <input class="dsc-form-control" id="ordem-servico-tipo-troca" type="text" list="ordem-servico-tipo-troca-options" placeholder="DIGITE PARA FILTRAR O TIPO DE TROCA" maxlength="255" />
+                    <input class="dsc-form-control" id="ordem-servico-tipo-troca" type="text" list="ordem-servico-tipo-troca-options" placeholder="DIGITE PARA FILTRAR O TIPO DE TROCA" maxlength="255" aria-required="true" />
                     <datalist id="ordem-servico-tipo-troca-options">
                       <option value=""></option>
                     </datalist>
@@ -2139,13 +2139,15 @@
         return JSON.stringify(serializeTrackedFormState()) !== JSON.stringify(initialTrackedFormState);
       };
 
+      const hasPendingRequiredValidation = () => !normalizeText(tipoTrocaInput.value, 255);
+
       const updateSaveButtonAvailability = () => {
         if (formMode === 'view' || formMode === 'hidden') {
           saveButton.disabled = false;
           return;
         }
 
-        saveButton.disabled = requireFormChangeToSave && !hasTrackedFormChanges();
+        saveButton.disabled = requireFormChangeToSave && !hasTrackedFormChanges() && !hasPendingRequiredValidation();
       };
 
       const clearSaveChangeRequirement = () => {
@@ -3957,6 +3959,11 @@
 
         if (!payload.crm) {
           crmError.textContent = 'Informe o CRM do veiculo.';
+          hasError = true;
+        }
+
+        if (!payload.tipoTroca) {
+          tipoTrocaError.textContent = 'Informe o tipo de troca.';
           hasError = true;
         }
 

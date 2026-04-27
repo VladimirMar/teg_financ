@@ -6805,6 +6805,12 @@ const validateCredenciamentoTermoPayload = async ({
     errors.tpOptante = 'Tipo optante invalido.'
   }
 
+  if (!normalizedStatusTermo) {
+    errors.statusTermo = 'Status do termo e obrigatorio.'
+  } else if (!allowedCredenciamentoTermoStatusValues.has(normalizedStatusTermo)) {
+    errors.statusTermo = 'Status do termo invalido.'
+  }
+
   let credenciadaItem = null
 
   if (Number.isInteger(normalizedCredenciadaCodigo) && normalizedCredenciadaCodigo > 0) {
@@ -6918,6 +6924,8 @@ const addYearsToCredenciamentoTermoDate = (value, years) => {
   return result
 }
 
+const allowedCredenciamentoTermoStatusValues = new Set(['ATIVO', 'INATIVO', 'SUBSTITUIDO', 'RESCINDIDO'])
+
 const buildCredenciamentoTermoCreatePayload = (payload, latestTermoItem) => {
   const today = new Date()
   const inicioVigencia = formatCredenciamentoTermoDateValue(today)
@@ -6937,7 +6945,7 @@ const buildCredenciamentoTermoCreatePayload = (payload, latestTermoItem) => {
     statusAditivo: 'PUBLICAR',
     dataPubAditivo: pickCredenciamentoTermoTextValue(payload.dataPubAditivo, latestTermoItem?.data_pub_aditivo),
     checkAditivo: pickCredenciamentoTermoIntegerValue(payload.checkAditivo, latestTermoItem?.check_aditivo),
-    statusTermo: 'ATIVO',
+    statusTermo: pickCredenciamentoTermoTextValue(payload.statusTermo, latestTermoItem?.status_termo) || 'ATIVO',
     tipoTermo: pickCredenciamentoTermoTextValue(payload.tipoTermo, latestTermoItem?.tipo_termo),
     especificacaoSei: pickCredenciamentoTermoTextValue(payload.especificacaoSei, latestTermoItem?.especificacao_sei),
     valorContrato: pickCredenciamentoTermoDecimalValue(payload.valorContrato, latestTermoItem?.valor_contrato),
@@ -6983,7 +6991,7 @@ const findCredenciamentoTermoByTermoAdesao = async (termoAdesao, executor = pool
       `SELECT
         ${credenciamentoTermoSelectClause}
      FROM ${credenciamentoTermoTableName}
-     WHERE UPPER(BTRIM(COALESCE(termo_adesao, ''))) = UPPER($1)
+     WHERE ${credenciamentoTermoNormalizedTermoExpression} = REGEXP_REPLACE($1, '\\D', '', 'g')
      ORDER BY aditivo DESC, CAST(codigo AS integer) DESC LIMIT 1`,
     [normalizedTermo],
   )
@@ -7007,7 +7015,7 @@ const findLatestCredenciamentoTermoByTermoAdesao = async (termoAdesao, executor 
         COALESCE(BTRIM(t.status_termo), '') AS status_termo,
         TO_CHAR(t.termino_vigencia::date, 'YYYY-MM-DD') AS termino_vigencia
       FROM ${credenciamentoTermoTableName} t
-      WHERE UPPER(BTRIM(COALESCE(t.termo_adesao, ''))) = UPPER($1)
+      WHERE REGEXP_REPLACE(COALESCE(BTRIM(t.termo_adesao), ''), '\\D', '', 'g') = REGEXP_REPLACE($1, '\\D', '', 'g')
       ORDER BY t.aditivo DESC, t.codigo DESC
       LIMIT 1${lockClause}`,
     [normalizedTermo],
@@ -10649,6 +10657,9 @@ const server = createServer(async (request, response) => {
     try {
       const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
       const statusTermo = normalizeRequestValue(requestUrl.searchParams.get('statusTermo') ?? '')
+      const aditivo = normalizeRequestValue(requestUrl.searchParams.get('aditivo') ?? '')
+      const termoAdesao = normalizeOrdemServicoTermoAdesao(requestUrl.searchParams.get('termoAdesao') ?? '')
+      const somenteAditivos = ['1', 'true', 'sim'].includes(normalizeRequestValue(requestUrl.searchParams.get('somenteAditivos') ?? '').toLowerCase())
       const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
       const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 20) || 20, 1), 50)
       const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
@@ -10666,7 +10677,9 @@ const server = createServer(async (request, response) => {
           ? `UPPER(BTRIM(${credenciamentoTermoCredenciadoExpression})) ${sortDirection}, CAST(codigo AS integer) ASC`
           : sortBy === 'aditivo'
             ? `aditivo ${sortDirection}, CAST(codigo AS integer) ASC`
-            : `CAST(codigo AS integer) ${sortDirection}`
+            : sortBy === 'status_termo'
+              ? `UPPER(BTRIM(COALESCE(status_termo, ''))) ${sortDirection}, CAST(codigo AS integer) ASC`
+              : `CAST(codigo AS integer) ${sortDirection}`
 
       if (search) {
         values.push(`%${search}%`)
@@ -10687,6 +10700,20 @@ const server = createServer(async (request, response) => {
       if (statusTermo) {
         values.push(statusTermo)
         filters.push(`UPPER(BTRIM(COALESCE(status_termo, ''))) = UPPER($${values.length})`)
+      }
+
+      if (termoAdesao) {
+        values.push(termoAdesao)
+        filters.push(`UPPER(BTRIM(COALESCE(termo_adesao, ''))) = UPPER($${values.length})`)
+      }
+
+      if (aditivo !== '') {
+        values.push(aditivo)
+        filters.push(`CAST(aditivo AS text) = $${values.length}`)
+      }
+
+      if (somenteAditivos) {
+        filters.push('COALESCE(aditivo, 0) > 0')
       }
 
       const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
@@ -10719,7 +10746,7 @@ const server = createServer(async (request, response) => {
         page,
         pageSize,
         totalPages: Math.max(Math.ceil(total / pageSize), 1),
-        sortBy: ['termo_adesao', 'credenciado', 'aditivo'].includes(sortBy) ? sortBy : 'codigo',
+        sortBy: ['termo_adesao', 'credenciado', 'aditivo', 'status_termo'].includes(sortBy) ? sortBy : 'codigo',
         sortDirection: sortDirection.toLowerCase(),
       })
     } catch (error) {
@@ -12616,6 +12643,7 @@ const server = createServer(async (request, response) => {
   if (request.method === 'POST' && pathname === credenciamentoTermoCollectionPath) {
     try {
       const body = await readJsonBody(request)
+      const allowExistingTermAditivo = body.allowExistingTermAditivo === true
       const validationResult = await validateCredenciamentoTermoPayload(body, pool, { requireAditivo: false })
 
       if (validationResult.status !== 200) {
@@ -12636,6 +12664,29 @@ const server = createServer(async (request, response) => {
         const latestTermoItem = latestTermo
           ? await fetchCredenciamentoTermoItemByCodigo(client, latestTermo.codigo)
           : null
+
+        if (!latestTermo && validationResult.payload.aditivo !== 0) {
+          await client.query('ROLLBACK')
+          sendJson(response, 400, {
+            message: 'Inserir registro aceita somente termo novo com aditivo 0.',
+            errors: {
+              aditivo: 'Para cadastro de novo termo, o aditivo deve ser 0.',
+            },
+          })
+          return
+        }
+
+        if (latestTermo && !allowExistingTermAditivo) {
+          await client.query('ROLLBACK')
+          sendJson(response, 409, {
+            message: 'Termo ja cadastrado. Para incluir aditivo, use o botao Aditivos no grid.',
+            errors: {
+              termoAdesao: 'O cadastro principal aceita somente termo novo com aditivo 0.',
+            },
+          })
+          return
+        }
+
         const createPayload = buildCredenciamentoTermoCreatePayload(validationResult.payload, latestTermoItem)
         let nextAditivo = 0
 
@@ -12643,6 +12694,16 @@ const server = createServer(async (request, response) => {
           nextAditivo = Number.isInteger(Number(latestTermo.aditivo))
             ? Number(latestTermo.aditivo) + 1
             : 1
+
+          await client.query(
+            `UPDATE ${credenciamentoTermoTableName}
+               SET status_termo = 'SUBSTITUIDO',
+                   data_modificacao = NOW()
+             WHERE ${credenciamentoTermoNormalizedTermoExpression} = REGEXP_REPLACE($1, '\\D', '', 'g')
+               AND COALESCE(aditivo, 0) > 0
+               AND UPPER(BTRIM(COALESCE(status_termo, ''))) = 'ATIVO'`,
+            [validationResult.payload.termoAdesao],
+          )
 
           await client.query(
             `UPDATE ${credenciamentoTermoTableName}
@@ -14268,6 +14329,19 @@ const server = createServer(async (request, response) => {
         return
       }
 
+      const existingItem = await fetchCredenciamentoTermoItemByCodigo(pool, originalCodigo)
+
+      if (!existingItem) {
+        sendJson(response, 404, { message: 'Credenciamento termo nao encontrado.' })
+        return
+      }
+
+      const nextDataPublicacao = normalizeRequestValue(validationResult.payload.dataPublicacao)
+      const currentDataPublicacao = normalizeRequestValue(existingItem.data_publicacao)
+      const nextSituacaoPublicacao = nextDataPublicacao && nextDataPublicacao !== currentDataPublicacao
+        ? 'PUBLICADO'
+        : validationResult.payload.situacaoPublicacao
+
       const updateResult = await pool.query(
         `UPDATE ${credenciamentoTermoTableName}
          SET codigo_xml = $1,
@@ -14301,7 +14375,7 @@ const server = createServer(async (request, response) => {
           validationResult.payload.termoAdesao,
           validationResult.payload.sei,
           validationResult.payload.aditivo,
-          validationResult.payload.situacaoPublicacao,
+          nextSituacaoPublicacao,
           validationResult.payload.situacaoEmissao,
           validationResult.payload.inicioVigencia,
           validationResult.payload.terminoVigencia,
