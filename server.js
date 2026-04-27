@@ -3,6 +3,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 import { spawn } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import { XMLParser } from 'fast-xml-parser'
+import JSZip from 'jszip'
 import path from 'node:path'
 import { Pool } from 'pg'
 import { fileURLToPath } from 'node:url'
@@ -5213,10 +5214,73 @@ const seedTitularTableFromXmlIfEmpty = async () => {
   }
 }
 
-const ensureCredenciadaImportCepExists = async (record) => {
-  if (!record.cep) return null
-  const result = await pool.query('SELECT 1 FROM ceps WHERE cep = $1 LIMIT 1', [record.cep])
-  return result.rowCount > 0 ? record.cep : null
+const resolveCredenciadaImportCepUf = (municipio, cep = '') => {
+  const normalizedMunicipio = normalizeRequestValue(municipio)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+
+  const normalizedCep = normalizeRequestValue(cep).replace(/\D/g, '')
+
+  if (normalizedMunicipio.startsWith('SAO PAU')) {
+    return 'SP'
+  }
+
+  if (/^[01]\d{7}$/.test(normalizedCep)) {
+    return 'SP'
+  }
+
+  return ''
+}
+
+const upsertCredenciadaImportCep = async (client, record) => {
+  if (!record.cep) {
+    return null
+  }
+
+  const uf = resolveCredenciadaImportCepUf(record.municipio, record.cep)
+
+  const existingResult = await client.query(
+    `SELECT uf FROM ${cepTableName} WHERE BTRIM(cep) = $1 LIMIT 1`,
+    [record.cep],
+  )
+
+  if (existingResult.rowCount > 0) {
+    const persistedUf = normalizeRequestValue(existingResult.rows[0]?.uf).toUpperCase()
+
+    await client.query(
+      `UPDATE ${cepTableName}
+       SET logradouro = NULLIF($1, ''),
+           bairro = NULLIF($2, ''),
+           municipio = NULLIF($3, ''),
+           uf = NULLIF($4, ''),
+           data_modificacao = NOW()
+       WHERE BTRIM(cep) = $5`,
+      [record.logradouro, record.bairro, record.municipio, uf || persistedUf, record.cep],
+    )
+
+    return record.cep
+  }
+
+  if (!uf) {
+    return null
+  }
+
+  await client.query(
+    `INSERT INTO ${cepTableName} (
+       cep,
+       logradouro,
+       bairro,
+       municipio,
+       uf,
+       data_inclusao,
+       data_modificacao
+     )
+     VALUES ($1, NULLIF($2, ''), NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''), NOW(), NOW())`,
+    [record.cep, record.logradouro, record.bairro, record.municipio, uf],
+  )
+
+  return record.cep
 }
 
 const importCredenciadaXmlFile = async (fileName) => {
@@ -5299,7 +5363,7 @@ const importCredenciadaXmlFile = async (fileName) => {
 
     for (const record of normalizedRecords) {
       const existingResult = await client.query('SELECT 1 FROM credenciada WHERE codigo = $1 LIMIT 1', [record.codigo])
-      const ensuredCep = await ensureCredenciadaImportCepExists(record)
+      const ensuredCep = await upsertCredenciadaImportCep(client, record)
 
       if (existingResult.rowCount > 0) {
         await client.query(
@@ -6970,6 +7034,508 @@ const findEmissaoDocumentoParametroByDate = async (dataReferencia, executor = po
   )
 
   return result.rows[0] ?? null
+}
+
+const normalizeContractTemplateKey = (value) => String(value || '')
+  .replace(/[<>]/g, '')
+  .replace(/[_/]+/g, ' ')
+  .trim()
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9]+/g, '')
+
+const normalizeContractTemplateKeyWithoutStopWords = (value) => String(value || '')
+  .replace(/[<>]/g, '')
+  .replace(/[_/]+/g, ' ')
+  .trim()
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/\b(de|da|do|das|dos|e)\b/g, ' ')
+  .replace(/[^a-z0-9]+/g, '')
+
+const normalizeContractDateKey = (value) => {
+  const normalizedValue = normalizeRequestValue(value)
+
+  if (!normalizedValue) {
+    return ''
+  }
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+    return normalizedValue
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+    const [year, month, day] = normalizedValue.split('-')
+    return `${day}/${month}/${year}`
+  }
+
+  return normalizedValue
+}
+
+const formatContractDatePorExtenso = (value) => {
+  const normalizedValue = normalizeContractDateKey(value)
+
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+    return normalizedValue
+  }
+
+  const [day, month, year] = normalizedValue.split('/')
+  const parsed = new Date(Number(year), Number(month) - 1, Number(day))
+
+  if (Number.isNaN(parsed.getTime())) {
+    return normalizedValue
+  }
+
+  const monthLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(parsed)
+  return `${day} de ${monthLabel} de ${year}`
+}
+
+const numberToContractPortugueseWords = (value) => {
+  const units = ['zero', 'um', 'dois', 'tres', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove']
+  const teens = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove']
+  const tens = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa']
+  const hundreds = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos']
+
+  const convertHundreds = (number) => {
+    if (number === 0) {
+      return ''
+    }
+
+    if (number < 10) {
+      return units[number]
+    }
+
+    if (number < 20) {
+      return teens[number - 10]
+    }
+
+    if (number < 100) {
+      const ten = Math.floor(number / 10)
+      const remainder = number % 10
+      return remainder ? `${tens[ten]} e ${convertHundreds(remainder)}` : tens[ten]
+    }
+
+    if (number === 100) {
+      return 'cem'
+    }
+
+    const hundred = Math.floor(number / 100)
+    const remainder = number % 100
+    return remainder ? `${hundreds[hundred]} e ${convertHundreds(remainder)}` : hundreds[hundred]
+  }
+
+  const convertLargeNumber = (number) => {
+    if (number === 0) {
+      return 'zero'
+    }
+
+    const scales = [
+      { value: 1000000000, singular: 'bilhao', plural: 'bilhoes' },
+      { value: 1000000, singular: 'milhao', plural: 'milhoes' },
+      { value: 1000, singular: 'mil', plural: 'mil' },
+    ]
+
+    let remainder = number
+    const parts = []
+
+    for (const scale of scales) {
+      if (remainder < scale.value) {
+        continue
+      }
+
+      const scaleAmount = Math.floor(remainder / scale.value)
+      remainder %= scale.value
+
+      if (scale.value === 1000 && scaleAmount === 1) {
+        parts.push(scale.singular)
+      } else {
+        parts.push(`${convertHundreds(scaleAmount)} ${scaleAmount === 1 ? scale.singular : scale.plural}`)
+      }
+    }
+
+    if (remainder) {
+      parts.push(convertHundreds(remainder))
+    }
+
+    if (parts.length === 1) {
+      return parts[0]
+    }
+
+    if (parts.length === 2) {
+      return `${parts[0]} e ${parts[1]}`
+    }
+
+    return `${parts.slice(0, -1).join(', ')} e ${parts[parts.length - 1]}`
+  }
+
+  return convertLargeNumber(value)
+}
+
+const formatContractCurrencyExtenso = (value) => {
+  const rawValue = String(value ?? '').trim()
+
+  if (!rawValue) {
+    return ''
+  }
+
+  const normalizedValue = rawValue
+    .replace(/^R\$\s*/i, '')
+    .replace(/\./g, '')
+    .replace(',', '.')
+  const parsed = Number(normalizedValue)
+
+  if (!Number.isFinite(parsed)) {
+    return rawValue
+  }
+
+  const integerPart = Math.trunc(parsed)
+  const centsPart = Math.round((parsed - integerPart) * 100)
+  const integerLabel = integerPart === 1 ? 'real' : 'reais'
+  const centsLabel = centsPart === 1 ? 'centavo' : 'centavos'
+  const integerText = `${numberToContractPortugueseWords(integerPart)} ${integerLabel}`
+
+  if (!centsPart) {
+    return integerText
+  }
+
+  return `${integerText} e ${numberToContractPortugueseWords(centsPart)} ${centsLabel}`
+}
+
+const formatContractTemplateValuePorExtenso = (value) => {
+  const rawValue = String(value ?? '').trim()
+
+  if (!rawValue) {
+    return ''
+  }
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalizeContractDateKey(rawValue)) || /^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
+    return formatContractDatePorExtenso(rawValue)
+  }
+
+  if (/^R?\$?\s*[\d.]+,\d{2}$/.test(rawValue) || /^\d+$/.test(rawValue.replace(/\D/g, ''))) {
+    return formatContractCurrencyExtenso(rawValue)
+  }
+
+  return rawValue
+}
+
+const escapeContractXmlText = (value) => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&apos;')
+  .replace(/\r/g, '')
+  .replace(/\n/g, '</w:t><w:br/><w:t>')
+
+const getContractTemplateLookupCandidates = (value) => {
+  const normalizedKey = normalizeContractTemplateKey(value)
+  const normalizedKeyWithoutStopWords = normalizeContractTemplateKeyWithoutStopWords(value)
+
+  if (!normalizedKey && !normalizedKeyWithoutStopWords) {
+    return []
+  }
+
+  return Array.from(new Set([
+    normalizedKey,
+    normalizedKeyWithoutStopWords,
+    normalizedKey === 'minicipio' ? 'municipio' : '',
+    normalizedKeyWithoutStopWords === 'minicipio' ? 'municipio' : '',
+  ].filter(Boolean)))
+}
+
+const applyContractTemplateTokens = (template, replacements) => {
+  const normalizedLookup = Object.entries(replacements || {}).reduce((lookup, [key, value]) => {
+    const normalizedKey = normalizeContractTemplateKey(key)
+
+    if (normalizedKey && value != null && value !== '') {
+      lookup[normalizedKey] = String(value)
+    }
+
+    return lookup
+  }, {})
+  const normalizedTemplate = String(template ?? '').replace(/<\s*([^<>,]+?)\s*,/g, '<$1>,')
+  const resolvedCurlyTokens = normalizedTemplate.replace(/\{\{\s*([a-z_]+)\s*\}\}/gi, (_, token) => {
+    const replacement = normalizedLookup[normalizeContractTemplateKey(token)]
+    return replacement == null || replacement === '' ? '' : escapeContractXmlText(replacement)
+  })
+
+  const resolveAngleToken = (match, token) => {
+    const normalizedToken = String(token || '')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    if (!normalizedToken) {
+      return match
+    }
+
+    const tokenParts = normalizedToken.split('/').map((part) => part.trim()).filter(Boolean)
+    const normalizedParts = tokenParts.map((part) => normalizeContractTemplateKey(part))
+    const hasPorExtenso = normalizedParts[normalizedParts.length - 1] === 'porextenso'
+    const effectiveParts = hasPorExtenso ? tokenParts.slice(0, -1) : tokenParts
+    const effectiveNormalizedParts = hasPorExtenso ? normalizedParts.slice(0, -1) : normalizedParts
+    const scopePrefixCount = effectiveNormalizedParts[0] === 'termo' ? 1 : 0
+    const lookupParts = effectiveParts.slice(scopePrefixCount)
+    const lookupKey = lookupParts.join(' ')
+    const replacement = getContractTemplateLookupCandidates(lookupKey)
+      .map((candidate) => normalizedLookup[candidate])
+      .find((value) => value != null && value !== '')
+
+    if (replacement == null || replacement === '') {
+      return match
+    }
+
+    const resolvedValue = hasPorExtenso
+      ? formatContractTemplateValuePorExtenso(replacement)
+      : replacement
+
+    return escapeContractXmlText(resolvedValue)
+  }
+
+  return resolvedCurlyTokens
+    .replace(/&lt;\s*((?:(?!&lt;|&gt;)[\s\S])+?)\s*,(?=\s*&lt;)/g, (match, token) => `${resolveAngleToken(`&lt;${token}&gt;`, token)},`)
+    .replace(/&lt;\s*((?:(?!&lt;|&gt;)[\s\S])+?)(?=\s*[)\].,;])/g, (match, token) => resolveAngleToken(`&lt;${token}&gt;`, token))
+    .replace(/&lt;\s*((?:(?!&lt;|&gt;)[\s\S])+?)\s*&gt;/g, resolveAngleToken)
+    .replace(/<\s*([A-Za-zÀ-ÿ0-9_.\-/\s]+?)\s*>/g, resolveAngleToken)
+}
+
+const normalizeContractTemplateType = (value) => normalizeRequestValue(value)
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+
+const buildCredenciamentoContratoFileName = (termoAdesao, typeLabel, templateReference) => {
+  const cleanedTermo = String(termoAdesao ?? '').trim().replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '')
+  const cleanedTemplateName = path.basename(String(templateReference ?? '').trim() || '')
+  const extension = cleanedTemplateName.toLowerCase().endsWith('.docx') ? '.docx' : '.docx'
+  const typeSuffix = normalizeContractTemplateType(typeLabel) === 'PESSOA FISICA' ? 'pf' : 'pj'
+  return `${cleanedTermo || 'termo'}-contrato-${typeSuffix}${extension}`
+}
+
+const resolveContractTemplatePath = (templateReference) => {
+  const normalizedReference = String(templateReference ?? '').trim()
+
+  if (!normalizedReference) {
+    return ''
+  }
+
+  if (path.isAbsolute(normalizedReference)) {
+    return normalizedReference
+  }
+
+  return path.join(workspaceRoot, normalizedReference.replace(/^[\\/]+/, ''))
+}
+
+const readContractTemplateBuffer = async (templateReference) => {
+  const normalizedReference = String(templateReference ?? '').trim()
+
+  if (!normalizedReference) {
+    throw Object.assign(new Error('Modelo Word do contrato nao informado em Parametros gerais.'), { statusCode: 400 })
+  }
+
+  if (/^https?:\/\//i.test(normalizedReference)) {
+    const templateResponse = await fetch(normalizedReference)
+
+    if (!templateResponse.ok) {
+      throw Object.assign(new Error('Nao foi possivel baixar o modelo Word configurado em Parametros gerais.'), { statusCode: 400 })
+    }
+
+    return Buffer.from(await templateResponse.arrayBuffer())
+  }
+
+  if (/^file:\/\//i.test(normalizedReference)) {
+    return readFile(fileURLToPath(normalizedReference))
+  }
+
+  return readFile(resolveContractTemplatePath(normalizedReference))
+}
+
+const buildContractTemplateReplacements = ({ body, parametroItem, isPessoaFisica }) => {
+  const descricaoContrato = isPessoaFisica
+    ? normalizeRequestValue(parametroItem?.descricao_contrato_pf)
+    : normalizeRequestValue(parametroItem?.descricao_contrato_pj)
+  const corpoContrato = isPessoaFisica
+    ? normalizeRequestValue(parametroItem?.corpo_contrato_pf)
+    : normalizeRequestValue(parametroItem?.corpo_contrato_pj)
+  const valorContrato = normalizeRequestValue(body.valorContrato)
+  const valorContratoAtualizado = normalizeRequestValue(body.valorContratoAtualizado) || valorContrato
+  const normalizedTipoTermo = normalizeRequestValue(body.tipoTermo)
+  const normalizedCnpjCpf = normalizeRequestValue(body.cnpjCpf)
+  const normalizedSei = normalizeRequestValue(body.sei)
+  const replacements = {
+    codigo_xml: normalizeRequestValue(body.codigoXml),
+    termo_adesao: normalizeOrdemServicoTermoAdesao(body.termoAdesao),
+    termo: normalizeOrdemServicoTermoAdesao(body.termoAdesao),
+    processo: normalizedSei,
+    sei: normalizedSei,
+    credenciado: normalizeRequestValue(body.credenciado),
+    cnpj_cpf: normalizedCnpjCpf,
+    cpf_cnpj: normalizedCnpjCpf,
+    tipo_termo: normalizedTipoTermo,
+    tipo_pessoa: normalizedTipoTermo,
+    representante: normalizeRequestValue(body.representante),
+    cpf_representante: normalizeRequestValue(body.cpfRepresentante),
+    logradouro: normalizeRequestValue(body.logradouro),
+    bairro: normalizeRequestValue(body.bairro),
+    municipio: normalizeRequestValue(body.municipio),
+    minicipio: normalizeRequestValue(body.municipio),
+    cep: normalizeRequestValue(body.cep),
+    inicio_vigencia: normalizeContractDateKey(body.inicioVigencia),
+    termino_vigencia: normalizeContractDateKey(body.terminoVigencia),
+    comp_data_aditivo: normalizeContractDateKey(body.compDataAditivo),
+    data_pub_aditivo: normalizeContractDateKey(body.dataPubAditivo),
+    data_publicacao: normalizeContractDateKey(body.dataPublicacao),
+    vencimento_geral: normalizeContractDateKey(body.vencimentoGeral),
+    mes_renovacao: normalizeRequestValue(body.mesRenovacao),
+    tp_optante: normalizeRequestValue(body.tpOptante),
+    tipo_optante: normalizeRequestValue(body.tpOptante),
+    valor_contrato: valorContrato,
+    valor_contrato_atualizado: valorContratoAtualizado,
+    valor_previsto: valorContratoAtualizado,
+    descricao_contrato: descricaoContrato,
+    corpo_contrato: corpoContrato,
+    contrato_descricao: descricaoContrato,
+    contrato_corpo: corpoContrato,
+    credenciante: normalizeRequestValue(parametroItem?.credenciante),
+    edital: normalizeRequestValue(parametroItem?.edital_chamamento_publico),
+    objeto_licitacao: normalizeRequestValue(parametroItem?.objeto_licitacao),
+    objeto: normalizeRequestValue(parametroItem?.objeto),
+    data_referencia: normalizeEmissaoDocumentoDateKey(body.requestedDate),
+  }
+
+  return Object.entries(replacements).reduce((lookup, [key, value]) => {
+    const normalizedKey = normalizeContractTemplateKey(key)
+
+    if (normalizedKey && value != null && value !== '') {
+      lookup[normalizedKey] = String(value)
+    }
+
+    return lookup
+  }, {})
+}
+
+const buildCredenciamentoContratoDocx = async ({ templateBuffer, body, parametroItem, isPessoaFisica }) => {
+  const zip = await JSZip.loadAsync(templateBuffer)
+  const replacements = buildContractTemplateReplacements({ body, parametroItem, isPessoaFisica })
+  const wordXmlPaths = Object.keys(zip.files).filter((fileName) => /^word\/(document|header\d+|footer\d+|footnotes|endnotes)\.xml$/i.test(fileName))
+
+  await Promise.all(wordXmlPaths.map(async (fileName) => {
+    const entry = zip.file(fileName)
+
+    if (!entry) {
+      return
+    }
+
+    const xmlContent = await entry.async('string')
+    const resolvedXmlContent = applyContractTemplateTokens(xmlContent, replacements)
+    zip.file(fileName, resolvedXmlContent)
+  }))
+
+  return zip.generateAsync({ type: 'nodebuffer' })
+}
+
+const escapeContractPreviewHtml = (value) => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+
+const decodeContractPreviewXmlText = (value) => String(value ?? '')
+  .replace(/&lt;/g, '<')
+  .replace(/&gt;/g, '>')
+  .replace(/&quot;/g, '"')
+  .replace(/&apos;/g, "'")
+  .replace(/&amp;/g, '&')
+
+const extractContractPreviewParagraphs = (xmlContent) => {
+  const cleanedXml = String(xmlContent ?? '')
+    .replace(/<w:instrText\b[\s\S]*?<\/w:instrText>/gi, '')
+    .replace(/<w:delText\b[\s\S]*?<\/w:delText>/gi, '')
+  const paragraphMatches = cleanedXml.match(/<w:p\b[\s\S]*?<\/w:p>/gi) ?? []
+
+  return paragraphMatches
+    .map((paragraphXml) => decodeContractPreviewXmlText(paragraphXml
+      .replace(/<w:tab\b[^>]*\/>/gi, '    ')
+      .replace(/<w:(?:br|cr)\b[^>]*\/>/gi, '\n')
+      .replace(/<w:t\b[^>]*>/gi, '')
+      .replace(/<\/w:t>/gi, '')
+      .replace(/<[^>]+>/g, ''))
+      .replace(/\u00a0/g, ' ')
+      .replace(/\r/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim())
+}
+
+const getContractPreviewPathWeight = (fileName) => {
+  if (/^word\/header\d+\.xml$/i.test(fileName)) {
+    return 0
+  }
+
+  if (/^word\/document\.xml$/i.test(fileName)) {
+    return 1
+  }
+
+  if (/^word\/footnotes\.xml$/i.test(fileName)) {
+    return 2
+  }
+
+  if (/^word\/endnotes\.xml$/i.test(fileName)) {
+    return 3
+  }
+
+  if (/^word\/footer\d+\.xml$/i.test(fileName)) {
+    return 4
+  }
+
+  return 5
+}
+
+const buildCredenciamentoContratoPreviewMarkup = async (generatedContractBuffer) => {
+  const zip = await JSZip.loadAsync(generatedContractBuffer)
+  const previewPaths = Object.keys(zip.files)
+    .filter((fileName) => /^word\/(document|header\d+|footer\d+|footnotes|endnotes)\.xml$/i.test(fileName))
+    .sort((left, right) => {
+      const weightDifference = getContractPreviewPathWeight(left) - getContractPreviewPathWeight(right)
+      return weightDifference !== 0 ? weightDifference : left.localeCompare(right)
+    })
+
+  const paragraphGroups = await Promise.all(previewPaths.map(async (fileName) => {
+    const entry = zip.file(fileName)
+
+    if (!entry) {
+      return []
+    }
+
+    return extractContractPreviewParagraphs(await entry.async('string'))
+  }))
+
+  const paragraphs = paragraphGroups.flat().filter((paragraph) => paragraph || paragraph === '')
+
+  if (!paragraphs.length) {
+    return `
+      <article class="dsc-emissao-documento">
+        <section class="dsc-emissao-documento-section">
+          <div class="dsc-emissao-documento-section-body dsc-emissao-documento-legal-body">
+            <p class="dsc-emissao-documento-paragraph">Nao foi possivel montar a visualizacao do modelo Word do contrato.</p>
+          </div>
+        </section>
+      </article>
+    `
+  }
+
+  return `
+    <article class="dsc-emissao-documento dsc-emissao-documento-contract-template">
+      <section class="dsc-emissao-documento-section">
+        <div class="dsc-emissao-documento-section-body dsc-emissao-documento-legal-body">
+          ${paragraphs.map((paragraph) => paragraph
+            ? `<p class="dsc-emissao-documento-paragraph">${escapeContractPreviewHtml(paragraph)}</p>`
+            : '<p class="dsc-emissao-documento-paragraph">&nbsp;</p>').join('')}
+        </div>
+      </section>
+    </article>
+  `
 }
 
 const validateOrdemServicoPayload = async ({
@@ -12196,6 +12762,89 @@ const server = createServer(async (request, response) => {
         : 'Erro ao importar veiculos do XML.'
 
       sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/termo/emitir-contrato') {
+    try {
+      const body = await readJsonBody(request)
+      const wantsPreviewPayload = body?.preview === true || String(request.headers.accept ?? '').includes('application/json')
+      const requestedDate = normalizeEmissaoDocumentoDateKey(body.requestedDate) || buildCurrentEmissaoDocumentoDateKey()
+
+      if (!isEmissaoDocumentoDateKeyValid(requestedDate)) {
+        sendJson(response, 400, { message: 'Data de referencia invalida para emissao do contrato.' })
+        return
+      }
+
+      const termoAdesao = normalizeOrdemServicoTermoAdesao(body.termoAdesao)
+
+      if (!termoAdesao) {
+        sendJson(response, 400, { message: 'Termo de adesao obrigatorio para emissao do contrato.' })
+        return
+      }
+
+      const parametroItem = await findEmissaoDocumentoParametroByDate(requestedDate)
+
+      if (!parametroItem) {
+        sendJson(response, 404, { message: 'Parametro de emissao nao encontrado para a data informada.' })
+        return
+      }
+
+      const tipoTermo = normalizeContractTemplateType(body.tipoTermo)
+      const cnpjCpfDigits = String(body.cnpjCpf ?? '').replace(/\D/g, '')
+      const isPessoaFisica = tipoTermo === 'PESSOA FISICA' || cnpjCpfDigits.length === 11
+      const templateReference = isPessoaFisica
+        ? parametroItem.link_modelo_relatorio_contrato_pf
+        : parametroItem.link_modelo_relatorio_contrato_pj
+
+      if (!normalizeRequestValue(templateReference)) {
+        sendJson(response, 400, {
+          message: isPessoaFisica
+            ? 'Link do modelo Word do relatorio de contrato PF nao informado em Parametros gerais.'
+            : 'Link do modelo Word do relatorio de contrato PJ nao informado em Parametros gerais.',
+        })
+        return
+      }
+
+      const templateBuffer = await readContractTemplateBuffer(templateReference)
+      const generatedContractBuffer = await buildCredenciamentoContratoDocx({
+        templateBuffer,
+        body: {
+          ...body,
+          termoAdesao,
+          requestedDate,
+        },
+        parametroItem,
+        isPessoaFisica,
+      })
+      const downloadFileName = buildCredenciamentoContratoFileName(termoAdesao, tipoTermo, templateReference)
+
+      if (wantsPreviewPayload) {
+        const previewMarkup = await buildCredenciamentoContratoPreviewMarkup(generatedContractBuffer)
+
+        sendJson(response, 200, {
+          fileName: downloadFileName,
+          templateReference,
+          previewMarkup,
+        })
+        return
+      }
+
+      response.writeHead(200, {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition': `attachment; filename="${downloadFileName}"`,
+        'Cache-Control': 'no-store',
+      })
+      response.end(generatedContractBuffer)
+    } catch (error) {
+      const statusCode = Number.isInteger(error?.statusCode) ? error.statusCode : 500
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao emitir contrato.'
+
+      sendJson(response, statusCode, { message })
     }
 
     return

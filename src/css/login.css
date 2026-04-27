@@ -1596,7 +1596,36 @@ body:has(#ordem-servico-grid-body) #ordem-servico-pagination-info {
 }
 
 body:has(#emissao-parametro-grid-body) .dsc-access-grid {
-  min-width: 1280px;
+  width: 100%;
+  min-width: 100%;
+  table-layout: fixed;
+}
+
+body:has(#emissao-parametro-grid-body) .dsc-access-grid-card {
+  width: min(100%, 1280px);
+}
+
+body:has(#emissao-parametro-grid-body) .dsc-access-grid-wrapper {
+  overflow-x: auto;
+}
+
+body:has(#emissao-parametro-grid-body) .dsc-grid-actions-column,
+body:has(#emissao-parametro-grid-body) .dsc-access-grid th:nth-child(2),
+body:has(#emissao-parametro-grid-body) .dsc-access-grid td:nth-child(2) {
+  width: 290px;
+  min-width: 290px;
+}
+
+body:has(#emissao-parametro-grid-body) .dsc-grid-actions {
+  gap: 6px;
+}
+
+body:has(#emissao-parametro-grid-body) .dsc-grid-actions .dsc-grid-action-button,
+body:has(#emissao-parametro-grid-body) .dsc-access-grid-actions .dsc-btn {
+  min-width: 86px;
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
 }
 
 body:has(#emissao-parametro-grid-body) .dsc-default-audit-badge {

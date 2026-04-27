@@ -93,30 +93,6 @@
                     <div class="dsc-form-error" id="emissao-parametro-assinaturas-aditivo-error"></div>
                   </label>
 
-                  <label class="dsc-field-group" for="emissao-parametro-descricao-contrato-pf">
-                    <span>Descricao do contrato PF</span>
-                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-descricao-contrato-pf" placeholder="Descricao do contrato para pessoa fisica" maxlength="20000"></textarea>
-                    <div class="dsc-form-error" id="emissao-parametro-descricao-contrato-pf-error"></div>
-                  </label>
-
-                  <label class="dsc-field-group" for="emissao-parametro-descricao-contrato-pj">
-                    <span>Descricao do contrato PJ</span>
-                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-descricao-contrato-pj" placeholder="Descricao do contrato para pessoa juridica" maxlength="20000"></textarea>
-                    <div class="dsc-form-error" id="emissao-parametro-descricao-contrato-pj-error"></div>
-                  </label>
-
-                  <label class="dsc-field-group" for="emissao-parametro-corpo-contrato-pf">
-                    <span>Corpo do contrato PF</span>
-                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-corpo-contrato-pf" placeholder="Corpo do contrato para pessoa fisica" maxlength="250000" rows="24"></textarea>
-                    <div class="dsc-form-error" id="emissao-parametro-corpo-contrato-pf-error"></div>
-                  </label>
-
-                  <label class="dsc-field-group" for="emissao-parametro-corpo-contrato-pj">
-                    <span>Corpo do contrato PJ</span>
-                    <textarea class="dsc-form-control dsc-form-textarea" id="emissao-parametro-corpo-contrato-pj" placeholder="Corpo do contrato para pessoa juridica" maxlength="250000" rows="24"></textarea>
-                    <div class="dsc-form-error" id="emissao-parametro-corpo-contrato-pj-error"></div>
-                  </label>
-
                   <label class="dsc-field-group" for="emissao-parametro-link-modelo-relatorio-contrato-pf">
                     <span>Link do modelo Word do relatorio de contrato PF</span>
                     <input class="dsc-form-control" id="emissao-parametro-link-modelo-relatorio-contrato-pf" type="text" placeholder="Informe o link ou caminho do modelo Word para pessoa fisica" maxlength="4000" />
@@ -239,10 +215,6 @@
       const descricaoAditivoInput = document.getElementById('emissao-parametro-descricao-aditivo');
       const corpoAditivoInput = document.getElementById('emissao-parametro-corpo-aditivo');
       const assinaturasAditivoInput = document.getElementById('emissao-parametro-assinaturas-aditivo');
-      const descricaoContratoPfInput = document.getElementById('emissao-parametro-descricao-contrato-pf');
-      const descricaoContratoPjInput = document.getElementById('emissao-parametro-descricao-contrato-pj');
-      const corpoContratoPfInput = document.getElementById('emissao-parametro-corpo-contrato-pf');
-      const corpoContratoPjInput = document.getElementById('emissao-parametro-corpo-contrato-pj');
       const linkModeloRelatorioContratoPfInput = document.getElementById('emissao-parametro-link-modelo-relatorio-contrato-pf');
       const linkModeloRelatorioContratoPjInput = document.getElementById('emissao-parametro-link-modelo-relatorio-contrato-pj');
       const obs01Input = document.getElementById('emissao-parametro-obs-01');
@@ -264,10 +236,6 @@
       const descricaoAditivoError = document.getElementById('emissao-parametro-descricao-aditivo-error');
       const corpoAditivoError = document.getElementById('emissao-parametro-corpo-aditivo-error');
       const assinaturasAditivoError = document.getElementById('emissao-parametro-assinaturas-aditivo-error');
-      const descricaoContratoPfError = document.getElementById('emissao-parametro-descricao-contrato-pf-error');
-      const descricaoContratoPjError = document.getElementById('emissao-parametro-descricao-contrato-pj-error');
-      const corpoContratoPfError = document.getElementById('emissao-parametro-corpo-contrato-pf-error');
-      const corpoContratoPjError = document.getElementById('emissao-parametro-corpo-contrato-pj-error');
       const linkModeloRelatorioContratoPfError = document.getElementById('emissao-parametro-link-modelo-relatorio-contrato-pf-error');
       const linkModeloRelatorioContratoPjError = document.getElementById('emissao-parametro-link-modelo-relatorio-contrato-pj-error');
       const obs01Error = document.getElementById('emissao-parametro-obs-01-error');
@@ -309,8 +277,6 @@
       let currentPrefeituraImagem = '';
       let defaultAuditTemplateItem = null;
       let defaultAuditTemplatePromise = null;
-      const contratoDescricaoMaxLength = 20000;
-      const contratoCorpoMaxLength = 250000;
       const linkModeloRelatorioMaxLength = 4000;
       const defaultObjetoOrdemServico = `A prestacao de servicos de transporte escolar, nos termos do Edital de Chamamento Publico SMTT/DTP n 001/2022`;
       const defaultTituloEmissao = `SECRETARIA MUNICIPAL DE MOBILIDADE URBANA E TRANSPORTE\nDIVISAO DE TRANSPORTE ESCOLAR GRATUITO\nRua Joaquim Carlos, 655 - Bairro Pari - Sao Paulo/SP`;
@@ -333,14 +299,6 @@
 
         if (input === descricaoAditivoInput || input === corpoAditivoInput || input === assinaturasAditivoInput) {
           return 12000;
-        }
-
-        if (input === descricaoContratoPfInput || input === descricaoContratoPjInput) {
-          return contratoDescricaoMaxLength;
-        }
-
-        if (input === corpoContratoPfInput || input === corpoContratoPjInput) {
-          return contratoCorpoMaxLength;
         }
 
         return 4000;
@@ -376,10 +334,6 @@
         descricao_aditivo: descricaoAditivoInput.value,
         corpo_aditivo: corpoAditivoInput.value,
         assinaturas_aditivo: assinaturasAditivoInput.value,
-        descricao_contrato_pf: descricaoContratoPfInput.value,
-        descricao_contrato_pj: descricaoContratoPjInput.value,
-        corpo_contrato_pf: corpoContratoPfInput.value,
-        corpo_contrato_pj: corpoContratoPjInput.value,
         link_modelo_relatorio_contrato_pf: linkModeloRelatorioContratoPfInput.value,
         link_modelo_relatorio_contrato_pj: linkModeloRelatorioContratoPjInput.value,
         titulo_emissao: tituloEmissaoInput.value,
@@ -533,10 +487,6 @@
         descricaoAditivoError.textContent = '';
         corpoAditivoError.textContent = '';
         assinaturasAditivoError.textContent = '';
-        descricaoContratoPfError.textContent = '';
-        descricaoContratoPjError.textContent = '';
-        corpoContratoPfError.textContent = '';
-        corpoContratoPjError.textContent = '';
         linkModeloRelatorioContratoPfError.textContent = '';
         linkModeloRelatorioContratoPjError.textContent = '';
         obs01Error.textContent = '';
@@ -578,7 +528,7 @@
       };
 
       const setFormReadOnly = (isReadOnly) => {
-        [dataReferenciaInput, editalInput, objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, descricaoContratoPfInput, descricaoContratoPjInput, corpoContratoPfInput, corpoContratoPjInput, linkModeloRelatorioContratoPfInput, linkModeloRelatorioContratoPjInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
+        [dataReferenciaInput, editalInput, objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, linkModeloRelatorioContratoPfInput, linkModeloRelatorioContratoPjInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
           input.readOnly = isReadOnly;
         });
         prefeituraImagemInput.disabled = isReadOnly;
@@ -613,10 +563,6 @@
         descricaoAditivoInput.value = defaultDescricaoAditivo;
         corpoAditivoInput.value = defaultCorpoAditivo;
         assinaturasAditivoInput.value = defaultAssinaturasAditivo;
-        descricaoContratoPfInput.value = '';
-        descricaoContratoPjInput.value = '';
-        corpoContratoPfInput.value = '';
-        corpoContratoPjInput.value = '';
         linkModeloRelatorioContratoPfInput.value = '';
         linkModeloRelatorioContratoPjInput.value = '';
         tituloEmissaoInput.value = defaultTituloEmissao;
@@ -724,10 +670,6 @@
         descricaoAditivoInput.value = item.descricao_aditivo || defaultDescricaoAditivo;
         corpoAditivoInput.value = item.corpo_aditivo || defaultCorpoAditivo;
         assinaturasAditivoInput.value = item.assinaturas_aditivo || defaultAssinaturasAditivo;
-        descricaoContratoPfInput.value = item.descricao_contrato_pf || '';
-        descricaoContratoPjInput.value = item.descricao_contrato_pj || '';
-        corpoContratoPfInput.value = item.corpo_contrato_pf || '';
-        corpoContratoPjInput.value = item.corpo_contrato_pj || '';
         linkModeloRelatorioContratoPfInput.value = item.link_modelo_relatorio_contrato_pf || '';
         linkModeloRelatorioContratoPjInput.value = item.link_modelo_relatorio_contrato_pj || '';
         obs01Input.value = item.obs_01_emissao || '';
@@ -752,10 +694,6 @@
         descricaoAditivoInput.value = defaultDescricaoAditivo;
         corpoAditivoInput.value = defaultCorpoAditivo;
         assinaturasAditivoInput.value = defaultAssinaturasAditivo;
-        descricaoContratoPfInput.value = '';
-        descricaoContratoPjInput.value = '';
-        corpoContratoPfInput.value = '';
-        corpoContratoPjInput.value = '';
         linkModeloRelatorioContratoPfInput.value = '';
         linkModeloRelatorioContratoPjInput.value = '';
         tituloEmissaoInput.value = defaultTituloEmissao;
@@ -783,7 +721,7 @@
       };
 
       const handleDelete = async (item) => {
-        if (!window.confirm(`Excluir o parametro de emissao com data ${item.data_referencia}?`)) {
+        if (!window.confirm(`Excluir o parametro geral com data ${item.data_referencia}?`)) {
           return;
         }
 
@@ -859,7 +797,7 @@
         });
       });
 
-      [objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, descricaoContratoPfInput, descricaoContratoPjInput, corpoContratoPfInput, corpoContratoPjInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
+      [objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, obs01Input, obs02Input, rodapeInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
         input.addEventListener('input', () => {
           input.value = normalizeTextarea(input.value, getTextareaMaxLength(input));
         });
@@ -899,7 +837,7 @@
         renderDefaultAuditPanel();
       });
 
-      [objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, descricaoContratoPfInput, descricaoContratoPjInput, corpoContratoPfInput, corpoContratoPjInput, linkModeloRelatorioContratoPfInput, linkModeloRelatorioContratoPjInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
+      [objetoInput, objetoLicitacaoInput, credencianteInput, tituloAditivoInput, termoSmtInput, descricaoAditivoInput, corpoAditivoInput, assinaturasAditivoInput, linkModeloRelatorioContratoPfInput, linkModeloRelatorioContratoPjInput, tituloEmissaoInput, diretorEmissaoInput, textoDespachoInput].forEach((input) => {
         input.addEventListener('input', () => {
           if (formMode !== 'create') {
             renderDefaultAuditPanel();
@@ -926,10 +864,6 @@
         const descricaoAditivo = normalizeTextarea(descricaoAditivoInput.value, 12000);
         const corpoAditivo = normalizeTextarea(corpoAditivoInput.value, 12000);
         const assinaturasAditivo = normalizeTextarea(assinaturasAditivoInput.value, 12000);
-        const descricaoContratoPf = normalizeTextarea(descricaoContratoPfInput.value, contratoDescricaoMaxLength);
-        const descricaoContratoPj = normalizeTextarea(descricaoContratoPjInput.value, contratoDescricaoMaxLength);
-        const corpoContratoPf = normalizeTextarea(corpoContratoPfInput.value, contratoCorpoMaxLength);
-        const corpoContratoPj = normalizeTextarea(corpoContratoPjInput.value, contratoCorpoMaxLength);
         const linkModeloRelatorioContratoPf = normalizeText(linkModeloRelatorioContratoPfInput.value, linkModeloRelatorioMaxLength);
         const linkModeloRelatorioContratoPj = normalizeText(linkModeloRelatorioContratoPjInput.value, linkModeloRelatorioMaxLength);
         const obs01Emissao = normalizeTextarea(obs01Input.value, 4000);
@@ -950,10 +884,6 @@
         descricaoAditivoInput.value = descricaoAditivo;
         corpoAditivoInput.value = corpoAditivo;
         assinaturasAditivoInput.value = assinaturasAditivo;
-        descricaoContratoPfInput.value = descricaoContratoPf;
-        descricaoContratoPjInput.value = descricaoContratoPj;
-        corpoContratoPfInput.value = corpoContratoPf;
-        corpoContratoPjInput.value = corpoContratoPj;
         linkModeloRelatorioContratoPfInput.value = linkModeloRelatorioContratoPf;
         linkModeloRelatorioContratoPjInput.value = linkModeloRelatorioContratoPj;
         obs01Input.value = obs01Emissao;
@@ -1067,10 +997,6 @@
               descricaoAditivo,
               corpoAditivo,
               assinaturasAditivo,
-              descricaoContratoPf,
-              descricaoContratoPj,
-              corpoContratoPf,
-              corpoContratoPj,
               linkModeloRelatorioContratoPf,
               linkModeloRelatorioContratoPj,
               obs01Emissao,
@@ -1086,7 +1012,7 @@
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
-            throw new Error(payload.message || 'Falha ao gravar parametro de emissao.');
+            throw new Error(payload.message || 'Falha ao gravar parametro geral.');
           }
 
           const savedItem = payload.item;
@@ -1098,7 +1024,7 @@
           hideForm();
           await loadItems();
         } catch (error) {
-          const message = getRequestErrorMessage(error, 'Falha ao gravar parametro de emissao.');
+          const message = getRequestErrorMessage(error, 'Falha ao gravar parametro geral.');
           feedback.textContent = message;
           feedback.classList.add('dsc-feedback-error');
           showBanner(message, 'error');

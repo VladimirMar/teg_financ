@@ -12,7 +12,8 @@
         max-width: 1600px;
       }
 
-      #credenciamento-termo-aditivo-panel {
+      #credenciamento-termo-aditivo-panel,
+      #credenciamento-termo-contrato-panel {
         width: min(100%, 1080px);
         max-height: min(82vh, 820px);
         overflow: auto;
@@ -21,7 +22,8 @@
         box-shadow: 0 24px 54px rgba(15, 23, 42, 0.22);
       }
 
-      #credenciamento-termo-aditivo-panel .dsc-popup-footer-sticky {
+      #credenciamento-termo-aditivo-panel .dsc-popup-footer-sticky,
+      #credenciamento-termo-contrato-panel .dsc-popup-footer-sticky {
         position: static !important;
         bottom: auto !important;
         z-index: auto !important;
@@ -29,7 +31,8 @@
         padding: 14px 0 10px;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento {
         max-width: none;
         margin: 0;
         padding: 0;
@@ -42,67 +45,77 @@
         line-height: 1.15;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-header {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-header,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-header {
         display: grid;
         gap: 8pt;
         margin: 0 0 10pt;
         text-align: center;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-logo-wrap {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-logo-wrap,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-logo-wrap {
         text-align: center;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-logo {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-logo,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-logo {
         max-width: 120pt;
         max-height: 72pt;
         object-fit: contain;
         display: inline-block;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-title-line {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-title-line,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-title-line {
         margin: 0;
         font-size: 10pt;
         font-weight: 700;
         line-height: 1.15;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-centered-header {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-centered-header,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-centered-header {
         display: grid;
         gap: 2pt;
         margin-top: 8pt;
         text-align: center;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-centered-process {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-centered-process,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-centered-process {
         margin: 0;
         font-size: 12pt;
         font-weight: 700;
         text-transform: uppercase;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-centered-term {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-centered-term,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-centered-term {
         margin: 0;
         font-size: 10pt;
         font-weight: 700;
         text-transform: uppercase;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-centered-title {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-centered-title,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-centered-title {
         margin: 6pt 0 0;
         font-size: 11pt;
         font-weight: 700;
         text-transform: uppercase;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-opening-lead {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-opening-lead,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-opening-lead {
         margin: 0 0 12pt;
         padding: 10pt 12pt;
         border: 1px solid #d4dde9;
         background: #f8fafc;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-highlight {
         display: table;
         width: 100%;
         margin: 0 0 8pt;
@@ -110,22 +123,28 @@
         border-spacing: 0 5pt;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-compact {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-compact,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-highlight-compact {
         margin-bottom: 12pt;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-field {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-field,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-highlight-field {
         display: table-row;
       }
 
       #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-field > span,
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-field > strong {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-field > strong,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-highlight-field > span,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-highlight-field > strong {
         display: table-cell;
         vertical-align: top;
       }
 
       #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-label,
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-field-label {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-field-label,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-highlight-label,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-field-label {
         width: 180pt;
         padding-right: 12pt;
         font-size: 9.5pt;
@@ -136,14 +155,17 @@
       }
 
       #credenciamento-termo-aditivo-content .dsc-emissao-documento-highlight-value,
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-field-value {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-field-value,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-highlight-value,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-field-value {
         font-size: 12pt;
         font-weight: 700;
         line-height: 1.15;
         color: #111827;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-paragraph {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-paragraph,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-paragraph {
         margin: 0 0 8pt;
         font-family: Aptos, Arial, Helvetica, sans-serif;
         font-size: 12pt;
@@ -153,36 +175,43 @@
         color: #111827;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-opening-paragraph {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-opening-paragraph,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-opening-paragraph {
         margin: 0;
         font-weight: 600;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-emissao-documento-legal-body .dsc-emissao-documento-paragraph {
+      #credenciamento-termo-aditivo-content .dsc-emissao-documento-legal-body .dsc-emissao-documento-paragraph,
+      #credenciamento-termo-contrato-content .dsc-emissao-documento-legal-body .dsc-emissao-documento-paragraph {
         margin-bottom: 10pt;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-block {
+      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-block,
+      #credenciamento-termo-contrato-content .dsc-aditivo-signature-block {
         margin-top: 18pt;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-note {
+      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-note,
+      #credenciamento-termo-contrato-content .dsc-aditivo-signature-note {
         margin: 0 0 2pt;
         font-size: 10pt;
         font-style: italic;
         font-weight: 700;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-label {
+      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-label,
+      #credenciamento-termo-contrato-content .dsc-aditivo-signature-label {
         margin: 0 0 10pt;
         font-size: 10pt;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-spacer {
+      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-spacer,
+      #credenciamento-termo-contrato-content .dsc-aditivo-signature-spacer {
         height: 18pt;
       }
 
-      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-line {
+      #credenciamento-termo-aditivo-content .dsc-aditivo-signature-line,
+      #credenciamento-termo-contrato-content .dsc-aditivo-signature-line {
         height: 0;
         margin: 10pt 0 6pt;
         border-top: 1px solid #111827;
@@ -212,7 +241,8 @@
       }
 
       @media (max-width: 768px) {
-        #credenciamento-termo-aditivo-panel {
+        #credenciamento-termo-aditivo-panel,
+        #credenciamento-termo-contrato-panel {
           width: 100%;
           max-height: min(86vh, 700px);
         }
@@ -578,6 +608,7 @@
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-credenciamento-termo-button">Salvar credenciamento termo</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="show-credenciamento-termo-despacho-button">Despacho da Publicacao</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="show-credenciamento-termo-aditivo-button">Termo Aditivo</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="emit-credenciamento-termo-contrato-button">Emiss&atilde;o Contrato</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-credenciamento-termo-button">Cancelar</button>
               </div>
 
@@ -627,6 +658,28 @@
                 </div>
 
                 <p class="dsc-feedback" id="credenciamento-termo-aditivo-feedback"></p>
+              </section>
+            </div>
+
+            <div class="dsc-summary-overlay dsc-hidden" id="credenciamento-termo-contrato-modal" aria-hidden="true">
+              <section class="dsc-card dsc-hidden" id="credenciamento-termo-contrato-panel" role="dialog" aria-modal="true" aria-labelledby="credenciamento-termo-contrato-title">
+                <div class="dsc-ordem-servico-summary-header">
+                  <div>
+                    <h2 id="credenciamento-termo-contrato-title">Emissao Contrato</h2>
+                    <p class="dsc-ordem-servico-summary-subtitle" id="credenciamento-termo-contrato-subtitle">Contrato ainda nao gerado.</p>
+                  </div>
+                  <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-credenciamento-termo-contrato-button" aria-label="Fechar emissao contrato">X</button>
+                </div>
+
+                <div id="credenciamento-termo-contrato-content"></div>
+
+                <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
+                  <button type="button" class="dsc-btn dsc-btn-blue" id="print-credenciamento-termo-contrato-button">Imprimir</button>
+                  <button type="button" class="dsc-btn dsc-btn-white" id="download-credenciamento-termo-contrato-doc-button">Gerar .docx</button>
+                  <button type="button" class="dsc-btn dsc-btn-white" id="dismiss-credenciamento-termo-contrato-button">Fechar</button>
+                </div>
+
+                <p class="dsc-feedback" id="credenciamento-termo-contrato-feedback"></p>
               </section>
             </div>
 
@@ -695,6 +748,7 @@
       const cancelButton = document.getElementById('cancel-credenciamento-termo-button');
       const showDespachoButton = document.getElementById('show-credenciamento-termo-despacho-button');
       const showAditivoButton = document.getElementById('show-credenciamento-termo-aditivo-button');
+      const emitContratoButton = document.getElementById('emit-credenciamento-termo-contrato-button');
       const closeFormModalButton = document.getElementById('close-credenciamento-termo-form-modal-button');
       const importButton = document.getElementById('open-credenciamento-termo-import-button');
       const rejectionButton = document.getElementById('open-credenciamento-termo-rejections-button');
@@ -772,6 +826,16 @@
       const dismissAditivoButton = document.getElementById('dismiss-credenciamento-termo-aditivo-button');
       const printAditivoButton = document.getElementById('print-credenciamento-termo-aditivo-button');
       const downloadAditivoDocButton = document.getElementById('download-credenciamento-termo-aditivo-doc-button');
+      const contratoModal = document.getElementById('credenciamento-termo-contrato-modal');
+      const contratoPanel = document.getElementById('credenciamento-termo-contrato-panel');
+      const contratoTitle = document.getElementById('credenciamento-termo-contrato-title');
+      const contratoSubtitle = document.getElementById('credenciamento-termo-contrato-subtitle');
+      const contratoContent = document.getElementById('credenciamento-termo-contrato-content');
+      const contratoFeedback = document.getElementById('credenciamento-termo-contrato-feedback');
+      const closeContratoButton = document.getElementById('close-credenciamento-termo-contrato-button');
+      const dismissContratoButton = document.getElementById('dismiss-credenciamento-termo-contrato-button');
+      const printContratoButton = document.getElementById('print-credenciamento-termo-contrato-button');
+      const downloadContratoDocButton = document.getElementById('download-credenciamento-termo-contrato-doc-button');
 
       const errors = {
         codigoXml: document.getElementById('credenciamento-termo-codigo-xml-error'),
@@ -859,6 +923,10 @@
       let lastTermoAditivoMarkup = '';
       let lastTermoAditivoPrintMarkup = '';
       let lastTermoAditivoFileName = 'termo-aditivo.doc';
+      let lastTermoContratoMarkup = '';
+      let lastTermoContratoPrintMarkup = '';
+      let lastTermoContratoFileName = 'contrato-termo.docx';
+      let lastTermoContratoRequestPayload = null;
       let nextAditivoRequestId = 0;
       let inheritedAditivoTermoAdesao = '';
 
@@ -1454,6 +1522,87 @@
         const cleanedAditivo = String(aditivo ?? '').trim().replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '');
         return `${cleanedTermo || 'termo'}${cleanedAditivo ? `-aditivo-${cleanedAditivo}` : '-aditivo'}.doc`;
       };
+      const buildTermoContratoFileName = (termoAdesao, tipoTermo) => {
+        const cleanedTermo = String(termoAdesao ?? '').trim().replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '');
+        const normalizedType = String(tipoTermo ?? '').trim().toUpperCase();
+        const suffix = normalizedType.includes('FISICA') ? 'pf' : 'pj';
+        return `${cleanedTermo || 'termo'}-contrato-${suffix}.doc`;
+      };
+      const buildContratoRequestPayload = (requestedDate) => ({
+        preview: true,
+        requestedDate,
+        codigoXml: String(codigoXmlInput.value || '').trim(),
+        termoAdesao: normalizeTermoAdesao(termoAdesaoInput.value),
+        sei: String(seiInput.value || '').trim(),
+        credenciado: String(credenciadoInput.value || '').trim(),
+        cnpjCpf: String(cnpjCpfInput.value || '').trim(),
+        tipoTermo: String(tipoTermoInput.value || '').trim(),
+        representante: String(representanteInput.value || '').trim(),
+        cpfRepresentante: String(cpfRepresentanteInput.value || '').trim(),
+        cep: String(cepEnderecoInput.value || '').trim(),
+        logradouro: String(logradouroInput.value || '').trim(),
+        bairro: String(bairroInput.value || '').trim(),
+        municipio: String(municipioInput.value || '').trim(),
+        inicioVigencia: normalizeReportDateKey(inicioVigenciaInput.value),
+        terminoVigencia: normalizeReportDateKey(terminoVigenciaInput.value),
+        compDataAditivo: normalizeReportDateKey(compDataAditivoInput.value),
+        dataPubAditivo: normalizeReportDateKey(dataPubAditivoInput.value),
+        dataPublicacao: normalizeReportDateKey(dataPublicacaoInput.value),
+        vencimentoGeral: normalizeReportDateKey(vencimentoGeralInput.value),
+        mesRenovacao: String(mesRenovacaoInput.value || '').trim(),
+        tpOptante: String(tpOptanteInput.value || '').trim(),
+        valorContrato: String(valorContratoInput.value || '').trim(),
+        valorContratoAtualizado: String(valorContratoAtualizadoInput.value || '').trim(),
+      });
+      const requestGeneratedContratoPreview = async (payload) => {
+        const response = await fetch('/api/termo/emitir-contrato', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+        const responseBody = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          throw new Error(responseBody?.message || 'Falha ao gerar a visualizacao do contrato.');
+        }
+
+        return responseBody;
+      };
+      const downloadGeneratedContratoDocx = async () => {
+        if (!lastTermoContratoRequestPayload) {
+          contratoFeedback.textContent = 'Gere o contrato antes de exportar o arquivo .docx.';
+          contratoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        const response = await fetch('/api/termo/emitir-contrato', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ...lastTermoContratoRequestPayload, preview: false }),
+        });
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          throw new Error(errorPayload?.message || 'Falha ao exportar o contrato.');
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = downloadUrl;
+        link.download = lastTermoContratoFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+      };
       const getTemplateLookupKey = (value) => String(value || '')
         .replace(/[<>]/g, '')
         .replace(/[_/]+/g, ' ')
@@ -1823,6 +1972,12 @@
         lastTermoAditivoPrintMarkup = '';
         lastTermoAditivoFileName = 'termo-aditivo.doc';
       };
+      const resetContratoState = () => {
+        lastTermoContratoMarkup = '';
+        lastTermoContratoPrintMarkup = '';
+        lastTermoContratoFileName = 'contrato-termo.docx';
+        lastTermoContratoRequestPayload = null;
+      };
       const hideDespacho = () => {
         despachoModal.classList.add('dsc-hidden');
         despachoModal.setAttribute('aria-hidden', 'true');
@@ -1835,10 +1990,21 @@
         aditivoPanel.classList.add('dsc-hidden');
         syncPopupPageState();
       };
+      const hideContrato = () => {
+        contratoModal.classList.add('dsc-hidden');
+        contratoModal.setAttribute('aria-hidden', 'true');
+        contratoPanel.classList.add('dsc-hidden');
+        syncPopupPageState();
+      };
       const resetAditivoScrollPosition = () => {
         aditivoModal.scrollTop = 0;
         aditivoPanel.scrollTop = 0;
         aditivoContent.scrollTop = 0;
+      };
+      const resetContratoScrollPosition = () => {
+        contratoModal.scrollTop = 0;
+        contratoPanel.scrollTop = 0;
+        contratoContent.scrollTop = 0;
       };
       const buildDespachoMarkup = ({ parametroItem, includePrefeituraImage = false, requestedDate }) => {
         const termoAdesao = formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento');
@@ -2051,6 +2217,106 @@
           </article>
         `;
       };
+      const buildTermoContratoMarkup = ({ parametroItem, includePrefeituraImage = false, requestedDate }) => {
+        const termoAdesao = formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento');
+        const processo = formatSummaryValue(seiInput.value, '');
+        const credenciado = formatSummaryValue(credenciadoInput.value);
+        const cnpjCpf = formatSummaryValue(cnpjCpfInput.value);
+        const representante = formatSummaryValue(representanteInput.value);
+        const cpfRepresentante = formatSummaryValue(cpfRepresentanteInput.value);
+        const logradouro = formatSummaryValue(logradouroInput.value);
+        const bairro = formatSummaryValue(bairroInput.value);
+        const municipio = formatSummaryValue(municipioInput.value);
+        const inicioVigencia = normalizeReportDateKey(inicioVigenciaInput.value);
+        const dataPublicacao = normalizeReportDateKey(dataPublicacaoInput.value || requestedDate);
+        const valorContratoAtual = String(valorContratoAtualizadoInput.value || '').trim();
+        const valorPrevistoBase = valorContratoAtual && !/[A-Za-zÀ-ÿ]/.test(valorContratoAtual)
+          ? valorContratoAtual
+          : valorContratoInput.value;
+        const valorPrevisto = formatCurrencyDisplay(valorPrevistoBase);
+        const tipoTermo = formatSummaryValue(tipoTermoInput.value, 'Pessoa Juridica');
+        const isPessoaFisica = /fisica/i.test(tipoTermo) || String(cnpjCpfInput.value || '').replace(/\D/g, '').length === 11;
+        const termoSmt = formatSummaryValue(parametroItem?.termo_smt, 'Termo SMT nao informado.');
+        const credenciante = formatSummaryValue(parametroItem?.credenciante, 'Credenciante nao informado.');
+        const tituloEmissao = String(parametroItem?.titulo_emissao || '').trim();
+        const prefeituraImagem = String(parametroItem?.prefeitura_imagem || '').trim();
+        const linkModeloContrato = formatSummaryValue(
+          isPessoaFisica ? parametroItem?.link_modelo_relatorio_contrato_pf : parametroItem?.link_modelo_relatorio_contrato_pj,
+          'Modelo Word do contrato nao informado.',
+        );
+        const replacements = {
+          processo,
+          edital: formatSummaryValue(parametroItem?.edital_chamamento_publico),
+          inicio_vigencia: formatSummaryValue(inicioVigencia, 'Nao informado'),
+          valor_previsto: valorPrevisto,
+          valor_contrato: valorPrevisto,
+          valor_contrato_atualizado: formatSummaryValue(valorContratoAtual || valorPrevistoBase),
+          credenciado,
+          cnpj_cpf: cnpjCpf,
+          cpf_cnpj: cnpjCpf,
+          termo_adesao: termoAdesao,
+          termo: termoAdesao,
+          representante,
+          cpf_representante: cpfRepresentante,
+          logradouro,
+          bairro,
+          municipio,
+          data_publicacao: formatSummaryValue(dataPublicacao),
+          credenciante,
+          sei: processo,
+        };
+        const descricaoContratoParagraphs = [
+          `A emissao do contrato para ${credenciado} utiliza o modelo Word configurado em Parametros gerais para ${tipoTermo.toLowerCase()}.`,
+          `Processo ${processo || 'nao informado'}, termo de adesao ${termoAdesao}, inicio de vigencia ${formatSummaryValue(inicioVigencia, 'Nao informado')} e valor previsto ${valorPrevisto || 'Nao informado'}.`,
+          `Modelo Word configurado: ${linkModeloContrato}.`,
+        ];
+        const [openingParagraph, ...remainingDescricaoParagraphs] = descricaoContratoParagraphs;
+
+        lastTermoContratoFileName = buildTermoContratoFileName(termoAdesao, tipoTermo);
+
+        return `
+          <article class="dsc-emissao-documento">
+            <header class="dsc-emissao-documento-header">
+              ${includePrefeituraImage && prefeituraImagem ? `<div class="dsc-emissao-documento-logo-wrap"><img class="dsc-emissao-documento-logo" src="${escapeHtml(prefeituraImagem)}" alt="Imagem da Prefeitura" /></div>` : ''}
+              ${tituloEmissao ? `<div class="dsc-emissao-documento-title-block">${buildTitleBlockHtml(tituloEmissao)}</div>` : ''}
+              <div class="dsc-emissao-documento-centered-header">
+                ${processo ? `<p class="dsc-emissao-documento-centered-process">PROCESSO ${escapeHtml(processo).toUpperCase()}</p>` : ''}
+                <p class="dsc-emissao-documento-centered-term">${escapeHtml(termoSmt)}</p>
+                <p class="dsc-emissao-documento-centered-title">CONTRATO</p>
+              </div>
+            </header>
+
+            <div class="dsc-emissao-documento-highlight dsc-emissao-documento-highlight-compact">
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-field-label">Credenciante</span>
+                <strong class="dsc-emissao-documento-field-value">${escapeHtml(credenciante)}</strong>
+              </div>
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-field-label">Credenciado</span>
+                <strong class="dsc-emissao-documento-field-value">${escapeHtml(credenciado)}</strong>
+              </div>
+              <div class="dsc-emissao-documento-highlight-field">
+                <span class="dsc-emissao-documento-field-label">Tipo de termo</span>
+                <strong class="dsc-emissao-documento-field-value">${escapeHtml(tipoTermo)}</strong>
+              </div>
+            </div>
+
+            ${openingParagraph ? `
+            <section class="dsc-emissao-documento-section dsc-emissao-documento-opening-lead">
+              <div class="dsc-emissao-documento-section-body">
+                <p class="dsc-emissao-documento-paragraph dsc-emissao-documento-opening-paragraph">${escapeHtml(openingParagraph)}</p>
+              </div>
+            </section>` : ''}
+
+            <section class="dsc-emissao-documento-section">
+              <div class="dsc-emissao-documento-section-body dsc-emissao-documento-legal-body">
+                ${remainingDescricaoParagraphs.map((paragraph) => `<p class="dsc-emissao-documento-paragraph">${escapeHtml(paragraph)}</p>`).join('')}
+                <p class="dsc-emissao-documento-paragraph">A geracao final do arquivo utiliza diretamente o modelo Word selecionado, com substituicao automatica dos placeholders do contrato.</p>
+              </div>
+            </section>
+          </article>
+        `;
+      };
       const buildTermoAditivoWordMarkup = (markup) => {
         const parser = new DOMParser();
         const documentNode = parser.parseFromString(markup, 'text/html');
@@ -2145,6 +2411,49 @@
     ${markup}
   </body>
 </html>`;
+      const buildTermoContratoDocumentHtml = (markup) => `<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Emissao Contrato</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        padding: 12px;
+        background: #ffffff;
+        color: #111827;
+        font-family: Aptos, Arial, Helvetica, sans-serif;
+        font-size: 12pt;
+        line-height: 1.15;
+      }
+      .dsc-emissao-documento { max-width: none; margin: 0; padding: 0; border: 0; box-shadow: none; background: #ffffff; }
+      .dsc-emissao-documento-header { display: grid; gap: 8pt; margin: 0 0 10pt; text-align: center; }
+      .dsc-emissao-documento-logo-wrap { text-align: center; }
+      .dsc-emissao-documento-logo { max-width: 120pt; max-height: 72pt; object-fit: contain; display: inline-block; }
+      .dsc-emissao-documento-title-line { margin: 0; font-size: 10pt; font-weight: 700; line-height: 1.15; }
+      .dsc-emissao-documento-centered-header { display: grid; gap: 2pt; margin-top: 8pt; text-align: center; }
+      .dsc-emissao-documento-centered-process { margin: 0; font-size: 12pt; font-weight: 700; text-transform: uppercase; }
+      .dsc-emissao-documento-centered-term { margin: 0; font-size: 10pt; font-weight: 700; text-transform: uppercase; }
+      .dsc-emissao-documento-centered-title { margin: 6pt 0 0; font-size: 11pt; font-weight: 700; text-transform: uppercase; }
+      .dsc-emissao-documento-opening-lead { margin: 0 0 12pt; padding: 10pt 12pt; border: 1px solid #d4dde9; background: #f8fafc; }
+      .dsc-emissao-documento-highlight { display: table; width: 100%; margin: 0 0 8pt; border-collapse: separate; border-spacing: 0 5pt; }
+      .dsc-emissao-documento-highlight-compact { margin-bottom: 12pt; }
+      .dsc-emissao-documento-highlight-field { display: table-row; }
+      .dsc-emissao-documento-highlight-field > span, .dsc-emissao-documento-highlight-field > strong { display: table-cell; vertical-align: top; }
+      .dsc-emissao-documento-field-label { width: 180pt; padding-right: 12pt; font-size: 9.5pt; font-weight: 700; text-transform: uppercase; }
+      .dsc-emissao-documento-field-value { font-size: 12pt; font-weight: 700; }
+      .dsc-emissao-documento-paragraph { margin: 0 0 8pt; text-align: justify; text-justify: inter-word; }
+      .dsc-emissao-documento-opening-paragraph { margin: 0; font-weight: 600; }
+      .dsc-emissao-documento-legal-body .dsc-emissao-documento-paragraph { margin-bottom: 10pt; }
+      @page { margin: 0.635cm; }
+      @media print { body { padding: 0; } }
+    </style>
+  </head>
+  <body>
+    ${markup}
+  </body>
+</html>`;
       const buildTermoAditivoDocExportHtml = (markup) => {
         const wordMarkup = buildTermoAditivoWordMarkup(markup);
 
@@ -2197,126 +2506,49 @@
   </body>
 </html>`;
       };
-      const downloadTermoAditivoAsDoc = () => {
-        if (!lastTermoAditivoMarkup) {
-          aditivoFeedback.textContent = 'Gere o termo aditivo antes de exportar o arquivo .doc.';
-          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
-          return;
-        }
+      const buildTermoContratoDocExportHtml = (markup) => {
+        const wordMarkup = buildTermoAditivoWordMarkup(markup);
 
-        const documentContent = buildTermoAditivoDocExportHtml(lastTermoAditivoMarkup);
-        const blob = new Blob(['\ufeff', documentContent], { type: 'application/msword' });
-        const downloadUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-
-        link.href = downloadUrl;
-        link.download = lastTermoAditivoFileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(downloadUrl);
-        aditivoFeedback.textContent = `Arquivo ${lastTermoAditivoFileName} gerado com sucesso.`;
-        aditivoFeedback.className = 'dsc-feedback dsc-feedback-success';
-      };
-      const handlePrintAditivo = () => {
-        if (!lastTermoAditivoMarkup) {
-          aditivoFeedback.textContent = 'Gere o termo aditivo antes de imprimir.';
-          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
-          return;
-        }
-
-        let printFrame = document.getElementById('credenciamento-termo-aditivo-print-frame');
-
-        if (!(printFrame instanceof HTMLIFrameElement)) {
-          printFrame = document.createElement('iframe');
-          printFrame.id = 'credenciamento-termo-aditivo-print-frame';
-          printFrame.style.position = 'fixed';
-          printFrame.style.right = '0';
-          printFrame.style.bottom = '0';
-          printFrame.style.width = '0';
-          printFrame.style.height = '0';
-          printFrame.style.border = '0';
-          printFrame.style.opacity = '0';
-          printFrame.setAttribute('aria-hidden', 'true');
-          document.body.appendChild(printFrame);
-        }
-
-        printFrame.onload = () => {
-          const printWindow = printFrame.contentWindow;
-
-          if (!printWindow) {
-            aditivoFeedback.textContent = 'Nao foi possivel abrir a visualizacao de impressao.';
-            aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
-            return;
-          }
-
-          printWindow.focus();
-          printWindow.print();
-          aditivoFeedback.textContent = 'Visualizacao de impressao preparada.';
-          aditivoFeedback.className = 'dsc-feedback dsc-feedback-success';
-        };
-
-        printFrame.srcdoc = buildTermoAditivoDocumentHtml(lastTermoAditivoPrintMarkup || lastTermoAditivoMarkup);
-      };
-      const handleShowAditivo = async () => {
-        const requestedDate = normalizeReportDateKey(inicioVigenciaInput.value || dataPubAditivoInput.value || dataPublicacaoInput.value);
-
-        aditivoModal.classList.remove('dsc-hidden');
-        aditivoModal.setAttribute('aria-hidden', 'false');
-        aditivoPanel.classList.remove('dsc-hidden');
-        syncPopupPageState();
-        resetAditivoScrollPosition();
-
-        if (!requestedDate) {
-          aditivoContent.innerHTML = '';
-          aditivoSubtitle.textContent = 'Informe a data de inicio de vigencia para gerar o termo aditivo.';
-          aditivoFeedback.textContent = 'Data de inicio de vigencia obrigatoria.';
-          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
-          resetAditivoState();
-          return;
-        }
-
-        showAditivoButton.disabled = true;
-        showAditivoButton.textContent = 'Gerando termo aditivo...';
-        aditivoSubtitle.textContent = `Montando termo aditivo para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}...`;
-        aditivoFeedback.textContent = 'Buscando parametro de emissao...';
-        aditivoFeedback.className = 'dsc-feedback';
-        aditivoContent.innerHTML = '';
-
-        try {
-          const parametroItem = await resolveEmissaoParametroByReferenceDate(requestedDate);
-
-          if (!parametroItem) {
-            throw new Error('Parametro de emissao nao encontrado.');
-          }
-
-          aditivoTitle.textContent = 'Termo Aditivo';
-          lastTermoAditivoMarkup = buildTermoAditivoMarkup({ parametroItem, includePrefeituraImage: false, requestedDate });
-          lastTermoAditivoPrintMarkup = buildTermoAditivoMarkup({ parametroItem, includePrefeituraImage: true, requestedDate });
-          aditivoSubtitle.textContent = `Termo aditivo pronto para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}.`;
-          aditivoContent.innerHTML = lastTermoAditivoMarkup;
-          resetAditivoScrollPosition();
-          window.requestAnimationFrame(() => {
-            const openingParagraph = aditivoContent.querySelector('.dsc-emissao-documento-opening-paragraph');
-
-            if (openingParagraph instanceof HTMLElement) {
-              openingParagraph.scrollIntoView({ block: 'start' });
-            }
-
-            resetAditivoScrollPosition();
-          });
-          aditivoFeedback.textContent = '';
-          aditivoFeedback.className = 'dsc-feedback';
-        } catch (error) {
-          aditivoContent.innerHTML = '';
-          aditivoFeedback.textContent = error instanceof Error ? error.message : 'Falha ao gerar o termo aditivo.';
-          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
-          aditivoSubtitle.textContent = 'Nao foi possivel gerar o termo aditivo.';
-          resetAditivoState();
-        } finally {
-          showAditivoButton.disabled = false;
-          showAditivoButton.textContent = 'Termo Aditivo';
-        }
+        return `<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Emissao Contrato</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        color: #000000;
+        font-family: Tahoma, Arial, Helvetica, sans-serif;
+        font-size: 9pt;
+        line-height: 1.15;
+      }
+      .dsc-despacho-doc-model { margin: 0; padding: 0; }
+      .dsc-despacho-doc-title-block { margin: 0 0 12pt; }
+      .dsc-despacho-doc-title-line { margin: 0; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 9pt; font-weight: 700; text-align: left; }
+      .dsc-aditivo-doc-header { margin: 0 0 12pt; }
+      .dsc-aditivo-doc-process-line { margin: 0 0 4pt; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 10.5pt; font-weight: 700; text-align: center; text-transform: uppercase; }
+      .dsc-aditivo-doc-title { margin: 6pt 0 0; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 9pt; font-weight: 700; text-align: center; text-transform: uppercase; }
+      .dsc-aditivo-doc-meta { margin: 0 0 12pt; }
+      .dsc-aditivo-doc-meta-line { margin: 0 0 4pt; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 9pt; text-align: left; }
+      .dsc-aditivo-doc-meta-label { display: inline-block; min-width: 110pt; font-weight: 700; text-transform: uppercase; }
+      .dsc-aditivo-doc-meta-value { display: inline; font-weight: 700; }
+      .dsc-despacho-doc-body { margin: 0; }
+      .dsc-despacho-doc-paragraph { margin: 0 0 8pt; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 9pt; text-align: justify; text-justify: inter-word; }
+      @page {
+        margin-top: 0.635cm;
+        margin-right: 0.635cm;
+        margin-bottom: 1.43cm;
+        margin-left: 0.635cm;
+      }
+    </style>
+  </head>
+  <body>
+    ${wordMarkup}
+  </body>
+</html>`;
       };
       const downloadDespachoAsDoc = () => {
         if (!lastTermoDespachoMarkup) {
@@ -2379,6 +2611,184 @@
 
         printFrame.srcdoc = buildDespachoDocumentHtml(lastTermoDespachoPrintMarkup || lastTermoDespachoMarkup);
       };
+      const downloadTermoAditivoAsDoc = () => {
+        if (!lastTermoAditivoMarkup) {
+          aditivoFeedback.textContent = 'Gere o termo aditivo antes de exportar o arquivo .doc.';
+          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        const documentContent = buildTermoAditivoDocExportHtml(lastTermoAditivoMarkup);
+        const blob = new Blob(['\ufeff', documentContent], { type: 'application/msword' });
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = downloadUrl;
+        link.download = lastTermoAditivoFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+        aditivoFeedback.textContent = `Arquivo ${lastTermoAditivoFileName} gerado com sucesso.`;
+        aditivoFeedback.className = 'dsc-feedback dsc-feedback-success';
+      };
+      const handlePrintAditivo = () => {
+        if (!lastTermoAditivoMarkup) {
+          aditivoFeedback.textContent = 'Gere o termo aditivo antes de imprimir.';
+          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        let printFrame = document.getElementById('credenciamento-termo-aditivo-print-frame');
+
+        if (!(printFrame instanceof HTMLIFrameElement)) {
+          printFrame = document.createElement('iframe');
+          printFrame.id = 'credenciamento-termo-aditivo-print-frame';
+          printFrame.style.position = 'fixed';
+          printFrame.style.right = '0';
+          printFrame.style.bottom = '0';
+          printFrame.style.width = '0';
+          printFrame.style.height = '0';
+          printFrame.style.border = '0';
+          printFrame.style.opacity = '0';
+          printFrame.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(printFrame);
+        }
+
+        printFrame.onload = () => {
+          const printWindow = printFrame.contentWindow;
+
+          if (!printWindow) {
+            aditivoFeedback.textContent = 'Nao foi possivel abrir a visualizacao de impressao.';
+            aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
+            return;
+          }
+
+          printWindow.focus();
+          printWindow.print();
+          aditivoFeedback.textContent = 'Visualizacao de impressao preparada.';
+          aditivoFeedback.className = 'dsc-feedback dsc-feedback-success';
+        };
+
+        printFrame.srcdoc = buildTermoAditivoDocumentHtml(lastTermoAditivoPrintMarkup || lastTermoAditivoMarkup);
+      };
+      const downloadTermoContratoAsDoc = () => {
+        if (!lastTermoContratoMarkup) {
+          contratoFeedback.textContent = 'Gere o contrato antes de exportar o arquivo .docx.';
+          contratoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        downloadGeneratedContratoDocx()
+          .then(() => {
+            contratoFeedback.textContent = `Arquivo ${lastTermoContratoFileName} gerado com sucesso.`;
+            contratoFeedback.className = 'dsc-feedback dsc-feedback-success';
+          })
+          .catch((error) => {
+            contratoFeedback.textContent = error instanceof Error ? error.message : 'Falha ao exportar o contrato.';
+            contratoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          });
+      };
+      const handlePrintContrato = () => {
+        if (!lastTermoContratoMarkup) {
+          contratoFeedback.textContent = 'Gere o contrato antes de imprimir.';
+          contratoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        let printFrame = document.getElementById('credenciamento-termo-contrato-print-frame');
+
+        if (!(printFrame instanceof HTMLIFrameElement)) {
+          printFrame = document.createElement('iframe');
+          printFrame.id = 'credenciamento-termo-contrato-print-frame';
+          printFrame.style.position = 'fixed';
+          printFrame.style.right = '0';
+          printFrame.style.bottom = '0';
+          printFrame.style.width = '0';
+          printFrame.style.height = '0';
+          printFrame.style.border = '0';
+          printFrame.style.opacity = '0';
+          printFrame.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(printFrame);
+        }
+
+        printFrame.onload = () => {
+          const printWindow = printFrame.contentWindow;
+
+          if (!printWindow) {
+            contratoFeedback.textContent = 'Nao foi possivel abrir a visualizacao de impressao.';
+            contratoFeedback.className = 'dsc-feedback dsc-feedback-error';
+            return;
+          }
+
+          printWindow.focus();
+          printWindow.print();
+          contratoFeedback.textContent = 'Visualizacao de impressao preparada.';
+          contratoFeedback.className = 'dsc-feedback dsc-feedback-success';
+        };
+
+        printFrame.srcdoc = buildTermoContratoDocumentHtml(lastTermoContratoPrintMarkup || lastTermoContratoMarkup);
+      };
+      const handleShowAditivo = async () => {
+        const requestedDate = normalizeReportDateKey(inicioVigenciaInput.value || dataPubAditivoInput.value || dataPublicacaoInput.value);
+
+        aditivoModal.classList.remove('dsc-hidden');
+        aditivoModal.setAttribute('aria-hidden', 'false');
+        aditivoPanel.classList.remove('dsc-hidden');
+        syncPopupPageState();
+        resetAditivoScrollPosition();
+
+        if (!requestedDate) {
+          aditivoContent.innerHTML = '';
+          aditivoSubtitle.textContent = 'Informe a data de inicio de vigencia para gerar o termo aditivo.';
+          aditivoFeedback.textContent = 'Data de inicio de vigencia obrigatoria.';
+          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          resetAditivoState();
+          return;
+        }
+
+        showAditivoButton.disabled = true;
+        showAditivoButton.textContent = 'Gerando termo aditivo...';
+        aditivoSubtitle.textContent = `Montando termo aditivo para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}...`;
+        aditivoFeedback.textContent = 'Buscando parametro de emissao...';
+        aditivoFeedback.className = 'dsc-feedback';
+        aditivoContent.innerHTML = '';
+
+        try {
+          const parametroItem = await resolveEmissaoParametroByReferenceDate(requestedDate);
+
+          if (!parametroItem) {
+            throw new Error('Parametro de emissao nao encontrado.');
+          }
+
+          aditivoTitle.textContent = 'Termo Aditivo';
+          lastTermoAditivoMarkup = buildTermoAditivoMarkup({ parametroItem, includePrefeituraImage: false, requestedDate });
+          lastTermoAditivoPrintMarkup = buildTermoAditivoMarkup({ parametroItem, includePrefeituraImage: true, requestedDate });
+          aditivoSubtitle.textContent = `Termo aditivo pronto para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}.`;
+          aditivoContent.innerHTML = lastTermoAditivoMarkup;
+          resetAditivoScrollPosition();
+          window.requestAnimationFrame(() => {
+            const openingParagraph = aditivoContent.querySelector('.dsc-emissao-documento-opening-paragraph');
+
+            if (openingParagraph instanceof HTMLElement) {
+              openingParagraph.scrollIntoView({ block: 'start' });
+            }
+
+            resetAditivoScrollPosition();
+          });
+          aditivoFeedback.textContent = '';
+          aditivoFeedback.className = 'dsc-feedback';
+        } catch (error) {
+          aditivoContent.innerHTML = '';
+          aditivoFeedback.textContent = error instanceof Error ? error.message : 'Falha ao gerar o termo aditivo.';
+          aditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          aditivoSubtitle.textContent = 'Nao foi possivel gerar o termo aditivo.';
+          resetAditivoState();
+        } finally {
+          showAditivoButton.disabled = false;
+          showAditivoButton.textContent = 'Termo Aditivo';
+        }
+      };
       const handleShowDespacho = async () => {
         const requestedDate = normalizeReportDateKey(inicioVigenciaInput.value || dataPubAditivoInput.value || dataPublicacaoInput.value);
 
@@ -2425,6 +2835,79 @@
         } finally {
           showDespachoButton.disabled = false;
           showDespachoButton.textContent = 'Despacho da Publicacao';
+        }
+      };
+      const handleEmitContrato = async () => {
+        const requestedDate = normalizeReportDateKey(inicioVigenciaInput.value || dataPubAditivoInput.value || dataPublicacaoInput.value);
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+
+        resetMessages();
+        contratoModal.classList.remove('dsc-hidden');
+        contratoModal.setAttribute('aria-hidden', 'false');
+        contratoPanel.classList.remove('dsc-hidden');
+        syncPopupPageState();
+        resetContratoScrollPosition();
+
+        if (!requestedDate) {
+          contratoContent.innerHTML = '';
+          contratoSubtitle.textContent = 'Informe a data de inicio de vigencia para gerar o contrato.';
+          contratoFeedback.textContent = 'Data de inicio de vigencia obrigatoria.';
+          contratoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          resetContratoState();
+          return;
+        }
+
+        if (!termoAdesao) {
+          errors.termoAdesao.textContent = 'Informe o termo de adesao para emitir o contrato.';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          revealFirstFormError({ termoAdesao: errors.termoAdesao.textContent });
+          contratoContent.innerHTML = '';
+          contratoSubtitle.textContent = 'Nao foi possivel gerar o contrato.';
+          contratoFeedback.textContent = 'Informe o termo de adesao para emitir o contrato.';
+          contratoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          resetContratoState();
+          return;
+        }
+
+        emitContratoButton.disabled = true;
+        emitContratoButton.textContent = 'Gerando contrato...';
+        contratoTitle.textContent = 'Emissao Contrato';
+        contratoSubtitle.textContent = `Montando contrato para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}...`;
+        contratoFeedback.textContent = 'Buscando parametro de emissao...';
+        contratoFeedback.className = 'dsc-feedback';
+        contratoContent.innerHTML = '';
+
+        try {
+          const contractPayload = buildContratoRequestPayload(requestedDate);
+          const contractPreview = await requestGeneratedContratoPreview(contractPayload);
+
+          lastTermoContratoRequestPayload = contractPayload;
+          lastTermoContratoMarkup = String(contractPreview?.previewMarkup || '').trim();
+          lastTermoContratoPrintMarkup = lastTermoContratoMarkup;
+          lastTermoContratoFileName = String(contractPreview?.fileName || '').trim() || 'contrato-termo.docx';
+          contratoSubtitle.textContent = `Contrato pronto para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}.`;
+          contratoContent.innerHTML = lastTermoContratoMarkup;
+          resetContratoScrollPosition();
+          window.requestAnimationFrame(() => {
+            const openingParagraph = contratoContent.querySelector('.dsc-emissao-documento-paragraph');
+
+            if (openingParagraph instanceof HTMLElement) {
+              openingParagraph.scrollIntoView({ block: 'start' });
+            }
+
+            resetContratoScrollPosition();
+          });
+          contratoFeedback.textContent = '';
+          contratoFeedback.className = 'dsc-feedback';
+        } catch (error) {
+          contratoContent.innerHTML = '';
+          contratoFeedback.textContent = error instanceof Error ? error.message : 'Falha ao gerar contrato.';
+          contratoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          contratoSubtitle.textContent = 'Nao foi possivel gerar o contrato.';
+          resetContratoState();
+        } finally {
+          emitContratoButton.disabled = false;
+          emitContratoButton.textContent = 'Emissao Contrato';
         }
       };
 
@@ -2552,7 +3035,8 @@
           || !importModal.classList.contains('dsc-hidden')
           || !rejectionModal.classList.contains('dsc-hidden')
           || !despachoModal.classList.contains('dsc-hidden')
-          || !aditivoModal.classList.contains('dsc-hidden');
+          || !aditivoModal.classList.contains('dsc-hidden')
+          || !contratoModal.classList.contains('dsc-hidden');
         document.body.classList.toggle('dsc-popup-open', isPopupVisible);
       };
 
@@ -2587,6 +3071,7 @@
         resetMessages();
         resetDespachoState();
         resetAditivoState();
+        resetContratoState();
         inheritedAditivoTermoAdesao = '';
         applyCreateTermoDefaults();
       };
@@ -3085,6 +3570,9 @@
       showAditivoButton.addEventListener('click', () => {
         void handleShowAditivo();
       });
+      emitContratoButton.addEventListener('click', () => {
+        void handleEmitContrato();
+      });
       closeFormModalButton.addEventListener('click', hideForm);
       closeDespachoButton.addEventListener('click', hideDespacho);
       dismissDespachoButton.addEventListener('click', hideDespacho);
@@ -3094,6 +3582,10 @@
       dismissAditivoButton.addEventListener('click', hideAditivo);
       printAditivoButton.addEventListener('click', handlePrintAditivo);
       downloadAditivoDocButton.addEventListener('click', downloadTermoAditivoAsDoc);
+      closeContratoButton.addEventListener('click', hideContrato);
+      dismissContratoButton.addEventListener('click', hideContrato);
+      printContratoButton.addEventListener('click', handlePrintContrato);
+      downloadContratoDocButton.addEventListener('click', downloadTermoContratoAsDoc);
 
       importButton.addEventListener('click', () => {
         hidePanels();
@@ -3135,6 +3627,12 @@
         }
       });
 
+      contratoModal.addEventListener('click', (event) => {
+        if (event.target === contratoModal) {
+          hideContrato();
+        }
+      });
+
       document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') {
           return;
@@ -3162,6 +3660,11 @@
 
         if (!aditivoModal.classList.contains('dsc-hidden')) {
           hideAditivo();
+          return;
+        }
+
+        if (!contratoModal.classList.contains('dsc-hidden')) {
+          hideContrato();
         }
       });
 

@@ -18,6 +18,7 @@
     "verify:invalid-fixtures:condutor": "node scripts/verify-invalid-fixtures.mjs condutor",
     "verify:invalid-fixtures:credenciada": "node scripts/verify-invalid-fixtures.mjs credenciada",
     "verify:invalid-fixtures:veiculo": "node scripts/verify-invalid-fixtures.mjs veiculo",
+    "verify:credenciada:ceps": "node scripts/verify-credenciada-ceps.mjs",
     "smoke:api": "node scripts/smoke-api.mjs all",
     "smoke:api:condutor": "node scripts/smoke-api.mjs condutor",
     "smoke:api:credenciada": "node scripts/smoke-api.mjs credenciada",
@@ -26,6 +27,7 @@
   },
   "dependencies": {
     "fast-xml-parser": "^5.5.10",
+    "jszip": "^3.10.1",
     "pg": "^8.20.0",
     "react": "19",
     "react-dom": "19"
