@@ -22,6 +22,7 @@
                 <input class="dsc-form-control dsc-access-filter-input" id="ordem-servico-search" type="text" placeholder="Filtrar por termo, num OS, revisao, OS, credenciado, DRE, condutor, monitor ou CRM" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-ordem-servico-filter-button">Limpar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="open-ordem-servico-eol-button">Pendências EOL</button>
               </form>
             </div>
 
@@ -225,7 +226,15 @@
                   </label>
                 </div>
 
-                <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-bottom">
+                <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-bottom" style="grid-template-columns: max-content minmax(150px, 1fr) minmax(150px, 1fr) minmax(132px, 0.72fr) minmax(52px, 0.2fr); column-gap: 12px;">
+                  <div class="dsc-checkbox-field-compact" style="width: max-content; justify-self: start; align-self: start;">
+                    <label class="dsc-checkbox-field-compact-label" for="ordem-servico-possui-preposto" style="display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; white-space: nowrap;">
+                      <span style="font-weight: 700;">Preposto</span>
+                      <br />
+                      <input id="ordem-servico-possui-preposto" type="checkbox" />
+                    </label>
+                  </div>
+
                   <label class="dsc-field-group" for="ordem-servico-cpf-preposto">
                     <span>CPF preposto</span>
                     <input class="dsc-form-control" id="ordem-servico-cpf-preposto" type="text" inputmode="numeric" list="ordem-servico-cpf-preposto-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO PREPOSTO" maxlength="14" />
@@ -247,9 +256,9 @@
                     <div class="dsc-form-error" id="ordem-servico-preposto-inicio-error"></div>
                   </label>
 
-                  <label class="dsc-field-group" for="ordem-servico-preposto-dias" id="label-preposto-dias">
+                  <label class="dsc-field-group dsc-field-group-dias-compact" for="ordem-servico-preposto-dias" id="label-preposto-dias">
                     <span id="span-preposto-dias">Dias</span>
-                    <input class="dsc-form-control" id="ordem-servico-preposto-dias" type="text" inputmode="numeric" placeholder="0" maxlength="3" />
+                    <input class="dsc-form-control" id="ordem-servico-preposto-dias" type="text" inputmode="numeric" placeholder="0" maxlength="2" />
                     <div class="dsc-form-error" id="ordem-servico-preposto-dias-error"></div>
                   </label>
                 </div>
@@ -285,9 +294,17 @@
                 <h3 class="dsc-form-section-title">Dados operacionais</h3>
 
                 <div class="dsc-form-row dsc-form-row-ordem-servico-operacional">
+                  <div class="dsc-checkbox-field-compact" style="width: max-content; justify-self: start; align-self: start;">
+                    <label class="dsc-checkbox-field-compact-label" for="ordem-servico-alterar-relacao-crm-veiculo" style="display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; white-space: nowrap;">
+                      <span style="font-weight: 700;">Alterar relacao CRM</span>
+                      <br />
+                      <input id="ordem-servico-alterar-relacao-crm-veiculo" type="checkbox" />
+                    </label>
+                  </div>
+
                   <label class="dsc-field-group" for="ordem-servico-crm">
                     <span>CRM</span>
-                    <input class="dsc-form-control" id="ordem-servico-crm" type="text" list="ordem-servico-crm-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CRM DO VEICULO" maxlength="20" />
+                    <input class="dsc-form-control" id="ordem-servico-crm" type="text" list="ordem-servico-crm-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CRM DO VEICULO" maxlength="10" />
                     <datalist id="ordem-servico-crm-options">
                       <option value=""></option>
                     </datalist>
@@ -314,6 +331,39 @@
                     <input class="dsc-form-control" id="ordem-servico-data-encerramento" type="date" />
                     <div class="dsc-form-error" id="ordem-servico-data-encerramento-error"></div>
                   </label>
+                </div>
+
+                <div class="dsc-popup-overlay dsc-hidden" id="ordem-servico-relacao-crm-modal" aria-hidden="true">
+                  <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="ordem-servico-relacao-crm-title">
+                    <section class="dsc-card dsc-form dsc-access-form dsc-hidden" id="ordem-servico-relacao-crm-panel">
+                      <div class="dsc-popup-header dsc-popup-header-with-compact-close dsc-popup-header-sticky">
+                        <div class="dsc-popup-header-copy">
+                          <h2 id="ordem-servico-relacao-crm-title">ALTERACAO DA RELACAO CRM COM VEICULO</h2>
+                          <span id="ordem-servico-relacao-crm-subtitle">Consulte o CRM e a placa vinculada ao veiculo.</span>
+                        </div>
+                        <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-ordem-servico-relacao-crm-button" aria-label="Fechar alteracao da relacao CRM com veiculo">X</button>
+                      </div>
+
+                      <div class="dsc-form-row dsc-form-row-ordem-servico-operacional">
+                        <label class="dsc-field-group" for="ordem-servico-relacao-crm-input">
+                          <span>CRM</span>
+                          <input class="dsc-form-control" id="ordem-servico-relacao-crm-input" type="text" list="ordem-servico-crm-options" autocomplete="off" placeholder="CRM" maxlength="10" />
+                        </label>
+
+                        <label class="dsc-field-group" for="ordem-servico-relacao-placa-input">
+                          <span>Placa do veiculo</span>
+                          <input class="dsc-form-control" id="ordem-servico-relacao-placa-input" type="text" placeholder="PLACAS DO VEICULO" maxlength="8" />
+                        </label>
+                      </div>
+
+                      <div class="dsc-login-form-buttons dsc-access-form-buttons dsc-popup-footer-sticky">
+                        <button type="button" class="dsc-btn dsc-btn-white" id="cancel-ordem-servico-relacao-crm-button">Cancelar</button>
+                        <button type="button" class="dsc-btn dsc-btn-blue" id="apply-ordem-servico-relacao-crm-button">Aplicar</button>
+                      </div>
+
+                      <p class="dsc-feedback" id="ordem-servico-relacao-crm-feedback"></p>
+                    </section>
+                  </div>
                 </div>
               </section>
 
@@ -422,9 +472,20 @@
             </div>
 
             <div class="dsc-card dsc-access-grid-card">
-              <div class="dsc-access-grid-header">
-                <h2>Registros cadastrados</h2>
-                <span id="ordem-servico-total"></span>
+              <div class="dsc-access-grid-header" style="align-items: flex-start; justify-content: space-between; flex-direction: row;">
+                <div class="dsc-access-grid-header-copy">
+                  <h2>Registros cadastrados</h2>
+                  <span id="ordem-servico-total"></span>
+                </div>
+                <div class="dsc-grid-page-size-field" style="flex-direction: column; align-items: flex-end; justify-content: flex-start; margin-left: auto;">
+                  <span class="dsc-grid-page-size-label">Registros no grid</span>
+                  <select class="dsc-form-control" id="ordem-servico-page-size" style="padding: 0; min-height: 38px; border-radius: 14px;">
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                  </select>
+                </div>
               </div>
 
               <div class="dsc-access-grid-top-scroll" id="ordem-servico-grid-top-scroll" aria-hidden="true">
@@ -494,11 +555,13 @@
       const condutorInput = document.getElementById('ordem-servico-condutor');
       const openVinculoCondutorPopupButton = document.getElementById('open-vinculo-condutor-popup-button');
       const dataAdmissaoCondutorInput = document.getElementById('ordem-servico-data-admissao-condutor');
+      const possuiPrepostoInput = document.getElementById('ordem-servico-possui-preposto');
       const cpfPrepostoInput = document.getElementById('ordem-servico-cpf-preposto');
       const cpfPrepostoOptionsList = document.getElementById('ordem-servico-cpf-preposto-options');
       const prepostoCondutorInput = document.getElementById('ordem-servico-preposto-condutor');
       const prepostoInicioInput = document.getElementById('ordem-servico-preposto-inicio');
       const prepostoDiasInput = document.getElementById('ordem-servico-preposto-dias');
+      const alterarRelacaoCrmVeiculoInput = document.getElementById('ordem-servico-alterar-relacao-crm-veiculo');
       const crmInput = document.getElementById('ordem-servico-crm');
       const crmOptionsList = document.getElementById('ordem-servico-crm-options');
       const veiculoPlacasInput = document.getElementById('ordem-servico-veiculo-placas');
@@ -544,6 +607,7 @@
       const cancelButton = document.getElementById('cancel-ordem-servico-button');
       const filterForm = document.getElementById('ordem-servico-filter-form');
       const clearFilterButton = document.getElementById('clear-ordem-servico-filter-button');
+      const openEolButton = document.getElementById('open-ordem-servico-eol-button');
       const searchInput = document.getElementById('ordem-servico-search');
       const gridBody = document.getElementById('ordem-servico-grid-body');
       const gridWrapper = document.getElementById('ordem-servico-grid-wrapper');
@@ -552,6 +616,7 @@
       const topGridScrollContent = document.getElementById('ordem-servico-grid-top-scroll-content');
       const emptyState = document.getElementById('ordem-servico-empty-state');
       const totalLabel = document.getElementById('ordem-servico-total');
+      const pageSizeSelect = document.getElementById('ordem-servico-page-size');
       const previousPageButton = document.getElementById('previous-ordem-servico-page-button');
       const nextPageButton = document.getElementById('next-ordem-servico-page-button');
       const paginationInfo = document.getElementById('ordem-servico-pagination-info');
@@ -576,6 +641,14 @@
       const summarySubtitle = document.getElementById('ordem-servico-summary-subtitle');
       const summaryContent = document.getElementById('ordem-servico-summary-content');
       const summaryFeedback = document.getElementById('ordem-servico-summary-feedback');
+      const relacaoCrmModal = document.getElementById('ordem-servico-relacao-crm-modal');
+      const relacaoCrmPanel = document.getElementById('ordem-servico-relacao-crm-panel');
+      const closeRelacaoCrmButton = document.getElementById('close-ordem-servico-relacao-crm-button');
+      const cancelRelacaoCrmButton = document.getElementById('cancel-ordem-servico-relacao-crm-button');
+      const applyRelacaoCrmButton = document.getElementById('apply-ordem-servico-relacao-crm-button');
+      const relacaoCrmInput = document.getElementById('ordem-servico-relacao-crm-input');
+      const relacaoPlacaInput = document.getElementById('ordem-servico-relacao-placa-input');
+      const relacaoCrmFeedback = document.getElementById('ordem-servico-relacao-crm-feedback');
       const emissaoModal = document.getElementById('ordem-servico-emissao-modal');
       const emissaoPanel = document.getElementById('ordem-servico-emissao-panel');
       const closeEmissaoButton = document.getElementById('close-ordem-servico-emissao-button');
@@ -606,7 +679,7 @@
       const clearRejectionFilterButton = document.getElementById('clear-ordem-servico-rejection-filter-button');
       const closeRejectionPanelButton = document.getElementById('close-ordem-servico-rejection-panel-button');
 
-      const pageSize = 20;
+      let pageSize = 20;
       const rejectionPageSize = 20;
       const defaultImportFileName = 'OrdemServico.xml';
       let currentPage = 1;
@@ -651,7 +724,38 @@
       const normalizeText = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trimStart().toUpperCase().slice(0, maxLength);
       const normalizeAnnotation = (value) => value.replace(/\s+/g, ' ').trimStart().slice(0, 1000);
       const normalizeIntegerInput = (value, maxDigits = 3) => value.replace(/\D/g, '').slice(0, maxDigits);
-      const normalizeCrm = (value) => value.toUpperCase().replace(/[^0-9A-Z.\-/]/g, '').slice(0, 20);
+      const normalizeCrm = (value) => {
+        const normalizedValue = value.toUpperCase().replace(/[^0-9A-Z.\-/]/g, '').slice(0, 20);
+        const compactValue = normalizedValue.replace(/[.\-/]/g, '');
+
+        if (/^\d+$/.test(compactValue)) {
+          const digits = compactValue.slice(0, 8);
+
+          if (digits.length <= 3) {
+            return digits;
+          }
+
+          if (digits.length <= 6) {
+            return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+          }
+
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}-${digits.slice(6)}`;
+        }
+
+        return normalizedValue;
+      };
+      const normalizePlaca = (value) => value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+      const formatPlacaDisplay = (value) => {
+        const normalizedValue = normalizePlaca(value);
+
+        if (!normalizedValue) {
+          return '';
+        }
+
+        const prefix = normalizedValue.slice(0, 3);
+        const suffix = normalizedValue.slice(3);
+        return suffix ? `${prefix}-${suffix}` : prefix;
+      };
       const normalizeKey = (value) => (value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
       const normalizeComboInput = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trimStart().slice(0, maxLength);
       const escapeHtml = (value) => String(value ?? '')
@@ -702,6 +806,97 @@
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }).format(parsedValue);
+      };
+
+      const formatEditableDateInputValue = (value) => {
+        const year = value.getFullYear();
+        const month = String(value.getMonth() + 1).padStart(2, '0');
+        const day = String(value.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const toEditableDateDisplay = (value) => {
+        const normalizedValue = String(value ?? '').trim();
+
+        if (!normalizedValue) {
+          return '';
+        }
+
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return normalizedValue;
+        }
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+          return normalizedValue;
+        }
+
+        const [year, month, day] = normalizedValue.split('-');
+        return `${day}/${month}/${year}`;
+      };
+
+      const parseEditableDateValue = (value) => {
+        const normalizedValue = String(value ?? '').trim();
+
+        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return null;
+        }
+
+        const [day, month, year] = normalizedValue.split('/').map(Number);
+        const parsed = new Date(year, month - 1, day);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      };
+
+      const enableFullDateSelection = (input) => {
+        if (!input) {
+          return;
+        }
+
+        const selectAllContent = () => {
+          if (document.activeElement === input && input.type === 'text') {
+            input.setSelectionRange(0, input.value.length);
+          }
+
+          requestAnimationFrame(() => {
+            if (document.activeElement === input && input.type === 'text') {
+              input.setSelectionRange(0, input.value.length);
+            }
+          });
+
+          setTimeout(() => {
+            if (document.activeElement === input && input.type === 'text') {
+              input.setSelectionRange(0, input.value.length);
+            }
+          }, 0);
+        };
+
+        input.addEventListener('focus', () => {
+          input.dataset.dateOriginalValue = input.value;
+          input.type = 'text';
+          input.inputMode = 'numeric';
+          input.placeholder = 'dd/mm/aaaa';
+          input.value = toEditableDateDisplay(input.value);
+          selectAllContent();
+        });
+
+        input.addEventListener('mouseup', (event) => {
+          if (input.type !== 'text') {
+            return;
+          }
+
+          event.preventDefault();
+          selectAllContent();
+        });
+
+        input.addEventListener('blur', () => {
+          const parsedDate = parseEditableDateValue(input.value);
+          input.type = 'date';
+          input.inputMode = '';
+          input.placeholder = '';
+          input.value = parsedDate
+            ? formatEditableDateInputValue(parsedDate)
+            : (input.dataset.dateOriginalValue || '');
+          delete input.dataset.dateOriginalValue;
+        });
       };
 
       const buildSummaryFieldHtml = (label, value) => `
@@ -902,11 +1097,11 @@
         termoFeedback.className = 'dsc-feedback';
 
         try {
-          const termoItem = await fetchLookupItem(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, 'Termo de adesao nao encontrado na tabela termo.');
+          const termoItem = await fetchLookupItem(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, 'Termo de adesao nao encontrado ou nao ativo');
           renderOrdemServicoTermo(termoItem);
         } catch (error) {
           termoContent.innerHTML = '';
-          termoFeedback.textContent = getRequestErrorMessage(error, 'Termo de adesao nao encontrado na tabela termo.');
+          termoFeedback.textContent = getRequestErrorMessage(error, 'Termo de adesao nao encontrado ou nao ativo');
           termoFeedback.className = 'dsc-feedback dsc-feedback-error';
           focusOrdemServicoTermo();
         } finally {
@@ -924,6 +1119,96 @@
         summaryFeedback.textContent = '';
         summaryFeedback.className = 'dsc-feedback';
         syncPopupPageState();
+      };
+
+      const clearOrdemServicoRelacaoCrm = () => {
+        setPopupVisibility(relacaoCrmModal, false);
+        relacaoCrmPanel.classList.add('dsc-hidden');
+        relacaoCrmInput.value = '';
+        relacaoPlacaInput.value = '';
+        relacaoCrmFeedback.textContent = '';
+        relacaoCrmFeedback.className = 'dsc-feedback';
+        alterarRelacaoCrmVeiculoInput.checked = false;
+        syncPopupPageState();
+      };
+
+      const focusOrdemServicoRelacaoCrm = () => {
+        if (relacaoCrmPanel.classList.contains('dsc-hidden')) {
+          return;
+        }
+
+        relacaoCrmInput.focus({ preventScroll: true });
+      };
+
+      const openOrdemServicoRelacaoCrm = () => {
+        relacaoCrmInput.value = normalizeCrm(crmInput.value);
+        relacaoPlacaInput.value = formatPlacaDisplay(veiculoPlacasInput.value);
+        relacaoCrmFeedback.textContent = '';
+        relacaoCrmFeedback.className = 'dsc-feedback';
+        setPopupVisibility(relacaoCrmModal, true);
+        relacaoCrmPanel.classList.remove('dsc-hidden');
+        syncPopupPageState();
+        focusOrdemServicoRelacaoCrm();
+      };
+
+      const applyOrdemServicoRelacaoCrm = async () => {
+        const nextCrm = normalizeCrm(relacaoCrmInput.value);
+        const nextPlaca = formatPlacaDisplay(relacaoPlacaInput.value);
+        relacaoCrmInput.value = nextCrm;
+        relacaoPlacaInput.value = nextPlaca;
+        relacaoCrmFeedback.textContent = '';
+        relacaoCrmFeedback.className = 'dsc-feedback';
+
+        if (!nextCrm) {
+          relacaoCrmFeedback.textContent = 'Informe o CRM do veiculo.';
+          relacaoCrmFeedback.className = 'dsc-feedback dsc-feedback-error';
+          focusOrdemServicoRelacaoCrm();
+          return;
+        }
+
+        try {
+          let item = null;
+
+          if (nextPlaca) {
+            const response = await fetch('/api/veiculo/relacao-crm', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              body: JSON.stringify({
+                crm: nextCrm,
+                placas: nextPlaca,
+              }),
+            });
+            const payload = await readJsonResponse(response);
+
+            if (!response.ok) {
+              throw new Error(payload.message || 'Falha ao criar relacao CRM com veiculo.');
+            }
+
+            item = payload.item || null;
+          } else {
+            item = await fetchLookupItem(`/api/veiculo/lookup?crm=${encodeURIComponent(nextCrm)}`, 'Falha ao localizar veiculo.');
+          }
+
+          const resolvedCrm = normalizeCrm(String(item.crm || nextCrm));
+          const resolvedPlaca = formatPlacaDisplay(String(item.placas || ''));
+
+          relacaoCrmInput.value = resolvedCrm;
+          relacaoPlacaInput.value = resolvedPlaca;
+          crmInput.value = resolvedCrm;
+          veiculoPlacasInput.value = resolvedPlaca;
+          crmError.textContent = '';
+          veiculoPlacasError.textContent = '';
+          clearOrdemServicoRelacaoCrm();
+          updateSaveButtonAvailability();
+          await validateActiveOrdemServicoPlaca({ placa: veiculoPlacasInput.value, errorElement: veiculoPlacasError });
+        } catch (error) {
+          relacaoCrmFeedback.textContent = getRequestErrorMessage(error, 'Falha ao localizar veiculo.');
+          relacaoCrmFeedback.className = 'dsc-feedback dsc-feedback-error';
+          focusOrdemServicoRelacaoCrm();
+        }
       };
 
       const focusOrdemServicoSummary = () => {
@@ -1069,7 +1354,7 @@
         try {
           const [termoResult, condutorResult, monitorResult, veiculoResult] = await Promise.all([
             termoAdesao
-              ? fetchSummaryLookup(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, 'Termo de adesao nao encontrado na tabela termo.')
+              ? fetchSummaryLookup(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, 'Termo de adesao nao encontrado ou nao ativo')
               : Promise.resolve({ item: null, error: '' }),
             getDocumentDigits(cpfCondutor)
               ? fetchSummaryLookup(`/api/condutor/lookup?cpf=${encodeURIComponent(cpfCondutor)}`, 'Falha ao localizar condutor.')
@@ -1804,7 +2089,7 @@
           const [parametroResult, termoResult, condutorResult, monitorResult, veiculoResult] = await Promise.all([
             fetchSummaryLookup(`/api/emissao-documento-parametro/resolve?dataReferencia=${encodeURIComponent(requestedDate)}`, 'Parametro de emissao nao encontrado.'),
             termoAdesao
-              ? fetchSummaryLookup(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, 'Termo de adesao nao encontrado na tabela termo.')
+              ? fetchSummaryLookup(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, 'Termo de adesao nao encontrado ou nao ativo')
               : Promise.resolve({ item: null, error: '' }),
             getDocumentDigits(cpfCondutor)
               ? fetchSummaryLookup(`/api/condutor/lookup?cpf=${encodeURIComponent(cpfCondutor)}`, 'Falha ao localizar condutor.')
@@ -2296,7 +2581,7 @@
       };
 
       const syncPopupPageState = () => {
-        const isPopupVisible = !formModal.classList.contains('dsc-hidden') || !importModal.classList.contains('dsc-hidden') || !rejectionModal.classList.contains('dsc-hidden');
+        const isPopupVisible = !formModal.classList.contains('dsc-hidden') || !importModal.classList.contains('dsc-hidden') || !rejectionModal.classList.contains('dsc-hidden') || !relacaoCrmModal.classList.contains('dsc-hidden');
         document.body.classList.toggle('dsc-popup-open', isPopupVisible);
       };
 
@@ -2344,6 +2629,31 @@
         monitorInput.value = '';
       };
 
+      const clearPrepostoFields = () => {
+        cpfPrepostoInput.value = '';
+        prepostoCondutorInput.value = '';
+        prepostoInicioInput.value = '';
+        prepostoDiasInput.value = '';
+        cpfPrepostoError.textContent = '';
+        prepostoCondutorError.textContent = '';
+        prepostoInicioError.textContent = '';
+        prepostoDiasError.textContent = '';
+      };
+
+      const syncPrepostoState = ({ clearValues = false } = {}) => {
+        const hasPreposto = Boolean(possuiPrepostoInput.checked);
+
+        if (!hasPreposto && clearValues) {
+          clearPrepostoFields();
+        }
+
+        cpfPrepostoInput.disabled = !hasPreposto;
+        prepostoCondutorInput.disabled = !hasPreposto;
+        prepostoInicioInput.disabled = !hasPreposto;
+        prepostoDiasInput.disabled = !hasPreposto;
+        document.getElementById('span-preposto-dias').textContent = 'Dias';
+      };
+
       const hideForm = () => {
         form.classList.add('dsc-hidden');
         setPopupVisibility(formModal, false);
@@ -2362,9 +2672,12 @@
         clearSaveChangeRequirement();
         renderDreOptions('');
         renderModalidadeOptions('');
+        possuiPrepostoInput.checked = false;
+        syncPrepostoState({ clearValues: true });
         tipoTrocaInput.value = '';
         setSelectedSituacao('Ativo');
         resetMessages();
+        clearOrdemServicoRelacaoCrm();
         clearOrdemServicoTermo();
         clearOrdemServicoSummary();
       };
@@ -2446,6 +2759,9 @@
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
+        if (pageSizeSelect) {
+          pageSizeSelect.value = String(pageSize);
+        }
         updateSortIndicators();
       };
 
@@ -2755,6 +3071,7 @@
         vigenciaOsInput.disabled = isEditing || isSubstitutionInsertion;
         addNumOsButton.disabled = isEditing || hasDerivedOsIdentity || isStandardInsert;
         addRevisaoButton.disabled = isEditing || isStandardInsert;
+        syncPrepostoState();
       };
 
       const applyInsertSpecificRules = () => {
@@ -3137,7 +3454,13 @@
         feedback.className = 'dsc-feedback';
 
         try {
-          const termoItem = await fetchLookupItem(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, 'Termo de adesao nao encontrado na tabela termo.');
+          const termoItem = await fetchLookupItem(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, 'Termo de adesao nao encontrado ou nao ativo');
+          const termoStatus = normalizeKey(String(termoItem.status_termo || termoItem.statusTermo || ''));
+
+          if (termoStatus !== 'ativo') {
+            throw new Error('Termo nao ativo.');
+          }
+
           termoAdesaoError.textContent = '';
           cnpjCpfInput.value = termoItem.cnpjCpf || '';
           credenciadoInput.value = termoItem.credenciado || '';
@@ -3150,7 +3473,7 @@
           credenciadoInput.value = '';
           syncOsConcatInput();
           feedback.textContent = '';
-          termoAdesaoError.textContent = getRequestErrorMessage(error, 'Termo de adesao nao encontrado na tabela termo.');
+          termoAdesaoError.textContent = getRequestErrorMessage(error, 'Termo de adesao nao encontrado ou nao ativo');
           applyInsertSpecificRules();
           return;
         }
@@ -3358,10 +3681,12 @@
         setGridMessage('');
         renderModalidadeOptions('');
         situacaoRadios.forEach((radio) => { radio.disabled = false; });
+        possuiPrepostoInput.checked = false;
         showForm('insert');
         updateInsertTermGuard({ showMissingError: false });
         applyInsertSpecificRules();
         applyIdentityFieldLock();
+        syncPrepostoState({ clearValues: true });
         termoAdesaoInput.focus();
         void ensureModalidadeOptionsLoaded('');
       };
@@ -3458,6 +3783,7 @@
         cpfCondutorInput.value = item.cpf_condutor || '';
         condutorInput.value = item.condutor || '';
         dataAdmissaoCondutorInput.value = item.data_admissao_condutor || '';
+        possuiPrepostoInput.checked = Boolean(item.cpf_preposto || item.preposto_condutor || item.preposto_inicio || item.preposto_dias);
         cpfPrepostoInput.value = item.cpf_preposto || '';
         prepostoCondutorInput.value = item.preposto_condutor || '';
         prepostoInicioInput.value = item.preposto_inicio || '';
@@ -3483,6 +3809,7 @@
         updateInsertTermGuard({ showMissingError: false });
         applyInsertSpecificRules();
         applyIdentityFieldLock();
+        syncPrepostoState();
         situacaoRadios.forEach((radio) => { radio.disabled = true; });
         void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
         await handleAddRevisao();
@@ -3513,6 +3840,7 @@
         cpfCondutorInput.value = item.cpf_condutor || '';
         condutorInput.value = item.condutor || '';
         dataAdmissaoCondutorInput.value = item.data_admissao_condutor || '';
+        possuiPrepostoInput.checked = Boolean(item.cpf_preposto || item.preposto_condutor || item.preposto_inicio || item.preposto_dias);
         cpfPrepostoInput.value = item.cpf_preposto || '';
         prepostoCondutorInput.value = item.preposto_condutor || '';
         prepostoInicioInput.value = item.preposto_inicio || '';
@@ -3538,6 +3866,7 @@
         updateInsertTermGuard();
         applyInsertSpecificRules();
         applyIdentityFieldLock();
+        syncPrepostoState();
         void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
       };
 
@@ -3577,6 +3906,7 @@
         cpfCondutorInput.value = item.cpf_condutor || '';
         condutorInput.value = item.condutor || '';
         dataAdmissaoCondutorInput.value = item.data_admissao_condutor || '';
+        possuiPrepostoInput.checked = Boolean(item.cpf_preposto || item.preposto_condutor || item.preposto_inicio || item.preposto_dias);
         cpfPrepostoInput.value = item.cpf_preposto || '';
         prepostoCondutorInput.value = item.preposto_condutor || '';
         prepostoInicioInput.value = item.preposto_inicio || '';
@@ -3602,6 +3932,7 @@
         updateInsertTermGuard({ showMissingError: false });
         applyInsertSpecificRules();
         applyIdentityFieldLock();
+        syncPrepostoState();
         situacaoRadios.forEach((radio) => { radio.disabled = false; });
         void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
         await handleAddRevisao();
@@ -3780,12 +4111,38 @@
         queueSuggestionLoad(prepostoSuggestionTimeoutId, (timeoutId) => { prepostoSuggestionTimeoutId = timeoutId; }, (value) => loadCondutorSuggestions(value, cpfPrepostoOptionsList, 'preposto'), () => cpfPrepostoInput.value);
       });
 
+      possuiPrepostoInput.addEventListener('change', () => {
+        syncPrepostoState({ clearValues: !possuiPrepostoInput.checked });
+        updateSaveButtonAvailability();
+      });
+
       cpfPrepostoInput.addEventListener('blur', () => {
         void syncCondutorByCpf(cpfPrepostoInput, prepostoCondutorInput, cpfPrepostoError, 'Falha ao localizar preposto.', 'preposto');
       });
 
       prepostoDiasInput.addEventListener('input', () => {
-        prepostoDiasInput.value = normalizeIntegerInput(prepostoDiasInput.value, 3);
+        prepostoDiasInput.value = normalizeIntegerInput(prepostoDiasInput.value, 2);
+      });
+
+      alterarRelacaoCrmVeiculoInput.addEventListener('change', () => {
+        if (alterarRelacaoCrmVeiculoInput.checked) {
+          openOrdemServicoRelacaoCrm();
+          return;
+        }
+
+        clearOrdemServicoRelacaoCrm();
+      });
+
+      relacaoCrmInput.addEventListener('input', () => {
+        relacaoCrmInput.value = normalizeCrm(relacaoCrmInput.value);
+        relacaoCrmFeedback.textContent = '';
+        relacaoCrmFeedback.className = 'dsc-feedback';
+      });
+
+      relacaoPlacaInput.addEventListener('input', () => {
+        relacaoPlacaInput.value = formatPlacaDisplay(relacaoPlacaInput.value);
+        relacaoCrmFeedback.textContent = '';
+        relacaoCrmFeedback.className = 'dsc-feedback';
       });
 
       crmInput.addEventListener('input', () => {
@@ -3864,7 +4221,7 @@
           dataAdmissaoCondutor: dataAdmissaoCondutorInput.value,
           cpfPreposto: normalizeCpf(cpfPrepostoInput.value),
           prepostoInicio: prepostoInicioInput.value,
-          prepostoDias: normalizeIntegerInput(prepostoDiasInput.value, 3),
+          prepostoDias: normalizeIntegerInput(prepostoDiasInput.value, 2),
           crm: normalizeCrm(crmInput.value),
           cpfMonitor: normalizeCpf(cpfMonitorInput.value),
           dataAdmissaoMonitor: dataAdmissaoMonitorInput.value,
@@ -3875,6 +4232,13 @@
           activationSourceCodigo: isActivationInsertion ? substitutionSourceCodigo : null,
           anotacao: normalizeAnnotation(anotacaoInput.value),
         };
+        const hasPrepostoEnabled = Boolean(possuiPrepostoInput.checked);
+
+        if (!hasPrepostoEnabled) {
+          payload.cpfPreposto = '';
+          payload.prepostoInicio = '';
+          payload.prepostoDias = '';
+        }
         let hasError = false;
 
         resetMessages();
@@ -3889,6 +4253,7 @@
         modalidadeDescricaoInput.value = payload.modalidadeDescricao;
         cpfCondutorInput.value = payload.cpfCondutor;
         dataAdmissaoCondutorInput.value = payload.dataAdmissaoCondutor;
+        possuiPrepostoInput.checked = hasPrepostoEnabled;
         cpfPrepostoInput.value = payload.cpfPreposto;
         prepostoDiasInput.value = payload.prepostoDias;
         crmInput.value = payload.crm;
@@ -3897,6 +4262,7 @@
         tipoTrocaInput.value = payload.tipoTroca;
         anotacaoInput.value = payload.anotacao;
         dataEncerramentoInput.value = payload.dataEncerramento;
+        syncPrepostoState();
 
         if (!payload.numOs) {
           numOsError.textContent = 'Informe o Num OS.';
@@ -3940,21 +4306,21 @@
           hasError = true;
         }
 
-        // Se CPF do preposto for preenchido, início e dias são obrigatórios
-        if (payload.cpfPreposto && getDocumentDigits(payload.cpfPreposto).length) {
-          // Renomeia label para "Dias como preposto"
-          document.getElementById('span-preposto-dias').textContent = 'Dias como preposto';
+        if (hasPrepostoEnabled) {
+          if (!payload.cpfPreposto || !getDocumentDigits(payload.cpfPreposto).length) {
+            cpfPrepostoError.textContent = 'Informe o CPF do preposto.';
+            hasError = true;
+          }
+
           if (!payload.prepostoInicio) {
             prepostoInicioError.textContent = 'Informe o início de preposto.';
             hasError = true;
           }
+
           if (!payload.prepostoDias || isNaN(Number(payload.prepostoDias)) || Number(payload.prepostoDias) <= 0) {
             prepostoDiasError.textContent = 'Informe os dias como preposto.';
             hasError = true;
           }
-        } else {
-          // Volta label para "Dias"
-          document.getElementById('span-preposto-dias').textContent = 'Dias';
         }
 
         if (!payload.crm) {
@@ -4081,6 +4447,10 @@
         void loadItems();
       });
 
+      openEolButton.addEventListener('click', () => {
+        window.location.href = '/src/ordemServicoDataEol.html';
+      });
+
       rejectionFilterForm.addEventListener('submit', (event) => {
         event.preventDefault();
         currentRejectionSearch = rejectionSearchInput.value.trim();
@@ -4107,6 +4477,19 @@
           currentPage += 1;
           void loadItems();
         }
+      });
+
+      pageSizeSelect?.addEventListener('change', () => {
+        const nextPageSize = Number.parseInt(pageSizeSelect.value, 10);
+
+        if (!Number.isFinite(nextPageSize) || nextPageSize <= 0) {
+          pageSizeSelect.value = String(pageSize);
+          return;
+        }
+
+        pageSize = nextPageSize;
+        currentPage = 1;
+        void loadItems();
       });
 
       previousRejectionPageButton.addEventListener('click', () => {
@@ -4153,6 +4536,11 @@
       closeFormModalButton.addEventListener('click', hideForm);
       closeTermoButton.addEventListener('click', clearOrdemServicoTermo);
       closeSummaryButton.addEventListener('click', clearOrdemServicoSummary);
+      closeRelacaoCrmButton.addEventListener('click', clearOrdemServicoRelacaoCrm);
+      cancelRelacaoCrmButton.addEventListener('click', clearOrdemServicoRelacaoCrm);
+      applyRelacaoCrmButton.addEventListener('click', () => {
+        void applyOrdemServicoRelacaoCrm();
+      });
       closeEmissaoButton.addEventListener('click', clearOrdemServicoEmissao);
       dismissEmissaoButton.addEventListener('click', clearOrdemServicoEmissao);
       showTermoButton.addEventListener('click', () => {
@@ -4174,6 +4562,11 @@
       summaryModal.addEventListener('click', (event) => {
         if (event.target === summaryModal) {
           clearOrdemServicoSummary();
+        }
+      });
+      relacaoCrmModal.addEventListener('click', (event) => {
+        if (event.target === relacaoCrmModal) {
+          clearOrdemServicoRelacaoCrm();
         }
       });
       emissaoModal.addEventListener('click', (event) => {
@@ -4275,6 +4668,14 @@
         void loadRejections();
       });
       closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
+
+      [
+        vigenciaOsInput,
+        dataAdmissaoCondutorInput,
+        prepostoInicioInput,
+        dataAdmissaoMonitorInput,
+        dataEncerramentoInput,
+      ].forEach(enableFullDateSelection);
 
       importFileNameInput.value = defaultImportFileName;
       setSelectedSituacao('Ativo');

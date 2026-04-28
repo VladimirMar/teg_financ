@@ -62,9 +62,21 @@
             </div>
 
             <div class="dsc-card dsc-access-grid-card">
-              <div class="dsc-access-grid-header">
-                <h2>Registros cadastrados</h2>
-                <span id="access-total"></span>
+              <div class="dsc-access-grid-header" style="align-items: flex-start; justify-content: space-between; flex-direction: row;">
+                <div class="dsc-access-grid-header-copy">
+                  <h2>Registros cadastrados</h2>
+                  <span id="access-total"></span>
+                </div>
+                <div class="dsc-grid-page-size-field" style="flex-direction: column; align-items: flex-end; justify-content: flex-start; margin-left: auto;">
+                  <span class="dsc-grid-page-size-label">Registros no grid</span>
+                  <select class="dsc-form-control" id="access-page-size" style="padding: 0; min-height: 38px; border-radius: 14px;">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                  </select>
+                </div>
               </div>
 
               <div class="dsc-access-grid-wrapper">
@@ -123,6 +135,7 @@
       const previousPageButton = document.getElementById('previous-page-button');
       const nextPageButton = document.getElementById('next-page-button');
       const paginationInfo = document.getElementById('pagination-info');
+      const pageSizeSelect = document.getElementById('access-page-size');
       const sortEmailButton = document.getElementById('sort-email-button');
       const sortEmailIndicator = document.getElementById('sort-email-indicator');
       const formTitle = document.getElementById('form-title');
@@ -133,7 +146,7 @@
       const validateEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
       const validateName = (value) => /^[A-ZÀ-Ý ]{1,50}$/.test(value);
       const normalizeName = (value) => value.toUpperCase().replace(/[^A-ZÀ-Ý\s]/g, '').replace(/\s+/g, ' ').trimStart().slice(0, 50);
-      const pageSize = 20;
+      let pageSize = 20;
 
       let currentPage = 1;
       let totalPages = 1;
@@ -300,6 +313,9 @@
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
+        if (pageSizeSelect) {
+          pageSizeSelect.value = String(pageSize);
+        }
         sortEmailIndicator.textContent = currentSortBy === 'email' && currentSortDirection === 'desc' ? '↓' : '↑';
       };
 
@@ -547,6 +563,19 @@
         }
 
         currentPage += 1;
+        void loadAccesses();
+      });
+
+      pageSizeSelect?.addEventListener('change', () => {
+        const nextPageSize = Number.parseInt(pageSizeSelect.value, 10);
+
+        if (!Number.isFinite(nextPageSize) || nextPageSize <= 0) {
+          pageSizeSelect.value = String(pageSize);
+          return;
+        }
+
+        pageSize = nextPageSize;
+        currentPage = 1;
         void loadAccesses();
       });
 

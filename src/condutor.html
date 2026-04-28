@@ -211,9 +211,21 @@
             </div>
 
             <div class="dsc-card dsc-access-grid-card">
-              <div class="dsc-access-grid-header">
-                <h2>Registros cadastrados</h2>
-                <span id="condutor-total"></span>
+              <div class="dsc-access-grid-header" style="align-items: flex-start; justify-content: space-between; flex-direction: row;">
+                <div class="dsc-access-grid-header-copy">
+                  <h2>Registros cadastrados</h2>
+                  <span id="condutor-total"></span>
+                </div>
+                <div class="dsc-grid-page-size-field" style="flex-direction: column; align-items: flex-end; justify-content: flex-start; margin-left: auto;">
+                  <span class="dsc-grid-page-size-label">Registros no grid</span>
+                  <select class="dsc-form-control" id="condutor-page-size" style="padding: 0; min-height: 38px; border-radius: 14px;">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                  </select>
+                </div>
               </div>
 
               <div class="dsc-access-grid-wrapper">
@@ -289,6 +301,7 @@
       const previousPageButton = document.getElementById('previous-condutor-page-button');
       const nextPageButton = document.getElementById('next-condutor-page-button');
       const paginationInfo = document.getElementById('condutor-pagination-info');
+      const pageSizeSelect = document.getElementById('condutor-page-size');
       const sortCondutorButton = document.getElementById('sort-condutor-button');
       const sortCondutorIndicator = document.getElementById('sort-condutor-indicator');
       const formTitle = document.getElementById('condutor-form-title');
@@ -315,7 +328,7 @@
       const vinculoEmptyState = document.getElementById('condutor-vinculo-empty-state');
       const vinculoFeedback = document.getElementById('condutor-vinculo-feedback');
 
-      const pageSize = 20;
+      let pageSize = 20;
       const rejectionPageSize = 20;
       const defaultImportFileName = 'Condutor.xml';
       let currentPage = 1;
@@ -355,6 +368,93 @@
         .trimStart()
         .slice(0, 100);
       const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
+      const formatEditableDateInputValue = (value) => {
+        const year = value.getFullYear();
+        const month = String(value.getMonth() + 1).padStart(2, '0');
+        const day = String(value.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      const toEditableDateDisplay = (value) => {
+        const normalizedValue = String(value ?? '').trim();
+
+        if (!normalizedValue) {
+          return '';
+        }
+
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return normalizedValue;
+        }
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+          return normalizedValue;
+        }
+
+        const [year, month, day] = normalizedValue.split('-');
+        return `${day}/${month}/${year}`;
+      };
+      const parseEditableDateValue = (value) => {
+        const normalizedValue = String(value ?? '').trim();
+
+        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return null;
+        }
+
+        const [day, month, year] = normalizedValue.split('/').map(Number);
+        const parsed = new Date(year, month - 1, day);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      };
+      const enableFullDateSelection = (input) => {
+        if (!input) {
+          return;
+        }
+
+        const selectAllContent = () => {
+          if (document.activeElement === input && input.type === 'text') {
+            input.setSelectionRange(0, input.value.length);
+          }
+
+          requestAnimationFrame(() => {
+            if (document.activeElement === input && input.type === 'text') {
+              input.setSelectionRange(0, input.value.length);
+            }
+          });
+
+          setTimeout(() => {
+            if (document.activeElement === input && input.type === 'text') {
+              input.setSelectionRange(0, input.value.length);
+            }
+          }, 0);
+        };
+
+        input.addEventListener('focus', () => {
+          input.dataset.dateOriginalValue = input.value;
+          input.type = 'text';
+          input.inputMode = 'numeric';
+          input.placeholder = 'dd/mm/aaaa';
+          input.value = toEditableDateDisplay(input.value);
+          selectAllContent();
+        });
+
+        input.addEventListener('mouseup', (event) => {
+          if (input.type !== 'text') {
+            return;
+          }
+
+          event.preventDefault();
+          selectAllContent();
+        });
+
+        input.addEventListener('blur', () => {
+          const parsedDate = parseEditableDateValue(input.value);
+          input.type = 'date';
+          input.inputMode = '';
+          input.placeholder = '';
+          input.value = parsedDate
+            ? formatEditableDateInputValue(parsedDate)
+            : (input.dataset.dateOriginalValue || '');
+          delete input.dataset.dateOriginalValue;
+        });
+      };
       const normalizeCpf = (value) => {
         const digits = value.replace(/\D/g, '').slice(0, 11);
 
@@ -851,6 +951,9 @@
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
+        if (pageSizeSelect) {
+          pageSizeSelect.value = String(pageSize);
+        }
         sortCondutorIndicator.textContent = currentSortBy === 'condutor' && currentSortDirection === 'desc' ? '↓' : '↑';
       };
 
@@ -1307,6 +1410,19 @@
         void loadItems();
       });
 
+      pageSizeSelect?.addEventListener('change', () => {
+        const nextPageSize = Number.parseInt(pageSizeSelect.value, 10);
+
+        if (!Number.isFinite(nextPageSize) || nextPageSize <= 0) {
+          pageSizeSelect.value = String(pageSize);
+          return;
+        }
+
+        pageSize = nextPageSize;
+        currentPage = 1;
+        void loadItems();
+      });
+
       previousRejectionPageButton.addEventListener('click', () => {
         if (currentRejectionPage <= 1) {
           return;
@@ -1331,6 +1447,8 @@
         currentPage = 1;
         void loadItems();
       });
+
+      [validadeCrmcInput, validadeCursoInput].forEach(enableFullDateSelection);
 
       hideForm();
       hideImportForm();

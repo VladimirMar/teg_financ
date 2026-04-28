@@ -344,9 +344,21 @@
             </div>
 
             <div class="dsc-card dsc-access-grid-card">
-              <div class="dsc-access-grid-header">
-                <h2>Registros cadastrados</h2>
-                <span id="credenciada-total"></span>
+              <div class="dsc-access-grid-header" style="align-items: flex-start; justify-content: space-between; flex-direction: row;">
+                <div class="dsc-access-grid-header-copy">
+                  <h2>Registros cadastrados</h2>
+                  <span id="credenciada-total"></span>
+                </div>
+                <div class="dsc-grid-page-size-field" style="flex-direction: column; align-items: flex-end; justify-content: flex-start; margin-left: auto;">
+                  <span class="dsc-grid-page-size-label">Registros no grid</span>
+                  <select class="dsc-form-control" id="credenciada-page-size" style="padding: 0; min-height: 38px; border-radius: 14px;">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                  </select>
+                </div>
               </div>
 
               <div class="dsc-access-grid-wrapper">
@@ -438,6 +450,7 @@
       const previousPageButton = document.getElementById('previous-credenciada-page-button');
       const nextPageButton = document.getElementById('next-credenciada-page-button');
       const paginationInfo = document.getElementById('credenciada-pagination-info');
+      const pageSizeSelect = document.getElementById('credenciada-page-size');
       const sortButton = document.getElementById('sort-credenciada-button');
       const sortIndicator = document.getElementById('sort-credenciada-indicator');
       const formModal = document.getElementById('credenciada-form-modal');
@@ -465,7 +478,7 @@
       const termoEmptyState = document.getElementById('credenciada-termo-empty-state');
       const termoFeedback = document.getElementById('credenciada-termo-feedback');
 
-      const pageSize = 20;
+      let pageSize = 20;
       const rejectionPageSize = 20;
       const defaultImportFileName = 'Credenciados.xml';
       let currentPage = 1;
@@ -598,15 +611,19 @@
           .normalize('NFD')
           .replace(/[\u0300-\u036f]/g, '');
 
-        if (normalized === 'COOPERATIVA') {
+        if (['COOPERATIVA', 'CO'].includes(normalized)) {
           return 'COOPERATIVA';
         }
 
-        if (normalized === 'PESSOA JURIDICA') {
+        if (['PESSOA JURIDICA', 'JURIDICA', 'PJ'].includes(normalized)) {
           return 'PESSOA JURIDICA';
         }
 
-        return 'PESSOA FISICA';
+        if (['PESSOA FISICA', 'FISICA', 'PF'].includes(normalized)) {
+          return 'PESSOA FISICA';
+        }
+
+        return '';
       };
       const syncRepresentanteFieldsValue = () => {
         const isPessoaFisica = tipoTermoInput.value === 'PESSOA FISICA';
@@ -1090,6 +1107,9 @@
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
+        if (pageSizeSelect) {
+          pageSizeSelect.value = String(pageSize);
+        }
         sortIndicator.textContent = currentSortBy === 'credenciado' && currentSortDirection === 'desc' ? '↓' : '↑';
       };
 
@@ -1660,6 +1680,19 @@
         }
 
         currentPage += 1;
+        void loadItems();
+      });
+
+      pageSizeSelect?.addEventListener('change', () => {
+        const nextPageSize = Number.parseInt(pageSizeSelect.value, 10);
+
+        if (!Number.isFinite(nextPageSize) || nextPageSize <= 0) {
+          pageSizeSelect.value = String(pageSize);
+          return;
+        }
+
+        pageSize = nextPageSize;
+        currentPage = 1;
         void loadItems();
       });
 

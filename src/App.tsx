@@ -1970,7 +1970,7 @@ function App() {
           <>
             <div className="content-copy">
               <p className="content-kicker">Centro de monitoramento</p>
-              <h2 id="content-title">Frota de onibus escolar</h2>
+              <h2 id="content-title">Sistema Transporte Escolar Gratuito</h2>
               <p className="content-description">
                 Area central dedicada a visualizacao do transporte escolar com foco
                 nas rotas, status da frota e organizacao do atendimento diario.

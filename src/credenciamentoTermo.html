@@ -263,6 +263,7 @@
                 <input class="dsc-form-control dsc-access-filter-input" id="credenciamento-termo-search" type="text" placeholder="Filtrar por codigo, termo, credenciado, SEI ou aditivo" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-credenciamento-termo-filter-button">Limpar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="open-credenciamento-termo-assinatura-button">Pendencias assinatura</button>
               </form>
             </div>
 
@@ -499,20 +500,6 @@
                     <div class="dsc-form-error" id="credenciamento-termo-status-aditivo-error"></div>
                   </label>
 
-                  <div class="dsc-field-group dsc-hidden">
-                    <span>Check aditivo</span>
-                    <div class="dsc-radio-field-group">
-                      <label>
-                        <input id="credenciamento-termo-check-aditivo-sim" name="credenciamento-termo-check-aditivo" type="radio" value="1" />
-                        <span>Sim</span>
-                      </label>
-                      <label>
-                        <input id="credenciamento-termo-check-aditivo-nao" name="credenciamento-termo-check-aditivo" type="radio" value="0" />
-                        <span>Nao</span>
-                      </label>
-                    </div>
-                    <div class="dsc-form-error" id="credenciamento-termo-check-aditivo-error"></div>
-                  </div>
                 </div>
 
                 <div class="dsc-form-row">
@@ -599,6 +586,12 @@
                 </div>
 
                 <div class="dsc-form-row">
+                  <label class="dsc-field-group" for="credenciamento-termo-data-assinatura">
+                    <span>Data de assinatura</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-data-assinatura" type="date" />
+                    <div class="dsc-form-error" id="credenciamento-termo-data-assinatura-error"></div>
+                  </label>
+
                   <label class="dsc-field-group" for="credenciamento-termo-data-publicacao">
                     <span>Data de publicacao</span>
                     <input class="dsc-form-control" id="credenciamento-termo-data-publicacao" type="date" />
@@ -675,21 +668,6 @@
                       </div>
 
                       <div class="dsc-form-row">
-                        <div class="dsc-field-group">
-                          <span>Check aditivo</span>
-                          <div class="dsc-radio-field-group">
-                            <label>
-                              <input id="credenciamento-termo-last-aditivo-check-sim" name="credenciamento-termo-last-aditivo-check" type="radio" value="1" />
-                              <span>Sim</span>
-                            </label>
-                            <label>
-                              <input id="credenciamento-termo-last-aditivo-check-nao" name="credenciamento-termo-last-aditivo-check" type="radio" value="0" />
-                              <span>Nao</span>
-                            </label>
-                          </div>
-                          <div class="dsc-form-error" id="credenciamento-termo-last-aditivo-check-error"></div>
-                        </div>
-
                         <label class="dsc-field-group" for="credenciamento-termo-last-aditivo-data-publicacao">
                           <span>Data de publicacao</span>
                           <input class="dsc-form-control" id="credenciamento-termo-last-aditivo-data-publicacao" type="date" />
@@ -776,9 +754,21 @@
             </div>
 
             <div class="dsc-card dsc-access-grid-card">
-              <div class="dsc-access-grid-header">
-                <h2>Tabela termo</h2>
-                <span id="credenciamento-termo-total"></span>
+              <div class="dsc-access-grid-header" style="align-items: flex-start; justify-content: space-between; flex-direction: row;">
+                <div class="dsc-access-grid-header-copy">
+                  <h2>Tabela termo</h2>
+                  <span id="credenciamento-termo-total"></span>
+                </div>
+                <div class="dsc-grid-page-size-field" style="flex-direction: column; align-items: flex-end; justify-content: flex-start; margin-left: auto;">
+                  <span class="dsc-grid-page-size-label">Registros no grid</span>
+                  <select class="dsc-form-control" id="credenciamento-termo-page-size" style="padding: 0; min-height: 38px; border-radius: 14px;">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                  </select>
+                </div>
               </div>
 
               <div class="dsc-access-grid-wrapper">
@@ -837,6 +827,7 @@
       const rejectionGridFeedback = document.getElementById('credenciamento-termo-rejection-grid-feedback');
       const searchInput = document.getElementById('credenciamento-termo-search');
       const clearFilterButton = document.getElementById('clear-credenciamento-termo-filter-button');
+      const openAssinaturaPendenciasButton = document.getElementById('open-credenciamento-termo-assinatura-button');
       const insertButton = document.getElementById('insert-credenciamento-termo-button');
       const saveButton = document.getElementById('save-credenciamento-termo-button');
       const cancelButton = document.getElementById('cancel-credenciamento-termo-button');
@@ -859,6 +850,7 @@
       const rejectionTotalLabel = document.getElementById('credenciamento-termo-rejection-total');
       const linkedAditivosSubtitle = document.getElementById('credenciamento-termo-linked-aditivos-subtitle');
       const paginationInfo = document.getElementById('credenciamento-termo-pagination-info');
+      const pageSizeSelect = document.getElementById('credenciamento-termo-page-size');
       const rejectionPaginationInfo = document.getElementById('credenciamento-termo-rejection-pagination-info');
       const previousPageButton = document.getElementById('previous-credenciamento-termo-page-button');
       const nextPageButton = document.getElementById('next-credenciamento-termo-page-button');
@@ -894,8 +886,6 @@
       const statusTermoInput = document.getElementById('credenciamento-termo-status-termo');
       const statusAditivoInput = document.getElementById('credenciamento-termo-status-aditivo');
       const statusAditivoFieldGroup = statusAditivoInput.closest('.dsc-field-group');
-      const checkAditivoYesInput = document.getElementById('credenciamento-termo-check-aditivo-sim');
-      const checkAditivoNoInput = document.getElementById('credenciamento-termo-check-aditivo-nao');
       const inicioVigenciaInput = document.getElementById('credenciamento-termo-inicio-vigencia');
       const terminoVigenciaInput = document.getElementById('credenciamento-termo-termino-vigencia');
       const compDataAditivoInput = document.getElementById('credenciamento-termo-comp-data-aditivo');
@@ -910,6 +900,7 @@
       const textoCopiaInput = especificacaoSeiInput;
       const valorContratoInput = document.getElementById('credenciamento-termo-valor-contrato');
       const valorContratoAtualizadoInput = document.getElementById('credenciamento-termo-valor-contrato-atualizado');
+      const dataAssinaturaInput = document.getElementById('credenciamento-termo-data-assinatura');
       const dataPublicacaoInput = document.getElementById('credenciamento-termo-data-publicacao');
       const dataPublicacaoFieldGroup = dataPublicacaoInput.closest('.dsc-field-group');
       const vencimentoGeralInput = document.getElementById('credenciamento-termo-vencimento-geral');
@@ -925,10 +916,7 @@
       const lastAditivoTermoInput = document.getElementById('credenciamento-termo-last-aditivo-termo');
       const lastAditivoNumeroInput = document.getElementById('credenciamento-termo-last-aditivo-numero');
       const lastAditivoSituacaoPublicacaoInput = document.getElementById('credenciamento-termo-last-aditivo-situacao-publicacao');
-      const lastAditivoCheckYesInput = document.getElementById('credenciamento-termo-last-aditivo-check-sim');
-      const lastAditivoCheckNoInput = document.getElementById('credenciamento-termo-last-aditivo-check-nao');
       const lastAditivoDataPublicacaoInput = document.getElementById('credenciamento-termo-last-aditivo-data-publicacao');
-      const lastAditivoCheckError = document.getElementById('credenciamento-termo-last-aditivo-check-error');
       const lastAditivoDataPublicacaoError = document.getElementById('credenciamento-termo-last-aditivo-data-publicacao-error');
       const despachoModal = document.getElementById('credenciamento-termo-despacho-modal');
       const despachoPanel = document.getElementById('credenciamento-termo-despacho-panel');
@@ -972,7 +960,6 @@
         situacaoEmissao: document.getElementById('credenciamento-termo-situacao-emissao-error'),
         statusTermo: document.getElementById('credenciamento-termo-status-termo-error'),
         statusAditivo: document.getElementById('credenciamento-termo-status-aditivo-error'),
-        checkAditivo: document.getElementById('credenciamento-termo-check-aditivo-error'),
         inicioVigencia: document.getElementById('credenciamento-termo-inicio-vigencia-error'),
         terminoVigencia: document.getElementById('credenciamento-termo-termino-vigencia-error'),
         compDataAditivo: document.getElementById('credenciamento-termo-comp-data-aditivo-error'),
@@ -986,6 +973,7 @@
         especificacaoSei: document.getElementById('credenciamento-termo-especificacao-sei-error'),
         valorContrato: document.getElementById('credenciamento-termo-valor-contrato-error'),
         valorContratoAtualizado: document.getElementById('credenciamento-termo-valor-contrato-atualizado-error'),
+        dataAssinatura: document.getElementById('credenciamento-termo-data-assinatura-error'),
         dataPublicacao: document.getElementById('credenciamento-termo-data-publicacao-error'),
         vencimentoGeral: document.getElementById('credenciamento-termo-vencimento-geral-error'),
         mesRenovacao: document.getElementById('credenciamento-termo-mes-renovacao-error'),
@@ -1003,7 +991,6 @@
         situacaoEmissao: situacaoEmissaoInput,
         statusTermo: statusTermoInput,
         statusAditivo: statusAditivoInput,
-        checkAditivo: checkAditivoYesInput,
         inicioVigencia: inicioVigenciaInput,
         terminoVigencia: terminoVigenciaInput,
         compDataAditivo: compDataAditivoInput,
@@ -1017,13 +1004,14 @@
         especificacaoSei: especificacaoSeiInput,
         valorContrato: valorContratoInput,
         valorContratoAtualizado: valorContratoAtualizadoInput,
+        dataAssinatura: dataAssinaturaInput,
         dataPublicacao: dataPublicacaoInput,
         vencimentoGeral: vencimentoGeralInput,
         mesRenovacao: mesRenovacaoInput,
         tpOptante: tpOptanteInput,
       };
 
-      const pageSize = 20;
+      let pageSize = 20;
       const rejectionPageSize = 20;
       const defaultImportFileName = 'Credenciamento_Termo.xml';
       let editingCodigo = null;
@@ -1511,12 +1499,11 @@
         especificacaoSeiInput.value = '';
         valorContratoInput.value = '';
         valorContratoAtualizadoInput.value = '';
+        dataAssinaturaInput.value = '';
         dataPublicacaoInput.value = '';
         vencimentoGeralInput.value = '';
         mesRenovacaoInput.value = '';
         tpOptanteInput.value = '';
-        checkAditivoYesInput.checked = true;
-        checkAditivoNoInput.checked = false;
         inheritedAditivoTermoAdesao = '';
         syncEspecificacaoSei();
         syncTextoCopia();
@@ -1536,8 +1523,6 @@
         situacaoEmissaoInput.value = item.situacao_emissao || '';
         statusTermoInput.value = item.status_termo || '';
         statusAditivoInput.value = item.status_aditivo || '';
-        checkAditivoYesInput.checked = item.check_aditivo === '1';
-        checkAditivoNoInput.checked = item.check_aditivo !== '1';
         inicioVigenciaInput.value = item.inicio_vigencia || '';
         terminoVigenciaInput.value = item.termino_vigencia || '';
         compDataAditivoInput.value = item.comp_data_aditivo || '';
@@ -1551,6 +1536,7 @@
         syncEspecificacaoSei();
         valorContratoInput.value = formatCurrencyInput(item.valor_contrato || '');
         valorContratoAtualizadoInput.value = formatCurrencyExtenso(item.valor_contrato_atualizado || item.valor_contrato || '');
+        dataAssinaturaInput.value = item.data_assinatura || '';
         dataPublicacaoInput.value = item.data_publicacao || '';
         vencimentoGeralInput.value = item.vencimento_geral || '';
         mesRenovacaoInput.value = formatMonthYearLabel(item.termino_vigencia || '');
@@ -1771,6 +1757,11 @@
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }).format(amount);
+      };
+      const formatCurrencyClauseValue = (value) => {
+        return formatCurrencyDisplay(value)
+          .replace(/^R\$\s*/i, '')
+          .trim();
       };
       const formatLongDate = (value) => {
         const normalizedValue = normalizeReportDateKey(value);
@@ -2127,7 +2118,9 @@
 
           return lookup;
         }, {});
-        const normalizedTemplate = String(template ?? '').replace(/<\s*([^<>,]+?)\s*,/g, '<$1>,');
+        const normalizedTemplate = String(template ?? '')
+          .replace(/<\s*([^<>,]+?)\s*,/g, '<$1>,')
+          .replace(/<\s*([^<>]+?)\s*>\s*\/\s*por[_\s-]*extenso\b/gi, '<$1/por_extenso>');
         const resolvedCurlyTokens = normalizedTemplate.replace(/\{\{\s*([a-z_]+)\s*\}\}/gi, (_, token) => {
           const replacement = replacements[token.toLowerCase()];
           return replacement == null || replacement === '' ? '' : String(replacement);
@@ -2186,7 +2179,8 @@
         .replace(/<\s*termo\/logradouro\s*,\s*<\s*termo\/bairro\s*>,?\s*<\s*termo\/mi?nicipio\s*>/gi, '<termo/logradouro>, <termo/bairro>, <termo/municipio>')
         .replace(/<\s*termo\/minicipio\s*>/gi, '<termo/municipio>')
         .replace(/,\s*RG\s+n\s*<\s*termo\/cpf\s+representante\s*>/gi, '')
-        .replace(/,\s*CPF\s+n\s*\{\{\s*cpf_representante\s*\}\}\s*e\s*RG\s+n\s*\{\{\s*[^}]+\s*\}\}/gi, ', CPF n {{cpf_representante}}');
+        .replace(/,\s*CPF\s+n\s*\{\{\s*cpf_representante\s*\}\}\s*e\s*RG\s+n\s*\{\{\s*[^}]+\s*\}\}/gi, ', CPF n {{cpf_representante}}')
+        .replace(/(valor\s+previsto\s+de\s+)\d[\d.]*,\d{2}\s*\([^)]*\)/gi, '$1{{valor_contrato}}');
       const resolveAditivoParagraphList = (template, replacements) => {
         const resolvedTemplate = applyTemplateTokens(normalizeLegacyAditivoTemplate(template), replacements)
           .replace(/\r/g, '')
@@ -2555,11 +2549,13 @@
         const inicioVigencia = normalizeReportDateKey(inicioVigenciaInput.value);
         const dataPublicacao = normalizeReportDateKey(dataPublicacaoInput.value || requestedDate);
         const dataComparencia = normalizeReportDateKey(compDataAditivoInput.value || dataPublicacao || requestedDate);
-        const valorContratoAtualizado = String(valorContratoAtualizadoInput.value || '').trim();
-        const valorPrevistoBase = valorContratoAtualizado && !/[A-Za-zÀ-ÿ]/.test(valorContratoAtualizado)
-          ? valorContratoAtualizado
-          : valorContratoInput.value;
+        const valorPrevistoBase = String(valorContratoInput.value || '').trim();
         const valorPrevisto = formatCurrencyDisplay(valorPrevistoBase);
+        const valorPrevistoClause = formatCurrencyClauseValue(valorPrevistoBase);
+        const valorPrevistoExtenso = formatCurrencyExtenso(valorPrevistoBase).toUpperCase();
+        const valorPrevistoAditivo = valorPrevistoClause && valorPrevistoExtenso
+          ? `${valorPrevistoClause} (${valorPrevistoExtenso})`
+          : valorPrevistoClause || valorPrevistoExtenso || valorPrevisto;
         const objetoLicitacao = formatSummaryValue(parametroItem?.objeto_licitacao);
         const credenciante = formatSummaryValue(parametroItem?.credenciante, 'Credenciante nao informado.');
         const tituloAditivo = formatSummaryValue(parametroItem?.titulo_aditivo, 'Titulo do aditivo nao informado.');
@@ -2573,7 +2569,9 @@
           processo,
           edital: formatSummaryValue(parametroItem?.edital_chamamento_publico),
           inicio_vigencia: formatSummaryValue(inicioVigencia, 'Nao informado'),
-          valor_previsto: valorPrevisto,
+          valor_previsto: valorPrevistoAditivo,
+          valor_contrato: valorPrevistoAditivo,
+          valor_contrato_atualizado: valorPrevistoAditivo,
           credenciado,
           cnpj_cpf: cnpjCpf,
           objeto_licitacao: objetoLicitacao,
@@ -2597,7 +2595,9 @@
           processo,
           edital: formatSummaryValue(parametroItem?.edital_chamamento_publico),
           inicio_vigencia: formatSummaryValue(inicioVigencia, 'Nao informado'),
-          valor_previsto: valorPrevisto,
+          valor_previsto: valorPrevistoAditivo,
+          valor_contrato: valorPrevistoAditivo,
+          valor_contrato_atualizado: valorPrevistoAditivo,
           credenciado,
           cnpj_cpf: cnpjCpf,
           objeto_licitacao: objetoLicitacao,
@@ -3476,8 +3476,6 @@
         valorContratoAtualizadoInput.readOnly = true;
         mesRenovacaoInput.readOnly = true;
         tpOptanteInput.disabled = isReadOnly;
-        checkAditivoYesInput.disabled = isReadOnly;
-        checkAditivoNoInput.disabled = isReadOnly;
         syncSaveButtonState();
         syncAditivoDependentFieldState();
         syncEmitContratoButtonState();
@@ -3530,8 +3528,6 @@
         cnpjCpfInput.value = '';
         syncEspecificacaoSei();
         syncTextoCopia();
-        checkAditivoYesInput.checked = true;
-        checkAditivoNoInput.checked = false;
         importFileNameInput.value = defaultImportFileName;
         syncCreateOnlyFieldVisibility();
         setFormReadOnly(false);
@@ -3562,8 +3558,6 @@
         situacaoEmissaoInput.value = item.situacao_emissao || '';
         statusTermoInput.value = item.status_termo || '';
         statusAditivoInput.value = item.status_aditivo || '';
-        checkAditivoYesInput.checked = item.check_aditivo === '1';
-        checkAditivoNoInput.checked = item.check_aditivo !== '1';
         inicioVigenciaInput.value = item.inicio_vigencia || '';
         terminoVigenciaInput.value = item.termino_vigencia || '';
         compDataAditivoInput.value = item.comp_data_aditivo || '';
@@ -3578,6 +3572,7 @@
         syncTextoCopia();
         valorContratoInput.value = formatCurrencyInput(item.valor_contrato || '');
         valorContratoAtualizadoInput.value = formatCurrencyExtenso(item.valor_contrato_atualizado || item.valor_contrato || '');
+        dataAssinaturaInput.value = item.data_assinatura || '';
         dataPublicacaoInput.value = item.data_publicacao || '';
         vencimentoGeralInput.value = item.vencimento_geral || '';
         mesRenovacaoInput.value = formatMonthYearLabel(item.termino_vigencia || '');
@@ -3595,9 +3590,6 @@
         lastAditivoTermoInput.value = '';
         lastAditivoNumeroInput.value = '';
         lastAditivoSituacaoPublicacaoInput.value = '';
-        lastAditivoCheckYesInput.checked = true;
-        lastAditivoCheckNoInput.checked = false;
-        lastAditivoCheckError.textContent = '';
         lastAditivoDataPublicacaoError.textContent = '';
         lastAditivoFeedback.textContent = '';
         lastAditivoFeedback.className = 'dsc-feedback';
@@ -3622,11 +3614,8 @@
         currentLastAditivoOriginalDataPublicacao = item?.data_publicacao || '';
         lastAditivoTermoInput.value = item?.termo_adesao || '';
         lastAditivoNumeroInput.value = item?.aditivo || '';
-        lastAditivoCheckYesInput.checked = item?.check_aditivo === '1';
-        lastAditivoCheckNoInput.checked = item?.check_aditivo !== '1';
         lastAditivoDataPublicacaoInput.value = item?.data_publicacao || '';
         syncLastAditivoSituacaoPublicacao();
-        lastAditivoCheckError.textContent = '';
         lastAditivoDataPublicacaoError.textContent = '';
         lastAditivoFeedback.textContent = '';
         lastAditivoFeedback.className = 'dsc-feedback';
@@ -4004,8 +3993,12 @@
           const payload = await response.json();
           renderGrid(payload.items || []);
           totalLabel.textContent = `${payload.total || 0} registro(s)`;
+          currentPage = payload.page || 1;
           totalPages = payload.totalPages || 1;
-          paginationInfo.textContent = `Pagina ${payload.page || 1} de ${totalPages}`;
+          paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+          if (pageSizeSelect) {
+            pageSizeSelect.value = String(pageSize);
+          }
           currentSortBy = payload.sortBy || 'codigo';
           currentSortDirection = payload.sortDirection || 'asc';
           syncSortIndicators();
@@ -4306,7 +4299,6 @@
         situacaoEmissao: normalizeText(situacaoEmissaoInput.value, 100),
         statusTermo: normalizeText(statusTermoInput.value, 100),
         statusAditivo: normalizeText(statusAditivoInput.value, 100),
-        checkAditivo: checkAditivoYesInput.checked ? 1 : 0,
         inicioVigencia: inicioVigenciaInput.value,
         terminoVigencia: terminoVigenciaInput.value,
         compDataAditivo: compDataAditivoInput.value,
@@ -4314,6 +4306,7 @@
         especificacaoSei: normalizeText(especificacaoSeiInput.value, 255),
         valorContrato: normalizeDecimalInput(valorContratoInput.value),
         valorContratoAtualizado: normalizeDecimalInput(valorContratoInput.value),
+        dataAssinatura: dataAssinaturaInput.value,
         dataPublicacao: formMode === 'create' ? '' : dataPublicacaoInput.value,
         vencimentoGeral: vencimentoGeralInput.value,
         mesRenovacao: normalizeText(formatMonthYearLabel(terminoVigenciaInput.value), 50),
@@ -4451,6 +4444,10 @@
         currentSearch = '';
         currentPage = 1;
         void loadItems();
+      });
+
+      openAssinaturaPendenciasButton?.addEventListener('click', () => {
+        window.location.href = '/src/termoDataAssinatura.html';
       });
 
       clearRejectionFilterButton.addEventListener('click', () => {
@@ -4650,6 +4647,19 @@
         }
       });
 
+      pageSizeSelect?.addEventListener('change', () => {
+        const nextPageSize = Number.parseInt(pageSizeSelect.value, 10);
+
+        if (!Number.isFinite(nextPageSize) || nextPageSize <= 0) {
+          pageSizeSelect.value = String(pageSize);
+          return;
+        }
+
+        pageSize = nextPageSize;
+        currentPage = 1;
+        void loadItems();
+      });
+
       previousRejectionPageButton.addEventListener('click', () => {
         if (currentRejectionPage > 1) {
           currentRejectionPage -= 1;
@@ -4776,6 +4786,7 @@
         inicioVigenciaInput,
         terminoVigenciaInput,
         compDataAditivoInput,
+        dataAssinaturaInput,
         dataPublicacaoInput,
         vencimentoGeralInput,
         lastAditivoDataPublicacaoInput,
@@ -4791,12 +4802,14 @@
       terminoVigenciaInput.addEventListener('input', () => {
         syncDerivedTermoFields();
       });
-      lastAditivoDataPublicacaoInput.addEventListener('input', syncLastAditivoSituacaoPublicacao);
+      lastAditivoDataPublicacaoInput.addEventListener('input', () => {
+        lastAditivoDataPublicacaoError.textContent = '';
+        syncLastAditivoSituacaoPublicacao();
+      });
 
       lastAditivoForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        lastAditivoCheckError.textContent = '';
         lastAditivoDataPublicacaoError.textContent = '';
         lastAditivoFeedback.textContent = '';
         lastAditivoFeedback.className = 'dsc-feedback';
@@ -4804,11 +4817,6 @@
         if (!currentLastAditivoItem?.codigo) {
           lastAditivoFeedback.textContent = 'Ultimo aditivo nao carregado.';
           lastAditivoFeedback.className = 'dsc-feedback dsc-feedback-error';
-          return;
-        }
-
-        if (!lastAditivoCheckYesInput.checked && !lastAditivoCheckNoInput.checked) {
-          lastAditivoCheckError.textContent = 'Selecione o check aditivo.';
           return;
         }
 
@@ -4830,7 +4838,6 @@
             const nextPublicationDate = String(lastAditivoDataPublicacaoInput.value || '').trim();
             const originalPublicationDate = normalizeReportDateKey(currentLastAditivoOriginalDataPublicacao);
 
-            payload.checkAditivo = lastAditivoCheckYesInput.checked ? 1 : 0;
             payload.dataPublicacao = nextPublicationDate;
 
             if (normalizeReportDateKey(nextPublicationDate) && normalizeReportDateKey(nextPublicationDate) !== originalPublicationDate) {
@@ -4849,10 +4856,6 @@
             if (!response.ok) {
               const responsePayload = await response.json().catch(() => ({}));
               const requestMessage = responsePayload.message || 'Falha ao alterar o ultimo aditivo.';
-
-              if (responsePayload.errors?.checkAditivo) {
-                lastAditivoCheckError.textContent = responsePayload.errors.checkAditivo;
-              }
 
               if (responsePayload.errors?.dataPublicacao) {
                 lastAditivoDataPublicacaoError.textContent = responsePayload.errors.dataPublicacao;

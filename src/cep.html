@@ -190,9 +190,21 @@
             </div>
 
             <div class="dsc-card dsc-access-grid-card">
-              <div class="dsc-access-grid-header">
-                <h2>Registros cadastrados</h2>
-                <span id="cep-total"></span>
+              <div class="dsc-access-grid-header" style="align-items: flex-start; justify-content: space-between; flex-direction: row;">
+                <div class="dsc-access-grid-header-copy">
+                  <h2>Registros cadastrados</h2>
+                  <span id="cep-total"></span>
+                </div>
+                <div class="dsc-grid-page-size-field" style="flex-direction: column; align-items: flex-end; justify-content: flex-start; margin-left: auto;">
+                  <span class="dsc-grid-page-size-label">Registros no grid</span>
+                  <select class="dsc-form-control" id="cep-page-size" style="padding: 0; min-height: 38px; border-radius: 14px;">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                  </select>
+                </div>
               </div>
               <div class="dsc-access-grid-wrapper">
                 <table class="dsc-access-grid">
@@ -236,6 +248,7 @@
       let currentPage = 1;
       let totalPages = 1;
       let pageSize = 20;
+      const pageSizeSelect = document.getElementById('cep-page-size');
       let currentSearch = '';
       let currentSortBy = 'cep';
       let currentSortDirection = 'asc';
@@ -496,6 +509,9 @@
           document.getElementById('cep-pagination-info').textContent = `Pagina ${currentPage} de ${totalPages}`;
           document.getElementById('previous-cep-page-button').disabled = currentPage <= 1;
           document.getElementById('next-cep-page-button').disabled = currentPage >= totalPages;
+          if (pageSizeSelect) {
+            pageSizeSelect.value = String(pageSize);
+          }
 
           const sortCepIndicator = document.getElementById('sort-cep-indicator');
           const sortMunicipioIndicator = document.getElementById('sort-municipio-indicator');
@@ -670,6 +686,19 @@
 
       document.getElementById('next-cep-page-button').addEventListener('click', () => {
         if (currentPage < totalPages) { currentPage++; void loadItems(); }
+      });
+
+      pageSizeSelect?.addEventListener('change', () => {
+        const nextPageSize = Number.parseInt(pageSizeSelect.value, 10);
+
+        if (!Number.isFinite(nextPageSize) || nextPageSize <= 0) {
+          pageSizeSelect.value = String(pageSize);
+          return;
+        }
+
+        pageSize = nextPageSize;
+        currentPage = 1;
+        void loadItems();
       });
 
       // ---- Sort ----

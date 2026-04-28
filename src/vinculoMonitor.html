@@ -181,9 +181,21 @@
             </div>
 
             <section class="dsc-card">
-              <div class="dsc-access-grid-header">
-                <h2>Tabela Vinculo de Monitor</h2>
-                <span id="vinculo-total"></span>
+              <div class="dsc-access-grid-header" style="align-items: flex-start; justify-content: space-between; flex-direction: row;">
+                <div class="dsc-access-grid-header-copy">
+                  <h2>Tabela Vinculo de Monitor</h2>
+                  <span id="vinculo-total"></span>
+                </div>
+                <div class="dsc-grid-page-size-field" style="flex-direction: column; align-items: flex-end; justify-content: flex-start; margin-left: auto;">
+                  <span class="dsc-grid-page-size-label">Registros no grid</span>
+                  <select class="dsc-form-control" id="vinculo-monitor-page-size" style="padding: 0; min-height: 38px; border-radius: 14px;">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                  </select>
+                </div>
               </div>
 
               <div class="dsc-access-grid-wrapper">
@@ -253,6 +265,7 @@
         const gridFeedback = document.getElementById('vinculo-grid-feedback');
         const totalLabel = document.getElementById('vinculo-total');
         const paginationInfo = document.getElementById('vinculo-pagination-info');
+        const pageSizeSelect = document.getElementById('vinculo-monitor-page-size');
         const previousPageButton = document.getElementById('previous-vinculo-page-button');
         const nextPageButton = document.getElementById('next-vinculo-page-button');
         const importForm = document.getElementById('vinculo-import-form');
@@ -376,6 +389,97 @@
             parsed.getMinutes(),
             parsed.getSeconds(),
           );
+        };
+
+        const formatEditableDateInputValue = (value) => {
+          const year = value.getFullYear();
+          const month = String(value.getMonth() + 1).padStart(2, '0');
+          const day = String(value.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        const toEditableDateDisplay = (value) => {
+          const normalizedValue = String(value ?? '').trim();
+
+          if (!normalizedValue) {
+            return '';
+          }
+
+          if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+            return normalizedValue;
+          }
+
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+            return normalizedValue;
+          }
+
+          const [year, month, day] = normalizedValue.split('-');
+          return `${day}/${month}/${year}`;
+        };
+
+        const parseEditableDateValue = (value) => {
+          const normalizedValue = String(value ?? '').trim();
+
+          if (!/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+            return null;
+          }
+
+          const [day, month, year] = normalizedValue.split('/').map(Number);
+          const parsed = new Date(year, month - 1, day);
+          return Number.isNaN(parsed.getTime()) ? null : parsed;
+        };
+
+        const enableFullDateSelection = (input) => {
+          if (!input) {
+            return;
+          }
+
+          const selectAllContent = () => {
+            if (document.activeElement === input && input.type === 'text') {
+              input.setSelectionRange(0, input.value.length);
+            }
+
+            requestAnimationFrame(() => {
+              if (document.activeElement === input && input.type === 'text') {
+                input.setSelectionRange(0, input.value.length);
+              }
+            });
+
+            setTimeout(() => {
+              if (document.activeElement === input && input.type === 'text') {
+                input.setSelectionRange(0, input.value.length);
+              }
+            }, 0);
+          };
+
+          input.addEventListener('focus', () => {
+            input.dataset.dateOriginalValue = input.value;
+            input.type = 'text';
+            input.inputMode = 'numeric';
+            input.placeholder = 'dd/mm/aaaa';
+            input.value = toEditableDateDisplay(input.value);
+            selectAllContent();
+          });
+
+          input.addEventListener('mouseup', (event) => {
+            if (input.type !== 'text') {
+              return;
+            }
+
+            event.preventDefault();
+            selectAllContent();
+          });
+
+          input.addEventListener('blur', () => {
+            const parsedDate = parseEditableDateValue(input.value);
+            input.type = 'date';
+            input.inputMode = '';
+            input.placeholder = '';
+            input.value = parsedDate
+              ? formatEditableDateInputValue(parsedDate)
+              : (input.dataset.dateOriginalValue || '');
+            delete input.dataset.dateOriginalValue;
+          });
         };
 
         const resetFormErrors = () => {
@@ -682,11 +786,15 @@
             }
 
             state.items = payload.items || [];
+            state.page = payload.page || 1;
             state.totalPages = payload.totalPages || 1;
             totalLabel.textContent = `${payload.total || 0} registro(s)`;
-            paginationInfo.textContent = `Pagina ${payload.page || 1} de ${payload.totalPages || 1}`;
-            previousPageButton.disabled = (payload.page || 1) <= 1;
-            nextPageButton.disabled = (payload.page || 1) >= (payload.totalPages || 1);
+            paginationInfo.textContent = `Pagina ${state.page} de ${state.totalPages}`;
+            if (pageSizeSelect) {
+              pageSizeSelect.value = String(state.pageSize);
+            }
+            previousPageButton.disabled = state.page <= 1;
+            nextPageButton.disabled = state.page >= state.totalPages;
             renderGrid(state.items);
             setFeedback(gridFeedback, state.items.length ? '' : 'Nenhum vinculo encontrado.');
           } catch (error) {
@@ -747,6 +855,19 @@
             state.page += 1;
             await loadItems();
           }
+        });
+
+        pageSizeSelect?.addEventListener('change', async () => {
+          const nextPageSize = Number.parseInt(pageSizeSelect.value, 10);
+
+          if (!Number.isFinite(nextPageSize) || nextPageSize <= 0) {
+            pageSizeSelect.value = String(state.pageSize);
+            return;
+          }
+
+          state.pageSize = nextPageSize;
+          state.page = 1;
+          await loadItems();
         });
 
         previousRejectionPageButton.addEventListener('click', async () => {
@@ -834,6 +955,8 @@
             syncPopupPageState();
           }
         });
+
+        [dataOsInput, dataAdmissaoInput].forEach(enableFullDateSelection);
 
         credenciadoInput.addEventListener('focus', () => {
           void populateCredenciadaOptions(credenciadoInput.value.trim());

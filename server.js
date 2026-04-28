@@ -178,6 +178,7 @@ const legacyCredenciamentoOsTableName = 'credenciamento_os'
 const legacyCredenciamentoOsImportRecusaTableName = 'credenciamento_os_import_recusa'
 const legacyCredenciamentoOsCodigoSequenceName = 'credenciamento_os_codigo_seq'
 const ordemServicoCollectionPath = '/api/ordem-servico'
+const ordemServicoDataEolPendenciasPath = '/api/ordem-servico/data-eol-pendencias'
 const ordemServicoNextNumOsPath = '/api/ordem-servico/next-num-os'
 const ordemServicoNextRevisaoPath = '/api/ordem-servico/next-revisao'
 const ordemServicoActiveCpfPath = '/api/ordem-servico/active-cpf'
@@ -185,6 +186,7 @@ const ordemServicoActivePlacaPath = '/api/ordem-servico/active-placa'
 const ordemServicoImportXmlPath = '/api/ordem-servico/import-xml'
 const ordemServicoImportRejectionsPath = '/api/ordem-servico/import-rejections'
 const credenciamentoTermoCollectionPath = '/api/termo'
+const credenciamentoTermoDataAssinaturaPendenciasPath = '/api/termo/data-assinatura-pendencias'
 const credenciamentoTermoLookupPath = '/api/termo/lookup'
 const credenciamentoTermoImportXmlPath = '/api/termo/import-xml'
 const credenciamentoTermoImportRejectionsPath = '/api/termo/import-rejections'
@@ -371,6 +373,11 @@ const getCredenciamentoTermoCodigoFromUrl = (url) => {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+const getCredenciamentoTermoDataAssinaturaCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/termo\/([^/]+)\/data-assinatura$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 const getVinculoCondutorIdFromUrl = (url) => {
   const match = url.match(/^\/api\/vinculo-condutor\/([^/]+)$/)
   return match ? decodeURIComponent(match[1]) : null
@@ -383,6 +390,11 @@ const getVinculoMonitorIdFromUrl = (url) => {
 
 const getOrdemServicoCodigoFromUrl = (url) => {
   const match = url.match(/^\/api\/ordem-servico\/([^/]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+const getOrdemServicoDataEolCodigoFromUrl = (url) => {
+  const match = url.match(/^\/api\/ordem-servico\/([^/]+)\/data-eol$/)
   return match ? decodeURIComponent(match[1]) : null
 }
 
@@ -1385,6 +1397,26 @@ const findVeiculoByCrm = async (crm) => {
   return result.rows[0] ?? null
 }
 
+const findVeiculoByPlaca = async (placa) => {
+  const normalizedPlaca = normalizeVehiclePlaca(placa)
+
+  if (!normalizedPlaca) {
+    return null
+  }
+
+  const result = await pool.query(
+    `SELECT
+       ${veiculoSelectClause}
+     FROM veiculo
+     WHERE regexp_replace(UPPER(COALESCE(placas, '')), '[^A-Z0-9]', '', 'g') = $1
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    [normalizedPlaca],
+  )
+
+  return result.rows[0] ?? null
+}
+
 const findTrocaByCodigoOrDescricao = async ({ codigo, descricao }) => {
   const normalizedCodigo = normalizeRequestValue(codigo)
   const normalizedDescricao = normalizeTrocaText(descricao, 255)
@@ -1435,6 +1467,27 @@ const buildCredenciadaLegacyFields = ({ codigo, credenciado, representante, cnpj
     condutor,
     tipoPessoa,
   }
+}
+
+const normalizeCredenciadaTipoPessoaValue = (value) => {
+  const normalized = normalizeRequestValue(value).slice(0, 20)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+
+  if (['COOPERATIVA', 'CO'].includes(normalized)) {
+    return 'CO'
+  }
+
+  if (['PESSOA JURIDICA', 'JURIDICA', 'PJ'].includes(normalized)) {
+    return 'PJ'
+  }
+
+  if (['PESSOA FISICA', 'FISICA', 'PF'].includes(normalized)) {
+    return 'PF'
+  }
+
+  return ''
 }
 
 const normalizeVehicleCrm = (value) => {
@@ -3115,6 +3168,7 @@ const credenciamentoTermoSelectClause = `
   COALESCE((SELECT BTRIM(c.municipio) FROM ceps c WHERE c.cep = BTRIM((SELECT cr.cep FROM credenciada cr WHERE cr.codigo = credenciada_codigo))), '') AS municipio,
   ${credenciamentoTermoEspecificacaoSeiExpression} AS especificacao_sei,
   valor_contrato::text AS valor_contrato,
+  TO_CHAR(data_assinatura::date, 'YYYY-MM-DD') AS data_assinatura,
   TO_CHAR(data_publicacao::date, 'YYYY-MM-DD') AS data_publicacao,
   valor_contrato_atualizado::text AS valor_contrato_atualizado,
   TO_CHAR(vencimento_geral::date, 'YYYY-MM-DD') AS vencimento_geral,
@@ -3204,6 +3258,7 @@ const ordemServicoSelectClause = `
   COALESCE(BTRIM(modalidade_descricao), '') AS modalidade_descricao,
   COALESCE(BTRIM(cpf_condutor), '') AS cpf_condutor,
   COALESCE(BTRIM(condutor), '') AS condutor,
+  COALESCE(BTRIM((SELECT c.crmc FROM condutor c WHERE BTRIM(c.cpf_condutor) = BTRIM(${ordemServicoTableName}.cpf_condutor) LIMIT 1)), '') AS crmc_condutor,
   TO_CHAR(data_admissao_condutor::date, 'YYYY-MM-DD') AS data_admissao_condutor,
   COALESCE(BTRIM(cpf_preposto), '') AS cpf_preposto,
   COALESCE(BTRIM(preposto_condutor), '') AS preposto_condutor,
@@ -3213,12 +3268,21 @@ const ordemServicoSelectClause = `
   COALESCE(BTRIM(veiculo_placas), '') AS veiculo_placas,
   COALESCE(BTRIM(cpf_monitor), '') AS cpf_monitor,
   COALESCE(BTRIM(monitor), '') AS monitor,
+  TO_CHAR((SELECT m.nascimento::date FROM monitor m WHERE BTRIM(m.cpf_monitor) = BTRIM(${ordemServicoTableName}.cpf_monitor) LIMIT 1), 'YYYY-MM-DD') AS monitor_nascimento,
   TO_CHAR(data_admissao_monitor::date, 'YYYY-MM-DD') AS data_admissao_monitor,
   COALESCE(BTRIM(situacao), '') AS situacao,
   COALESCE(tipo_troca_codigo::text, '') AS tipo_troca_codigo,
   COALESCE(BTRIM(tipo_troca_descricao), '') AS tipo_troca_descricao,
   COALESCE(BTRIM(conexao), '') AS conexao,
+  COALESCE((SELECT v.ano::text FROM veiculo v WHERE BTRIM(v.crm) = BTRIM(${ordemServicoTableName}.crm) LIMIT 1), '') AS veiculo_ano,
+  COALESCE((SELECT v.cap_detran::text FROM veiculo v WHERE BTRIM(v.crm) = BTRIM(${ordemServicoTableName}.crm) LIMIT 1), '') AS veiculo_cap_detran,
+  COALESCE((SELECT v.cap_teg::text FROM veiculo v WHERE BTRIM(v.crm) = BTRIM(${ordemServicoTableName}.crm) LIMIT 1), '') AS veiculo_cap_teg,
+  COALESCE((SELECT v.cap_teg_creche::text FROM veiculo v WHERE BTRIM(v.crm) = BTRIM(${ordemServicoTableName}.crm) LIMIT 1), '') AS veiculo_cap_teg_creche,
+  COALESCE((SELECT v.cap_acessivel::text FROM veiculo v WHERE BTRIM(v.crm) = BTRIM(${ordemServicoTableName}.crm) LIMIT 1), '') AS veiculo_cap_acessivel,
+  COALESCE(BTRIM((SELECT v.tipo_de_bancada FROM veiculo v WHERE BTRIM(v.crm) = BTRIM(${ordemServicoTableName}.crm) LIMIT 1)), '') AS veiculo_tipo_de_bancada,
+  COALESCE(BTRIM((SELECT v.os_especial FROM veiculo v WHERE BTRIM(v.crm) = BTRIM(${ordemServicoTableName}.crm) LIMIT 1)), '') AS veiculo_os_especial,
   TO_CHAR(data_encerramento::date, 'YYYY-MM-DD') AS data_encerramento,
+  TO_CHAR(data_eol::date, 'YYYY-MM-DD') AS data_eol,
   COALESCE(BTRIM(anotacao), '') AS anotacao,
   COALESCE(BTRIM(uniao_termos), '') AS uniao_termos,
   TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
@@ -5233,10 +5297,16 @@ const resolveCredenciadaImportCepUf = (municipio, cep = '') => {
   return ''
 }
 
-const upsertCredenciadaImportCep = async (client, record) => {
+const upsertCredenciadaImportCep = async (client, record, importedCepSet = null) => {
   if (!record.cep) {
     return null
   }
+
+  if (importedCepSet?.has(record.cep)) {
+    return record.cep
+  }
+
+  importedCepSet?.add(record.cep)
 
   const uf = resolveCredenciadaImportCepUf(record.municipio, record.cep)
 
@@ -5331,6 +5401,7 @@ const importCredenciadaXmlFile = async (fileName) => {
   try {
     await client.query('BEGIN')
     await client.query('TRUNCATE TABLE credenciada_import_recusa RESTART IDENTITY')
+    const importedCepSet = new Set()
     let inserted = 0
     let updated = 0
 
@@ -5363,7 +5434,7 @@ const importCredenciadaXmlFile = async (fileName) => {
 
     for (const record of normalizedRecords) {
       const existingResult = await client.query('SELECT 1 FROM credenciada WHERE codigo = $1 LIMIT 1', [record.codigo])
-      const ensuredCep = await upsertCredenciadaImportCep(client, record)
+      const ensuredCep = await upsertCredenciadaImportCep(client, record, importedCepSet)
 
       if (existingResult.rowCount > 0) {
         await client.query(
@@ -6572,9 +6643,7 @@ const validateCredenciadaPayload = async ({
   const normalizedCodigo = normalizeCondutorCodigo(codigo)
   const normalizedCredenciado = normalizeCredenciadaText(credenciado, 255)
   const normalizedCnpjCpf = normalizeCnpjCpf(cnpjCpf)
-  const normalizedTipoPessoaSource = normalizeRequestValue(tipoPessoa).slice(0, 20)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  const normalizedTipoPessoaSource = normalizeCredenciadaTipoPessoaValue(tipoPessoa)
   const normalizedCep = normalizeCep(cep)
   const normalizedNumero = normalizeCredenciadaText(numero, 30)
   const normalizedComplemento = normalizeCredenciadaText(complemento, 30)
@@ -6606,13 +6675,20 @@ const validateCredenciadaPayload = async ({
   }
 
   const documentDigitsLength = extractDocumentDigits(normalizedCnpjCpf).length
+  let persistedTipoPessoa = ''
+
+  if (documentDigitsLength === 14 && !normalizedTipoPessoaSource && Number.isInteger(originalCodigo) && originalCodigo > 0) {
+    const persistedTipoPessoaResult = await pool.query(
+      'SELECT tipo_pessoa FROM credenciada WHERE codigo = $1 LIMIT 1',
+      [originalCodigo],
+    )
+
+    persistedTipoPessoa = normalizeCredenciadaTipoPessoaValue(persistedTipoPessoaResult.rows[0]?.tipo_pessoa)
+  }
+
   const normalizedTipoPessoa = documentDigitsLength === 11
-    ? 'PESSOA FISICA'
-    : normalizedTipoPessoaSource === 'COOPERATIVA'
-      ? 'COOPERATIVA'
-      : normalizedTipoPessoaSource === 'PESSOA JURIDICA'
-        ? 'PESSOA JURIDICA'
-        : ''
+    ? 'PF'
+    : normalizedTipoPessoaSource || persistedTipoPessoa || 'PJ'
 
   if (documentDigitsLength === 14 && !normalizedTipoPessoa) {
     return { status: 400, payload: { message: 'Para CNPJ, tipo de termo deve ser Pessoa Juridica ou Cooperativa.' } }
@@ -6712,6 +6788,7 @@ const validateCredenciamentoTermoPayload = async ({
   municipio,
   especificacaoSei,
   valorContrato,
+  dataAssinatura,
   dataPublicacao,
   valorContratoAtualizado,
   vencimentoGeral,
@@ -6741,6 +6818,7 @@ const validateCredenciamentoTermoPayload = async ({
   const normalizedMunicipio = normalizeCredenciadaText(municipio, 120)
   const normalizedEspecificacaoSei = normalizeRequestValue(especificacaoSei).toUpperCase().slice(0, 255)
   const normalizedValorContrato = normalizeDecimalValue(valorContrato)
+  const normalizedDataAssinatura = normalizeXmlDateInput(dataAssinatura) || normalizeRequestValue(dataAssinatura)
   const normalizedDataPublicacao = normalizeXmlDateInput(dataPublicacao) || normalizeRequestValue(dataPublicacao)
   const normalizedValorContratoAtualizado = normalizeDecimalValue(valorContratoAtualizado)
   const normalizedVencimentoGeral = normalizeXmlDateInput(vencimentoGeral) || normalizeRequestValue(vencimentoGeral)
@@ -6757,10 +6835,6 @@ const validateCredenciamentoTermoPayload = async ({
 
   if (requireAditivo && (!Number.isInteger(normalizedAditivo) || normalizedAditivo < 0)) {
     errors.aditivo = 'Aditivo deve ser um inteiro positivo.'
-  }
-
-  if (!Number.isInteger(normalizedCheckAditivo)) {
-    errors.checkAditivo = 'Check do aditivo deve ser um inteiro.'
   }
 
   if (normalizedCep && !isCepValid(normalizedCep)) {
@@ -6781,6 +6855,10 @@ const validateCredenciamentoTermoPayload = async ({
 
   if (normalizedDataPubAditivo && !isDateInputValid(normalizedDataPubAditivo)) {
     errors.dataPubAditivo = 'Data de publicacao do aditivo invalida.'
+  }
+
+  if (normalizedDataAssinatura && !isDateInputValid(normalizedDataAssinatura)) {
+    errors.dataAssinatura = 'Data de assinatura invalida.'
   }
 
   if (normalizedDataPublicacao && !isDateInputValid(normalizedDataPublicacao)) {
@@ -6855,6 +6933,7 @@ const validateCredenciamentoTermoPayload = async ({
       municipio: normalizedMunicipio,
       especificacaoSei: normalizedEspecificacaoSei,
       valorContrato: normalizedValorContrato,
+      dataAssinatura: normalizedDataAssinatura,
       dataPublicacao: normalizedDataPublicacao,
       valorContratoAtualizado: normalizedValorContratoAtualizado,
       vencimentoGeral: normalizedVencimentoGeral,
@@ -6944,12 +7023,13 @@ const buildCredenciamentoTermoCreatePayload = (payload, latestTermoItem) => {
     compDataAditivo: pickCredenciamentoTermoTextValue(payload.compDataAditivo, latestTermoItem?.comp_data_aditivo),
     statusAditivo: 'PUBLICAR',
     dataPubAditivo: pickCredenciamentoTermoTextValue(payload.dataPubAditivo, latestTermoItem?.data_pub_aditivo),
-    checkAditivo: pickCredenciamentoTermoIntegerValue(payload.checkAditivo, latestTermoItem?.check_aditivo),
+    checkAditivo: pickCredenciamentoTermoIntegerValue(payload.checkAditivo, latestTermoItem?.check_aditivo) ?? 0,
     statusTermo: pickCredenciamentoTermoTextValue(payload.statusTermo, latestTermoItem?.status_termo) || 'ATIVO',
     tipoTermo: pickCredenciamentoTermoTextValue(payload.tipoTermo, latestTermoItem?.tipo_termo),
     especificacaoSei: pickCredenciamentoTermoTextValue(payload.especificacaoSei, latestTermoItem?.especificacao_sei),
     valorContrato: pickCredenciamentoTermoDecimalValue(payload.valorContrato, latestTermoItem?.valor_contrato),
     folhas: pickCredenciamentoTermoTextValue(payload.folhas, latestTermoItem?.folhas),
+    dataAssinatura: pickCredenciamentoTermoTextValue(payload.dataAssinatura, latestTermoItem?.data_assinatura),
     dataPublicacao: pickCredenciamentoTermoTextValue(payload.dataPublicacao, latestTermoItem?.data_publicacao),
     valorContratoAtualizado: pickCredenciamentoTermoDecimalValue(payload.valorContratoAtualizado, latestTermoItem?.valor_contrato_atualizado),
     vencimentoGeral,
@@ -7569,6 +7649,7 @@ const validateOrdemServicoPayload = async ({
   tipoTroca,
   conexao,
   dataEncerramento,
+  dataEol,
   anotacao,
   uniaoTermos,
   substitutionSourceCodigo = null,
@@ -7598,6 +7679,7 @@ const validateOrdemServicoPayload = async ({
   const normalizedTipoTroca = normalizeTrocaText(tipoTroca, 255)
   const normalizedConexao = normalizeOperationalCode(conexao, 50)
   const normalizedDataEncerramento = normalizeRequestValue(dataEncerramento)
+  const normalizedDataEol = normalizeRequestValue(dataEol)
   const normalizedAnotacao = normalizeCredenciamentoAnnotation(anotacao)
   const normalizedUniaoTermos = normalizeOperationalCode(uniaoTermos, 255)
   const normalizedSubstitutionSourceCodigo = normalizeCondutorCodigo(substitutionSourceCodigo)
@@ -7686,6 +7768,10 @@ if (importMode && !normalizedCredenciado && !normalizedCnpjCpf) {
 
   if (normalizedDataEncerramento && !isDateInputValid(normalizedDataEncerramento)) {
     return { status: 400, payload: { message: 'Data de encerramento invalida.' } }
+  }
+
+  if (normalizedDataEol && !isDateInputValid(normalizedDataEol)) {
+    return { status: 400, payload: { message: 'Data EOL invalida.' } }
   }
 
   if (!skipVigenciaValidation && !importMode && normalizedVigenciaOs && normalizedDataEncerramento && normalizedDataEncerramento < normalizedVigenciaOs) {
@@ -7785,6 +7871,10 @@ if (importMode && !normalizedCredenciado && !normalizedCnpjCpf) {
       return { status: 400, payload: { message: 'Termo de adesao nao encontrado na tabela termo.' } }
     }
 
+    if (normalizeRequestValue(credenciamentoTermoItem.status_termo).toUpperCase() !== 'ATIVO') {
+      return { status: 400, payload: { message: 'Termo nao ativo.' } }
+    }
+
     termoCodigo = Number(credenciamentoTermoItem.codigo)
     termoCredenciado = normalizeCredenciadaText(credenciamentoTermoItem.credenciado, 255)
     termoCnpjCpf = normalizeCnpjCpf(credenciamentoTermoItem.cnpj_cpf)
@@ -7879,6 +7969,7 @@ if (importMode && !normalizedCredenciado && !normalizedCnpjCpf) {
       tipoTrocaDescricao: tipoTrocaItem ? normalizeTrocaText(tipoTrocaItem.lista, 255) : '',
       conexao: normalizedConexao,
       dataEncerramento: normalizedDataEncerramento,
+      dataEol: normalizedDataEol,
       anotacao: normalizedAnotacao,
       uniaoTermos: normalizedUniaoTermos,
     },
@@ -8394,6 +8485,21 @@ const ensureDatabaseSchema = async () => {
   `)
   await pool.query('SELECT setval(\'veiculo_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM veiculo), 0), 1), true)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS veiculo_codigo_unique_idx ON veiculo (codigo)')
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE table_schema = 'public'
+          AND table_name = 'veiculo'
+          AND constraint_name = 'veiculo_placa_uk'
+      ) THEN
+        ALTER TABLE veiculo DROP CONSTRAINT veiculo_placa_uk;
+      END IF;
+    END $$;
+  `)
+  await pool.query('DROP INDEX IF EXISTS veiculo_placa_uk')
   await pool.query('CREATE INDEX IF NOT EXISTS veiculo_placas_idx ON veiculo (placas)')
   await pool.query('CREATE INDEX IF NOT EXISTS veiculo_crm_idx ON veiculo (crm)')
   await pool.query('CREATE INDEX IF NOT EXISTS veiculo_import_recusa_data_idx ON veiculo_import_recusa (data_importacao DESC)')
@@ -8703,6 +8809,7 @@ const ensureDatabaseSchema = async () => {
       especificacao_sei varchar(255),
       valor_contrato numeric(14, 2),
       objeto text,
+      data_assinatura date,
       data_publicacao date,
       info_sei varchar(100),
       valor_contrato_atualizado numeric(14, 2),
@@ -8739,6 +8846,7 @@ const ensureDatabaseSchema = async () => {
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS especificacao_sei varchar(255)`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS valor_contrato numeric(14, 2)`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS objeto text`)
+  await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS data_assinatura date`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS data_publicacao date`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS info_sei varchar(100)`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS valor_contrato_atualizado numeric(14, 2)`)
@@ -8774,7 +8882,7 @@ const ensureDatabaseSchema = async () => {
     SET placa = COALESCE(NULLIF(BTRIM(placa), ''), LEFT(CONCAT('CRED-', codigo::text), 20)),
         empresa = COALESCE(NULLIF(BTRIM(empresa), ''), COALESCE(NULLIF(BTRIM(credenciado), ''), CONCAT('CREDENCIADA ', codigo::text))),
         condutor = COALESCE(NULLIF(BTRIM(condutor), ''), COALESCE(NULLIF(BTRIM(representante), ''), NULLIF(BTRIM(empresa), ''), CONCAT('CREDENCIADA ', codigo::text))),
-        tipo_pessoa = COALESCE(NULLIF(BTRIM(tipo_pessoa), ''), CASE WHEN LENGTH(REGEXP_REPLACE(COALESCE(cnpj_cpf, ''), '\\D', '', 'g')) = 14 THEN 'JURIDICA' ELSE 'FISICA' END),
+      tipo_pessoa = COALESCE(NULLIF(BTRIM(tipo_pessoa), ''), CASE WHEN LENGTH(REGEXP_REPLACE(COALESCE(cnpj_cpf, ''), '\D', '', 'g')) = 14 THEN 'PJ' ELSE 'PF' END),
         credenciado = COALESCE(NULLIF(BTRIM(credenciado), ''), NULLIF(BTRIM(empresa), '')),
         cnpj_cpf = COALESCE(NULLIF(BTRIM(cnpj_cpf), ''), NULL),
         data_inclusao = COALESCE(data_inclusao, NOW()),
@@ -8877,6 +8985,7 @@ const ensureDatabaseSchema = async () => {
       tipo_troca_descricao varchar(255),
       conexao varchar(50),
       data_encerramento date,
+      data_eol date,
       anotacao text,
       uniao_termos varchar(255),
       data_inclusao timestamp without time zone NOT NULL DEFAULT NOW(),
@@ -8915,6 +9024,7 @@ const ensureDatabaseSchema = async () => {
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS tipo_troca_descricao varchar(255)`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS conexao varchar(50)`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS data_encerramento date`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS data_eol date`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS anotacao text`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS uniao_termos varchar(255)`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone`)
@@ -9812,6 +9922,70 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar OrdemServico.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === ordemServicoDataEolPendenciasPath) {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 20) || 20, 1), 100)
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = ['data_eol IS NULL']
+      const ordemServicoCredenciadoExpression = `COALESCE(BTRIM((SELECT cr.credenciado FROM credenciada cr WHERE cr.codigo = (SELECT credenciada_codigo FROM ${credenciamentoTermoTableName} WHERE codigo = ${ordemServicoTableName}.termo_codigo))), '')`
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR COALESCE(BTRIM(termo_adesao), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(num_os), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(revisao), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(os_concat), '') ILIKE UPPER($${values.length})
+          OR ${ordemServicoCredenciadoExpression} ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(dre_codigo), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(condutor), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(monitor), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(crm), '') ILIKE UPPER($${values.length})
+        )`)
+      }
+
+      const whereClause = `WHERE ${filters.join(' AND ')}`
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM ${ordemServicoTableName} ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT ${ordemServicoSelectClause}
+         FROM ${ordemServicoTableName}
+         ${whereClause}
+         ORDER BY ${ordemServicoCompositeKeyOrderClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar pendencias de data EOL.'
 
       sendJson(response, 500, { message })
     }
@@ -10753,6 +10927,66 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar credenciamentos termo.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === credenciamentoTermoDataAssinaturaPendenciasPath) {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 20) || 20, 1), 100)
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = ['data_assinatura IS NULL']
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(codigo AS text) ILIKE $${values.length}
+          OR ${credenciamentoTermoCnpjCpfExpression} ILIKE $${values.length}
+          OR ${credenciamentoTermoCredenciadoExpression} ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(tipo_termo), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(sei), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(termo_adesao), '') ILIKE UPPER($${values.length})
+          OR CAST(aditivo AS text) ILIKE $${values.length}
+        )`)
+      }
+
+      const whereClause = `WHERE ${filters.join(' AND ')}`
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM ${credenciamentoTermoTableName} ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT ${credenciamentoTermoSelectClause}
+         FROM ${credenciamentoTermoTableName}
+         ${whereClause}
+         ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC, COALESCE(aditivo, 0) ASC, CAST(codigo AS integer) ASC
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar pendencias de data de assinatura.'
 
       sendJson(response, 500, { message })
     }
@@ -12640,6 +12874,90 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'POST' && pathname === '/api/veiculo/relacao-crm') {
+    try {
+      const body = await readJsonBody(request)
+      const sourcePlaca = normalizeVehiclePlaca(body.placas)
+      const nextCrm = normalizeVehicleCrm(body.crm)
+
+      if (!nextCrm) {
+        sendJson(response, 400, { message: 'CRM e obrigatorio.' })
+        return
+      }
+
+      if (!sourcePlaca) {
+        sendJson(response, 400, { message: 'Placa do veiculo e obrigatoria.' })
+        return
+      }
+
+      const sourceItem = await findVeiculoByPlaca(sourcePlaca)
+
+      if (!sourceItem) {
+        sendJson(response, 404, { message: 'Placa nao encontrada na tabela veiculo.' })
+        return
+      }
+
+      if (!isVehicleCrmValid(nextCrm)) {
+        sendJson(response, 400, { message: 'CRM invalido.' })
+        return
+      }
+
+      const insertResult = await pool.query(
+        `INSERT INTO veiculo (
+           crm,
+           placas,
+           ano,
+           cap_detran,
+           cap_teg,
+           cap_teg_creche,
+           cap_acessivel,
+           val_crm,
+           seguradora,
+           seguro_inicio,
+           seguro_termino,
+           tipo_de_bancada,
+           tipo_de_veiculo,
+           marca_modelo,
+           titular,
+           cnpj_cpf,
+           valor_veiculo,
+           os_especial,
+           data_inclusao,
+           data_modificacao
+         )
+         VALUES (NULLIF($1, ''), NULLIF($2, ''), $3, $4, $5, $6, $7, NULLIF($8, '')::date, NULLIF($9, ''), NULLIF($10, '')::date, NULLIF($11, '')::date, NULLIF($12, ''), NULLIF($13, ''), NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), $17, NULLIF($18, ''), NOW(), NOW())
+         RETURNING ${veiculoSelectClause}`,
+        [
+          nextCrm,
+          sourceItem.placas,
+          sourceItem.ano ? Number(sourceItem.ano) : null,
+          sourceItem.cap_detran ? Number(sourceItem.cap_detran) : null,
+          sourceItem.cap_teg ? Number(sourceItem.cap_teg) : null,
+          sourceItem.cap_teg_creche ? Number(sourceItem.cap_teg_creche) : null,
+          sourceItem.cap_acessivel ? Number(sourceItem.cap_acessivel) : null,
+          sourceItem.val_crm,
+          sourceItem.seguradora,
+          sourceItem.seguro_inicio,
+          sourceItem.seguro_termino,
+          sourceItem.tipo_de_bancada,
+          sourceItem.tipo_de_veiculo,
+          sourceItem.marca_modelo,
+          sourceItem.titular,
+          sourceItem.cnpj_cpf,
+          sourceItem.valor_veiculo ? Number(sourceItem.valor_veiculo) : null,
+          sourceItem.os_especial,
+        ],
+      )
+
+      sendJson(response, 201, { item: insertResult.rows[0], sourceItem })
+    } catch (error) {
+      const persistenceError = getVeiculoPersistenceError(error, 'Erro ao criar nova relacao CRM com veiculo.')
+      sendJson(response, persistenceError.status, { message: persistenceError.message })
+    }
+
+    return
+  }
+
   if (request.method === 'POST' && pathname === credenciamentoTermoCollectionPath) {
     try {
       const body = await readJsonBody(request)
@@ -12734,6 +13052,7 @@ const server = createServer(async (request, response) => {
              tipo_termo,
              especificacao_sei,
              valor_contrato,
+             data_assinatura,
              data_publicacao,
              valor_contrato_atualizado,
              vencimento_geral,
@@ -12742,7 +13061,7 @@ const server = createServer(async (request, response) => {
              data_inclusao,
              data_modificacao
            )
-           VALUES ($1, $2, $3, NULLIF($4, ''), $5, NULLIF($6, ''), NULLIF($7, ''), NULLIF($8, '')::date, NULLIF($9, '')::date, NULLIF($10, '')::date, NULLIF($11, ''), NULLIF($12, '')::date, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), $17, NULLIF($18, '')::date, $19, NULLIF($20, '')::date, NULLIF($21, ''), NULLIF($22, ''), NOW(), NOW())
+           VALUES ($1, $2, $3, NULLIF($4, ''), $5, NULLIF($6, ''), NULLIF($7, ''), NULLIF($8, '')::date, NULLIF($9, '')::date, NULLIF($10, '')::date, NULLIF($11, ''), NULLIF($12, '')::date, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), $17, NULLIF($18, '')::date, NULLIF($19, '')::date, $20, NULLIF($21, '')::date, NULLIF($22, ''), NULLIF($23, ''), NOW(), NOW())
            RETURNING codigo`,
           [
               createPayload.codigoXml,
@@ -12762,6 +13081,7 @@ const server = createServer(async (request, response) => {
               createPayload.tipoTermo,
               createPayload.especificacaoSei,
               createPayload.valorContrato,
+              createPayload.dataAssinatura,
               createPayload.dataPublicacao,
               createPayload.valorContratoAtualizado,
               createPayload.vencimentoGeral,
@@ -14341,6 +14661,9 @@ const server = createServer(async (request, response) => {
       const nextSituacaoPublicacao = nextDataPublicacao && nextDataPublicacao !== currentDataPublicacao
         ? 'PUBLICADO'
         : validationResult.payload.situacaoPublicacao
+      const nextCheckAditivo = Number.isInteger(validationResult.payload.checkAditivo)
+        ? validationResult.payload.checkAditivo
+        : pickCredenciamentoTermoIntegerValue(existingItem.check_aditivo, 0) ?? 0
 
       const updateResult = await pool.query(
         `UPDATE ${credenciamentoTermoTableName}
@@ -14361,13 +14684,14 @@ const server = createServer(async (request, response) => {
              tipo_termo = NULLIF($15, ''),
              especificacao_sei = NULLIF($16, ''),
              valor_contrato = $17,
-            data_publicacao = NULLIF($18, '')::date,
-            valor_contrato_atualizado = $19,
-            vencimento_geral = NULLIF($20, '')::date,
-            mes_renovacao = NULLIF($21, ''),
-            tp_optante = NULLIF($22, ''),
+             data_assinatura = NULLIF($18, '')::date,
+            data_publicacao = NULLIF($19, '')::date,
+            valor_contrato_atualizado = $20,
+            vencimento_geral = NULLIF($21, '')::date,
+            mes_renovacao = NULLIF($22, ''),
+            tp_optante = NULLIF($23, ''),
              data_modificacao = NOW()
-           WHERE codigo = $23
+           WHERE codigo = $24
          RETURNING codigo`,
         [
           validationResult.payload.codigoXml,
@@ -14382,11 +14706,12 @@ const server = createServer(async (request, response) => {
           validationResult.payload.compDataAditivo,
           validationResult.payload.statusAditivo,
           validationResult.payload.dataPubAditivo,
-          validationResult.payload.checkAditivo,
+          nextCheckAditivo,
           validationResult.payload.statusTermo,
           validationResult.payload.tipoTermo,
           validationResult.payload.especificacaoSei,
           validationResult.payload.valorContrato,
+          validationResult.payload.dataAssinatura,
           validationResult.payload.dataPublicacao,
           validationResult.payload.valorContratoAtualizado,
           validationResult.payload.vencimentoGeral,
@@ -14406,6 +14731,51 @@ const server = createServer(async (request, response) => {
     } catch (error) {
       const persistenceError = getCredenciamentoTermoPersistenceError(error, 'Erro ao alterar credenciamento termo.')
       sendJson(response, persistenceError.status, { message: persistenceError.message })
+    }
+
+    return
+  }
+
+  if (request.method === 'PATCH' && getCredenciamentoTermoDataAssinaturaCodigoFromUrl(pathname)) {
+    try {
+      const codigo = Number(getCredenciamentoTermoDataAssinaturaCodigoFromUrl(pathname))
+
+      if (!Number.isInteger(codigo) || codigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo invalido.' })
+        return
+      }
+
+      const body = await readJsonBody(request)
+      const dataAssinatura = normalizeRequestValue(body.dataAssinatura)
+
+      if (!dataAssinatura) {
+        sendJson(response, 400, { message: 'Data de assinatura e obrigatoria.' })
+        return
+      }
+
+      if (!isDateInputValid(dataAssinatura)) {
+        sendJson(response, 400, { message: 'Data de assinatura invalida.' })
+        return
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE ${credenciamentoTermoTableName}
+         SET data_assinatura = $2::date,
+             data_modificacao = NOW()
+         WHERE codigo = $1
+         RETURNING ${credenciamentoTermoSelectClause}`,
+        [codigo, dataAssinatura],
+      )
+
+      if (updateResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'Credenciamento termo nao encontrado.' })
+        return
+      }
+
+      sendJson(response, 200, { item: updateResult.rows[0] })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao atualizar data de assinatura.'
+      sendJson(response, 500, { message })
     }
 
     return
@@ -15485,6 +15855,51 @@ const server = createServer(async (request, response) => {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erro ao atualizar OrdemServico.'
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'PATCH' && getOrdemServicoDataEolCodigoFromUrl(pathname)) {
+    try {
+      const codigo = Number(getOrdemServicoDataEolCodigoFromUrl(pathname))
+
+      if (!Number.isInteger(codigo) || codigo <= 0) {
+        sendJson(response, 400, { message: 'Codigo invalido.' })
+        return
+      }
+
+      const body = await readJsonBody(request)
+      const dataEol = normalizeRequestValue(body.dataEol)
+
+      if (!dataEol) {
+        sendJson(response, 400, { message: 'Data EOL e obrigatoria.' })
+        return
+      }
+
+      if (!isDateInputValid(dataEol)) {
+        sendJson(response, 400, { message: 'Data EOL invalida.' })
+        return
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE ${ordemServicoTableName}
+         SET data_eol = $2::date,
+             data_modificacao = NOW()
+         WHERE codigo = $1
+         RETURNING ${ordemServicoSelectClause}`,
+        [codigo, dataEol],
+      )
+
+      if (updateResult.rowCount === 0) {
+        sendJson(response, 404, { message: 'OrdemServico nao encontrada.' })
+        return
+      }
+
+      sendJson(response, 200, { item: updateResult.rows[0] })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao atualizar data EOL.'
       sendJson(response, 500, { message })
     }
 

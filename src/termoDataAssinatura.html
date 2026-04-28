@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PENDENCIAS ASSINATURA TERMO</title>
+
+    <link rel="stylesheet" href="css/login.css?v=20260428-termo-assinatura-1" />
+    <style>
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        color: #213139;
+      }
+
+      main.dsc-assinatura-page {
+        display: flex;
+        min-height: 100vh;
+        padding: 6px 10px;
+      }
+
+      .dsc-assinatura-page #login-section,
+      .dsc-assinatura-page .dsc-access-layout {
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+
+      .dsc-assinatura-shell {
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
+        gap: 10px;
+        width: min(100%, 920px);
+        min-height: calc(100vh - 12px);
+        margin: 0 auto;
+        padding: 12px 14px 24px;
+      }
+
+      .dsc-assinatura-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .dsc-assinatura-title-block {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .dsc-assinatura-kicker {
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.72rem;
+        color: #6d7f79;
+      }
+
+      .dsc-assinatura-title {
+        margin: 0;
+        font-size: clamp(1.2rem, 2vw, 1.55rem);
+        line-height: 1.1;
+        color: #213139;
+      }
+
+      .dsc-assinatura-total {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: #556761;
+        text-align: right;
+        align-self: start;
+      }
+
+      .dsc-assinatura-content {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        min-height: 0;
+      }
+
+      .dsc-assinatura-column {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .dsc-assinatura-panel {
+        background: rgba(248, 244, 238, 0.9);
+        border: 1px solid rgba(121, 91, 56, 0.16);
+        border-radius: 20px;
+        padding: 12px 14px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
+      }
+
+      .dsc-assinatura-filter-bar {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+        padding: 0;
+        width: 100%;
+      }
+
+      .dsc-assinatura-filter-label {
+        font-size: 0.86rem;
+        font-weight: 700;
+        color: #314641;
+        white-space: nowrap;
+      }
+
+      .dsc-assinatura-filter-input {
+        min-width: 0;
+      }
+
+      .dsc-assinatura-filter-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+      }
+
+      .dsc-assinatura-row {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 6px 10px;
+        align-items: center;
+      }
+
+      .dsc-assinatura-row + .dsc-assinatura-row {
+        margin-top: 6px;
+      }
+
+      .dsc-assinatura-field {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .dsc-assinatura-field label {
+        flex: 0 0 124px;
+        width: 124px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #314641;
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      .dsc-assinatura-inline-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        width: 100%;
+        min-width: 0;
+      }
+
+      .dsc-assinatura-input {
+        min-width: 0;
+        width: 100%;
+        height: 34px;
+        border-radius: 12px;
+        padding: 8px 12px;
+        border: 1px solid rgba(121, 91, 56, 0.2);
+        background: rgba(255, 255, 255, 0.92);
+        color: #213139;
+        font: inherit;
+      }
+
+      .dsc-assinatura-input:focus {
+        outline: none;
+        border-color: #c85c2c;
+        box-shadow: 0 0 0 4px rgba(200, 92, 44, 0.14);
+      }
+
+      .dsc-assinatura-input[readonly] {
+        color: #556761;
+        background: rgba(229, 235, 232, 0.88);
+      }
+
+      .dsc-assinatura-input-highlight {
+        background: #fff7ba;
+        color: #213139;
+        font-weight: 700;
+      }
+
+      .dsc-assinatura-fill-date-button {
+        min-width: unset;
+        width: fit-content;
+        flex: 0 0 auto;
+        height: 34px;
+        padding-left: 10px;
+        padding-right: 10px;
+        white-space: nowrap;
+      }
+
+      .dsc-span-6 { grid-column: span 6; }
+      .dsc-span-12 { grid-column: span 12; }
+
+      .dsc-assinatura-bottom {
+        display: grid;
+        gap: 8px;
+        align-content: end;
+      }
+
+      .dsc-assinatura-feedback {
+        min-height: 20px;
+        margin: 0;
+        font-size: 0.92rem;
+        color: #556761;
+      }
+
+      .dsc-assinatura-feedback-error {
+        color: #b42318;
+      }
+
+      .dsc-assinatura-feedback-success {
+        color: #027a48;
+      }
+
+      .dsc-assinatura-empty-state.dsc-hidden {
+        display: none;
+      }
+
+      .dsc-assinatura-footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+        margin-top: auto;
+        padding-top: 14px;
+        padding-bottom: 2px;
+        background: linear-gradient(0deg, rgba(250, 245, 240, 0.98), rgba(250, 245, 240, 0.9));
+        backdrop-filter: blur(10px);
+        width: 100%;
+      }
+
+      .dsc-assinatura-actions,
+      .dsc-assinatura-nav-actions,
+      .dsc-assinatura-nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+        justify-content: center;
+      }
+
+      .dsc-assinatura-nav .dsc-btn {
+        min-width: 44px;
+        width: 44px;
+        padding: 0;
+      }
+
+      .dsc-assinatura-hidden {
+        display: none;
+      }
+
+      @media (max-width: 640px) {
+        .dsc-assinatura-header {
+          grid-template-columns: 1fr;
+        }
+
+        .dsc-assinatura-row {
+          grid-template-columns: 1fr;
+        }
+
+        .dsc-span-6,
+        .dsc-span-12 {
+          grid-column: span 1;
+        }
+
+        .dsc-assinatura-field {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .dsc-assinatura-field label {
+          flex: 0 0 auto;
+          width: auto;
+        }
+
+        .dsc-assinatura-inline-actions,
+        .dsc-assinatura-actions,
+        .dsc-assinatura-nav-actions {
+          flex-wrap: wrap;
+          justify-content: flex-start;
+        }
+
+        .dsc-assinatura-filter-bar {
+          grid-template-columns: 1fr;
+        }
+
+        .dsc-assinatura-filter-label {
+          white-space: normal;
+        }
+
+        .dsc-assinatura-filter-actions {
+          justify-content: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="dsc-access-page dsc-assinatura-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <form id="assinatura-record-form" class="dsc-card dsc-assinatura-shell">
+            <header class="dsc-assinatura-header">
+              <div class="dsc-assinatura-title-block">
+                <p class="dsc-assinatura-kicker">Sistema operacional</p>
+                <h1 class="dsc-assinatura-title">Pendencias de assinatura do termo</h1>
+              </div>
+              <span class="dsc-assinatura-total" id="assinatura-total-label">Carregando...</span>
+            </header>
+
+            <div id="assinatura-filter-form" class="dsc-assinatura-filter-bar">
+              <label class="dsc-assinatura-filter-label" for="assinatura-search">Numero termo</label>
+              <input class="dsc-assinatura-input dsc-assinatura-filter-input" id="assinatura-search" type="text" placeholder="Filtrar por numero termo" inputmode="numeric" />
+              <div class="dsc-assinatura-filter-actions">
+                <button type="button" class="dsc-btn dsc-btn-white" id="apply-assinatura-filter-button">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-assinatura-filter-button">Limpar</button>
+              </div>
+            </div>
+
+            <div class="dsc-assinatura-content">
+              <div class="dsc-assinatura-column">
+                <section class="dsc-assinatura-panel">
+                  <div class="dsc-assinatura-row">
+                    <div class="dsc-assinatura-field dsc-span-12">
+                      <label for="assinatura-data-display">Data assinatura:</label>
+                      <div class="dsc-assinatura-inline-actions">
+                        <input class="dsc-assinatura-input dsc-assinatura-input-highlight" id="assinatura-data-display" type="text" placeholder="dd/mm/aaaa" />
+                        <button type="button" class="dsc-btn dsc-btn-blue dsc-assinatura-fill-date-button" id="fill-assinatura-date-button">Preencher Data</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="dsc-assinatura-row">
+                    <div class="dsc-assinatura-field dsc-span-12">
+                      <label for="assinatura-cnpj-cpf">CNPJ/CPF:</label>
+                      <input class="dsc-assinatura-input" id="assinatura-cnpj-cpf" type="text" readonly />
+                    </div>
+                  </div>
+                  <div class="dsc-assinatura-row">
+                    <div class="dsc-assinatura-field dsc-span-12">
+                      <label for="assinatura-credenciada">Credenciada:</label>
+                      <input class="dsc-assinatura-input" id="assinatura-credenciada" type="text" readonly />
+                    </div>
+                  </div>
+                  <div class="dsc-assinatura-row">
+                    <div class="dsc-assinatura-field dsc-span-12">
+                      <label for="assinatura-tipo-termo">Tipo termo:</label>
+                      <input class="dsc-assinatura-input" id="assinatura-tipo-termo" type="text" readonly />
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <div class="dsc-assinatura-column">
+                <section class="dsc-assinatura-panel">
+                  <div class="dsc-assinatura-row">
+                    <div class="dsc-assinatura-field dsc-span-12">
+                      <label for="assinatura-sei">Numero SEI:</label>
+                      <input class="dsc-assinatura-input" id="assinatura-sei" type="text" readonly />
+                    </div>
+                  </div>
+                  <div class="dsc-assinatura-row">
+                    <div class="dsc-assinatura-field dsc-span-6">
+                      <label for="assinatura-termo">Numero termo:</label>
+                      <input class="dsc-assinatura-input" id="assinatura-termo" type="text" readonly />
+                    </div>
+                    <div class="dsc-assinatura-field dsc-span-6">
+                      <label for="assinatura-aditivo">Aditivo:</label>
+                      <input class="dsc-assinatura-input" id="assinatura-aditivo" type="text" readonly />
+                    </div>
+                  </div>
+                  <div class="dsc-assinatura-row">
+                    <div class="dsc-assinatura-field dsc-span-6">
+                      <label for="assinatura-inicio-vigencia">Inicio vigencia:</label>
+                      <input class="dsc-assinatura-input" id="assinatura-inicio-vigencia" type="text" readonly />
+                    </div>
+                    <div class="dsc-assinatura-field dsc-span-6">
+                      <label for="assinatura-termino-vigencia">Fim vigencia:</label>
+                      <input class="dsc-assinatura-input" id="assinatura-termino-vigencia" type="text" readonly />
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            <input id="assinatura-codigo" type="hidden" />
+
+            <div class="dsc-assinatura-bottom">
+              <p class="dsc-assinatura-feedback dsc-assinatura-empty-state dsc-assinatura-hidden" id="assinatura-empty-state">Nenhum termo pendente de assinatura.</p>
+              <p class="dsc-assinatura-feedback" id="assinatura-feedback"></p>
+
+              <div class="dsc-assinatura-footer">
+                <div class="dsc-assinatura-actions">
+                  <button type="submit" class="dsc-btn dsc-btn-blue" id="save-assinatura-button">Salvar</button>
+                </div>
+                <div class="dsc-assinatura-nav-actions">
+                  <div class="dsc-assinatura-nav">
+                    <button type="button" class="dsc-btn dsc-btn-white" id="first-assinatura-record-button" title="Primeiro registro">|◀</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="previous-assinatura-record-button" title="Registro anterior">◀</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="next-assinatura-record-button" title="Proximo registro">▶</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="last-assinatura-record-button" title="Ultimo registro">▶|</button>
+                  </div>
+                  <button type="button" class="dsc-btn dsc-btn-white" id="back-termo-button">Cancelar</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const backButton = document.getElementById('back-termo-button');
+      const filterForm = document.getElementById('assinatura-filter-form');
+      const recordForm = document.getElementById('assinatura-record-form');
+      const searchInput = document.getElementById('assinatura-search');
+      const applyFilterButton = document.getElementById('apply-assinatura-filter-button');
+      const clearFilterButton = document.getElementById('clear-assinatura-filter-button');
+      const totalLabel = document.getElementById('assinatura-total-label');
+      const emptyState = document.getElementById('assinatura-empty-state');
+      const feedback = document.getElementById('assinatura-feedback');
+      const firstRecordButton = document.getElementById('first-assinatura-record-button');
+      const previousRecordButton = document.getElementById('previous-assinatura-record-button');
+      const nextRecordButton = document.getElementById('next-assinatura-record-button');
+      const lastRecordButton = document.getElementById('last-assinatura-record-button');
+      const fillDateButton = document.getElementById('fill-assinatura-date-button');
+      const saveButton = document.getElementById('save-assinatura-button');
+      const codigoInput = document.getElementById('assinatura-codigo');
+      const dataDisplayInput = document.getElementById('assinatura-data-display');
+      const cnpjCpfInput = document.getElementById('assinatura-cnpj-cpf');
+      const credenciadaInput = document.getElementById('assinatura-credenciada');
+      const tipoTermoInput = document.getElementById('assinatura-tipo-termo');
+      const seiInput = document.getElementById('assinatura-sei');
+      const termoInput = document.getElementById('assinatura-termo');
+      const aditivoInput = document.getElementById('assinatura-aditivo');
+      const inicioVigenciaInput = document.getElementById('assinatura-inicio-vigencia');
+      const terminoVigenciaInput = document.getElementById('assinatura-termino-vigencia');
+
+      const pageSize = 1;
+      let currentSearch = '';
+      let currentPage = 1;
+      let totalPages = 1;
+      let totalItems = 0;
+      let currentItem = null;
+
+      const normalizeRequestValue = (value) => String(value ?? '').trim();
+
+      const formatIsoDateToDisplay = (value) => {
+        const normalizedValue = normalizeRequestValue(value);
+
+        if (!normalizedValue || !/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+          return '';
+        }
+
+        const [year, month, day] = normalizedValue.split('-');
+        return `${day}/${month}/${year}`;
+      };
+
+      const getTodayDisplayValue = () => {
+        const now = new Date();
+        return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+      };
+
+      const normalizeDisplayDate = (value) => {
+        const digits = normalizeRequestValue(value).replace(/\D/g, '').slice(0, 8);
+
+        if (digits.length <= 2) {
+          return digits;
+        }
+
+        if (digits.length <= 4) {
+          return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+        }
+
+        return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+      };
+
+      const parseDisplayDateToIso = (value) => {
+        const normalizedValue = normalizeRequestValue(value);
+
+        if (!normalizedValue) {
+          return '';
+        }
+
+        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return null;
+        }
+
+        const [day, month, year] = normalizedValue.split('/');
+        const isoValue = `${year}-${month}-${day}`;
+        const parsedDate = new Date(`${isoValue}T00:00:00`);
+        return Number.isNaN(parsedDate.getTime()) ? null : isoValue;
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof Error && error.message) {
+          return error.message;
+        }
+
+        return fallbackMessage;
+      };
+
+      const readJsonResponse = async (response) => {
+        const text = await response.text();
+
+        if (!text) {
+          return {};
+        }
+
+        try {
+          return JSON.parse(text);
+        } catch {
+          throw new Error('Resposta JSON invalida.');
+        }
+      };
+
+      const buildUrl = () => {
+        const params = new URLSearchParams({ page: String(currentPage), pageSize: String(pageSize) });
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+        return `/api/termo/data-assinatura-pendencias?${params.toString()}`;
+      };
+
+      const setFeedback = (message, tone = '') => {
+        feedback.textContent = message;
+        feedback.className = `dsc-assinatura-feedback${tone ? ` dsc-assinatura-feedback-${tone}` : ''}`;
+      };
+
+      const updateNavigation = () => {
+        totalLabel.textContent = totalItems ? `${totalItems} pendencia(s) encontrada(s)` : 'Nenhuma pendencia';
+        firstRecordButton.disabled = currentPage <= 1 || totalItems === 0;
+        previousRecordButton.disabled = currentPage <= 1 || totalItems === 0;
+        nextRecordButton.disabled = currentPage >= totalPages || totalItems === 0;
+        lastRecordButton.disabled = currentPage >= totalPages || totalItems === 0;
+        saveButton.disabled = totalItems === 0;
+      };
+
+      const clearForm = () => {
+        currentItem = null;
+        codigoInput.value = '';
+        dataDisplayInput.value = '';
+        cnpjCpfInput.value = '';
+        credenciadaInput.value = '';
+        tipoTermoInput.value = '';
+        seiInput.value = '';
+        termoInput.value = '';
+        aditivoInput.value = '';
+        inicioVigenciaInput.value = '';
+        terminoVigenciaInput.value = '';
+      };
+
+      const renderItem = (item) => {
+        currentItem = item;
+        codigoInput.value = item.codigo || '';
+        dataDisplayInput.value = formatIsoDateToDisplay(item.data_assinatura);
+        cnpjCpfInput.value = item.cnpj_cpf || '';
+        credenciadaInput.value = item.credenciado || '';
+        tipoTermoInput.value = item.tipo_termo || '';
+        seiInput.value = item.sei || '';
+        termoInput.value = item.termo_adesao || '';
+        aditivoInput.value = item.aditivo || '';
+        inicioVigenciaInput.value = formatIsoDateToDisplay(item.inicio_vigencia);
+        terminoVigenciaInput.value = formatIsoDateToDisplay(item.termino_vigencia);
+        emptyState.classList.add('dsc-assinatura-hidden');
+      };
+
+      const loadItems = async () => {
+        setFeedback('Carregando pendencias de assinatura...');
+
+        try {
+          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar pendencias de assinatura.');
+          }
+
+          totalPages = payload.totalPages || 1;
+          totalItems = payload.total || 0;
+
+          if (currentPage > totalPages) {
+            currentPage = totalPages;
+            return loadItems();
+          }
+
+          const items = payload.items || [];
+
+          if (items.length) {
+            renderItem(items[0]);
+            setFeedback('');
+          } else {
+            clearForm();
+            emptyState.classList.remove('dsc-assinatura-hidden');
+            setFeedback('Nenhum termo pendente de assinatura.');
+          }
+
+          updateNavigation();
+        } catch (error) {
+          clearForm();
+          totalItems = 0;
+          totalPages = 1;
+          updateNavigation();
+          emptyState.classList.remove('dsc-assinatura-hidden');
+          setFeedback(getRequestErrorMessage(error, 'Falha ao carregar pendencias de assinatura.'), 'error');
+        }
+      };
+
+      const saveDataAssinatura = async (codigo, dataAssinatura) => {
+        saveButton.disabled = true;
+        saveButton.textContent = 'Salvando...';
+        setFeedback(`Atualizando data de assinatura do termo ${codigo}...`);
+
+        try {
+          const response = await fetch(`/api/termo/${encodeURIComponent(codigo)}/data-assinatura`, {
+            method: 'PATCH',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ dataAssinatura }),
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao atualizar data de assinatura.');
+          }
+
+          setFeedback(`Data de assinatura do termo ${codigo} atualizada com sucesso.`, 'success');
+          await loadItems();
+        } catch (error) {
+          setFeedback(getRequestErrorMessage(error, 'Falha ao atualizar data de assinatura.'), 'error');
+        } finally {
+          saveButton.disabled = totalItems === 0;
+          saveButton.textContent = 'Salvar';
+        }
+      };
+
+      backButton.addEventListener('click', () => {
+        window.location.href = '/src/credenciamentoTermo.html';
+      });
+
+      const applyFilter = () => {
+        currentSearch = normalizeRequestValue(searchInput.value);
+        currentPage = 1;
+        void loadItems();
+      };
+
+      applyFilterButton.addEventListener('click', applyFilter);
+
+      searchInput.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') {
+          return;
+        }
+
+        event.preventDefault();
+        applyFilter();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      dataDisplayInput.addEventListener('input', () => {
+        dataDisplayInput.value = normalizeDisplayDate(dataDisplayInput.value);
+      });
+
+      fillDateButton.addEventListener('click', () => {
+        dataDisplayInput.value = getTodayDisplayValue();
+        setFeedback('Data de assinatura preenchida com a data de hoje.');
+      });
+
+      firstRecordButton.addEventListener('click', () => {
+        if (currentPage === 1) {
+          return;
+        }
+
+        currentPage = 1;
+        void loadItems();
+      });
+
+      previousRecordButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage -= 1;
+        void loadItems();
+      });
+
+      nextRecordButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage += 1;
+        void loadItems();
+      });
+
+      lastRecordButton.addEventListener('click', () => {
+        if (currentPage === totalPages) {
+          return;
+        }
+
+        currentPage = totalPages;
+        void loadItems();
+      });
+
+      recordForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        if (!currentItem?.codigo) {
+          setFeedback('Nenhum termo pendente carregado para atualizar.', 'error');
+          return;
+        }
+
+        const parsedDate = parseDisplayDateToIso(dataDisplayInput.value);
+
+        if (!parsedDate) {
+          setFeedback('Informe uma data valida no formato dd/mm/aaaa.', 'error');
+          dataDisplayInput.focus();
+          return;
+        }
+
+        void saveDataAssinatura(currentItem.codigo, parsedDate);
+      });
+
+      void loadItems();
+    </script>
+  </body>
+</html>

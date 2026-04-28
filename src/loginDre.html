@@ -111,9 +111,21 @@
             </div>
 
             <div class="dsc-card dsc-access-grid-card">
-              <div class="dsc-access-grid-header">
-                <h2>Relacionamentos cadastrados</h2>
-                <span id="login-dre-total"></span>
+              <div class="dsc-access-grid-header" style="align-items: flex-start; justify-content: space-between; flex-direction: row;">
+                <div class="dsc-access-grid-header-copy">
+                  <h2>Relacionamentos cadastrados</h2>
+                  <span id="login-dre-total"></span>
+                </div>
+                <div class="dsc-grid-page-size-field" style="flex-direction: column; align-items: flex-end; justify-content: flex-start; margin-left: auto;">
+                  <span class="dsc-grid-page-size-label">Registros no grid</span>
+                  <select class="dsc-form-control" id="login-dre-page-size" style="padding: 0; min-height: 38px; border-radius: 14px;">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                  </select>
+                </div>
               </div>
 
               <div class="dsc-access-grid-wrapper">
@@ -189,6 +201,7 @@
       const previousPageButton = document.getElementById('previous-login-dre-page-button');
       const nextPageButton = document.getElementById('next-login-dre-page-button');
       const paginationInfo = document.getElementById('login-dre-pagination-info');
+      const pageSizeSelect = document.getElementById('login-dre-page-size');
       const sortLoginCodigoButton = document.getElementById('sort-login-codigo-button');
       const sortLoginCodigoIndicator = document.getElementById('sort-login-codigo-indicator');
       const sortDreCodigoButton = document.getElementById('sort-dre-codigo-button');
@@ -197,7 +210,7 @@
       const saveButton = document.getElementById('save-login-dre-button');
       const statusBanner = document.getElementById('status-banner');
 
-      const pageSize = 20;
+      let pageSize = 20;
       let currentPage = 1;
       let totalPages = 1;
       let currentSearch = '';
@@ -508,6 +521,9 @@
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
+        if (pageSizeSelect) {
+          pageSizeSelect.value = String(pageSize);
+        }
         sortLoginCodigoIndicator.textContent = currentSortBy === 'login_codigo' ? (currentSortDirection === 'asc' ? '↑' : '↓') : '↕';
         sortDreCodigoIndicator.textContent = currentSortBy === 'dre_codigo' ? (currentSortDirection === 'asc' ? '↑' : '↓') : '↕';
       };
@@ -843,6 +859,19 @@
         }
 
         currentPage += 1;
+        void loadItems();
+      });
+
+      pageSizeSelect?.addEventListener('change', () => {
+        const nextPageSize = Number.parseInt(pageSizeSelect.value, 10);
+
+        if (!Number.isFinite(nextPageSize) || nextPageSize <= 0) {
+          pageSizeSelect.value = String(pageSize);
+          return;
+        }
+
+        pageSize = nextPageSize;
+        currentPage = 1;
         void loadItems();
       });
 

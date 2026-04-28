@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PENDENCIAS EOL</title>
+
+    <link rel="stylesheet" href="css/login.css?v=20260423-emissao-footer-static-7" />
+    <style>
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        color: #213139;
+      }
+
+      main.dsc-eol-page {
+        display: flex;
+        min-height: 100vh;
+          padding: 6px 10px;
+      }
+
+      .dsc-eol-page #login-section {
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+
+      .dsc-eol-page .dsc-access-layout {
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+
+      .dsc-eol-shell {
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
+        gap: 10px;
+          width: min(100%, 1560px);
+        min-height: 0;
+          min-height: calc(100vh - 12px);
+          height: auto;
+        margin: 0 auto;
+          padding: 12px 14px 24px;
+      }
+
+      .dsc-eol-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .dsc-eol-title-block {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .dsc-eol-kicker {
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.72rem;
+        color: #6d7f79;
+      }
+
+      .dsc-eol-title {
+        margin: 0;
+        font-size: clamp(1.2rem, 2vw, 1.55rem);
+        line-height: 1.1;
+        color: #213139;
+      }
+
+      .dsc-eol-total {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: #556761;
+        text-align: right;
+        align-self: start;
+      }
+
+      .dsc-eol-content {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr);
+        gap: 12px;
+        min-height: 0;
+          overflow: visible;
+      }
+
+      .dsc-eol-column {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .dsc-eol-panel {
+        background: rgba(248, 244, 238, 0.9);
+        border: 1px solid rgba(121, 91, 56, 0.16);
+        border-radius: 20px;
+        padding: 12px 14px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
+      }
+
+      .dsc-eol-filter-bar {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+        padding: 0;
+        width: 100%;
+      }
+
+      .dsc-eol-filter-label {
+        font-size: 0.86rem;
+        font-weight: 700;
+        color: #314641;
+        white-space: nowrap;
+      }
+
+      .dsc-eol-filter-input {
+        min-width: 0;
+      }
+
+      .dsc-eol-filter-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+      }
+
+      .dsc-eol-row {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 6px 10px;
+        align-items: center;
+      }
+
+      .dsc-eol-row + .dsc-eol-row {
+        margin-top: 6px;
+      }
+
+      .dsc-eol-field {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .dsc-eol-field label {
+        flex: 0 0 112px;
+        width: 112px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #314641;
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      .dsc-eol-inline-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        width: 100%;
+        min-width: 0;
+      }
+
+      .dsc-eol-inline-actions .dsc-eol-input {
+        flex: 1 1 auto;
+      }
+
+      .dsc-eol-inline-actions .dsc-eol-input-fixed {
+        flex: 0 0 140px;
+        width: 140px;
+      }
+
+      .dsc-eol-inline-actions-capacidades {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        width: 100%;
+      }
+
+      .dsc-eol-fill-date-button {
+        min-width: unset;
+        width: fit-content;
+        flex: 0 0 auto;
+        height: 34px;
+        padding-left: 10px;
+        padding-right: 10px;
+        white-space: nowrap;
+      }
+
+      .dsc-eol-input {
+        min-width: 0;
+        width: 100%;
+        height: 34px;
+        border-radius: 12px;
+        padding: 8px 12px;
+        border: 1px solid rgba(121, 91, 56, 0.2);
+        background: rgba(255, 255, 255, 0.92);
+        color: #213139;
+        font: inherit;
+      }
+
+      .dsc-eol-input:focus {
+        outline: none;
+        border-color: #c85c2c;
+        box-shadow: 0 0 0 4px rgba(200, 92, 44, 0.14);
+      }
+
+      .dsc-eol-input[readonly] {
+        color: #556761;
+        background: rgba(229, 235, 232, 0.88);
+      }
+
+      .dsc-eol-input-highlight {
+        background: #fff7ba;
+        color: #213139;
+        font-weight: 700;
+      }
+
+      .dsc-eol-input-highlight[readonly] {
+        background: #fff7ba;
+        color: #213139;
+      }
+
+      .dsc-eol-input-compact {
+        text-align: center;
+      }
+
+      .dsc-span-1 { grid-column: span 1; }
+      .dsc-span-2 { grid-column: span 2; }
+      .dsc-span-3 { grid-column: span 3; }
+      .dsc-span-4 { grid-column: span 4; }
+      .dsc-span-5 { grid-column: span 5; }
+      .dsc-span-6 { grid-column: span 6; }
+      .dsc-span-7 { grid-column: span 7; }
+      .dsc-span-8 { grid-column: span 8; }
+      .dsc-span-9 { grid-column: span 9; }
+      .dsc-span-10 { grid-column: span 10; }
+      .dsc-span-12 { grid-column: span 12; }
+
+      .dsc-eol-bottom {
+        display: grid;
+        gap: 8px;
+        align-content: end;
+      }
+
+      .dsc-eol-feedback {
+        min-height: 20px;
+        margin: 0;
+        font-size: 0.92rem;
+        color: #556761;
+      }
+
+      .dsc-eol-feedback-error {
+        color: #b42318;
+      }
+
+      .dsc-eol-feedback-success {
+        color: #027a48;
+      }
+
+      .dsc-eol-footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+        margin-top: auto;
+        padding-top: 14px;
+        padding-bottom: 2px;
+        background: linear-gradient(0deg, rgba(250, 245, 240, 0.98), rgba(250, 245, 240, 0.9));
+        backdrop-filter: blur(10px);
+        width: 100%;
+      }
+
+      .dsc-eol-actions,
+      .dsc-eol-nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+        justify-content: center;
+      }
+
+      .dsc-eol-nav {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+      }
+
+      .dsc-eol-nav .dsc-btn {
+        min-width: 44px;
+        width: 44px;
+        padding: 0;
+      }
+
+      .dsc-eol-hidden {
+        display: none;
+      }
+
+      @media (max-width: 1180px) {
+        .dsc-eol-content {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .dsc-eol-header {
+          grid-template-columns: 1fr;
+        }
+
+        main.dsc-eol-page {
+          padding: 8px;
+        }
+
+        .dsc-eol-shell {
+            min-height: calc(100vh - 16px);
+            height: auto;
+          padding: 12px;
+        }
+
+        .dsc-eol-row {
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+        }
+
+        .dsc-span-7,
+        .dsc-span-8,
+        .dsc-span-9,
+        .dsc-span-10,
+        .dsc-span-12 {
+          grid-column: span 6;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .dsc-eol-shell {
+          height: auto;
+          min-height: calc(100vh - 16px);
+        }
+
+        .dsc-eol-row {
+          grid-template-columns: 1fr;
+        }
+
+        .dsc-span-1,
+        .dsc-span-2,
+        .dsc-span-3,
+        .dsc-span-4,
+        .dsc-span-5,
+        .dsc-span-6,
+        .dsc-span-7,
+        .dsc-span-8,
+        .dsc-span-9,
+        .dsc-span-10,
+        .dsc-span-12 {
+          grid-column: span 1;
+        }
+
+        .dsc-eol-field {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .dsc-eol-field label {
+          flex: 0 0 auto;
+          width: auto;
+        }
+
+        .dsc-eol-inline-actions {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .dsc-eol-inline-actions-capacidades {
+          grid-template-columns: 1fr;
+        }
+
+        .dsc-eol-actions,
+        .dsc-eol-nav-actions {
+          flex-wrap: wrap;
+        }
+
+        .dsc-eol-filter-bar {
+          grid-template-columns: 1fr;
+        }
+
+        .dsc-eol-filter-label {
+          white-space: normal;
+        }
+
+        .dsc-eol-filter-actions {
+          justify-content: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="dsc-access-page dsc-eol-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <form id="eol-record-form" class="dsc-card dsc-eol-shell">
+            <header class="dsc-eol-header">
+              <div class="dsc-eol-title-block">
+                <p class="dsc-eol-kicker">Sisema operacional</p>
+                <h1 class="dsc-eol-title">Pendencias de data EOL</h1>
+              </div>
+              <span class="dsc-eol-total" id="eol-total-label">Carregando...</span>
+            </header>
+
+            <div id="eol-filter-form" class="dsc-eol-filter-bar">
+              <label class="dsc-eol-filter-label" for="eol-search">Numero OrdemServico</label>
+              <input class="dsc-eol-input dsc-eol-filter-input" id="eol-search" type="text" placeholder="Filtrar por numero OrdemServico" />
+              <div class="dsc-eol-filter-actions">
+                <button type="button" class="dsc-btn dsc-btn-white" id="apply-eol-filter-button">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-eol-filter-button">Limpar</button>
+              </div>
+            </div>
+
+            <div class="dsc-eol-content">
+              <div class="dsc-eol-column">
+                <section class="dsc-eol-panel">
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-data-eol-display">Data EOL:</label>
+              <div class="dsc-eol-inline-actions">
+                <input class="dsc-eol-input dsc-eol-input-highlight" id="eol-data-eol-display" type="text" placeholder="dd/mm/aaaa" />
+                <button type="button" class="dsc-btn dsc-btn-blue dsc-eol-fill-date-button" id="fill-change-date-button">Preencher Data</button>
+              </div>
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-os-concat">OS:</label>
+              <input class="dsc-eol-input" id="eol-os-concat" type="text" readonly />
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-dre-codigo">DRE:</label>
+              <div class="dsc-eol-inline-actions">
+                <input class="dsc-eol-input dsc-eol-input-fixed" id="eol-dre-codigo" type="text" readonly />
+                <input class="dsc-eol-input" id="eol-dre-ext" type="text" readonly aria-label="Descricao da DRE" />
+              </div>
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-motivo">Motivo:</label>
+              <input class="dsc-eol-input dsc-eol-input-highlight" id="eol-motivo" type="text" readonly />
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-credenciado">Credenciado:</label>
+              <input class="dsc-eol-input" id="eol-credenciado" type="text" readonly />
+            </div>
+          </div>
+                </section>
+
+                <section class="dsc-eol-panel">
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-condutor">Condutor:</label>
+              <input class="dsc-eol-input" id="eol-condutor" type="text" readonly />
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-crmc-condutor">CRMC:</label>
+              <input class="dsc-eol-input" id="eol-crmc-condutor" type="text" readonly />
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-cpf-condutor">CPF_condutor:</label>
+              <input class="dsc-eol-input" id="eol-cpf-condutor" type="text" readonly />
+            </div>
+          </div>
+                </section>
+              </div>
+
+              <div class="dsc-eol-column">
+                <section class="dsc-eol-panel">
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-monitor">Monitor:</label>
+              <input class="dsc-eol-input" id="eol-monitor" type="text" readonly />
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-cpf-monitor">CPF:</label>
+              <input class="dsc-eol-input" id="eol-cpf-monitor" type="text" readonly />
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-monitor-nascimento">Nascimento:</label>
+              <input class="dsc-eol-input" id="eol-monitor-nascimento" type="text" readonly />
+            </div>
+          </div>
+                </section>
+
+                <section class="dsc-eol-panel">
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-crm">CRM:</label>
+              <input class="dsc-eol-input" id="eol-crm" type="text" readonly />
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-veiculo-placas">Placas:</label>
+              <input class="dsc-eol-input" id="eol-veiculo-placas" type="text" readonly />
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-veiculo-ano">Ano:</label>
+              <input class="dsc-eol-input" id="eol-veiculo-ano" type="text" readonly />
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-capacidades">Capacidades:</label>
+              <div class="dsc-eol-inline-actions-capacidades">
+                <input class="dsc-eol-input" id="eol-capacidade-detran" type="text" placeholder="DETRAN" readonly />
+                <input class="dsc-eol-input" id="eol-capacidade-teg" type="text" placeholder="TEG" readonly />
+                <input class="dsc-eol-input" id="eol-capacidade-teg-creche" type="text" placeholder="TEG creche" readonly />
+                <input class="dsc-eol-input" id="eol-capacidade-acessivel" type="text" placeholder="Acessivel" readonly />
+              </div>
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-os-especial">OS_especial:</label>
+              <input class="dsc-eol-input" id="eol-os-especial" type="text" readonly />
+            </div>
+          </div>
+          <div class="dsc-eol-row">
+            <div class="dsc-eol-field dsc-span-12">
+              <label for="eol-bancada">Bancada:</label>
+              <input class="dsc-eol-input" id="eol-bancada" type="text" readonly />
+            </div>
+          </div>
+                </section>
+              </div>
+            </div>
+
+            <input id="eol-codigo" type="hidden" />
+            <input id="eol-codigo-access" type="hidden" />
+            <input id="eol-termo-adesao" type="hidden" />
+            <input id="eol-num-os" type="hidden" />
+            <input id="eol-revisao" type="hidden" />
+            <input id="eol-situacao" type="hidden" />
+            <input id="eol-record-position" type="hidden" />
+
+            <div class="dsc-eol-bottom">
+              <p class="dsc-eol-feedback dsc-eol-hidden" id="eol-empty-state">Nenhuma OrdemServico pendente de data EOL.</p>
+              <p class="dsc-eol-feedback" id="eol-feedback"></p>
+
+              <div class="dsc-eol-footer">
+                <div class="dsc-eol-actions">
+                  <button type="submit" class="dsc-btn dsc-btn-blue" id="save-eol-button">Salvar</button>
+                </div>
+                <div class="dsc-eol-nav-actions">
+                  <div class="dsc-eol-nav">
+                    <button type="button" class="dsc-btn dsc-btn-white" id="first-eol-record-button" title="Primeiro registro">|◀</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="previous-eol-record-button" title="Registro anterior">◀</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="next-eol-record-button" title="Proximo registro">▶</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="last-eol-record-button" title="Ultimo registro">▶|</button>
+                  </div>
+                  <button type="button" class="dsc-btn dsc-btn-white" id="back-ordem-servico-button">Cancelar</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const backButton = document.getElementById('back-ordem-servico-button');
+      const filterForm = document.getElementById('eol-filter-form');
+      const recordForm = document.getElementById('eol-record-form');
+      const searchInput = document.getElementById('eol-search');
+      const applyFilterButton = document.getElementById('apply-eol-filter-button');
+      const clearFilterButton = document.getElementById('clear-eol-filter-button');
+      const totalLabel = document.getElementById('eol-total-label');
+      const emptyState = document.getElementById('eol-empty-state');
+      const feedback = document.getElementById('eol-feedback');
+      const firstRecordButton = document.getElementById('first-eol-record-button');
+      const previousRecordButton = document.getElementById('previous-eol-record-button');
+      const nextRecordButton = document.getElementById('next-eol-record-button');
+      const lastRecordButton = document.getElementById('last-eol-record-button');
+      const fillChangeDateButton = document.getElementById('fill-change-date-button');
+      const saveButton = document.getElementById('save-eol-button');
+      const codigoInput = document.getElementById('eol-codigo');
+      const codigoAccessInput = document.getElementById('eol-codigo-access');
+      const osConcatInput = document.getElementById('eol-os-concat');
+      const situacaoInput = document.getElementById('eol-situacao');
+      const termoAdesaoInput = document.getElementById('eol-termo-adesao');
+      const numOsInput = document.getElementById('eol-num-os');
+      const revisaoInput = document.getElementById('eol-revisao');
+      const dreCodigoInput = document.getElementById('eol-dre-codigo');
+      const dreExtInput = document.getElementById('eol-dre-ext');
+      const credenciadoInput = document.getElementById('eol-credenciado');
+      const motivoInput = document.getElementById('eol-motivo');
+      const condutorInput = document.getElementById('eol-condutor');
+      const crmcCondutorInput = document.getElementById('eol-crmc-condutor');
+      const cpfCondutorInput = document.getElementById('eol-cpf-condutor');
+      const monitorInput = document.getElementById('eol-monitor');
+      const cpfMonitorInput = document.getElementById('eol-cpf-monitor');
+      const monitorNascimentoInput = document.getElementById('eol-monitor-nascimento');
+      const crmInput = document.getElementById('eol-crm');
+      const veiculoPlacasInput = document.getElementById('eol-veiculo-placas');
+      const veiculoAnoInput = document.getElementById('eol-veiculo-ano');
+      const capacidadeDetranInput = document.getElementById('eol-capacidade-detran');
+      const capacidadeTegInput = document.getElementById('eol-capacidade-teg');
+      const capacidadeTegCrecheInput = document.getElementById('eol-capacidade-teg-creche');
+      const capacidadeAcessivelInput = document.getElementById('eol-capacidade-acessivel');
+      const osEspecialInput = document.getElementById('eol-os-especial');
+      const bancadaInput = document.getElementById('eol-bancada');
+      const dataEolDisplayInput = document.getElementById('eol-data-eol-display');
+      const pageSize = 1;
+      let currentSearch = '';
+      let currentPage = 1;
+      let totalPages = 1;
+      let totalItems = 0;
+      let currentItem = null;
+
+      const normalizeRequestValue = (value) => String(value ?? '').trim();
+
+      const formatIsoDateToDisplay = (value) => {
+        const normalizedValue = normalizeRequestValue(value);
+        if (!normalizedValue || !/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+          return '';
+        }
+        const [year, month, day] = normalizedValue.split('-');
+        return `${day}/${month}/${year}`;
+      };
+
+      const getTodayDisplayValue = () => {
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = String(now.getFullYear());
+        return `${day}/${month}/${year}`;
+      };
+
+      const normalizeDisplayDate = (value) => {
+        const digits = normalizeRequestValue(value).replace(/\D/g, '').slice(0, 8);
+        if (digits.length <= 2) {
+          return digits;
+        }
+        if (digits.length <= 4) {
+          return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+        }
+        return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+      };
+
+      const parseDisplayDateToIso = (value) => {
+        const normalizedValue = normalizeRequestValue(value);
+        if (!normalizedValue) {
+          return '';
+        }
+        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+          return null;
+        }
+        const [day, month, year] = normalizedValue.split('/');
+        const isoValue = `${year}-${month}-${day}`;
+        const parsedDate = new Date(`${isoValue}T00:00:00`);
+        if (Number.isNaN(parsedDate.getTime())) {
+          return null;
+        }
+        return isoValue;
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof Error && error.message) {
+          return error.message;
+        }
+        return fallbackMessage;
+      };
+
+      const readJsonResponse = async (response) => {
+        const text = await response.text();
+        if (!text) {
+          return {};
+        }
+        try {
+          return JSON.parse(text);
+        } catch {
+          throw new Error('Resposta JSON invalida.');
+        }
+      };
+
+      const buildUrl = () => {
+        const params = new URLSearchParams({ page: String(currentPage), pageSize: String(pageSize) });
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+        return `/api/ordem-servico/data-eol-pendencias?${params.toString()}`;
+      };
+
+      const setFeedback = (message, tone = '') => {
+        feedback.textContent = message;
+        feedback.className = `dsc-eol-feedback${tone ? ` dsc-eol-feedback-${tone}` : ''}`;
+      };
+
+      const buildOsLabel = (item) => item.os_concat || [item.termo_adesao, item.num_os, item.revisao].filter(Boolean).join('-');
+
+      const updateNavigation = () => {
+        totalLabel.textContent = totalItems ? `${totalItems} pendencia(s) encontrada(s)` : 'Nenhuma pendencia';
+        firstRecordButton.disabled = currentPage <= 1 || totalItems === 0;
+        previousRecordButton.disabled = currentPage <= 1 || totalItems === 0;
+        nextRecordButton.disabled = currentPage >= totalPages || totalItems === 0;
+        lastRecordButton.disabled = currentPage >= totalPages || totalItems === 0;
+        saveButton.disabled = totalItems === 0;
+      };
+
+      const clearForm = () => {
+        currentItem = null;
+        codigoInput.value = '';
+        codigoAccessInput.value = '';
+        osConcatInput.value = '';
+        situacaoInput.value = '';
+        termoAdesaoInput.value = '';
+        numOsInput.value = '';
+        revisaoInput.value = '';
+        dreCodigoInput.value = '';
+        dreExtInput.value = '';
+        credenciadoInput.value = '';
+        motivoInput.value = '';
+        condutorInput.value = '';
+        crmcCondutorInput.value = '';
+        cpfCondutorInput.value = '';
+        monitorInput.value = '';
+        cpfMonitorInput.value = '';
+        monitorNascimentoInput.value = '';
+        crmInput.value = '';
+        veiculoPlacasInput.value = '';
+        veiculoAnoInput.value = '';
+        capacidadeDetranInput.value = '';
+        capacidadeTegInput.value = '';
+        capacidadeTegCrecheInput.value = '';
+        capacidadeAcessivelInput.value = '';
+        osEspecialInput.value = '';
+        bancadaInput.value = '';
+        dataEolDisplayInput.value = '';
+      };
+
+      const renderItem = (item) => {
+        currentItem = item;
+        codigoInput.value = item.codigo || '';
+        codigoAccessInput.value = item.codigo_access || '';
+        osConcatInput.value = buildOsLabel(item);
+        situacaoInput.value = item.situacao || '';
+        termoAdesaoInput.value = item.termo_adesao || '';
+        numOsInput.value = item.num_os || '';
+        revisaoInput.value = item.revisao || '';
+        dreCodigoInput.value = item.dre_codigo || '';
+        dreExtInput.value = item.dre_descricao || '';
+        credenciadoInput.value = item.credenciado || '';
+        motivoInput.value = item.tipo_troca_descricao || '';
+        condutorInput.value = item.condutor || '';
+        crmcCondutorInput.value = item.crmc_condutor || '';
+        cpfCondutorInput.value = item.cpf_condutor || '';
+        monitorInput.value = item.monitor || '';
+        cpfMonitorInput.value = item.cpf_monitor || '';
+        monitorNascimentoInput.value = formatIsoDateToDisplay(item.monitor_nascimento);
+        crmInput.value = item.crm || '';
+        veiculoPlacasInput.value = item.veiculo_placas || '';
+        veiculoAnoInput.value = item.veiculo_ano || '';
+        capacidadeDetranInput.value = item.veiculo_cap_detran || '';
+        capacidadeTegInput.value = item.veiculo_cap_teg || '';
+        capacidadeTegCrecheInput.value = item.veiculo_cap_teg_creche || '';
+        capacidadeAcessivelInput.value = item.veiculo_cap_acessivel || '';
+        osEspecialInput.value = item.veiculo_os_especial || '';
+        bancadaInput.value = item.veiculo_tipo_de_bancada || '';
+        dataEolDisplayInput.value = formatIsoDateToDisplay(item.data_eol);
+        emptyState.classList.add('dsc-eol-hidden');
+      };
+
+      const loadItems = async () => {
+        setFeedback('Carregando pendencias de data EOL...');
+        try {
+          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await readJsonResponse(response);
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar pendencias de data EOL.');
+          }
+          totalPages = payload.totalPages || 1;
+          totalItems = payload.total || 0;
+          if (currentPage > totalPages) {
+            currentPage = totalPages;
+            return loadItems();
+          }
+          const items = payload.items || [];
+          if (items.length) {
+            renderItem(items[0]);
+            setFeedback('');
+          } else {
+            clearForm();
+            emptyState.classList.remove('dsc-eol-hidden');
+            setFeedback('Nenhuma OrdemServico pendente de data EOL.');
+          }
+          updateNavigation();
+        } catch (error) {
+          clearForm();
+          totalItems = 0;
+          totalPages = 1;
+          updateNavigation();
+          emptyState.classList.remove('dsc-eol-hidden');
+          setFeedback(getRequestErrorMessage(error, 'Falha ao carregar pendencias de data EOL.'), 'error');
+        }
+      };
+
+      const saveDataEol = async (codigo, dataEol) => {
+        saveButton.disabled = true;
+        saveButton.textContent = 'Salvando...';
+        setFeedback(`Atualizando data EOL da OrdemServico ${codigo}...`);
+        try {
+          const response = await fetch(`/api/ordem-servico/${encodeURIComponent(codigo)}/data-eol`, {
+            method: 'PATCH',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ dataEol }),
+          });
+          const payload = await readJsonResponse(response);
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao atualizar data EOL.');
+          }
+          setFeedback(`Data EOL da OrdemServico ${codigo} atualizada com sucesso.`, 'success');
+          await loadItems();
+        } catch (error) {
+          setFeedback(getRequestErrorMessage(error, 'Falha ao atualizar data EOL.'), 'error');
+        } finally {
+          saveButton.disabled = totalItems === 0;
+          saveButton.textContent = 'Salvar';
+        }
+      };
+
+      backButton.addEventListener('click', () => {
+        window.location.href = '/src/ordemServico.html';
+      });
+
+      const applyFilter = () => {
+        currentSearch = normalizeRequestValue(searchInput.value);
+        currentPage = 1;
+        void loadItems();
+      };
+
+      applyFilterButton.addEventListener('click', applyFilter);
+
+      searchInput.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') {
+          return;
+        }
+
+        event.preventDefault();
+        applyFilter();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      dataEolDisplayInput.addEventListener('input', () => {
+        dataEolDisplayInput.value = normalizeDisplayDate(dataEolDisplayInput.value);
+      });
+
+      fillChangeDateButton.addEventListener('click', () => {
+        dataEolDisplayInput.value = getTodayDisplayValue();
+        setFeedback('Data EOL preenchida com a data de hoje.');
+      });
+
+      firstRecordButton.addEventListener('click', () => {
+        if (currentPage === 1) {
+          return;
+        }
+        currentPage = 1;
+        void loadItems();
+      });
+
+      previousRecordButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+        currentPage -= 1;
+        void loadItems();
+      });
+
+      nextRecordButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+        currentPage += 1;
+        void loadItems();
+      });
+
+      lastRecordButton.addEventListener('click', () => {
+        if (currentPage === totalPages) {
+          return;
+        }
+        currentPage = totalPages;
+        void loadItems();
+      });
+
+      recordForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (!currentItem?.codigo) {
+          setFeedback('Nenhum registro pendente carregado para atualizar.', 'error');
+          return;
+        }
+        const parsedDate = parseDisplayDateToIso(dataEolDisplayInput.value);
+        if (!parsedDate) {
+          setFeedback('Informe uma data valida no formato dd/mm/aaaa.', 'error');
+          dataEolDisplayInput.focus();
+          return;
+        }
+        void saveDataEol(currentItem.codigo, parsedDate);
+      });
+
+      void loadItems();
+    </script>
+  </body>
+</html>

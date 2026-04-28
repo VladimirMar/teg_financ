@@ -51,17 +51,17 @@ body:has(#emissao-parametro-grid-body) .dsc-container {
 
 body:has(#ordem-servico-grid-body) .dsc-container,
 body:has(#ordem-servico-rejection-grid-body) .dsc-container {
-  width: min(100%, 1820px);
-  max-width: 1820px;
+  width: calc(100vw - 12px);
+  max-width: none;
 }
 
 body:has(#ordem-servico-grid-body) .dsc-access-page {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: calc(100vh - 48px);
+  height: calc(100vh - 12px);
   overflow: hidden;
-  padding: 10px 16px;
+  padding: 6px;
 }
 
 body:has(#ordem-servico-grid-body) #login-section {
@@ -188,6 +188,15 @@ body:has(#ordem-servico-grid-body) .dsc-access-toolbar {
   flex-wrap: wrap;
   flex: 1 1 auto;
   width: 100%;
+}
+
+.dsc-access-toolbar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .dsc-access-filter-input,
@@ -941,7 +950,13 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 }
 
 .dsc-form-row-ordem-servico-vinculos-bottom {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: max-content minmax(150px, 1fr) minmax(150px, 1fr) minmax(132px, 0.72fr) minmax(52px, 0.2fr);
+  column-gap: 12px;
+}
+
+#ordem-servico-form .dsc-form-row-ordem-servico-vinculos-bottom {
+  grid-template-columns: max-content minmax(150px, 1fr) minmax(150px, 1fr) minmax(132px, 0.72fr) minmax(52px, 0.2fr);
+  column-gap: 12px;
 }
 
 .dsc-form-row-ordem-servico-vinculos-final {
@@ -1386,6 +1401,36 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   color: #213139;
 }
 
+.dsc-checkbox-field-compact {
+  width: max-content;
+  justify-self: start;
+  align-self: center;
+}
+
+#ordem-servico-form .dsc-checkbox-field-compact {
+  width: max-content;
+  justify-self: start;
+}
+
+.dsc-checkbox-field-compact-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: #213139;
+  white-space: nowrap;
+}
+
+.dsc-field-group-dias-compact {
+  min-width: 52px;
+}
+
+.dsc-field-group-dias-compact .dsc-form-control {
+  width: 52px;
+  min-width: 52px;
+  max-width: 52px;
+}
+
 .dsc-radio-field-group {
   border: 0;
   padding: 0;
@@ -1498,7 +1543,7 @@ body:has(#cep-rejection-grid-body) .dsc-access-grid-card {
 
 body:has(#ordem-servico-grid-body) .dsc-access-grid-card,
 body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid-card {
-  min-height: 1080px;
+  min-height: 0;
 }
 
 body:has(#ordem-servico-grid-body) .dsc-access-grid-card {
@@ -1507,7 +1552,8 @@ body:has(#ordem-servico-grid-body) .dsc-access-grid-card {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-  padding: 10px 12px;
+  width: 100%;
+  padding: 8px 10px;
 }
 
 body:has(#ordem-servico-grid-body) .dsc-access-grid-header {
@@ -1526,11 +1572,56 @@ body:has(#ordem-servico-grid-body) .dsc-access-grid-top-scroll {
 
 .dsc-access-grid-header {
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 10px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+}
+
+.dsc-access-grid-header-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dsc-grid-page-size-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 4px;
+  min-width: 150px;
+}
+
+.dsc-grid-page-size-field .dsc-form-control {
+  min-width: 0;
+  padding: 10px 14px;
+}
+
+.dsc-grid-page-size-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #556761;
+  white-space: nowrap;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-grid-page-size-label {
+  text-align: right;
+}
+
+body:has(#ordem-servico-grid-body) .dsc-grid-page-size-field .dsc-form-control {
+  width: 88px;
+  min-height: 38px;
+  padding: 0;
+  border-radius: 14px;
+}
+
+#ordem-servico-page-size {
+  min-height: 38px;
+  padding: 0;
+  border-radius: 14px;
 }
 
 .dsc-access-grid-header span,
@@ -1764,7 +1855,9 @@ body:has(#credenciada-grid-body) .dsc-access-grid {
 }
 
 body:has(#ordem-servico-grid-body) .dsc-access-grid {
-  min-width: 1360px;
+  width: 100%;
+  min-width: 1200px;
+  table-layout: fixed;
   font-size: 0.72rem;
 }
 
@@ -1929,7 +2022,7 @@ body:has(#credenciada-rejection-grid-body) .dsc-access-grid {
   min-width: 1760px;
 }
 
-body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid {
+#ordem-servico-rejection-panel .dsc-access-grid {
   min-width: 1840px;
 }
 
