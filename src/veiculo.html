@@ -898,6 +898,27 @@
         }
       };
 
+      const getAuditHeaders = () => {
+        try {
+          const storedSession = window.sessionStorage.getItem('tegfinanc.auth');
+
+          if (!storedSession) {
+            return {};
+          }
+
+          const session = JSON.parse(storedSession);
+          const userName = typeof session?.displayName === 'string' ? session.displayName.trim() : '';
+          const userEmail = typeof session?.email === 'string' ? session.email.trim() : '';
+
+          return {
+            ...(userName ? { 'X-User-Name': userName } : {}),
+            ...(userEmail ? { 'X-User-Email': userEmail } : {}),
+          };
+        } catch {
+          return {};
+        }
+      };
+
       const getRequestErrorMessage = (error, fallbackMessage) => {
         if (error instanceof TypeError) {
           return 'API indisponivel. Confirme se o backend esta em execucao na porta 3001.';
@@ -1569,6 +1590,7 @@
             headers: {
               'Content-Type': 'application/json',
               Accept: 'application/json',
+              ...getAuditHeaders(),
             },
             body: JSON.stringify({
               codigo: editingCodigo,
@@ -1665,6 +1687,7 @@
             headers: {
               'Content-Type': 'application/json',
               Accept: 'application/json',
+              ...getAuditHeaders(),
             },
             body: JSON.stringify({ fileName }),
           });

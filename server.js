@@ -177,6 +177,7 @@ const vinculoMonitorImportRecusaTableName = 'vinculo_monitor_import_recusa'
 const legacyCredenciamentoOsTableName = 'credenciamento_os'
 const legacyCredenciamentoOsImportRecusaTableName = 'credenciamento_os_import_recusa'
 const legacyCredenciamentoOsCodigoSequenceName = 'credenciamento_os_codigo_seq'
+const veiculoHistoricoTableName = 'veiculo_historico'
 const ordemServicoCollectionPath = '/api/ordem-servico'
 const ordemServicoDataEolPendenciasPath = '/api/ordem-servico/data-eol-pendencias'
 const ordemServicoNextNumOsPath = '/api/ordem-servico/next-num-os'
@@ -1417,6 +1418,82 @@ const findVeiculoByPlaca = async (placa) => {
   return result.rows[0] ?? null
 }
 
+const fetchVeiculoAuditItemByCodigo = async (executor, codigo) => {
+  const normalizedCodigo = normalizeCondutorCodigo(codigo)
+
+  if (!Number.isInteger(normalizedCodigo) || normalizedCodigo <= 0) {
+    return null
+  }
+
+  const result = await executor.query(
+    `SELECT
+       ${veiculoAuditSelectClause}
+     FROM veiculo
+     WHERE codigo = $1
+     LIMIT 1`,
+    [normalizedCodigo],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const fetchVeiculoAuditItemByCrm = async (executor, crm) => {
+  const normalizedCrm = normalizeVehicleCrm(crm)
+
+  if (!normalizedCrm) {
+    return null
+  }
+
+  const result = await executor.query(
+    `SELECT
+       ${veiculoAuditSelectClause}
+     FROM veiculo
+     WHERE UPPER(BTRIM(COALESCE(crm, ''))) = UPPER($1)
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    [normalizedCrm],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const fetchVeiculoAuditItemByPlaca = async (executor, placa) => {
+  const normalizedPlaca = normalizeVehiclePlaca(placa)
+
+  if (!normalizedPlaca) {
+    return null
+  }
+
+  const result = await executor.query(
+    `SELECT
+       ${veiculoAuditSelectClause}
+     FROM veiculo
+     WHERE regexp_replace(UPPER(COALESCE(placas, '')), '[^A-Z0-9]', '', 'g') = $1
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    [normalizedPlaca],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const normalizeAuditActor = (value) => {
+  return normalizeRequestValue(value)
+    .replace(/\s+/g, ' ')
+    .slice(0, 255)
+}
+
+const resolveRequestActor = (request, fallbackValue = 'SISTEMA') => {
+  const headerActor = normalizeAuditActor(
+    request.headers['x-user-name']
+      ?? request.headers['x-user-email']
+      ?? request.headers['x-auth-user']
+      ?? '',
+  )
+
+  return headerActor || normalizeAuditActor(fallbackValue) || 'SISTEMA'
+}
+
 const findTrocaByCodigoOrDescricao = async ({ codigo, descricao }) => {
   const normalizedCodigo = normalizeRequestValue(codigo)
   const normalizedDescricao = normalizeTrocaText(descricao, 255)
@@ -1546,6 +1623,250 @@ const getVeiculoPersistenceError = (error, fallbackMessage) => {
   return {
     status: 500,
     message: error instanceof Error ? error.message : fallbackMessage,
+  }
+}
+
+const buildVeiculoComparableSnapshot = (value) => {
+  return {
+    crm: normalizeVehicleCrm(value?.crm ?? ''),
+    placas: normalizeVehiclePlaca(value?.placas ?? ''),
+    ano: normalizeVehicleInteger(value?.ano ?? null, 4),
+    capDetran: normalizeVehicleInteger(value?.capDetran ?? value?.cap_detran ?? null, 3),
+    capTeg: normalizeVehicleInteger(value?.capTeg ?? value?.cap_teg ?? null, 3),
+    capTegCreche: normalizeVehicleInteger(value?.capTegCreche ?? value?.cap_teg_creche ?? null, 3),
+    capAcessivel: normalizeVehicleInteger(value?.capAcessivel ?? value?.cap_acessivel ?? null, 3),
+    valCrm: normalizeRequestValue(value?.valCrm ?? value?.val_crm ?? ''),
+    seguradora: normalizeCredenciadaText(value?.seguradora ?? '', 255),
+    seguroInicio: normalizeRequestValue(value?.seguroInicio ?? value?.seguro_inicio ?? ''),
+    seguroTermino: normalizeRequestValue(value?.seguroTermino ?? value?.seguro_termino ?? ''),
+    tipoDeBancada: normalizeTipoDeBancada(value?.tipoDeBancada ?? value?.tipo_de_bancada ?? '') || '',
+    tipoDeVeiculo: normalizeTipoDeVeiculo(value?.tipoDeVeiculo ?? value?.tipo_de_veiculo ?? '') || '',
+    marcaModelo: normalizeCredenciadaText(value?.marcaModelo ?? value?.marca_modelo ?? '', 255),
+    titular: normalizeCredenciadaText(value?.titular ?? '', 255),
+    cnpjCpf: normalizeCnpjCpf(value?.cnpjCpf ?? value?.cnpj_cpf ?? ''),
+    valorVeiculo: normalizeVehicleMoney(value?.valorVeiculo ?? value?.valor_veiculo ?? null),
+    osEspecial: normalizeOsEspecial(value?.osEspecial ?? value?.os_especial ?? '') || '',
+  }
+}
+
+const hasVeiculoSnapshotChanged = (currentItem, nextPayload) => {
+  const currentSnapshot = buildVeiculoComparableSnapshot(currentItem)
+  const nextSnapshot = buildVeiculoComparableSnapshot(nextPayload)
+
+  return Object.keys(currentSnapshot).some((key) => currentSnapshot[key] !== nextSnapshot[key])
+}
+
+const insertVeiculoHistoricoEntry = async (executor, item, { acao, realizadoPor, dataEvento = null }) => {
+  if (!item) {
+    return
+  }
+
+  await executor.query(
+    `INSERT INTO ${veiculoHistoricoTableName} (
+       veiculo_codigo,
+       acao,
+       realizado_por,
+       data_evento,
+       crm,
+       placas,
+       ano,
+       cap_detran,
+       cap_teg,
+       cap_teg_creche,
+       cap_acessivel,
+       val_crm,
+       seguradora,
+       seguro_inicio,
+       seguro_termino,
+       tipo_de_bancada,
+       tipo_de_veiculo,
+       marca_modelo,
+       titular,
+       cnpj_cpf,
+       valor_veiculo,
+       os_especial,
+       data_inclusao_original,
+       data_modificacao_original
+     )
+     VALUES (
+       $1,
+       $2,
+       $3,
+       COALESCE(NULLIF($4, '')::timestamp, NOW()),
+       NULLIF($5, ''),
+       NULLIF($6, ''),
+       $7,
+       $8,
+       $9,
+       $10,
+       $11,
+       NULLIF($12, '')::date,
+       NULLIF($13, ''),
+       NULLIF($14, '')::date,
+       NULLIF($15, '')::date,
+       NULLIF($16, ''),
+       NULLIF($17, ''),
+       NULLIF($18, ''),
+       NULLIF($19, ''),
+       NULLIF($20, ''),
+       $21,
+       NULLIF($22, ''),
+       NULLIF($23, '')::timestamp,
+       NULLIF($24, '')::timestamp
+     )`,
+    [
+      Number(item.codigo),
+      normalizeRequestValue(acao).slice(0, 50) || 'ALTERACAO',
+      normalizeAuditActor(realizadoPor) || 'SISTEMA',
+      normalizeRequestValue(dataEvento),
+      item.crm,
+      item.placas,
+      item.ano ?? null,
+      item.cap_detran ?? null,
+      item.cap_teg ?? null,
+      item.cap_teg_creche ?? null,
+      item.cap_acessivel ?? null,
+      item.val_crm,
+      item.seguradora,
+      item.seguro_inicio,
+      item.seguro_termino,
+      item.tipo_de_bancada,
+      item.tipo_de_veiculo,
+      item.marca_modelo,
+      item.titular,
+      item.cnpj_cpf,
+      item.valor_veiculo ? Number(item.valor_veiculo) : null,
+      item.os_especial,
+      item.data_inclusao,
+      item.data_modificacao,
+    ],
+  )
+}
+
+const updateVeiculoByCodigo = async (executor, codigo, payload) => {
+  const result = await executor.query(
+    `UPDATE veiculo
+     SET crm = NULLIF($1, ''),
+         placas = NULLIF($2, ''),
+         ano = $3,
+         cap_detran = $4,
+         cap_teg = $5,
+         cap_teg_creche = $6,
+         cap_acessivel = $7,
+         val_crm = NULLIF($8, '')::date,
+         seguradora = NULLIF($9, ''),
+         seguro_inicio = NULLIF($10, '')::date,
+         seguro_termino = NULLIF($11, '')::date,
+         tipo_de_bancada = NULLIF($12, ''),
+         tipo_de_veiculo = NULLIF($13, ''),
+         marca_modelo = NULLIF($14, ''),
+         titular = NULLIF($15, ''),
+         cnpj_cpf = NULLIF($16, ''),
+         valor_veiculo = $17,
+         os_especial = NULLIF($18, ''),
+         data_modificacao = NOW()
+     WHERE codigo = $19
+     RETURNING ${veiculoSelectClause}`,
+    [
+      payload.crm,
+      payload.placas,
+      payload.ano,
+      payload.capDetran,
+      payload.capTeg,
+      payload.capTegCreche,
+      payload.capAcessivel,
+      payload.valCrm,
+      payload.seguradora,
+      payload.seguroInicio,
+      payload.seguroTermino,
+      payload.tipoDeBancada,
+      payload.tipoDeVeiculo,
+      payload.marcaModelo,
+      payload.titular,
+      payload.cnpjCpf,
+      payload.valorVeiculo,
+      payload.osEspecial,
+      codigo,
+    ],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const upsertImportedVeiculoByCodigo = async (executor, targetCodigo, payload) => {
+  await executor.query(
+    `UPDATE veiculo
+     SET codigo = $1,
+         crm = NULLIF($2, ''),
+         placas = NULLIF($3, ''),
+         ano = $4,
+         cap_detran = $5,
+         cap_teg = $6,
+         cap_teg_creche = $7,
+         cap_acessivel = $8,
+         val_crm = NULLIF($9, '')::date,
+         seguradora = NULLIF($10, ''),
+         seguro_inicio = NULLIF($11, '')::date,
+         seguro_termino = NULLIF($12, '')::date,
+         tipo_de_bancada = NULLIF($13, ''),
+         tipo_de_veiculo = NULLIF($14, ''),
+         marca_modelo = NULLIF($15, ''),
+         titular = NULLIF($16, ''),
+         cnpj_cpf = NULLIF($17, ''),
+         valor_veiculo = $18,
+         os_especial = NULLIF($19, ''),
+         data_modificacao = NOW()
+     WHERE codigo = $20`,
+    [
+      payload.codigo,
+      payload.crm,
+      payload.placas,
+      payload.ano,
+      payload.capDetran,
+      payload.capTeg,
+      payload.capTegCreche,
+      payload.capAcessivel,
+      payload.valCrm,
+      payload.seguradora,
+      payload.seguroInicio,
+      payload.seguroTermino,
+      payload.tipoDeBancada,
+      payload.tipoDeVeiculo,
+      payload.marcaModelo,
+      payload.titular,
+      payload.cnpjCpf,
+      payload.valorVeiculo,
+      payload.osEspecial,
+      targetCodigo,
+    ],
+  )
+}
+
+const deduplicateVeiculoByExpression = async (executor, { keyExpression, action, actor }) => {
+  const duplicateGroupsResult = await executor.query(
+    `SELECT ${keyExpression} AS unique_key,
+            array_agg(codigo ORDER BY data_modificacao DESC NULLS LAST, data_inclusao DESC NULLS LAST, codigo DESC) AS codigos
+     FROM veiculo
+     GROUP BY 1
+     HAVING ${keyExpression} <> '' AND COUNT(*) > 1`,
+  )
+
+  for (const group of duplicateGroupsResult.rows) {
+    const duplicateCodes = Array.isArray(group.codigos) ? group.codigos.map((item) => Number(item)) : []
+
+    for (const duplicateCodigo of duplicateCodes.slice(1)) {
+      const duplicateItem = await fetchVeiculoAuditItemByCodigo(executor, duplicateCodigo)
+
+      if (!duplicateItem) {
+        continue
+      }
+
+      await insertVeiculoHistoricoEntry(executor, duplicateItem, {
+        acao: action,
+        realizadoPor: actor,
+      })
+      await executor.query('DELETE FROM veiculo WHERE codigo = $1', [duplicateCodigo])
+    }
   }
 }
 
@@ -3051,6 +3372,29 @@ const veiculoSelectClause = `
   TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
   TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
 
+const veiculoAuditSelectClause = `
+  codigo,
+  COALESCE(BTRIM(crm), '') AS crm,
+  COALESCE(BTRIM(placas), '') AS placas,
+  ano,
+  cap_detran,
+  cap_teg,
+  cap_teg_creche,
+  cap_acessivel,
+  TO_CHAR(val_crm::date, 'YYYY-MM-DD') AS val_crm,
+  COALESCE(BTRIM(seguradora), '') AS seguradora,
+  TO_CHAR(seguro_inicio::date, 'YYYY-MM-DD') AS seguro_inicio,
+  TO_CHAR(seguro_termino::date, 'YYYY-MM-DD') AS seguro_termino,
+  COALESCE(BTRIM(tipo_de_bancada), '') AS tipo_de_bancada,
+  COALESCE(BTRIM(tipo_de_veiculo), '') AS tipo_de_veiculo,
+  COALESCE(BTRIM(marca_modelo), '') AS marca_modelo,
+  COALESCE(BTRIM(titular), '') AS titular,
+  COALESCE(BTRIM(cnpj_cpf), '') AS cnpj_cpf,
+  COALESCE(TO_CHAR(valor_veiculo, 'FM999999999990.00'), '') AS valor_veiculo,
+  COALESCE(BTRIM(os_especial), '') AS os_especial,
+  TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
+  TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
+
 const veiculoImportRecusaSelectClause = `
   id::text AS id,
   BTRIM(arquivo_xml) AS arquivo_xml,
@@ -4013,7 +4357,7 @@ const importCepsXmlFile = async (fileName) => {
   }
 }
 
-const importVeiculoXmlFile = async (fileName) => {
+const importVeiculoXmlFile = async (fileName, actor = 'IMPORTACAO_XML') => {
   const sanitizedFileName = path.basename(normalizeRequestValue(fileName))
 
   if (!sanitizedFileName) {
@@ -4089,53 +4433,47 @@ const importVeiculoXmlFile = async (fileName) => {
     }
 
     for (const record of normalizedRecords) {
-      const existingResult = await client.query('SELECT 1 FROM veiculo WHERE codigo = $1 LIMIT 1', [record.codigo])
+      const existingItemByCodigo = await fetchVeiculoAuditItemByCodigo(client, record.codigo)
+      const existingItemByPlaca = await fetchVeiculoAuditItemByPlaca(client, record.placas)
+      const existingItemByCrm = await fetchVeiculoAuditItemByCrm(client, record.crm)
+      let existingItem = existingItemByCodigo ?? existingItemByPlaca ?? existingItemByCrm
 
-      if (existingResult.rowCount > 0) {
-        await client.query(
-          `UPDATE veiculo
-           SET crm = NULLIF($1, ''),
-               placas = NULLIF($2, ''),
-               ano = $3,
-               cap_detran = $4,
-               cap_teg = $5,
-               cap_teg_creche = $6,
-               cap_acessivel = $7,
-               val_crm = NULLIF($8, '')::date,
-               seguradora = NULLIF($9, ''),
-               seguro_inicio = NULLIF($10, '')::date,
-               seguro_termino = NULLIF($11, '')::date,
-               tipo_de_bancada = NULLIF($12, ''),
-               tipo_de_veiculo = NULLIF($13, ''),
-               marca_modelo = NULLIF($14, ''),
-               titular = NULLIF($15, ''),
-               cnpj_cpf = NULLIF($16, ''),
-               valor_veiculo = $17,
-               os_especial = NULLIF($18, ''),
-               data_modificacao = NOW()
-           WHERE codigo = $19`,
-          [
-            record.crm,
-            record.placas,
-            record.ano,
-            record.capDetran,
-            record.capTeg,
-            record.capTegCreche,
-            record.capAcessivel,
-            record.valCrm,
-            record.seguradora,
-            record.seguroInicio,
-            record.seguroTermino,
-            record.tipoDeBancada,
-            record.tipoDeVeiculo,
-            record.marcaModelo,
-            record.titular,
-            record.cnpjCpf,
-            record.valorVeiculo,
-            record.osEspecial,
-            record.codigo,
-          ],
-        )
+      if (
+        existingItemByCodigo
+        && existingItemByPlaca
+        && Number(existingItemByCodigo.codigo) !== Number(existingItemByPlaca.codigo)
+      ) {
+        existingItem = existingItemByPlaca
+      } else if (
+        existingItemByCodigo
+        && existingItemByCrm
+        && Number(existingItemByCodigo.codigo) !== Number(existingItemByCrm.codigo)
+      ) {
+        existingItem = existingItemByCrm
+      }
+
+      if (existingItem) {
+        let targetRecord = record
+        const targetCodigo = Number(existingItem.codigo)
+        const conflictingCodeOwner = record.codigo === targetCodigo
+          ? null
+          : await fetchVeiculoAuditItemByCodigo(client, record.codigo)
+
+        if (conflictingCodeOwner && Number(conflictingCodeOwner.codigo) !== targetCodigo) {
+          targetRecord = {
+            ...record,
+            codigo: targetCodigo,
+          }
+        }
+
+        if (hasVeiculoSnapshotChanged(existingItem, targetRecord)) {
+          await insertVeiculoHistoricoEntry(client, existingItem, {
+            acao: 'IMPORTACAO_XML',
+            realizadoPor: actor,
+          })
+        }
+
+        await upsertImportedVeiculoByCodigo(client, targetCodigo, targetRecord)
         updated += 1
         continue
       }
@@ -6551,6 +6889,36 @@ const validateVeiculoPayload = async ({
     }
   }
 
+  if (normalizedCrm) {
+    const duplicateCrmResult = await pool.query(
+      `SELECT 1
+       FROM veiculo
+       WHERE UPPER(BTRIM(COALESCE(crm, ''))) = UPPER($1)
+         AND ($2::int IS NULL OR codigo <> $2)
+       LIMIT 1`,
+      [normalizedCrm, originalCodigo],
+    )
+
+    if (duplicateCrmResult.rowCount > 0) {
+      return { status: 409, payload: { message: 'CRM ja cadastrado.' } }
+    }
+  }
+
+  if (normalizedPlacas) {
+    const duplicatePlacaResult = await pool.query(
+      `SELECT 1
+       FROM veiculo
+       WHERE regexp_replace(UPPER(COALESCE(placas, '')), '[^A-Z0-9]', '', 'g') = $1
+         AND ($2::int IS NULL OR codigo <> $2)
+       LIMIT 1`,
+      [normalizedPlacas, originalCodigo],
+    )
+
+    if (duplicatePlacaResult.rowCount > 0) {
+      return { status: 409, payload: { message: 'Placa ja cadastrada.' } }
+    }
+  }
+
   return {
     status: 200,
     payload: {
@@ -8478,6 +8846,35 @@ const ensureDatabaseSchema = async () => {
     )
   `)
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS ${veiculoHistoricoTableName} (
+      id bigserial PRIMARY KEY,
+      veiculo_codigo integer NOT NULL,
+      acao varchar(50) NOT NULL,
+      realizado_por varchar(255) NOT NULL,
+      data_evento timestamp without time zone NOT NULL DEFAULT NOW(),
+      crm varchar(20),
+      placas varchar(7),
+      ano integer,
+      cap_detran integer,
+      cap_teg integer,
+      cap_teg_creche integer,
+      cap_acessivel integer,
+      val_crm date,
+      seguradora varchar(255),
+      seguro_inicio date,
+      seguro_termino date,
+      tipo_de_bancada varchar(20),
+      tipo_de_veiculo varchar(20),
+      marca_modelo varchar(255),
+      titular varchar(255),
+      cnpj_cpf varchar(18),
+      valor_veiculo numeric(14, 2),
+      os_especial varchar(3),
+      data_inclusao_original timestamp without time zone,
+      data_modificacao_original timestamp without time zone
+    )
+  `)
+  await pool.query(`
     UPDATE veiculo
     SET data_inclusao = COALESCE(data_inclusao, NOW()),
         data_modificacao = COALESCE(data_modificacao, COALESCE(data_inclusao, NOW()))
@@ -8485,21 +8882,30 @@ const ensureDatabaseSchema = async () => {
   `)
   await pool.query('SELECT setval(\'veiculo_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM veiculo), 0), 1), true)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS veiculo_codigo_unique_idx ON veiculo (codigo)')
+  await deduplicateVeiculoByExpression(pool, {
+    keyExpression: `regexp_replace(UPPER(COALESCE(placas, '')), '[^A-Z0-9]', '', 'g')`,
+    action: 'DEDUPLICACAO_PLACA',
+    actor: 'MIGRACAO_SISTEMA',
+  })
+  await deduplicateVeiculoByExpression(pool, {
+    keyExpression: `UPPER(BTRIM(COALESCE(crm, '')))`,
+    action: 'DEDUPLICACAO_CRM',
+    actor: 'MIGRACAO_SISTEMA',
+  })
   await pool.query(`
-    DO $$
-    BEGIN
-      IF EXISTS (
-        SELECT 1
-        FROM information_schema.table_constraints
-        WHERE table_schema = 'public'
-          AND table_name = 'veiculo'
-          AND constraint_name = 'veiculo_placa_uk'
-      ) THEN
-        ALTER TABLE veiculo DROP CONSTRAINT veiculo_placa_uk;
-      END IF;
-    END $$;
+    CREATE UNIQUE INDEX IF NOT EXISTS veiculo_placa_uk
+    ON veiculo (regexp_replace(UPPER(COALESCE(placas, '')), '[^A-Z0-9]', '', 'g'))
+    WHERE BTRIM(COALESCE(placas, '')) <> ''
   `)
-  await pool.query('DROP INDEX IF EXISTS veiculo_placa_uk')
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS veiculo_crm_uk
+    ON veiculo (UPPER(BTRIM(COALESCE(crm, ''))))
+    WHERE BTRIM(COALESCE(crm, '')) <> ''
+  `)
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS veiculo_historico_veiculo_codigo_idx
+    ON ${veiculoHistoricoTableName} (veiculo_codigo, data_evento DESC)
+  `)
   await pool.query('CREATE INDEX IF NOT EXISTS veiculo_placas_idx ON veiculo (placas)')
   await pool.query('CREATE INDEX IF NOT EXISTS veiculo_crm_idx ON veiculo (crm)')
   await pool.query('CREATE INDEX IF NOT EXISTS veiculo_import_recusa_data_idx ON veiculo_import_recusa (data_importacao DESC)')
@@ -12877,6 +13283,7 @@ const server = createServer(async (request, response) => {
   if (request.method === 'POST' && pathname === '/api/veiculo/relacao-crm') {
     try {
       const body = await readJsonBody(request)
+      const actor = resolveRequestActor(request)
       const sourcePlaca = normalizeVehiclePlaca(body.placas)
       const nextCrm = normalizeVehicleCrm(body.crm)
 
@@ -12890,66 +13297,72 @@ const server = createServer(async (request, response) => {
         return
       }
 
-      const sourceItem = await findVeiculoByPlaca(sourcePlaca)
-
-      if (!sourceItem) {
-        sendJson(response, 404, { message: 'Placa nao encontrada na tabela veiculo.' })
-        return
-      }
-
       if (!isVehicleCrmValid(nextCrm)) {
         sendJson(response, 400, { message: 'CRM invalido.' })
         return
       }
 
-      const insertResult = await pool.query(
-        `INSERT INTO veiculo (
-           crm,
-           placas,
-           ano,
-           cap_detran,
-           cap_teg,
-           cap_teg_creche,
-           cap_acessivel,
-           val_crm,
-           seguradora,
-           seguro_inicio,
-           seguro_termino,
-           tipo_de_bancada,
-           tipo_de_veiculo,
-           marca_modelo,
-           titular,
-           cnpj_cpf,
-           valor_veiculo,
-           os_especial,
-           data_inclusao,
-           data_modificacao
-         )
-         VALUES (NULLIF($1, ''), NULLIF($2, ''), $3, $4, $5, $6, $7, NULLIF($8, '')::date, NULLIF($9, ''), NULLIF($10, '')::date, NULLIF($11, '')::date, NULLIF($12, ''), NULLIF($13, ''), NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), $17, NULLIF($18, ''), NOW(), NOW())
-         RETURNING ${veiculoSelectClause}`,
-        [
-          nextCrm,
-          sourceItem.placas,
-          sourceItem.ano ? Number(sourceItem.ano) : null,
-          sourceItem.cap_detran ? Number(sourceItem.cap_detran) : null,
-          sourceItem.cap_teg ? Number(sourceItem.cap_teg) : null,
-          sourceItem.cap_teg_creche ? Number(sourceItem.cap_teg_creche) : null,
-          sourceItem.cap_acessivel ? Number(sourceItem.cap_acessivel) : null,
-          sourceItem.val_crm,
-          sourceItem.seguradora,
-          sourceItem.seguro_inicio,
-          sourceItem.seguro_termino,
-          sourceItem.tipo_de_bancada,
-          sourceItem.tipo_de_veiculo,
-          sourceItem.marca_modelo,
-          sourceItem.titular,
-          sourceItem.cnpj_cpf,
-          sourceItem.valor_veiculo ? Number(sourceItem.valor_veiculo) : null,
-          sourceItem.os_especial,
-        ],
-      )
+      const client = await pool.connect()
 
-      sendJson(response, 201, { item: insertResult.rows[0], sourceItem })
+      try {
+        await client.query('BEGIN')
+        const sourceItem = await fetchVeiculoAuditItemByPlaca(client, sourcePlaca)
+
+        if (!sourceItem) {
+          await client.query('ROLLBACK')
+          sendJson(response, 404, { message: 'Placa nao encontrada na tabela veiculo.' })
+          return
+        }
+
+        const conflictingCrmItem = await fetchVeiculoAuditItemByCrm(client, nextCrm)
+
+        if (conflictingCrmItem && Number(conflictingCrmItem.codigo) !== Number(sourceItem.codigo)) {
+          await client.query('ROLLBACK')
+          sendJson(response, 409, { message: 'CRM ja cadastrado para outra placa.' })
+          return
+        }
+
+        if (normalizeVehicleCrm(sourceItem.crm) === nextCrm) {
+          const currentItem = await findVeiculoByPlaca(sourcePlaca)
+          await client.query('COMMIT')
+          sendJson(response, 200, { item: currentItem, sourceItem: currentItem })
+          return
+        }
+
+        await insertVeiculoHistoricoEntry(client, sourceItem, {
+          acao: 'RELACAO_CRM',
+          realizadoPor: actor,
+        })
+
+        const updatedItem = await updateVeiculoByCodigo(client, Number(sourceItem.codigo), {
+          crm: nextCrm,
+          placas: sourceItem.placas,
+          ano: sourceItem.ano,
+          capDetran: sourceItem.cap_detran,
+          capTeg: sourceItem.cap_teg,
+          capTegCreche: sourceItem.cap_teg_creche,
+          capAcessivel: sourceItem.cap_acessivel,
+          valCrm: sourceItem.val_crm,
+          seguradora: sourceItem.seguradora,
+          seguroInicio: sourceItem.seguro_inicio,
+          seguroTermino: sourceItem.seguro_termino,
+          tipoDeBancada: sourceItem.tipo_de_bancada,
+          tipoDeVeiculo: sourceItem.tipo_de_veiculo,
+          marcaModelo: sourceItem.marca_modelo,
+          titular: sourceItem.titular,
+          cnpjCpf: sourceItem.cnpj_cpf,
+          valorVeiculo: sourceItem.valor_veiculo,
+          osEspecial: sourceItem.os_especial,
+        })
+
+        await client.query('COMMIT')
+        sendJson(response, 200, { item: updatedItem, sourceItem })
+      } catch (error) {
+        await client.query('ROLLBACK')
+        throw error
+      } finally {
+        client.release()
+      }
     } catch (error) {
       const persistenceError = getVeiculoPersistenceError(error, 'Erro ao criar nova relacao CRM com veiculo.')
       sendJson(response, persistenceError.status, { message: persistenceError.message })
@@ -13131,7 +13544,7 @@ const server = createServer(async (request, response) => {
   if (request.method === 'POST' && pathname === '/api/veiculo/import-xml') {
     try {
       const body = await readJsonBody(request)
-      const result = await importVeiculoXmlFile(body.fileName)
+      const result = await importVeiculoXmlFile(body.fileName, resolveRequestActor(request, 'IMPORTACAO_XML'))
 
       sendJson(response, 200, {
         message: 'Importacao de veiculos concluida com sucesso.',
@@ -14530,18 +14943,16 @@ const server = createServer(async (request, response) => {
     try {
       const originalCodigo = Number(getVeiculoCodigoFromUrl(pathname))
       const body = await readJsonBody(request)
+      const actor = resolveRequestActor(request)
 
       if (!Number.isInteger(originalCodigo) || originalCodigo <= 0) {
         sendJson(response, 400, { message: 'Codigo original invalido.' })
         return
       }
 
-      const existingResult = await pool.query(
-        'SELECT 1 FROM veiculo WHERE codigo = $1 LIMIT 1',
-        [originalCodigo],
-      )
+      const existingItem = await fetchVeiculoAuditItemByCodigo(pool, originalCodigo)
 
-      if (existingResult.rowCount === 0) {
+      if (!existingItem) {
         sendJson(response, 404, { message: 'Veiculo nao encontrado.' })
         return
       }
@@ -14574,55 +14985,30 @@ const server = createServer(async (request, response) => {
         return
       }
 
-      const updateResult = await pool.query(
-        `UPDATE veiculo
-         SET crm = NULLIF($1, ''),
-             placas = NULLIF($2, ''),
-             ano = $3,
-             cap_detran = $4,
-             cap_teg = $5,
-             cap_teg_creche = $6,
-             cap_acessivel = $7,
-             val_crm = NULLIF($8, '')::date,
-             seguradora = NULLIF($9, ''),
-             seguro_inicio = NULLIF($10, '')::date,
-             seguro_termino = NULLIF($11, '')::date,
-             tipo_de_bancada = NULLIF($12, ''),
-             tipo_de_veiculo = NULLIF($13, ''),
-             marca_modelo = NULLIF($14, ''),
-             titular = NULLIF($15, ''),
-             cnpj_cpf = NULLIF($16, ''),
-             valor_veiculo = $17,
-             os_especial = NULLIF($18, ''),
-             data_modificacao = NOW()
-         WHERE codigo = $19
-         RETURNING ${veiculoSelectClause}`,
-        [
-          validationResult.payload.crm,
-          validationResult.payload.placas,
-          validationResult.payload.ano,
-          validationResult.payload.capDetran,
-          validationResult.payload.capTeg,
-          validationResult.payload.capTegCreche,
-          validationResult.payload.capAcessivel,
-          validationResult.payload.valCrm,
-          validationResult.payload.seguradora,
-          validationResult.payload.seguroInicio,
-          validationResult.payload.seguroTermino,
-          validationResult.payload.tipoDeBancada,
-          validationResult.payload.tipoDeVeiculo,
-          validationResult.payload.marcaModelo,
-          validationResult.payload.titular,
-          validationResult.payload.cnpjCpf,
-          validationResult.payload.valorVeiculo,
-          validationResult.payload.osEspecial,
-          originalCodigo,
-        ],
-      )
+      const client = await pool.connect()
 
-      sendJson(response, 200, {
-        item: updateResult.rows[0],
-      })
+      try {
+        await client.query('BEGIN')
+
+        if (hasVeiculoSnapshotChanged(existingItem, validationResult.payload)) {
+          await insertVeiculoHistoricoEntry(client, existingItem, {
+            acao: 'ALTERACAO_MANUAL',
+            realizadoPor: actor,
+          })
+        }
+
+        const updatedItem = await updateVeiculoByCodigo(client, originalCodigo, validationResult.payload)
+        await client.query('COMMIT')
+
+        sendJson(response, 200, {
+          item: updatedItem,
+        })
+      } catch (error) {
+        await client.query('ROLLBACK')
+        throw error
+      } finally {
+        client.release()
+      }
     } catch (error) {
       const persistenceError = getVeiculoPersistenceError(error, 'Erro ao alterar veiculo.')
 
