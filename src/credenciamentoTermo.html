@@ -1057,6 +1057,7 @@
       let nextAditivoRequestId = 0;
       let credenciadaSuggestionRequestId = 0;
       let inheritedAditivoTermoAdesao = '';
+      const missingDespachoPublicationMessage = 'Termo sem data de publicacao.';
 
       const normalizeText = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trim().toUpperCase().slice(0, maxLength);
       const normalizeIntegerInput = (value, maxDigits = 10) => value.replace(/\D/g, '').slice(0, maxDigits);
@@ -1197,6 +1198,63 @@
         const parsed = new Date(year, month - 1, day);
 
         return Number.isNaN(parsed.getTime()) ? null : parsed;
+      };
+      const enableFullDateSelection = (input) => {
+        if (!input) {
+          return;
+        }
+
+        const selectAllContent = () => {
+          if (document.activeElement === input && input.type === 'text') {
+            input.setSelectionRange(0, input.value.length);
+          }
+
+          requestAnimationFrame(() => {
+            if (document.activeElement === input && input.type === 'text') {
+              input.setSelectionRange(0, input.value.length);
+            }
+          });
+
+          setTimeout(() => {
+            if (document.activeElement === input && input.type === 'text') {
+              input.setSelectionRange(0, input.value.length);
+            }
+          }, 0);
+        };
+
+        input.addEventListener('focus', () => {
+          const displayValue = normalizeReportDateKey(input.value);
+
+          input.dataset.dateOriginalValue = input.value;
+          input.type = 'text';
+          input.inputMode = 'numeric';
+          input.placeholder = 'dd/mm/aaaa';
+          input.value = displayValue;
+
+          selectAllContent();
+        });
+        input.addEventListener('mouseup', (event) => {
+          if (input.type !== 'text') {
+            return;
+          }
+
+          event.preventDefault();
+          selectAllContent();
+        });
+
+        input.addEventListener('blur', () => {
+          const typedValue = String(input.value || '').trim();
+          const parsedDate = parseReportDateToDate(typedValue);
+          const normalizedValue = parsedDate
+            ? formatDateInputValue(parsedDate)
+            : (input.dataset.dateOriginalValue || '');
+
+          input.type = 'date';
+          input.inputMode = '';
+          input.placeholder = '';
+          input.value = normalizedValue;
+          delete input.dataset.dateOriginalValue;
+        });
       };
       const addDaysToDate = (value, days) => {
         const result = new Date(value);
@@ -1652,12 +1710,26 @@
 
         if (!termoAdesao || formMode === 'create') {
           showDespachoButton.disabled = true;
+          if (feedback.textContent.trim() === missingDespachoPublicationMessage) {
+            feedback.textContent = '';
+            feedback.className = 'dsc-feedback';
+          }
           return;
         }
 
         try {
           const latestItem = await fetchLatestCredenciamentoTermoItemByTermoAdesao(termoAdesao);
-          showDespachoButton.disabled = !normalizeReportDateKey(latestItem?.data_publicacao || '');
+          const publicationDate = normalizeReportDateKey(dataPublicacaoInput.value || latestItem?.data_publicacao || '');
+
+          showDespachoButton.disabled = !latestItem;
+
+          if (!latestItem || publicationDate) {
+            if (feedback.textContent.trim() === missingDespachoPublicationMessage) {
+              feedback.textContent = '';
+              feedback.className = 'dsc-feedback';
+            }
+            return;
+          }
         } catch {
           showDespachoButton.disabled = true;
         }
@@ -3157,6 +3229,16 @@
         }
       };
       const handleShowDespacho = async () => {
+        const publicationDate = normalizeReportDateKey(dataPublicacaoInput.value);
+
+        if (!publicationDate) {
+          errors.dataPublicacao.textContent = missingDespachoPublicationMessage;
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+          revealFirstFormError({ dataPublicacao: errors.dataPublicacao.textContent });
+          return;
+        }
+
         despachoModal.classList.remove('dsc-hidden');
         despachoModal.setAttribute('aria-hidden', 'false');
         despachoPanel.classList.remove('dsc-hidden');
@@ -3171,16 +3253,10 @@
 
         try {
           await withLatestTermoItemOnForm(async (latestItem) => {
-            const latestAditivoPublicationDate = normalizeReportDateKey(dataPublicacaoInput.value);
-
-            if (!latestAditivoPublicationDate) {
-              throw new Error('Data de publicacao do ultimo aditivo obrigatoria.');
-            }
-
-            const requestedDate = normalizeReportDateKey(dataPublicacaoInput.value || inicioVigenciaInput.value);
+            const requestedDate = normalizeReportDateKey(dataPublicacaoInput.value);
 
             if (!requestedDate) {
-              throw new Error('Data de publicacao obrigatoria.');
+              throw new Error(missingDespachoPublicationMessage);
             }
 
             const parametroItem = await resolveEmissaoParametroByReferenceDate(requestedDate);
@@ -4695,6 +4771,22 @@
         valorContratoInput.value = formatCurrencyInput(valorContratoInput.value);
         syncDerivedTermoFields();
         syncEmitContratoButtonState();
+      });
+      [
+        inicioVigenciaInput,
+        terminoVigenciaInput,
+        compDataAditivoInput,
+        dataPublicacaoInput,
+        vencimentoGeralInput,
+        lastAditivoDataPublicacaoInput,
+      ].forEach(enableFullDateSelection);
+      dataPublicacaoInput.addEventListener('input', () => {
+        errors.dataPublicacao.textContent = '';
+        if (feedback.textContent.trim() === missingDespachoPublicationMessage) {
+          feedback.textContent = '';
+          feedback.className = 'dsc-feedback';
+        }
+        void syncDespachoButtonState();
       });
       terminoVigenciaInput.addEventListener('input', () => {
         syncDerivedTermoFields();
