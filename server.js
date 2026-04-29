@@ -178,6 +178,7 @@ const legacyCredenciamentoOsTableName = 'credenciamento_os'
 const legacyCredenciamentoOsImportRecusaTableName = 'credenciamento_os_import_recusa'
 const legacyCredenciamentoOsCodigoSequenceName = 'credenciamento_os_codigo_seq'
 const veiculoHistoricoTableName = 'veiculo_historico'
+const veiculoOrdemServicoCollectionPath = '/api/veiculo/ordens-servico'
 const ordemServicoCollectionPath = '/api/ordem-servico'
 const ordemServicoDataEolPendenciasPath = '/api/ordem-servico/data-eol-pendencias'
 const ordemServicoNextNumOsPath = '/api/ordem-servico/next-num-os'
@@ -3395,6 +3396,33 @@ const veiculoAuditSelectClause = `
   TO_CHAR(data_inclusao, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao,
   TO_CHAR(data_modificacao, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao`
 
+const veiculoHistoricoSelectClause = `
+  id::text AS id,
+  veiculo_codigo::text AS veiculo_codigo,
+  COALESCE(BTRIM(acao), '') AS acao,
+  COALESCE(BTRIM(realizado_por), '') AS realizado_por,
+  TO_CHAR(data_evento, 'YYYY-MM-DD HH24:MI:SS') AS data_evento,
+  COALESCE(BTRIM(crm), '') AS crm,
+  COALESCE(BTRIM(placas), '') AS placas,
+  COALESCE(ano::text, '') AS ano,
+  COALESCE(cap_detran::text, '') AS cap_detran,
+  COALESCE(cap_teg::text, '') AS cap_teg,
+  COALESCE(cap_teg_creche::text, '') AS cap_teg_creche,
+  COALESCE(cap_acessivel::text, '') AS cap_acessivel,
+  TO_CHAR(val_crm::date, 'YYYY-MM-DD') AS val_crm,
+  COALESCE(BTRIM(seguradora), '') AS seguradora,
+  TO_CHAR(seguro_inicio::date, 'YYYY-MM-DD') AS seguro_inicio,
+  TO_CHAR(seguro_termino::date, 'YYYY-MM-DD') AS seguro_termino,
+  COALESCE(BTRIM(tipo_de_bancada), '') AS tipo_de_bancada,
+  COALESCE(BTRIM(tipo_de_veiculo), '') AS tipo_de_veiculo,
+  COALESCE(BTRIM(marca_modelo), '') AS marca_modelo,
+  COALESCE(BTRIM(titular), '') AS titular,
+  COALESCE(BTRIM(cnpj_cpf), '') AS cnpj_cpf,
+  COALESCE(TO_CHAR(valor_veiculo, 'FM999999999990.00'), '') AS valor_veiculo,
+  COALESCE(BTRIM(os_especial), '') AS os_especial,
+  TO_CHAR(data_inclusao_original, 'YYYY-MM-DD HH24:MI:SS') AS data_inclusao_original,
+  TO_CHAR(data_modificacao_original, 'YYYY-MM-DD HH24:MI:SS') AS data_modificacao_original`
+
 const veiculoImportRecusaSelectClause = `
   id::text AS id,
   BTRIM(arquivo_xml) AS arquivo_xml,
@@ -3593,6 +3621,7 @@ const ordemServicoSelectClause = `
   COALESCE(BTRIM(revisao), '') AS revisao,
   COALESCE(BTRIM(os_concat), '') AS os_concat,
   TO_CHAR(vigencia_os::date, 'YYYY-MM-DD') AS vigencia_os,
+  TO_CHAR(data_emissao::date, 'YYYY-MM-DD') AS data_emissao,
   COALESCE((SELECT credenciada_codigo::text FROM ${credenciamentoTermoTableName} WHERE codigo = ${ordemServicoTableName}.termo_codigo), '') AS credenciada_codigo,
   COALESCE(BTRIM((SELECT cr.credenciado FROM credenciada cr WHERE cr.codigo = (SELECT credenciada_codigo FROM ${credenciamentoTermoTableName} WHERE codigo = ${ordemServicoTableName}.termo_codigo))), '') AS credenciado,
   COALESCE(BTRIM((SELECT cr.cnpj_cpf FROM credenciada cr WHERE cr.codigo = (SELECT credenciada_codigo FROM ${credenciamentoTermoTableName} WHERE codigo = ${ordemServicoTableName}.termo_codigo))), '') AS cnpj_cpf,
@@ -8078,10 +8107,6 @@ const validateOrdemServicoPayload = async ({
     return { status: 400, payload: { message: 'Vigencia da OS e obrigatoria.' } }
   }
 
-  if (!skipVigenciaValidation && !importMode && normalizedVigenciaOs && isDateBeforeToday(normalizedVigenciaOs)) {
-    return { status: 400, payload: { message: 'Vigencia da OS nao pode ser anterior a hoje.' } }
-  }
-
 if (importMode && !normalizedCredenciado && !normalizedCnpjCpf) {
     return { status: 400, payload: { message: 'Credenciado e obrigatorio.' } }
   }
@@ -9367,6 +9392,7 @@ const ensureDatabaseSchema = async () => {
       revisao varchar(30),
       os_concat varchar(295),
       vigencia_os date,
+      data_emissao date NOT NULL DEFAULT CURRENT_DATE,
       credenciada_codigo integer NOT NULL,
       credenciado varchar(255) NOT NULL,
       cnpj_cpf varchar(18) NOT NULL,
@@ -9406,6 +9432,7 @@ const ensureDatabaseSchema = async () => {
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS revisao varchar(30)`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS os_concat varchar(295)`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS vigencia_os date`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS data_emissao date`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS credenciada_codigo integer`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS credenciado varchar(255)`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS cnpj_cpf varchar(18)`)
@@ -9435,8 +9462,14 @@ const ensureDatabaseSchema = async () => {
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS uniao_termos varchar(255)`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS data_inclusao timestamp without time zone`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ADD COLUMN IF NOT EXISTS data_modificacao timestamp without time zone`)
+  await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN data_emissao SET DEFAULT CURRENT_DATE`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN data_inclusao SET DEFAULT NOW()`)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} ALTER COLUMN data_modificacao SET DEFAULT NOW()`)
+  await pool.query(`
+    UPDATE ${ordemServicoTableName}
+    SET data_emissao = COALESCE(data_emissao, data_inclusao::date, CURRENT_DATE)
+    WHERE data_emissao IS NULL
+  `)
   await pool.query(`ALTER TABLE ${ordemServicoTableName} DROP COLUMN IF EXISTS os_origem`)
   await pool.query(`
     CREATE TABLE IF NOT EXISTS ${vinculoCondutorTableName} (
@@ -10793,6 +10826,36 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'GET' && pathname === veiculoOrdemServicoCollectionPath) {
+    try {
+      const placa = normalizeVehiclePlaca(requestUrl.searchParams.get('placa') ?? '')
+
+      if (!placa) {
+        sendJson(response, 400, { message: 'Placa do veiculo e obrigatoria.' })
+        return
+      }
+
+      const result = await pool.query(
+        `SELECT
+           ${ordemServicoSelectClause}
+         FROM ${ordemServicoTableName}
+         WHERE regexp_replace(UPPER(COALESCE(veiculo_placas, '')), '[^A-Z0-9]', '', 'g') = $1
+         ORDER BY COALESCE(vigencia_os, data_inclusao::date) DESC NULLS LAST, codigo DESC`,
+        [placa],
+      )
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total: result.rowCount,
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao consultar Ordens de Servico do veiculo.'
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'GET' && pathname === '/api/veiculo/lookup') {
     try {
       const crm = normalizeVehicleCrm(requestUrl.searchParams.get('crm') ?? '')
@@ -11226,6 +11289,80 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao consultar veiculos.'
+
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'GET' && pathname === '/api/veiculo-historico') {
+    try {
+      const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
+      const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 20) || 20, 1), 50)
+      const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'data_evento')
+      const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'desc').toLowerCase() === 'asc'
+        ? 'ASC'
+        : 'DESC'
+      const offset = (page - 1) * pageSize
+      const values = []
+      const filters = []
+      const orderByClause = sortBy === 'veiculo_codigo'
+        ? `veiculo_codigo ${sortDirection}, id DESC`
+        : sortBy === 'placas'
+          ? `UPPER(BTRIM(COALESCE(placas, ''))) ${sortDirection}, id DESC`
+          : sortBy === 'crm'
+            ? `UPPER(BTRIM(COALESCE(crm, ''))) ${sortDirection}, id DESC`
+            : `data_evento ${sortDirection}, id DESC`
+
+      if (search) {
+        values.push(`%${search}%`)
+        filters.push(`(
+          CAST(id AS text) ILIKE $${values.length}
+          OR CAST(veiculo_codigo AS text) ILIKE $${values.length}
+          OR COALESCE(BTRIM(acao), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(realizado_por), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(placas), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(crm), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(marca_modelo), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(titular), '') ILIKE UPPER($${values.length})
+        )`)
+      }
+
+      const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : ''
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM ${veiculoHistoricoTableName} ${whereClause}`,
+        values,
+      )
+
+      values.push(pageSize)
+      values.push(offset)
+      const result = await pool.query(
+        `SELECT
+           ${veiculoHistoricoSelectClause}
+         FROM ${veiculoHistoricoTableName}
+         ${whereClause}
+         ORDER BY ${orderByClause}
+         LIMIT $${values.length - 1}
+         OFFSET $${values.length}`,
+        values,
+      )
+      const total = countResult.rows[0]?.total ?? 0
+
+      sendJson(response, 200, {
+        items: result.rows,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        sortBy: ['veiculo_codigo', 'placas', 'crm'].includes(sortBy) ? sortBy : 'data_evento',
+        sortDirection: sortDirection.toLowerCase(),
+      })
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao consultar historico de veiculos.'
 
       sendJson(response, 500, { message })
     }
@@ -13842,6 +13979,8 @@ const server = createServer(async (request, response) => {
       const body = await readJsonBody(request)
       const substitutionSourceCodigo = normalizeCondutorCodigo(body.substitutionSourceCodigo)
       const activationSourceCodigo = normalizeCondutorCodigo(body.activationSourceCodigo)
+      const shouldSkipVigenciaValidation = (Number.isInteger(substitutionSourceCodigo) && substitutionSourceCodigo > 0)
+        || (Number.isInteger(activationSourceCodigo) && activationSourceCodigo > 0)
       const validationResult = await validateOrdemServicoPayload({
         codigoAccess: body.codigoAccess,
         termoAdesao: body.termoAdesao,
@@ -13867,6 +14006,7 @@ const server = createServer(async (request, response) => {
         anotacao: body.anotacao,
         uniaoTermos: body.uniaoTermos,
         substitutionSourceCodigo,
+        skipVigenciaValidation: shouldSkipVigenciaValidation,
         requireCodigo: false,
       })
 
@@ -13888,6 +14028,7 @@ const server = createServer(async (request, response) => {
              revisao,
              os_concat,
              vigencia_os,
+              data_emissao,
              termo_codigo,
              dre_codigo,
              dre_descricao,
@@ -13915,7 +14056,7 @@ const server = createServer(async (request, response) => {
              data_inclusao,
              data_modificacao
            )
-           VALUES (NULLIF($1, ''), NULLIF($2, ''), NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, '')::date, $7, $8, $9, $10, NULLIF($11, ''), $12, $13, NULLIF($14, '')::date, NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, '')::date, $18, $19, NULLIF($20, ''), NULLIF($21, ''), NULLIF($22, ''), NULLIF($23, '')::date, $24, $25, NULLIF($26, ''), NULLIF($27, ''), NULLIF($28, '')::date, NULLIF($29, ''), NULLIF($30, ''), NOW(), NOW())
+           VALUES (NULLIF($1, ''), NULLIF($2, ''), NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, '')::date, CURRENT_DATE, $7, $8, $9, $10, NULLIF($11, ''), $12, $13, NULLIF($14, '')::date, NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, '')::date, $18, $19, NULLIF($20, ''), NULLIF($21, ''), NULLIF($22, ''), NULLIF($23, '')::date, $24, $25, NULLIF($26, ''), NULLIF($27, ''), NULLIF($28, '')::date, NULLIF($29, ''), NULLIF($30, ''), NOW(), NOW())
            RETURNING codigo`,
           [
             validationResult.payload.codigoAccess,
@@ -15530,6 +15671,7 @@ const server = createServer(async (request, response) => {
                revisao = NULLIF($5, ''),
                os_concat = NULLIF($6, ''),
                vigencia_os = NULLIF($7, '')::date,
+               data_emissao = CURRENT_DATE,
                termo_codigo = $8,
                dre_codigo = $9,
                dre_descricao = $10,

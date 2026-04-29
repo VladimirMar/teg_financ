@@ -418,11 +418,7 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   font-weight: 700;
 }
 
-#ordem-servico-form .dsc-popup-header-sticky {
-  justify-content: center;
-  padding-right: 56px;
-}
-
+#ordem-servico-form .dsc-popup-header-sticky,
 #condutor-form .dsc-popup-header-sticky,
 #monitor-form .dsc-popup-header-sticky,
 #credenciada-form .dsc-popup-header-sticky,
@@ -434,10 +430,10 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 #login-dre-bulk-form .dsc-popup-header-sticky,
 #register-form .dsc-popup-header-sticky,
 #cep-form .dsc-popup-header-sticky,
-#cep-import-form .dsc-popup-header-sticky,
-#cep-rejection-panel .dsc-popup-header-sticky {
-  justify-content: center;
-  padding-right: 56px;
+#veiculo-form .dsc-popup-header-sticky,
+#veiculo-historico-form .dsc-popup-header-sticky {
+  justify-content: flex-start;
+  padding-right: 0;
 }
 
 #ordem-servico-form-title {
@@ -672,14 +668,19 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 }
 
 .dsc-form-row-ordem-servico-codigo {
-  grid-template-columns: minmax(160px, 220px) minmax(240px, 1fr);
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(220px, 1fr);
   width: 100%;
-  justify-content: start;
+  justify-content: stretch;
 }
 
 .dsc-form-row-ordem-servico-codigo .dsc-field-group {
   width: 100%;
   justify-self: start;
+}
+
+.dsc-form-row-ordem-servico-codigo .dsc-field-group:nth-child(2) {
+  width: min(100%, 260px);
+  justify-self: center;
 }
 
 .dsc-form-row-ordem-servico-codigo .dsc-field-group:last-child {
@@ -2331,6 +2332,29 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
     border-radius: 24px;
     padding: 22px;
   }
+
+@media (min-width: 769px) {
+  #ordem-servico-form .dsc-form-row-ordem-servico-codigo {
+    grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(220px, 1fr);
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  #ordem-servico-form .dsc-form-row-ordem-servico-codigo .dsc-field-group {
+    width: 100%;
+    justify-self: start;
+  }
+
+  #ordem-servico-form .dsc-form-row-ordem-servico-codigo .dsc-field-group:nth-child(2) {
+    width: min(100%, 260px);
+    justify-self: center;
+  }
+
+  #ordem-servico-form .dsc-form-row-ordem-servico-codigo .dsc-field-group:last-child {
+    width: min(100%, 320px);
+    justify-self: end;
+  }
+}
 
   .dsc-access-form {
     gap: 14px;

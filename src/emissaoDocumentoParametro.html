@@ -28,7 +28,7 @@
                 <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="emissao-parametro-form">
                   <div class="dsc-popup-header dsc-popup-header-sticky">
                     <h2 id="emissao-parametro-form-title">PARAMETROS GERAIS</h2>
-                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-emissao-parametro-form-modal-button" aria-label="Fechar formulario de parametros gerais">X</button>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-emissao-parametro-form-modal-button" aria-label="Fechar formulario de parametros gerais">X</button>
                   </div>
 
                   <div class="dsc-default-audit-panel dsc-hidden" id="emissao-parametro-default-audit-panel"></div>
@@ -204,9 +204,11 @@
               <p class="dsc-feedback" id="emissao-parametro-grid-feedback"></p>
 
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-emissao-parametro-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-emissao-parametro-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-emissao-parametro-page-button" title="Registro anterior">◀</button>
                 <span id="emissao-parametro-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-emissao-parametro-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-emissao-parametro-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-emissao-parametro-page-button" title="Ultimo registro">▶|</button>
               </div>
             </div>
           </div>
@@ -268,8 +270,10 @@
       const gridBody = document.getElementById('emissao-parametro-grid-body');
       const emptyState = document.getElementById('emissao-parametro-empty-state');
       const totalLabel = document.getElementById('emissao-parametro-total');
+      const firstPageButton = document.getElementById('first-emissao-parametro-page-button');
       const previousPageButton = document.getElementById('previous-emissao-parametro-page-button');
       const nextPageButton = document.getElementById('next-emissao-parametro-page-button');
+      const lastPageButton = document.getElementById('last-emissao-parametro-page-button');
       const paginationInfo = document.getElementById('emissao-parametro-pagination-info');
       const pageSizeSelect = document.getElementById('emissao-parametro-page-size');
       const sortDataButton = document.getElementById('sort-emissao-parametro-data-button');
@@ -643,8 +647,10 @@
       const updatePagination = (totalItems) => {
         totalLabel.textContent = `${totalItems} item(ns) encontrados`;
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        firstPageButton.disabled = currentPage <= 1;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
+        lastPageButton.disabled = currentPage >= totalPages;
         if (pageSizeSelect) {
           pageSizeSelect.value = String(pageSize);
         }
@@ -1076,6 +1082,15 @@
         void loadItems();
       });
 
+      firstPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage = 1;
+        void loadItems();
+      });
+
       previousPageButton.addEventListener('click', () => {
         if (currentPage <= 1) {
           return;
@@ -1091,6 +1106,15 @@
         }
 
         currentPage += 1;
+        void loadItems();
+      });
+
+      lastPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage = totalPages;
         void loadItems();
       });
 

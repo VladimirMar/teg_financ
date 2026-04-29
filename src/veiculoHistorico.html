@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Historico de veiculo</title>
+
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <div class="dsc-status-banner dsc-hidden" id="status-banner"></div>
+    <main class="dsc-access-page">
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-access-layout">
+          <div class="dsc-access-management-layout">
+            <div class="dsc-access-toolbar">
+              <form class="dsc-access-filter-form" id="veiculo-historico-filter-form">
+                <input class="dsc-form-control dsc-access-filter-input" id="veiculo-historico-search" type="text" placeholder="Filtrar por id, codigo do veiculo, acao, usuario, placas, CRM, marca/modelo ou titular" />
+                <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="clear-veiculo-historico-filter-button">Limpar</button>
+              </form>
+            </div>
+
+            <div class="dsc-popup-overlay dsc-hidden" id="veiculo-historico-form-modal" aria-hidden="true">
+              <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="veiculo-historico-form-title">
+                <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="veiculo-historico-form">
+                  <div class="dsc-popup-header dsc-popup-header-sticky">
+                    <h2 id="veiculo-historico-form-title">HISTORICO DE VEICULO</h2>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-veiculo-historico-form-modal-button" aria-label="Fechar formulario de historico de veiculo">X</button>
+                  </div>
+
+                  <section class="dsc-form-section-card">
+                    <h3 class="dsc-form-section-title">Auditoria</h3>
+
+                    <div class="dsc-form-row">
+                      <label class="dsc-field-group" for="veiculo-historico-id">
+                        <span>ID historico</span>
+                        <input class="dsc-form-control" id="veiculo-historico-id" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-veiculo-codigo">
+                        <span>Codigo veiculo</span>
+                        <input class="dsc-form-control" id="veiculo-historico-veiculo-codigo" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-acao">
+                        <span>Acao</span>
+                        <input class="dsc-form-control" id="veiculo-historico-acao" type="text" readonly />
+                      </label>
+                    </div>
+
+                    <div class="dsc-form-row">
+                      <label class="dsc-field-group" for="veiculo-historico-realizado-por">
+                        <span>Realizado por</span>
+                        <input class="dsc-form-control" id="veiculo-historico-realizado-por" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-data-evento">
+                        <span>Data do evento</span>
+                        <input class="dsc-form-control" id="veiculo-historico-data-evento" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-data-inclusao-original">
+                        <span>Data inclusao original</span>
+                        <input class="dsc-form-control" id="veiculo-historico-data-inclusao-original" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-data-modificacao-original">
+                        <span>Data modificacao original</span>
+                        <input class="dsc-form-control" id="veiculo-historico-data-modificacao-original" type="text" readonly />
+                      </label>
+                    </div>
+                  </section>
+
+                  <section class="dsc-form-section-card dsc-form-section-card-veiculo-identificacao">
+                    <h3 class="dsc-form-section-title">Identificacao</h3>
+
+                    <div class="dsc-form-row dsc-form-row-veiculo-identificacao">
+                      <label class="dsc-field-group" for="veiculo-historico-crm">
+                        <span>CRM</span>
+                        <input class="dsc-form-control" id="veiculo-historico-crm" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-placas">
+                        <span>Placas</span>
+                        <input class="dsc-form-control" id="veiculo-historico-placas" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-ano">
+                        <span>Ano</span>
+                        <input class="dsc-form-control" id="veiculo-historico-ano" type="text" readonly />
+                      </label>
+                    </div>
+                  </section>
+
+                  <section class="dsc-form-section-card dsc-form-section-card-veiculo-capacidades">
+                    <h3 class="dsc-form-section-title">Capacidades</h3>
+
+                    <div class="dsc-form-row">
+                      <label class="dsc-field-group" for="veiculo-historico-cap-detran">
+                        <span>Capacidade DETRAN</span>
+                        <input class="dsc-form-control" id="veiculo-historico-cap-detran" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-cap-teg">
+                        <span>Capacidade TEG</span>
+                        <input class="dsc-form-control" id="veiculo-historico-cap-teg" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-cap-teg-creche">
+                        <span>Capacidade TEG creche</span>
+                        <input class="dsc-form-control" id="veiculo-historico-cap-teg-creche" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-cap-acessivel">
+                        <span>Capacidade acessivel</span>
+                        <input class="dsc-form-control" id="veiculo-historico-cap-acessivel" type="text" readonly />
+                      </label>
+                    </div>
+                  </section>
+
+                  <section class="dsc-form-section-card dsc-form-section-card-veiculo-datas">
+                    <h3 class="dsc-form-section-title">Datas</h3>
+
+                    <div class="dsc-form-row dsc-form-row-veiculo-datas">
+                      <label class="dsc-field-group" for="veiculo-historico-val-crm">
+                        <span>Validade CRM</span>
+                        <input class="dsc-form-control" id="veiculo-historico-val-crm" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-seguro-inicio">
+                        <span>Seguro inicio</span>
+                        <input class="dsc-form-control" id="veiculo-historico-seguro-inicio" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-seguro-termino">
+                        <span>Seguro termino</span>
+                        <input class="dsc-form-control" id="veiculo-historico-seguro-termino" type="text" readonly />
+                      </label>
+                    </div>
+                  </section>
+
+                  <section class="dsc-form-section-card dsc-form-section-card-veiculo-comercial">
+                    <h3 class="dsc-form-section-title">Dados do veiculo</h3>
+
+                    <div class="dsc-form-row dsc-form-row-veiculo-comercial">
+                      <label class="dsc-field-group" for="veiculo-historico-seguradora">
+                        <span>Seguradora</span>
+                        <input class="dsc-form-control" id="veiculo-historico-seguradora" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-marca-modelo">
+                        <span>Marca/modelo</span>
+                        <input class="dsc-form-control" id="veiculo-historico-marca-modelo" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-valor">
+                        <span>Valor do veiculo</span>
+                        <input class="dsc-form-control" id="veiculo-historico-valor" type="text" readonly />
+                      </label>
+                    </div>
+                  </section>
+
+                  <section class="dsc-form-section-card dsc-form-section-card-veiculo-proprietario">
+                    <h3 class="dsc-form-section-title">Titular do CRM</h3>
+
+                    <div class="dsc-form-row dsc-form-row-veiculo-proprietario">
+                      <label class="dsc-field-group" for="veiculo-historico-cnpj-cpf">
+                        <span>CNPJ/CPF</span>
+                        <input class="dsc-form-control" id="veiculo-historico-cnpj-cpf" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-titular">
+                        <span>Titular do CRM</span>
+                        <input class="dsc-form-control" id="veiculo-historico-titular" type="text" readonly />
+                      </label>
+                    </div>
+                  </section>
+
+                  <section class="dsc-form-section-card dsc-form-section-card-veiculo-classificacao">
+                    <h3 class="dsc-form-section-title">Classificacao</h3>
+
+                    <div class="dsc-form-row dsc-form-row-veiculo-classificacao">
+                      <label class="dsc-field-group" for="veiculo-historico-tipo-de-veiculo">
+                        <span>Tipo de veiculo</span>
+                        <input class="dsc-form-control" id="veiculo-historico-tipo-de-veiculo" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-tipo-de-bancada">
+                        <span>Tipo de bancada</span>
+                        <input class="dsc-form-control" id="veiculo-historico-tipo-de-bancada" type="text" readonly />
+                      </label>
+
+                      <label class="dsc-field-group" for="veiculo-historico-os-especial">
+                        <span>OS especial</span>
+                        <input class="dsc-form-control" id="veiculo-historico-os-especial" type="text" readonly />
+                      </label>
+                    </div>
+                  </section>
+
+                  <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons">
+                    <button type="button" class="dsc-btn dsc-btn-white" id="cancel-veiculo-historico-button">Fechar</button>
+                  </div>
+
+                  <p class="dsc-feedback" id="veiculo-historico-form-feedback"></p>
+                </form>
+              </div>
+            </div>
+
+            <div class="dsc-card dsc-access-grid-card">
+              <div class="dsc-access-grid-header" style="align-items: flex-start; justify-content: space-between; flex-direction: row;">
+                <div class="dsc-access-grid-header-copy">
+                  <h2>Historico de veiculos</h2>
+                  <span id="veiculo-historico-total"></span>
+                </div>
+                <div class="dsc-grid-page-size-field" style="flex-direction: column; align-items: flex-end; justify-content: flex-start; margin-left: auto;">
+                  <span class="dsc-grid-page-size-label">Registros no grid</span>
+                  <select class="dsc-form-control" id="veiculo-historico-page-size" style="padding: 0; min-height: 38px; border-radius: 14px;">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="dsc-access-grid-wrapper">
+                <table class="dsc-access-grid">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-veiculo-historico-data-evento-button">
+                          Data evento <span id="sort-veiculo-historico-data-evento-indicator">↓</span>
+                        </button>
+                      </th>
+                      <th>Acao</th>
+                      <th>Usuario</th>
+                      <th>Codigo veiculo</th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-veiculo-historico-placas-button">
+                          Placas <span id="sort-veiculo-historico-placas-indicator">↑</span>
+                        </button>
+                      </th>
+                      <th>
+                        <button type="button" class="dsc-grid-sort-button" id="sort-veiculo-historico-crm-button">
+                          CRM <span id="sort-veiculo-historico-crm-indicator">↑</span>
+                        </button>
+                      </th>
+                      <th>Marca/modelo</th>
+                      <th class="dsc-grid-actions-column">Consulta</th>
+                    </tr>
+                  </thead>
+                  <tbody id="veiculo-historico-grid-body"></tbody>
+                </table>
+
+                <p class="dsc-empty-state dsc-hidden" id="veiculo-historico-empty-state">Nenhum historico de veiculo encontrado.</p>
+              </div>
+
+              <p class="dsc-feedback" id="veiculo-historico-grid-feedback"></p>
+
+              <div class="dsc-access-pagination">
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-veiculo-historico-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-veiculo-historico-page-button" title="Registro anterior">◀</button>
+                <span id="veiculo-historico-pagination-info">Pagina 1 de 1</span>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-veiculo-historico-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-veiculo-historico-page-button" title="Ultimo registro">▶|</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('veiculo-historico-form');
+      const formModal = document.getElementById('veiculo-historico-form-modal');
+      const filterForm = document.getElementById('veiculo-historico-filter-form');
+      const searchInput = document.getElementById('veiculo-historico-search');
+      const clearFilterButton = document.getElementById('clear-veiculo-historico-filter-button');
+      const gridBody = document.getElementById('veiculo-historico-grid-body');
+      const emptyState = document.getElementById('veiculo-historico-empty-state');
+      const totalLabel = document.getElementById('veiculo-historico-total');
+      const firstPageButton = document.getElementById('first-veiculo-historico-page-button');
+      const previousPageButton = document.getElementById('previous-veiculo-historico-page-button');
+      const nextPageButton = document.getElementById('next-veiculo-historico-page-button');
+      const lastPageButton = document.getElementById('last-veiculo-historico-page-button');
+      const paginationInfo = document.getElementById('veiculo-historico-pagination-info');
+      const pageSizeSelect = document.getElementById('veiculo-historico-page-size');
+      const sortDataEventoButton = document.getElementById('sort-veiculo-historico-data-evento-button');
+      const sortPlacasButton = document.getElementById('sort-veiculo-historico-placas-button');
+      const sortCrmButton = document.getElementById('sort-veiculo-historico-crm-button');
+      const sortDataEventoIndicator = document.getElementById('sort-veiculo-historico-data-evento-indicator');
+      const sortPlacasIndicator = document.getElementById('sort-veiculo-historico-placas-indicator');
+      const sortCrmIndicator = document.getElementById('sort-veiculo-historico-crm-indicator');
+      const closeFormModalButton = document.getElementById('close-veiculo-historico-form-modal-button');
+      const cancelButton = document.getElementById('cancel-veiculo-historico-button');
+      const gridFeedback = document.getElementById('veiculo-historico-grid-feedback');
+      const formFeedback = document.getElementById('veiculo-historico-form-feedback');
+      const statusBanner = document.getElementById('status-banner');
+
+      const fieldIds = [
+        'id',
+        'veiculo-codigo',
+        'acao',
+        'realizado-por',
+        'data-evento',
+        'data-inclusao-original',
+        'data-modificacao-original',
+        'crm',
+        'placas',
+        'ano',
+        'cap-detran',
+        'cap-teg',
+        'cap-teg-creche',
+        'cap-acessivel',
+        'val-crm',
+        'seguro-inicio',
+        'seguro-termino',
+        'seguradora',
+        'marca-modelo',
+        'valor',
+        'cnpj-cpf',
+        'titular',
+        'tipo-de-veiculo',
+        'tipo-de-bancada',
+        'os-especial',
+      ];
+
+      const fields = Object.fromEntries(fieldIds.map((suffix) => [suffix, document.getElementById(`veiculo-historico-${suffix}`)]));
+
+      let currentPage = 1;
+      let totalPages = 1;
+      let pageSize = 20;
+      let currentSearch = '';
+      let currentSortBy = 'data_evento';
+      let currentSortDirection = 'desc';
+      let bannerTimeoutId = 0;
+
+      const normalizeText = (value) => String(value || '').trim();
+
+      const readJsonResponse = async (response) => {
+        const rawBody = await response.text();
+
+        if (!rawBody) {
+          throw new Error('Resposta vazia do servidor.');
+        }
+
+        try {
+          return JSON.parse(rawBody);
+        } catch {
+          throw new Error('Resposta invalida do servidor.');
+        }
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof TypeError) {
+          return 'API indisponivel. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        if (error instanceof Error && ['Resposta vazia do servidor.', 'Resposta invalida do servidor.'].includes(error.message)) {
+          return 'API indisponivel ou respondeu de forma incompleta. Confirme se o backend esta em execucao na porta 3001.';
+        }
+
+        return error instanceof Error ? error.message : fallbackMessage;
+      };
+
+      const showBanner = (message, tone = 'success') => {
+        if (bannerTimeoutId) {
+          window.clearTimeout(bannerTimeoutId);
+        }
+
+        statusBanner.textContent = message;
+        statusBanner.className = `dsc-status-banner dsc-status-banner-${tone}`;
+
+        bannerTimeoutId = window.setTimeout(() => {
+          statusBanner.className = 'dsc-status-banner dsc-hidden';
+          statusBanner.textContent = '';
+        }, 4000);
+      };
+
+      const setGridMessage = (message, tone = '') => {
+        gridFeedback.textContent = message;
+        gridFeedback.className = tone ? `dsc-feedback dsc-feedback-${tone}` : 'dsc-feedback';
+      };
+
+      const setFormMessage = (message, tone = '') => {
+        formFeedback.textContent = message;
+        formFeedback.className = tone ? `dsc-feedback dsc-feedback-${tone}` : 'dsc-feedback';
+      };
+
+      const buildUrl = () => {
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          pageSize: String(pageSize),
+          sortBy: currentSortBy,
+          sortDirection: currentSortDirection,
+        });
+
+        if (currentSearch) {
+          params.set('search', currentSearch);
+        }
+
+        return `/api/veiculo-historico?${params.toString()}`;
+      };
+
+      const updateSortIndicators = () => {
+        sortDataEventoIndicator.textContent = currentSortBy === 'data_evento' ? (currentSortDirection === 'desc' ? '↓' : '↑') : '↓';
+        sortPlacasIndicator.textContent = currentSortBy === 'placas' ? (currentSortDirection === 'desc' ? '↓' : '↑') : '↑';
+        sortCrmIndicator.textContent = currentSortBy === 'crm' ? (currentSortDirection === 'desc' ? '↓' : '↑') : '↑';
+      };
+
+      const renderGrid = (items) => {
+        gridBody.innerHTML = '';
+
+        if (!items.length) {
+          emptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        emptyState.classList.add('dsc-hidden');
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.id || ''}</td>
+            <td>${item.data_evento || ''}</td>
+            <td>${item.acao || ''}</td>
+            <td>${item.realizado_por || ''}</td>
+            <td>${item.veiculo_codigo || ''}</td>
+            <td>${item.placas || ''}</td>
+            <td>${item.crm || ''}</td>
+            <td>${item.marca_modelo || ''}</td>
+            <td>
+              <div class="dsc-grid-actions">
+                <button type="button" class="dsc-grid-action-button" data-action="view">Consulta</button>
+              </div>
+            </td>
+          `;
+          row.dataset.item = JSON.stringify(item);
+          gridBody.appendChild(row);
+        });
+      };
+
+      const updatePagination = (totalItems) => {
+        totalLabel.textContent = `${totalItems} item(ns) encontrados`;
+        paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        firstPageButton.disabled = currentPage <= 1;
+        previousPageButton.disabled = currentPage <= 1;
+        nextPageButton.disabled = currentPage >= totalPages;
+        lastPageButton.disabled = currentPage >= totalPages;
+        pageSizeSelect.value = String(pageSize);
+        updateSortIndicators();
+      };
+
+      const clearForm = () => {
+        Object.values(fields).forEach((field) => {
+          if (field) {
+            field.value = '';
+          }
+        });
+        setFormMessage('');
+      };
+
+      const populateForm = (item) => {
+        fields['id'].value = item.id || '';
+        fields['veiculo-codigo'].value = item.veiculo_codigo || '';
+        fields['acao'].value = item.acao || '';
+        fields['realizado-por'].value = item.realizado_por || '';
+        fields['data-evento'].value = item.data_evento || '';
+        fields['data-inclusao-original'].value = item.data_inclusao_original || '';
+        fields['data-modificacao-original'].value = item.data_modificacao_original || '';
+        fields['crm'].value = item.crm || '';
+        fields['placas'].value = item.placas || '';
+        fields['ano'].value = item.ano || '';
+        fields['cap-detran'].value = item.cap_detran || '';
+        fields['cap-teg'].value = item.cap_teg || '';
+        fields['cap-teg-creche'].value = item.cap_teg_creche || '';
+        fields['cap-acessivel'].value = item.cap_acessivel || '';
+        fields['val-crm'].value = item.val_crm || '';
+        fields['seguro-inicio'].value = item.seguro_inicio || '';
+        fields['seguro-termino'].value = item.seguro_termino || '';
+        fields['seguradora'].value = item.seguradora || '';
+        fields['marca-modelo'].value = item.marca_modelo || '';
+        fields['valor'].value = item.valor_veiculo || '';
+        fields['cnpj-cpf'].value = item.cnpj_cpf || '';
+        fields['titular'].value = item.titular || '';
+        fields['tipo-de-veiculo'].value = item.tipo_de_veiculo || '';
+        fields['tipo-de-bancada'].value = item.tipo_de_bancada || '';
+        fields['os-especial'].value = item.os_especial || '';
+      };
+
+      const showForm = () => {
+        formModal.classList.remove('dsc-hidden');
+        formModal.setAttribute('aria-hidden', 'false');
+        form.classList.remove('dsc-hidden');
+      };
+
+      const hideForm = () => {
+        formModal.classList.add('dsc-hidden');
+        formModal.setAttribute('aria-hidden', 'true');
+        form.classList.add('dsc-hidden');
+        clearForm();
+      };
+
+      const loadItems = async () => {
+        setGridMessage('Carregando historico de veiculos...');
+
+        try {
+          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar historico de veiculos.');
+          }
+
+          totalPages = payload.totalPages || 1;
+          currentPage = payload.page || 1;
+          renderGrid(payload.items || []);
+          updatePagination(payload.total || 0);
+          setGridMessage(payload.items && payload.items.length ? '' : 'Nenhum historico de veiculo encontrado.');
+        } catch (error) {
+          gridBody.innerHTML = '';
+          emptyState.classList.remove('dsc-hidden');
+          const message = getRequestErrorMessage(error, 'Falha ao carregar historico de veiculos.');
+          setGridMessage(message, 'error');
+          showBanner(message, 'error');
+        }
+      };
+
+      gridBody.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (!(target instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const row = target.closest('tr');
+        const rawItem = row ? row.dataset.item : '';
+
+        if (!rawItem) {
+          return;
+        }
+
+        populateForm(JSON.parse(rawItem));
+        showForm();
+      });
+
+      filterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentSearch = normalizeText(searchInput.value);
+        currentPage = 1;
+        void loadItems();
+      });
+
+      clearFilterButton.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      firstPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage = 1;
+        void loadItems();
+      });
+
+      previousPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage -= 1;
+        void loadItems();
+      });
+
+      nextPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage += 1;
+        void loadItems();
+      });
+
+      lastPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage = totalPages;
+        void loadItems();
+      });
+
+      pageSizeSelect.addEventListener('change', () => {
+        const nextPageSize = Number.parseInt(pageSizeSelect.value, 10);
+
+        if (!Number.isFinite(nextPageSize) || nextPageSize <= 0) {
+          pageSizeSelect.value = String(pageSize);
+          return;
+        }
+
+        pageSize = nextPageSize;
+        currentPage = 1;
+        void loadItems();
+      });
+
+      sortDataEventoButton.addEventListener('click', () => {
+        currentSortDirection = currentSortBy === 'data_evento' && currentSortDirection === 'desc' ? 'asc' : 'desc';
+        currentSortBy = 'data_evento';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      sortPlacasButton.addEventListener('click', () => {
+        currentSortDirection = currentSortBy === 'placas' && currentSortDirection === 'asc' ? 'desc' : 'asc';
+        currentSortBy = 'placas';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      sortCrmButton.addEventListener('click', () => {
+        currentSortDirection = currentSortBy === 'crm' && currentSortDirection === 'asc' ? 'desc' : 'asc';
+        currentSortBy = 'crm';
+        currentPage = 1;
+        void loadItems();
+      });
+
+      cancelButton.addEventListener('click', hideForm);
+      closeFormModalButton.addEventListener('click', hideForm);
+
+      formModal.addEventListener('click', (event) => {
+        if (event.target === formModal) {
+          hideForm();
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !formModal.classList.contains('dsc-hidden')) {
+          hideForm();
+        }
+      });
+
+      updateSortIndicators();
+      void loadItems();
+    </script>
+  </body>
+</html>

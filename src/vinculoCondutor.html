@@ -67,9 +67,11 @@
               <p class="dsc-feedback" id="vinculo-rejection-grid-feedback"></p>
 
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-vinculo-rejection-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-vinculo-rejection-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-vinculo-rejection-page-button" title="Registro anterior">◀</button>
                 <span id="vinculo-rejection-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-vinculo-rejection-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-vinculo-rejection-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-vinculo-rejection-page-button" title="Ultimo registro">▶|</button>
               </div>
             </section>
               </div>
@@ -106,7 +108,7 @@
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="vinculo-form">
               <div class="dsc-popup-header dsc-popup-header-sticky">
                 <h2 id="vinculo-form-title">VINCULO CONDUTOR</h2>
-                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-vinculo-form-modal-button" aria-label="Fechar formulario de vinculo do condutor">X</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-vinculo-form-modal-button" aria-label="Fechar formulario de vinculo do condutor">X</button>
               </div>
 
               <section class="dsc-form-section-card">
@@ -226,9 +228,11 @@
               <p class="dsc-feedback" id="vinculo-grid-feedback"></p>
 
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-vinculo-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-vinculo-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-vinculo-page-button" title="Registro anterior">◀</button>
                 <span id="vinculo-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-vinculo-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-vinculo-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-vinculo-page-button" title="Ultimo registro">▶|</button>
               </div>
             </section>
           </div>
@@ -266,8 +270,10 @@
         const totalLabel = document.getElementById('vinculo-total');
         const paginationInfo = document.getElementById('vinculo-pagination-info');
         const pageSizeSelect = document.getElementById('vinculo-condutor-page-size');
+        const firstPageButton = document.getElementById('first-vinculo-page-button');
         const previousPageButton = document.getElementById('previous-vinculo-page-button');
         const nextPageButton = document.getElementById('next-vinculo-page-button');
+        const lastPageButton = document.getElementById('last-vinculo-page-button');
         const importForm = document.getElementById('vinculo-import-form');
         const importFileNameInput = document.getElementById('vinculo-import-file-name');
         const importFileNameError = document.getElementById('vinculo-import-file-name-error');
@@ -287,8 +293,10 @@
         const rejectionFeedback = document.getElementById('vinculo-rejection-grid-feedback');
         const rejectionTotalLabel = document.getElementById('vinculo-rejection-total');
         const rejectionPaginationInfo = document.getElementById('vinculo-rejection-pagination-info');
+        const firstRejectionPageButton = document.getElementById('first-vinculo-rejection-page-button');
         const previousRejectionPageButton = document.getElementById('previous-vinculo-rejection-page-button');
         const nextRejectionPageButton = document.getElementById('next-vinculo-rejection-page-button');
+        const lastRejectionPageButton = document.getElementById('last-vinculo-rejection-page-button');
 
         const formErrors = {
           credenciado: document.getElementById('vinculo-credenciado-error'),
@@ -793,8 +801,10 @@
             if (pageSizeSelect) {
               pageSizeSelect.value = String(state.pageSize);
             }
+            firstPageButton.disabled = state.page <= 1;
             previousPageButton.disabled = state.page <= 1;
             nextPageButton.disabled = state.page >= state.totalPages;
+            lastPageButton.disabled = state.page >= state.totalPages;
             renderGrid(state.items);
             setFeedback(gridFeedback, state.items.length ? '' : 'Nenhum vinculo encontrado.');
           } catch (error) {
@@ -818,9 +828,12 @@
             state.rejections = payload.items || [];
             state.rejectionTotalPages = payload.totalPages || 1;
             rejectionTotalLabel.textContent = `${payload.total || 0} registro(s)`;
-            rejectionPaginationInfo.textContent = `Pagina ${payload.page || 1} de ${payload.totalPages || 1}`;
-            previousRejectionPageButton.disabled = (payload.page || 1) <= 1;
-            nextRejectionPageButton.disabled = (payload.page || 1) >= (payload.totalPages || 1);
+            state.rejectionPage = payload.page || 1;
+            rejectionPaginationInfo.textContent = `Pagina ${state.rejectionPage} de ${state.rejectionTotalPages}`;
+            firstRejectionPageButton.disabled = state.rejectionPage <= 1;
+            previousRejectionPageButton.disabled = state.rejectionPage <= 1;
+            nextRejectionPageButton.disabled = state.rejectionPage >= state.rejectionTotalPages;
+            lastRejectionPageButton.disabled = state.rejectionPage >= state.rejectionTotalPages;
             renderRejectionGrid(state.rejections);
             setFeedback(rejectionFeedback, state.rejections.length ? '' : 'Nenhuma recusa encontrada.');
           } catch (error) {
@@ -843,6 +856,13 @@
           await loadItems();
         });
 
+        firstPageButton.addEventListener('click', async () => {
+          if (state.page > 1) {
+            state.page = 1;
+            await loadItems();
+          }
+        });
+
         previousPageButton.addEventListener('click', async () => {
           if (state.page > 1) {
             state.page -= 1;
@@ -853,6 +873,13 @@
         nextPageButton.addEventListener('click', async () => {
           if (state.page < state.totalPages) {
             state.page += 1;
+            await loadItems();
+          }
+        });
+
+        lastPageButton.addEventListener('click', async () => {
+          if (state.page < state.totalPages) {
+            state.page = state.totalPages;
             await loadItems();
           }
         });
@@ -870,6 +897,13 @@
           await loadItems();
         });
 
+        firstRejectionPageButton.addEventListener('click', async () => {
+          if (state.rejectionPage > 1) {
+            state.rejectionPage = 1;
+            await loadRejections();
+          }
+        });
+
         previousRejectionPageButton.addEventListener('click', async () => {
           if (state.rejectionPage > 1) {
             state.rejectionPage -= 1;
@@ -880,6 +914,13 @@
         nextRejectionPageButton.addEventListener('click', async () => {
           if (state.rejectionPage < state.rejectionTotalPages) {
             state.rejectionPage += 1;
+            await loadRejections();
+          }
+        });
+
+        lastRejectionPageButton.addEventListener('click', async () => {
+          if (state.rejectionPage < state.rejectionTotalPages) {
+            state.rejectionPage = state.rejectionTotalPages;
             await loadRejections();
           }
         });

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TITULAR DO CRM</title>
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body>
+    <main>
+      <section id="login-section" class="dsc-container">
+        <div class="dsc-popup-overlay" aria-hidden="false">
+          <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="titular-crm-popup-title">
+            <form class="dsc-card dsc-form dsc-access-form" id="titular-crm-popup-form">
+              <div class="dsc-form-header dsc-popup-header-sticky">
+                <div>
+                  <p class="dsc-form-kicker">Cadastro administrativo</p>
+                  <h2 id="titular-crm-popup-title">TITULAR DO CRM</h2>
+                </div>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-titular-crm-popup-button" aria-label="Fechar cadastro de titular do CRM">X</button>
+              </div>
+
+              <p class="dsc-form-subtitle">Cadastre o titular do CRM e retorne ao formulario do veiculo.</p>
+
+              <label class="dsc-field-group" for="titular-crm-popup-cnpj-cpf">
+                <span>CNPJ/CPF</span>
+                <input class="dsc-form-control" id="titular-crm-popup-cnpj-cpf" type="text" inputmode="numeric" placeholder="000.000.000-00 ou 00.000.000/0000-00" maxlength="18" />
+                <div class="dsc-form-error" id="titular-crm-popup-cnpj-cpf-error"></div>
+              </label>
+
+              <label class="dsc-field-group" for="titular-crm-popup-nome">
+                <span>Titular do CRM</span>
+                <input class="dsc-form-control" id="titular-crm-popup-nome" type="text" maxlength="255" placeholder="TITULAR DO CRM" />
+                <div class="dsc-form-error" id="titular-crm-popup-nome-error"></div>
+              </label>
+
+              <p class="dsc-feedback" id="titular-crm-popup-feedback"></p>
+
+              <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
+                <button type="submit" class="dsc-btn dsc-btn-blue" id="save-titular-crm-popup-button">Salvar titular do CRM</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="cancel-titular-crm-popup-button">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const pageSearchParams = new URLSearchParams(window.location.search);
+      const initialCnpjCpf = String(pageSearchParams.get('cnpjCpf') || '').trim();
+
+      const form = document.getElementById('titular-crm-popup-form');
+      const cnpjCpfInput = document.getElementById('titular-crm-popup-cnpj-cpf');
+      const nomeInput = document.getElementById('titular-crm-popup-nome');
+      const cnpjCpfError = document.getElementById('titular-crm-popup-cnpj-cpf-error');
+      const nomeError = document.getElementById('titular-crm-popup-nome-error');
+      const feedback = document.getElementById('titular-crm-popup-feedback');
+      const saveButton = document.getElementById('save-titular-crm-popup-button');
+      const closeButton = document.getElementById('close-titular-crm-popup-button');
+      const cancelButton = document.getElementById('cancel-titular-crm-popup-button');
+
+      const normalizeText = (value, maxLength = 255) => String(value || '').trim().slice(0, maxLength);
+      const getDocumentDigits = (value) => String(value || '').replace(/\D/g, '');
+
+      const normalizeCnpjCpf = (value) => {
+        const digits = getDocumentDigits(value).slice(0, 14);
+
+        if (digits.length <= 11) {
+          if (digits.length <= 3) {
+            return digits;
+          }
+
+          if (digits.length <= 6) {
+            return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+          }
+
+          if (digits.length <= 9) {
+            return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+          }
+
+          return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+        }
+
+        if (digits.length <= 12) {
+          return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+        }
+
+        return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
+      };
+
+      const closePopup = () => {
+        window.close();
+      };
+
+      const readJsonResponse = async (response) => {
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          return {};
+        }
+
+        return response.json();
+      };
+
+      const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof Error && error.message.trim()) {
+          return error.message;
+        }
+
+        return fallbackMessage;
+      };
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const cnpjCpf = normalizeCnpjCpf(cnpjCpfInput.value);
+        const titular = normalizeText(nomeInput.value, 255);
+        const digits = getDocumentDigits(cnpjCpf);
+
+        cnpjCpfInput.value = cnpjCpf;
+        nomeInput.value = titular;
+        cnpjCpfError.textContent = '';
+        nomeError.textContent = '';
+        feedback.textContent = '';
+        feedback.className = 'dsc-feedback';
+
+        let hasError = false;
+
+        if (![11, 14].includes(digits.length)) {
+          cnpjCpfError.textContent = 'Informe um CNPJ/CPF com 11 ou 14 digitos.';
+          hasError = true;
+        }
+
+        if (!titular) {
+          nomeError.textContent = 'Titular do CRM e obrigatorio.';
+          hasError = true;
+        }
+
+        if (hasError) {
+          feedback.textContent = 'Corrija os campos para continuar.';
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        saveButton.disabled = true;
+        saveButton.textContent = 'Salvando...';
+        feedback.textContent = 'Gravando titular do CRM...';
+
+        try {
+          const response = await fetch('/api/titular', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({
+              cnpjCpf,
+              titular,
+            }),
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao cadastrar titular do CRM.');
+          }
+
+          const savedItem = payload.item || {};
+          const savedCnpjCpf = normalizeCnpjCpf(String(savedItem.cnpj_cpf || cnpjCpf));
+          const savedTitular = normalizeText(String(savedItem.titular || titular), 255);
+
+          cnpjCpfInput.value = savedCnpjCpf;
+          nomeInput.value = savedTitular;
+          feedback.textContent = 'Titular do CRM cadastrado com sucesso.';
+          feedback.className = 'dsc-feedback dsc-feedback-success';
+
+          if (window.opener && !window.opener.closed) {
+            window.opener.postMessage({
+              type: 'tegfinanc:titular-created',
+              context: 'veiculo-titular',
+              cnpjCpf: savedCnpjCpf,
+              titular: savedTitular,
+            }, window.location.origin);
+          }
+
+          window.setTimeout(() => {
+            closePopup();
+          }, 120);
+        } catch (error) {
+          feedback.textContent = getRequestErrorMessage(error, 'Falha ao cadastrar titular do CRM.');
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+        } finally {
+          saveButton.disabled = false;
+          saveButton.textContent = 'Salvar titular do CRM';
+        }
+      });
+
+      cnpjCpfInput.addEventListener('input', () => {
+        cnpjCpfInput.value = normalizeCnpjCpf(cnpjCpfInput.value);
+        cnpjCpfError.textContent = '';
+        feedback.textContent = '';
+        feedback.className = 'dsc-feedback';
+      });
+
+      nomeInput.addEventListener('input', () => {
+        nomeInput.value = normalizeText(nomeInput.value, 255);
+        nomeError.textContent = '';
+        feedback.textContent = '';
+        feedback.className = 'dsc-feedback';
+      });
+
+      closeButton.addEventListener('click', closePopup);
+      cancelButton.addEventListener('click', closePopup);
+
+      cnpjCpfInput.value = normalizeCnpjCpf(initialCnpjCpf);
+      if (cnpjCpfInput.value) {
+        nomeInput.focus();
+      } else {
+        cnpjCpfInput.focus();
+      }
+    </script>
+  </body>
+</html>

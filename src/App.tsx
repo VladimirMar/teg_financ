@@ -14,7 +14,7 @@ import { createSeguradoraItem, deleteSeguradoraItem, listSeguradoraItemsPaginate
 import type { SeguradoraItem } from './services/seguradora'
 
 type StatusTone = 'idle' | 'error' | 'success'
-type ActiveView = 'inicio' | 'dre' | 'modalidade' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'credenciamentoTermo' | 'emissaoDocumentoParametro' | 'veiculo' | 'vinculoCondutor' | 'vinculoMonitor' | 'ordemServico' | 'cep' | 'smoke'
+type ActiveView = 'inicio' | 'dre' | 'modalidade' | 'titular' | 'marcaModelo' | 'seguradora' | 'troca' | 'acesso' | 'loginDre' | 'condutor' | 'monitor' | 'credenciada' | 'credenciamentoTermo' | 'emissaoDocumentoParametro' | 'veiculo' | 'veiculoHistorico' | 'vinculoCondutor' | 'vinculoMonitor' | 'ordemServico' | 'cep' | 'smoke'
 type SmokeSuite = 'all' | 'condutor' | 'credenciada' | 'veiculo' | 'marca-modelo'
 type SmokeLogStream = 'stdout' | 'stderr'
 type DreSortField = 'codigo' | 'descricao'
@@ -239,6 +239,10 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [session, setSession] = useState<StoredSession | null>(null)
   const [activeView, setActiveView] = useState<ActiveView>('inicio')
+  const [collapsedMenuGroups, setCollapsedMenuGroups] = useState({
+    cadastros: true,
+    operacional: true,
+  })
   const [isRunningSmoke, setIsRunningSmoke] = useState(false)
   const [selectedSmokeSuite, setSelectedSmokeSuite] = useState<SmokeSuite>('all')
   const [smokeStatusMessage, setSmokeStatusMessage] = useState('')
@@ -1822,13 +1826,20 @@ function App() {
   const canGoToPreviousSeguradoraPage = seguradoraPage > 1
   const canGoToNextSeguradoraPage = seguradoraPage < seguradoraTotalPages
 
+  const toggleMenuGroup = (groupName: 'cadastros' | 'operacional') => {
+    setCollapsedMenuGroups((current) => ({
+      ...current,
+      [groupName]: !current[groupName],
+    }))
+  }
+
   return (
     <main className="dashboard-page">
       <aside className="sidebar-menu" aria-label="Menu principal">
         <div>
           <p className="sidebar-brand">TEG Financ</p>
           {environmentName ? <p className="environment-pill environment-pill-sidebar">{environmentName}</p> : null}
-          <h1 className="sidebar-title">Painel Financeiro</h1>
+          <h1 className="sidebar-title">Menu TEG</h1>
         </div>
 
         <nav>
@@ -1837,121 +1848,169 @@ function App() {
               className={`menu-item ${activeView === 'inicio' ? 'menu-item-active' : ''}`}
               onClick={() => setActiveView('inicio')}
             >
-              Inicio
+              Dashboard
             </li>
-            <li
-              className={`menu-item ${activeView === 'dre' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('dre')}
-            >
-              DRE
+            <li className="menu-group">
+              <button
+                type="button"
+                className="menu-item menu-item-static menu-item-toggle"
+                onClick={() => toggleMenuGroup('operacional')}
+                aria-expanded={!collapsedMenuGroups.operacional}
+              >
+                <span>Operacional</span>
+                <span className="menu-toggle-indicator" aria-hidden="true">{collapsedMenuGroups.operacional ? '▸' : '▾'}</span>
+              </button>
+              <ul className={`menu-sublist ${collapsedMenuGroups.operacional ? 'menu-sublist-hidden' : ''}`}>
+                <li
+                  className={`menu-subitem ${activeView === 'titular' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('titular')}
+                >
+                  Titular do CRM
+                </li>
+                <li className="menu-group menu-subgroup">
+                  <div
+                    className={`menu-subitem ${activeView === 'condutor' ? 'menu-subitem-active' : ''}`}
+                    onClick={() => setActiveView('condutor')}
+                  >
+                    Condutor
+                  </div>
+                  <ul className="menu-sublist menu-sublist-nested">
+                    <li
+                      className={`menu-subitem menu-subitem-nested ${activeView === 'vinculoCondutor' ? 'menu-subitem-active' : ''}`}
+                      onClick={() => setActiveView('vinculoCondutor')}
+                    >
+                      Vinculo Condutor
+                    </li>
+                  </ul>
+                </li>
+                <li className="menu-group menu-subgroup">
+                  <div
+                    className={`menu-subitem ${activeView === 'monitor' ? 'menu-subitem-active' : ''}`}
+                    onClick={() => setActiveView('monitor')}
+                  >
+                    Monitor
+                  </div>
+                  <ul className="menu-sublist menu-sublist-nested">
+                    <li
+                      className={`menu-subitem menu-subitem-nested ${activeView === 'vinculoMonitor' ? 'menu-subitem-active' : ''}`}
+                      onClick={() => setActiveView('vinculoMonitor')}
+                    >
+                      Vinculo Monitor
+                    </li>
+                  </ul>
+                </li>
+                <li
+                  className={`menu-subitem ${activeView === 'credenciada' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('credenciada')}
+                >
+                  Credenciada
+                </li>
+                <li
+                  className={`menu-subitem ${activeView === 'credenciamentoTermo' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('credenciamentoTermo')}
+                >
+                  Termo
+                </li>
+                <li
+                  className={`menu-subitem ${activeView === 'ordemServico' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('ordemServico')}
+                >
+                  OrdemServico
+                </li>
+                <li className="menu-group menu-subgroup">
+                  <div
+                    className={`menu-subitem ${activeView === 'veiculo' ? 'menu-subitem-active' : ''}`}
+                    onClick={() => setActiveView('veiculo')}
+                  >
+                    Veiculo
+                  </div>
+                  <ul className="menu-sublist menu-sublist-nested">
+                    <li
+                      className={`menu-subitem menu-subitem-nested ${activeView === 'veiculoHistorico' ? 'menu-subitem-active' : ''}`}
+                      onClick={() => setActiveView('veiculoHistorico')}
+                    >
+                      Historico Veiculo
+                    </li>
+                  </ul>
+                </li>
+              </ul>
             </li>
-            <li
-              className={`menu-item ${activeView === 'modalidade' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('modalidade')}
-            >
-              Modalidade
+            <li className="menu-group">
+              <button
+                type="button"
+                className="menu-item menu-item-static menu-item-toggle"
+                onClick={() => toggleMenuGroup('cadastros')}
+                aria-expanded={!collapsedMenuGroups.cadastros}
+              >
+                <span>Cadastros</span>
+                <span className="menu-toggle-indicator" aria-hidden="true">{collapsedMenuGroups.cadastros ? '▸' : '▾'}</span>
+              </button>
+              <ul className={`menu-sublist ${collapsedMenuGroups.cadastros ? 'menu-sublist-hidden' : ''}`}>
+                <li
+                  className={`menu-subitem ${activeView === 'dre' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('dre')}
+                >
+                  DRE
+                </li>
+                <li
+                  className={`menu-subitem ${activeView === 'modalidade' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('modalidade')}
+                >
+                  Modalidade
+                </li>
+                <li
+                  className={`menu-subitem ${activeView === 'marcaModelo' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('marcaModelo')}
+                >
+                  Marca/Modelo
+                </li>
+                <li
+                  className={`menu-subitem ${activeView === 'seguradora' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('seguradora')}
+                >
+                  Seguradoras
+                </li>
+                <li
+                  className={`menu-subitem ${activeView === 'troca' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('troca')}
+                >
+                  Tipo de Troca
+                </li>
+                <li
+                  className={`menu-subitem ${activeView === 'emissaoDocumentoParametro' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('emissaoDocumentoParametro')}
+                >
+                  Param. Emissao
+                </li>
+                <li
+                  className={`menu-subitem ${activeView === 'cep' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('cep')}
+                >
+                  CEP
+                </li>
+                <li
+                  className={`menu-subitem ${activeView === 'smoke' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('smoke')}
+                >
+                  Smoke Test
+                </li>
+              </ul>
             </li>
-            <li
-              className={`menu-item ${activeView === 'titular' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('titular')}
-            >
-              Titular do CRM
-            </li>
-            <li
-              className={`menu-item ${activeView === 'marcaModelo' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('marcaModelo')}
-            >
-              Marca/Modelo
-            </li>
-            <li
-              className={`menu-item ${activeView === 'seguradora' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('seguradora')}
-            >
-              Seguradoras
-            </li>
-            <li
-              className={`menu-item ${activeView === 'troca' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('troca')}
-            >
-              Tipo de Troca
-            </li>
-            <li
-              className={`menu-item ${activeView === 'acesso' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('acesso')}
-            >
-              Controle de acesso
-            </li>
-            <li
-              className={`menu-item ${activeView === 'loginDre' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('loginDre')}
-            >
-              Login x DRE
-            </li>
-            <li
-              className={`menu-item ${activeView === 'condutor' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('condutor')}
-            >
-              Condutor
-            </li>
-            <li
-              className={`menu-item ${activeView === 'monitor' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('monitor')}
-            >
-              Monitor
-            </li>
-            <li
-              className={`menu-item ${activeView === 'credenciada' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('credenciada')}
-            >
-              Credenciada
-            </li>
-            <li
-              className={`menu-item ${activeView === 'credenciamentoTermo' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('credenciamentoTermo')}
-            >
-              Termo
-            </li>
-            <li
-              className={`menu-item ${activeView === 'emissaoDocumentoParametro' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('emissaoDocumentoParametro')}
-            >
-              Param. Emissao
-            </li>
-            <li
-              className={`menu-item ${activeView === 'veiculo' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('veiculo')}
-            >
-              Veiculo
-            </li>
-            <li
-              className={`menu-item ${activeView === 'vinculoCondutor' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('vinculoCondutor')}
-            >
-              Vinculo Condutor
-            </li>
-            <li
-              className={`menu-item ${activeView === 'vinculoMonitor' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('vinculoMonitor')}
-            >
-              Vinculo Monitor
-            </li>
-            <li
-              className={`menu-item ${activeView === 'ordemServico' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('ordemServico')}
-            >
-              OrdemServico
-            </li>
-            <li
-              className={`menu-item ${activeView === 'cep' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('cep')}
-            >
-              CEP
-            </li>
-            <li
-              className={`menu-item ${activeView === 'smoke' ? 'menu-item-active' : ''}`}
-              onClick={() => setActiveView('smoke')}
-            >
-              Smoke Test
+            <li className="menu-group">
+              <div
+                className={`menu-item ${activeView === 'acesso' ? 'menu-item-active' : ''}`}
+                onClick={() => setActiveView('acesso')}
+              >
+                Controle de acesso
+              </div>
+              <ul className="menu-sublist">
+                <li
+                  className={`menu-subitem ${activeView === 'loginDre' ? 'menu-subitem-active' : ''}`}
+                  onClick={() => setActiveView('loginDre')}
+                >
+                  Login x DRE
+                </li>
+              </ul>
             </li>
           </ul>
         </nav>
@@ -3137,6 +3196,24 @@ function App() {
                 className="access-embed-frame"
                 src="/src/veiculo.html"
                 title="Cadastro de veiculo"
+              />
+            </div>
+          </>
+        ) : activeView === 'veiculoHistorico' ? (
+          <>
+            <div className="content-copy">
+              <p className="content-kicker">Consulta operacional</p>
+              <h2 id="content-title">Historico de Veiculo</h2>
+              <p className="content-description">
+                Consulte o historico de alteracoes dos veiculos, incluindo acao executada, usuario responsavel e dados completos gravados em cada evento.
+              </p>
+            </div>
+
+            <div className="access-embed-card">
+              <iframe
+                className="access-embed-frame"
+                src="/src/veiculoHistorico.html"
+                title="Historico de veiculo"
               />
             </div>
           </>

@@ -28,7 +28,7 @@
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="troca-form">
               <div class="dsc-popup-header dsc-popup-header-sticky">
                 <h2 id="troca-form-title">TIPO DE TROCA</h2>
-                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-troca-form-modal-button" aria-label="Fechar formulario de tipo de troca">X</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-troca-form-modal-button" aria-label="Fechar formulario de tipo de troca">X</button>
               </div>
 
               <div class="dsc-form-row">
@@ -104,9 +104,11 @@
               <p class="dsc-feedback" id="troca-grid-feedback"></p>
 
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-troca-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-troca-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-troca-page-button" title="Registro anterior">◀</button>
                 <span id="troca-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-troca-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-troca-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-troca-page-button" title="Ultimo registro">▶|</button>
               </div>
             </div>
           </div>
@@ -131,8 +133,10 @@
       const gridBody = document.getElementById('troca-grid-body');
       const emptyState = document.getElementById('troca-empty-state');
       const totalLabel = document.getElementById('troca-total');
+      const firstPageButton = document.getElementById('first-troca-page-button');
       const previousPageButton = document.getElementById('previous-troca-page-button');
       const nextPageButton = document.getElementById('next-troca-page-button');
+      const lastPageButton = document.getElementById('last-troca-page-button');
       const paginationInfo = document.getElementById('troca-pagination-info');
       const pageSizeSelect = document.getElementById('troca-page-size');
       const sortCodigoButton = document.getElementById('sort-troca-codigo-button');
@@ -311,8 +315,10 @@
       const updatePagination = (totalItems) => {
         totalLabel.textContent = `${totalItems} item(ns) encontrados`;
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        firstPageButton.disabled = currentPage <= 1;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
+        lastPageButton.disabled = currentPage >= totalPages;
         if (pageSizeSelect) {
           pageSizeSelect.value = String(pageSize);
         }
@@ -528,6 +534,15 @@
         void loadItems();
       });
 
+      firstPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage = 1;
+        void loadItems();
+      });
+
       previousPageButton.addEventListener('click', () => {
         if (currentPage <= 1) {
           return;
@@ -543,6 +558,15 @@
         }
 
         currentPage += 1;
+        void loadItems();
+      });
+
+      lastPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage = totalPages;
         void loadItems();
       });
 

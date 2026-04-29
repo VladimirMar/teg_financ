@@ -71,9 +71,11 @@
                   <p class="dsc-feedback" id="cep-rejection-grid-feedback"></p>
 
                   <div class="dsc-access-pagination dsc-popup-footer-sticky">
-                    <button type="button" class="dsc-btn dsc-btn-white" id="previous-cep-rejection-page-button">Anterior</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="first-cep-rejection-page-button" title="Primeiro registro">|◀</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="previous-cep-rejection-page-button" title="Registro anterior">◀</button>
                     <span id="cep-rejection-pagination-info">Pagina 1 de 1</span>
-                    <button type="button" class="dsc-btn dsc-btn-white" id="next-cep-rejection-page-button">Proxima</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="next-cep-rejection-page-button" title="Proximo registro">▶</button>
+                    <button type="button" class="dsc-btn dsc-btn-white" id="last-cep-rejection-page-button" title="Ultimo registro">▶|</button>
                   </div>
                 </section>
               </div>
@@ -110,7 +112,7 @@
                 <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="cep-form">
                   <div class="dsc-popup-header dsc-popup-header-sticky">
                     <h2 id="cep-form-title">CADASTRO DE CEP</h2>
-                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-cep-form-modal-button" aria-label="Fechar formulario de CEP">X</button>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-cep-form-modal-button" aria-label="Fechar formulario de CEP">X</button>
                   </div>
 
                   <div class="dsc-form-row">
@@ -232,9 +234,11 @@
               </div>
               <p class="dsc-feedback" id="cep-grid-feedback"></p>
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-cep-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-cep-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-cep-page-button" title="Registro anterior">◀</button>
                 <span id="cep-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-cep-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-cep-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-cep-page-button" title="Ultimo registro">▶|</button>
               </div>
             </div>
           </div>
@@ -507,8 +511,10 @@
           renderGrid(data.items ?? []);
           document.getElementById('cep-total').textContent = `Total: ${data.total ?? 0}`;
           document.getElementById('cep-pagination-info').textContent = `Pagina ${currentPage} de ${totalPages}`;
+          document.getElementById('first-cep-page-button').disabled = currentPage <= 1;
           document.getElementById('previous-cep-page-button').disabled = currentPage <= 1;
           document.getElementById('next-cep-page-button').disabled = currentPage >= totalPages;
+          document.getElementById('last-cep-page-button').disabled = currentPage >= totalPages;
           if (pageSizeSelect) {
             pageSizeSelect.value = String(pageSize);
           }
@@ -543,8 +549,10 @@
           renderRejectionGrid(data.items ?? []);
           document.getElementById('cep-rejection-total').textContent = `Total: ${data.total ?? 0}`;
           document.getElementById('cep-rejection-pagination-info').textContent = `Pagina ${currentRejectionPage} de ${totalRejectionPages}`;
+          document.getElementById('first-cep-rejection-page-button').disabled = currentRejectionPage <= 1;
           document.getElementById('previous-cep-rejection-page-button').disabled = currentRejectionPage <= 1;
           document.getElementById('next-cep-rejection-page-button').disabled = currentRejectionPage >= totalRejectionPages;
+          document.getElementById('last-cep-rejection-page-button').disabled = currentRejectionPage >= totalRejectionPages;
           feedbackEl.textContent = '';
         } catch {
           feedbackEl.textContent = 'Erro de comunicacao com o servidor.';
@@ -680,12 +688,20 @@
       });
 
       // ---- Pagination ----
+      document.getElementById('first-cep-page-button').addEventListener('click', () => {
+        if (currentPage > 1) { currentPage = 1; void loadItems(); }
+      });
+
       document.getElementById('previous-cep-page-button').addEventListener('click', () => {
         if (currentPage > 1) { currentPage--; void loadItems(); }
       });
 
       document.getElementById('next-cep-page-button').addEventListener('click', () => {
         if (currentPage < totalPages) { currentPage++; void loadItems(); }
+      });
+
+      document.getElementById('last-cep-page-button').addEventListener('click', () => {
+        if (currentPage < totalPages) { currentPage = totalPages; void loadItems(); }
       });
 
       pageSizeSelect?.addEventListener('change', () => {
@@ -813,12 +829,20 @@
         void loadRejections();
       });
 
+      document.getElementById('first-cep-rejection-page-button').addEventListener('click', () => {
+        if (currentRejectionPage > 1) { currentRejectionPage = 1; void loadRejections(); }
+      });
+
       document.getElementById('previous-cep-rejection-page-button').addEventListener('click', () => {
         if (currentRejectionPage > 1) { currentRejectionPage--; void loadRejections(); }
       });
 
       document.getElementById('next-cep-rejection-page-button').addEventListener('click', () => {
         if (currentRejectionPage < totalRejectionPages) { currentRejectionPage++; void loadRejections(); }
+      });
+
+      document.getElementById('last-cep-rejection-page-button').addEventListener('click', () => {
+        if (currentRejectionPage < totalRejectionPages) { currentRejectionPage = totalRejectionPages; void loadRejections(); }
       });
 
       // ---- Input normalization ----

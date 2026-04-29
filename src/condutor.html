@@ -66,9 +66,11 @@
               <p class="dsc-feedback" id="condutor-rejection-grid-feedback"></p>
 
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-condutor-rejection-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-condutor-rejection-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-condutor-rejection-page-button" title="Registro anterior">◀</button>
                 <span id="condutor-rejection-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-condutor-rejection-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-condutor-rejection-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-condutor-rejection-page-button" title="Ultimo registro">▶|</button>
               </div>
             </section>
               </div>
@@ -105,7 +107,7 @@
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="condutor-form">
               <div class="dsc-popup-header dsc-popup-header-sticky">
                 <h2 id="condutor-form-title">CONDUTOR</h2>
-                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-condutor-form-modal-button" aria-label="Fechar formulario de condutor">X</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-condutor-form-modal-button" aria-label="Fechar formulario de condutor">X</button>
               </div>
 
               <div class="dsc-form-tabs" id="condutor-form-tabs">
@@ -254,9 +256,11 @@
               <p class="dsc-feedback" id="condutor-grid-feedback"></p>
 
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-condutor-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-condutor-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-condutor-page-button" title="Registro anterior">◀</button>
                 <span id="condutor-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-condutor-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-condutor-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-condutor-page-button" title="Ultimo registro">▶|</button>
               </div>
             </div>
           </div>
@@ -298,8 +302,10 @@
       const gridBody = document.getElementById('condutor-grid-body');
       const emptyState = document.getElementById('condutor-empty-state');
       const totalLabel = document.getElementById('condutor-total');
+      const firstPageButton = document.getElementById('first-condutor-page-button');
       const previousPageButton = document.getElementById('previous-condutor-page-button');
       const nextPageButton = document.getElementById('next-condutor-page-button');
+      const lastPageButton = document.getElementById('last-condutor-page-button');
       const paginationInfo = document.getElementById('condutor-pagination-info');
       const pageSizeSelect = document.getElementById('condutor-page-size');
       const sortCondutorButton = document.getElementById('sort-condutor-button');
@@ -316,8 +322,10 @@
       const rejectionEmptyState = document.getElementById('condutor-rejection-empty-state');
       const rejectionGridFeedback = document.getElementById('condutor-rejection-grid-feedback');
       const rejectionTotalLabel = document.getElementById('condutor-rejection-total');
+      const firstRejectionPageButton = document.getElementById('first-condutor-rejection-page-button');
       const previousRejectionPageButton = document.getElementById('previous-condutor-rejection-page-button');
       const nextRejectionPageButton = document.getElementById('next-condutor-rejection-page-button');
+      const lastRejectionPageButton = document.getElementById('last-condutor-rejection-page-button');
       const rejectionPaginationInfo = document.getElementById('condutor-rejection-pagination-info');
       const clearRejectionFilterButton = document.getElementById('clear-condutor-rejection-filter-button');
       const closeRejectionPanelButton = document.getElementById('close-condutor-rejection-modal-button');
@@ -949,8 +957,10 @@
       const updatePagination = (totalItems) => {
         totalLabel.textContent = `${totalItems} item(ns) encontrados`;
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        firstPageButton.disabled = currentPage <= 1;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
+        lastPageButton.disabled = currentPage >= totalPages;
         if (pageSizeSelect) {
           pageSizeSelect.value = String(pageSize);
         }
@@ -960,8 +970,10 @@
       const updateRejectionPagination = (totalItems) => {
         rejectionTotalLabel.textContent = `${totalItems} recusa(s) encontrada(s)`;
         rejectionPaginationInfo.textContent = `Pagina ${currentRejectionPage} de ${totalRejectionPages}`;
+        firstRejectionPageButton.disabled = currentRejectionPage <= 1;
         previousRejectionPageButton.disabled = currentRejectionPage <= 1;
         nextRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
+        lastRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
       };
 
       const loadItems = async () => {
@@ -1392,6 +1404,15 @@
         void loadRejectionItems();
       });
 
+      firstPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage = 1;
+        void loadItems();
+      });
+
       previousPageButton.addEventListener('click', () => {
         if (currentPage <= 1) {
           return;
@@ -1410,6 +1431,15 @@
         void loadItems();
       });
 
+      lastPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage = totalPages;
+        void loadItems();
+      });
+
       pageSizeSelect?.addEventListener('change', () => {
         const nextPageSize = Number.parseInt(pageSizeSelect.value, 10);
 
@@ -1421,6 +1451,15 @@
         pageSize = nextPageSize;
         currentPage = 1;
         void loadItems();
+      });
+
+      firstRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage <= 1) {
+          return;
+        }
+
+        currentRejectionPage = 1;
+        void loadRejectionItems();
       });
 
       previousRejectionPageButton.addEventListener('click', () => {
@@ -1438,6 +1477,15 @@
         }
 
         currentRejectionPage += 1;
+        void loadRejectionItems();
+      });
+
+      lastRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage >= totalRejectionPages) {
+          return;
+        }
+
+        currentRejectionPage = totalRejectionPages;
         void loadRejectionItems();
       });
 

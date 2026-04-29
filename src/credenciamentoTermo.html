@@ -306,9 +306,11 @@
               <p class="dsc-feedback" id="credenciamento-termo-rejection-grid-feedback"></p>
 
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-credenciamento-termo-rejection-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-credenciamento-termo-rejection-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-credenciamento-termo-rejection-page-button" title="Registro anterior">◀</button>
                 <span id="credenciamento-termo-rejection-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-credenciamento-termo-rejection-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-credenciamento-termo-rejection-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-credenciamento-termo-rejection-page-button" title="Ultimo registro">▶|</button>
               </div>
             </section>
               </div>
@@ -382,7 +384,7 @@
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciamento-termo-form">
               <div class="dsc-popup-header dsc-popup-header-sticky">
                 <h2 id="credenciamento-termo-form-title">CADASTRO DE TERMO</h2>
-                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-credenciamento-termo-form-modal-button" aria-label="Fechar formulario de termo">X</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-credenciamento-termo-form-modal-button" aria-label="Fechar formulario de termo">X</button>
               </div>
 
               <section class="dsc-form-section-card">
@@ -800,9 +802,11 @@
               <p class="dsc-feedback" id="credenciamento-termo-grid-feedback"></p>
 
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-credenciamento-termo-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-credenciamento-termo-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-credenciamento-termo-page-button" title="Registro anterior">◀</button>
                 <span id="credenciamento-termo-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-credenciamento-termo-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-credenciamento-termo-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-credenciamento-termo-page-button" title="Ultimo registro">▶|</button>
               </div>
             </div>
           </div>
@@ -852,10 +856,14 @@
       const paginationInfo = document.getElementById('credenciamento-termo-pagination-info');
       const pageSizeSelect = document.getElementById('credenciamento-termo-page-size');
       const rejectionPaginationInfo = document.getElementById('credenciamento-termo-rejection-pagination-info');
+      const firstPageButton = document.getElementById('first-credenciamento-termo-page-button');
       const previousPageButton = document.getElementById('previous-credenciamento-termo-page-button');
       const nextPageButton = document.getElementById('next-credenciamento-termo-page-button');
+      const lastPageButton = document.getElementById('last-credenciamento-termo-page-button');
+      const firstRejectionPageButton = document.getElementById('first-credenciamento-termo-rejection-page-button');
       const previousRejectionPageButton = document.getElementById('previous-credenciamento-termo-rejection-page-button');
       const nextRejectionPageButton = document.getElementById('next-credenciamento-termo-rejection-page-button');
+      const lastRejectionPageButton = document.getElementById('last-credenciamento-termo-rejection-page-button');
       const rejectionPanel = document.getElementById('credenciamento-termo-rejection-panel');
       const rejectionSearchInput = document.getElementById('credenciamento-termo-rejection-search');
       const clearRejectionFilterButton = document.getElementById('clear-credenciamento-termo-rejection-filter-button');
@@ -4002,8 +4010,10 @@
           currentSortBy = payload.sortBy || 'codigo';
           currentSortDirection = payload.sortDirection || 'asc';
           syncSortIndicators();
+          firstPageButton.disabled = currentPage <= 1;
           previousPageButton.disabled = currentPage <= 1;
           nextPageButton.disabled = currentPage >= totalPages;
+          lastPageButton.disabled = currentPage >= totalPages;
           gridFeedback.textContent = '';
         } catch (error) {
           gridBody.innerHTML = '';
@@ -4026,8 +4036,10 @@
           rejectionTotalLabel.textContent = `${payload.total || 0} recusa(s)`;
           totalRejectionPages = payload.totalPages || 1;
           rejectionPaginationInfo.textContent = `Pagina ${payload.page || 1} de ${totalRejectionPages}`;
+          firstRejectionPageButton.disabled = currentRejectionPage <= 1;
           previousRejectionPageButton.disabled = currentRejectionPage <= 1;
           nextRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
+          lastRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
           rejectionGridFeedback.textContent = '';
         } catch (error) {
           rejectionGridBody.innerHTML = '';
@@ -4633,6 +4645,13 @@
 
       closeRejectionPanelButton.addEventListener('click', hideRejectionPanel);
 
+      firstPageButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage = 1;
+          void loadItems();
+        }
+      });
+
       previousPageButton.addEventListener('click', () => {
         if (currentPage > 1) {
           currentPage -= 1;
@@ -4643,6 +4662,13 @@
       nextPageButton.addEventListener('click', () => {
         if (currentPage < totalPages) {
           currentPage += 1;
+          void loadItems();
+        }
+      });
+
+      lastPageButton.addEventListener('click', () => {
+        if (currentPage < totalPages) {
+          currentPage = totalPages;
           void loadItems();
         }
       });
@@ -4660,6 +4686,13 @@
         void loadItems();
       });
 
+      firstRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage > 1) {
+          currentRejectionPage = 1;
+          void loadRejections();
+        }
+      });
+
       previousRejectionPageButton.addEventListener('click', () => {
         if (currentRejectionPage > 1) {
           currentRejectionPage -= 1;
@@ -4670,6 +4703,13 @@
       nextRejectionPageButton.addEventListener('click', () => {
         if (currentRejectionPage < totalRejectionPages) {
           currentRejectionPage += 1;
+          void loadRejections();
+        }
+      });
+
+      lastRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage < totalRejectionPages) {
+          currentRejectionPage = totalRejectionPages;
           void loadRejections();
         }
       });

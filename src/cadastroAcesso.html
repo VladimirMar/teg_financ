@@ -28,7 +28,7 @@
                 <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="register-form">
                   <div class="dsc-popup-header dsc-popup-header-sticky">
                     <h2 id="form-title">Cadastro de acesso</h2>
-                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-access-form-modal-button" aria-label="Fechar formulario de acesso">X</button>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-access-form-modal-button" aria-label="Fechar formulario de acesso">X</button>
                   </div>
 
                   <label class="dsc-field-group" for="nome">
@@ -102,9 +102,11 @@
               <p class="dsc-feedback" id="grid-feedback"></p>
 
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-page-button" title="Registro anterior">◀</button>
                 <span id="pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-page-button" title="Ultimo registro">▶|</button>
               </div>
             </div>
           </div>
@@ -132,8 +134,10 @@
       const accessGridBody = document.getElementById('access-grid-body');
       const accessEmptyState = document.getElementById('access-empty-state');
       const accessTotal = document.getElementById('access-total');
+      const firstPageButton = document.getElementById('first-page-button');
       const previousPageButton = document.getElementById('previous-page-button');
       const nextPageButton = document.getElementById('next-page-button');
+      const lastPageButton = document.getElementById('last-page-button');
       const paginationInfo = document.getElementById('pagination-info');
       const pageSizeSelect = document.getElementById('access-page-size');
       const sortEmailButton = document.getElementById('sort-email-button');
@@ -311,8 +315,10 @@
       const updatePagination = (totalItems) => {
         accessTotal.textContent = `${totalItems} item(ns) encontrados`;
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        firstPageButton.disabled = currentPage <= 1;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
+        lastPageButton.disabled = currentPage >= totalPages;
         if (pageSizeSelect) {
           pageSizeSelect.value = String(pageSize);
         }
@@ -548,6 +554,15 @@
         void loadAccesses();
       });
 
+      firstPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage = 1;
+        void loadAccesses();
+      });
+
       previousPageButton.addEventListener('click', () => {
         if (currentPage <= 1) {
           return;
@@ -563,6 +578,15 @@
         }
 
         currentPage += 1;
+        void loadAccesses();
+      });
+
+      lastPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage = totalPages;
         void loadAccesses();
       });
 

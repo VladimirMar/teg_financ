@@ -248,15 +248,81 @@
 .menu-item {
   padding: 14px 16px;
   border-radius: 18px;
+  border: none;
   font-weight: 700;
+  font-size: 1rem;
+  text-align: left;
   color: rgba(238, 247, 244, 0.84);
   background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
 }
 
+.menu-item-static {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.menu-item-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.menu-toggle-indicator {
+  font-size: 0.9rem;
+  color: rgba(238, 247, 244, 0.74);
+}
+
+.menu-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-subgroup {
+  gap: 6px;
+}
+
+.menu-sublist {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-sublist-hidden {
+  display: none;
+}
+
+.menu-sublist-nested {
+  padding-left: 14px;
+}
+
+.menu-subitem {
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 0.94rem;
+  color: rgba(238, 247, 244, 0.76);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+}
+
+.menu-subitem-nested {
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
 .menu-item-active {
   background: linear-gradient(135deg, rgba(244, 190, 42, 0.24), rgba(255, 255, 255, 0.12));
   color: #fff9e3;
+}
+
+.menu-subitem-active {
+  background: rgba(244, 190, 42, 0.18);
+  color: #fff4cb;
 }
 
 .sidebar-footer {
@@ -891,6 +957,22 @@ body.management-modal-open {
     text-align: center;
   }
 
+  .menu-group {
+    flex: 1 1 180px;
+  }
+
+  .menu-sublist {
+    padding-left: 12px;
+  }
+
+  .menu-sublist-nested {
+    padding-left: 8px;
+  }
+
+  .menu-subitem {
+    text-align: center;
+  }
+
   .management-toolbar,
   .dre-toolbar {
     align-items: stretch;
@@ -1019,6 +1101,18 @@ body.management-modal-open {
   .menu-item {
     flex-basis: auto;
     text-align: left;
+  }
+
+  .menu-group {
+    flex-basis: auto;
+  }
+
+  .menu-subitem {
+    text-align: left;
+  }
+
+  .menu-sublist-nested {
+    padding-left: 10px;
   }
 
   .management-filter-button,

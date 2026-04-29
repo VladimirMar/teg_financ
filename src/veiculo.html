@@ -61,9 +61,11 @@
               <p class="dsc-feedback" id="veiculo-rejection-grid-feedback"></p>
 
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-veiculo-rejection-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-veiculo-rejection-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-veiculo-rejection-page-button" title="Registro anterior">◀</button>
                 <span id="veiculo-rejection-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-veiculo-rejection-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-veiculo-rejection-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-veiculo-rejection-page-button" title="Ultimo registro">▶|</button>
               </div>
             </section>
 
@@ -91,8 +93,15 @@
                 <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="veiculo-form">
                   <div class="dsc-popup-header dsc-popup-header-sticky">
                     <h2 id="veiculo-form-title">VEICULO</h2>
-                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-veiculo-form-modal-button" aria-label="Fechar formulario de veiculo">X</button>
+                    <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-veiculo-form-modal-button" aria-label="Fechar formulario de veiculo">X</button>
                   </div>
+
+              <div class="dsc-form-tabs" id="veiculo-form-tabs">
+                <button type="button" class="dsc-form-tab-button dsc-form-tab-button-active" data-tab-target="cadastro">Dados do veiculo</button>
+                <button type="button" class="dsc-form-tab-button" data-tab-target="ordens-servico">Ordens de Serviço da placa</button>
+              </div>
+
+              <div class="dsc-form-tab-panel dsc-form-tab-panel-active" id="veiculo-tab-cadastro">
 
               <section class="dsc-form-section-card dsc-form-section-card-veiculo-identificacao">
                 <h3 class="dsc-form-section-title">Identificacao</h3>
@@ -270,6 +279,34 @@
                 </div>
               </section>
 
+              </div>
+
+              <div class="dsc-form-tab-panel" id="veiculo-tab-ordens-servico">
+                <section class="dsc-form-section-card">
+                  <h3 class="dsc-form-section-title">Ordens de Serviço relacionadas à placa</h3>
+
+                  <div class="dsc-access-grid-wrapper dsc-vinculo-grid-wrapper">
+                    <table class="dsc-access-grid dsc-vinculo-grid">
+                      <thead>
+                        <tr>
+                          <th>OS</th>
+                          <th>Vigência</th>
+                          <th>Credenciado</th>
+                          <th>Condutor</th>
+                          <th>Monitor</th>
+                          <th>Situação</th>
+                        </tr>
+                      </thead>
+                      <tbody id="veiculo-ordem-servico-grid-body"></tbody>
+                    </table>
+
+                    <p class="dsc-empty-state dsc-hidden" id="veiculo-ordem-servico-empty-state">Nenhuma Ordem de Serviço encontrada para a placa informada.</p>
+                  </div>
+
+                  <p class="dsc-feedback" id="veiculo-ordem-servico-feedback"></p>
+                </section>
+              </div>
+
               <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
                 <button type="submit" class="dsc-btn dsc-btn-blue" id="save-veiculo-button">Salvar veiculo</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-veiculo-button">Cancelar</button>
@@ -325,9 +362,11 @@
               <p class="dsc-feedback" id="veiculo-grid-feedback"></p>
 
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-veiculo-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-veiculo-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-veiculo-page-button" title="Registro anterior">◀</button>
                 <span id="veiculo-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-veiculo-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-veiculo-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-veiculo-page-button" title="Ultimo registro">▶|</button>
               </div>
             </div>
           </div>
@@ -336,8 +375,17 @@
     </main>
 
     <script>
+      const pageSearchParams = new URLSearchParams(window.location.search);
+      const veiculoPopupMode = String(pageSearchParams.get('popupMode') || '').trim();
+      const veiculoPopupInitialCrm = String(pageSearchParams.get('crm') || '').trim();
+      const veiculoPopupInitialPlaca = String(pageSearchParams.get('placa') || '').trim();
+      const isOrdemServicoRelacaoCrmPopup = veiculoPopupMode === 'ordem-servico-relacao-crm';
+
       const form = document.getElementById('veiculo-form');
       const formModal = document.getElementById('veiculo-form-modal');
+      const formTabButtons = Array.from(document.querySelectorAll('#veiculo-form-tabs .dsc-form-tab-button'));
+      const cadastroTabPanel = document.getElementById('veiculo-tab-cadastro');
+      const ordemServicoTabPanel = document.getElementById('veiculo-tab-ordens-servico');
       const crmInput = document.getElementById('veiculo-crm');
       const placasInput = document.getElementById('veiculo-placas');
       const anoInput = document.getElementById('veiculo-ano');
@@ -395,8 +443,10 @@
       const gridBody = document.getElementById('veiculo-grid-body');
       const emptyState = document.getElementById('veiculo-empty-state');
       const totalLabel = document.getElementById('veiculo-total');
+      const firstPageButton = document.getElementById('first-veiculo-page-button');
       const previousPageButton = document.getElementById('previous-veiculo-page-button');
       const nextPageButton = document.getElementById('next-veiculo-page-button');
+      const lastPageButton = document.getElementById('last-veiculo-page-button');
       const paginationInfo = document.getElementById('veiculo-pagination-info');
       const pageSizeSelect = document.getElementById('veiculo-page-size');
       const sortButton = document.getElementById('sort-veiculo-button');
@@ -412,11 +462,16 @@
       const rejectionEmptyState = document.getElementById('veiculo-rejection-empty-state');
       const rejectionGridFeedback = document.getElementById('veiculo-rejection-grid-feedback');
       const rejectionTotalLabel = document.getElementById('veiculo-rejection-total');
+      const firstRejectionPageButton = document.getElementById('first-veiculo-rejection-page-button');
       const previousRejectionPageButton = document.getElementById('previous-veiculo-rejection-page-button');
       const nextRejectionPageButton = document.getElementById('next-veiculo-rejection-page-button');
+      const lastRejectionPageButton = document.getElementById('last-veiculo-rejection-page-button');
       const rejectionPaginationInfo = document.getElementById('veiculo-rejection-pagination-info');
       const clearRejectionFilterButton = document.getElementById('clear-veiculo-rejection-filter-button');
       const closeRejectionPanelButton = document.getElementById('close-veiculo-rejection-panel-button');
+      const ordemServicoGridBody = document.getElementById('veiculo-ordem-servico-grid-body');
+      const ordemServicoEmptyState = document.getElementById('veiculo-ordem-servico-empty-state');
+      const ordemServicoFeedback = document.getElementById('veiculo-ordem-servico-feedback');
 
       let pageSize = 20;
       const rejectionPageSize = 20;
@@ -434,6 +489,7 @@
       let titularLookupRequestId = 0;
       let titularSuggestionRequestId = 0;
       let titularSuggestionTimeoutId = null;
+      let veiculoOrdemServicoRequestId = 0;
       let titularSuggestionOptions = [];
       let seguradoraOptions = [];
       let marcaModeloOptions = [];
@@ -958,7 +1014,58 @@
         titularError.textContent = '';
       };
 
-      const syncTitularByCnpjCpf = async () => {
+      let titularCrmPopupWindow = null;
+
+      const openTitularCrmPopup = ({ cnpjCpf = '' } = {}) => {
+        const popupUrl = new URL('/src/titularCrmPopup.html', window.location.origin);
+        const normalizedCnpjCpf = normalizeCnpjCpf(String(cnpjCpf || ''));
+
+        if (normalizedCnpjCpf) {
+          popupUrl.searchParams.set('cnpjCpf', normalizedCnpjCpf);
+        }
+
+        const popupFeatures = [
+          'popup=yes',
+          'width=720',
+          'height=520',
+          'resizable=yes',
+          'scrollbars=yes',
+        ].join(',');
+
+        titularCrmPopupWindow = window.open(popupUrl.toString(), 'tegfinanc-titular-crm-popup', popupFeatures);
+
+        if (titularCrmPopupWindow && typeof titularCrmPopupWindow.focus === 'function') {
+          titularCrmPopupWindow.focus();
+        }
+      };
+
+      const handleTitularCrmPopupMessage = async (event) => {
+        if (event.origin !== window.location.origin) {
+          return;
+        }
+
+        const data = event.data;
+
+        if (!data || data.type !== 'tegfinanc:titular-created' || data.context !== 'veiculo-titular') {
+          return;
+        }
+
+        const nextCnpjCpf = normalizeCnpjCpf(String(data.cnpjCpf || ''));
+        const nextTitular = normalizeText(String(data.titular || ''), 255);
+
+        if (!nextCnpjCpf || !nextTitular) {
+          return;
+        }
+
+        cnpjCpfInput.value = nextCnpjCpf;
+        titularInput.value = nextTitular;
+        cnpjCpfError.textContent = '';
+        titularError.textContent = '';
+        renderTitularSuggestions([]);
+        titularCrmPopupWindow = null;
+      };
+
+      const syncTitularByCnpjCpf = async (allowPopup = false) => {
         const requestId = ++titularLookupRequestId;
         const cnpjCpf = normalizeCnpjCpf(cnpjCpfInput.value);
         const digits = getDocumentDigits(cnpjCpf);
@@ -993,6 +1100,13 @@
           }
 
           if (!response.ok) {
+            if (allowPopup && response.status === 404 && String(payload.message || '').toLowerCase().includes('cnpj/cpf nao encontrado')) {
+              clearTitularLookupState();
+              cnpjCpfError.textContent = 'CNPJ/CPF nao encontrado. Cadastre o titular do CRM e retorne ao veiculo.';
+              openTitularCrmPopup({ cnpjCpf });
+              return;
+            }
+
             throw new Error(payload.message || 'Falha ao localizar titular do CRM.');
           }
 
@@ -1026,6 +1140,95 @@
         rejectionGridFeedback.className = 'dsc-feedback';
         if (tone) {
           rejectionGridFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const setOrdemServicoMessage = (message, tone = '') => {
+        ordemServicoFeedback.textContent = message;
+        ordemServicoFeedback.className = 'dsc-feedback';
+        if (tone) {
+          ordemServicoFeedback.classList.add(`dsc-feedback-${tone}`);
+        }
+      };
+
+      const resetOrdemServicoGrid = (emptyMessage = 'Nenhuma Ordem de Serviço encontrada para a placa informada.') => {
+        ordemServicoGridBody.innerHTML = '';
+        ordemServicoEmptyState.textContent = emptyMessage;
+        ordemServicoEmptyState.classList.add('dsc-hidden');
+        setOrdemServicoMessage('');
+      };
+
+      const renderOrdemServicoGrid = (items) => {
+        ordemServicoGridBody.innerHTML = '';
+        ordemServicoEmptyState.textContent = 'Nenhuma Ordem de Serviço encontrada para a placa informada.';
+        ordemServicoEmptyState.classList.toggle('dsc-hidden', items.length > 0);
+
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          const osLabel = item.os_concat || [item.termo_adesao, item.num_os, item.revisao].filter(Boolean).join('-');
+          row.innerHTML = `
+            <td>${osLabel || ''}</td>
+            <td>${formatDateLabel(item.vigencia_os)}</td>
+            <td title="${item.credenciado || ''}">${(item.credenciado || '').substring(0, 30)}</td>
+            <td title="${item.condutor || ''}">${(item.condutor || '').substring(0, 28)}</td>
+            <td title="${item.monitor || ''}">${(item.monitor || '').substring(0, 28)}</td>
+            <td>${item.situacao || ''}</td>
+          `;
+          ordemServicoGridBody.appendChild(row);
+        });
+      };
+
+      const loadOrdensServicoByPlaca = async (placaValue = placasInput.value) => {
+        const placa = normalizePlaca(placaValue);
+        const requestId = ++veiculoOrdemServicoRequestId;
+
+        if (!placa) {
+          resetOrdemServicoGrid('Informe uma placa para consultar as Ordens de Serviço relacionadas.');
+          ordemServicoEmptyState.classList.remove('dsc-hidden');
+          return;
+        }
+
+        resetOrdemServicoGrid();
+        setOrdemServicoMessage('Carregando Ordens de Serviço relacionadas...');
+
+        try {
+          const response = await fetch(`/api/veiculo/ordens-servico?placa=${encodeURIComponent(placa)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (requestId !== veiculoOrdemServicoRequestId) {
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.message || 'Falha ao carregar Ordens de Serviço relacionadas.');
+          }
+
+          const items = Array.isArray(payload.items) ? payload.items : [];
+          renderOrdemServicoGrid(items);
+          setOrdemServicoMessage(items.length ? `${items.length} Ordem(ns) de Serviço encontrada(s).` : '');
+        } catch (error) {
+          if (requestId !== veiculoOrdemServicoRequestId) {
+            return;
+          }
+
+          resetOrdemServicoGrid();
+          setOrdemServicoMessage(getRequestErrorMessage(error, 'Falha ao carregar Ordens de Serviço relacionadas.'), 'error');
+        }
+      };
+
+      const setActiveFormTab = (tabName = 'cadastro') => {
+        formTabButtons.forEach((button) => {
+          const isActive = button.dataset.tabTarget === tabName;
+          button.classList.toggle('dsc-form-tab-button-active', isActive);
+        });
+
+        cadastroTabPanel.classList.toggle('dsc-form-tab-panel-active', tabName === 'cadastro');
+        ordemServicoTabPanel.classList.toggle('dsc-form-tab-panel-active', tabName === 'ordens-servico');
+
+        if (tabName === 'ordens-servico') {
+          void loadOrdensServicoByPlaca();
         }
       };
 
@@ -1076,6 +1279,8 @@
         formTitle.textContent = 'VEICULO';
         saveButton.textContent = isEditing ? 'Salvar alteracao' : 'Salvar veiculo';
         setFormReadOnly(isReadOnly);
+        resetOrdemServicoGrid();
+        setActiveFormTab('cadastro');
       };
 
       const showImportForm = () => {
@@ -1110,6 +1315,8 @@
         formMode = 'create';
         setFormReadOnly(false);
         resetMessages();
+        resetOrdemServicoGrid();
+        setActiveFormTab('cadastro');
       };
 
       const hideImportForm = () => {
@@ -1215,8 +1422,10 @@
       const updatePagination = (totalItems) => {
         totalLabel.textContent = `${totalItems} item(ns) encontrados`;
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        firstPageButton.disabled = currentPage <= 1;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
+        lastPageButton.disabled = currentPage >= totalPages;
         if (pageSizeSelect) {
           pageSizeSelect.value = String(pageSize);
         }
@@ -1226,8 +1435,10 @@
       const updateRejectionPagination = (totalItems) => {
         rejectionTotalLabel.textContent = `${totalItems} recusa(s) encontrada(s)`;
         rejectionPaginationInfo.textContent = `Pagina ${currentRejectionPage} de ${totalRejectionPages}`;
+        firstRejectionPageButton.disabled = currentRejectionPage <= 1;
         previousRejectionPageButton.disabled = currentRejectionPage <= 1;
         nextRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
+        lastRejectionPageButton.disabled = currentRejectionPage >= totalRejectionPages;
       };
 
       const loadItems = async () => {
@@ -1276,7 +1487,7 @@
         }
       };
 
-      const startInsert = () => {
+      const startInsert = ({ crm = '', placa = '' } = {}) => {
         editingCodigo = null;
         form.reset();
         renderSeguradoraOptions('');
@@ -1288,6 +1499,8 @@
         renderTitularSuggestions([]);
         resetMessages();
         showForm('create');
+        crmInput.value = normalizeCrm(crm);
+        placasInput.value = formatPlacaDisplay(placa);
       };
 
       const startEdit = (item) => {
@@ -1312,7 +1525,7 @@
         setSelectedOsEspecial(item.os_especial || '');
         resetMessages();
         showForm('edit');
-        void syncTitularByCnpjCpf();
+        void syncTitularByCnpjCpf(false);
       };
 
       const startView = (item) => {
@@ -1337,7 +1550,7 @@
         setSelectedOsEspecial(item.os_especial || '');
         resetMessages();
         showForm('view');
-        void syncTitularByCnpjCpf();
+        void syncTitularByCnpjCpf(false);
       };
 
       const handleDelete = async (item) => {
@@ -1409,6 +1622,16 @@
 
       placasInput.addEventListener('input', () => {
         placasInput.value = formatPlacaDisplay(placasInput.value);
+
+        if (ordemServicoTabPanel.classList.contains('dsc-form-tab-panel-active')) {
+          void loadOrdensServicoByPlaca();
+        }
+      });
+
+      formTabButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          setActiveFormTab(button.dataset.tabTarget || 'cadastro');
+        });
       });
 
       anoInput.addEventListener('input', () => {
@@ -1457,7 +1680,7 @@
 
       cnpjCpfInput.addEventListener('input', () => {
         queueTitularSuggestions();
-        void syncTitularByCnpjCpf();
+        void syncTitularByCnpjCpf(false);
       });
 
       cnpjCpfInput.addEventListener('focus', () => {
@@ -1465,7 +1688,11 @@
       });
 
       cnpjCpfInput.addEventListener('blur', () => {
-        void syncTitularByCnpjCpf();
+        void syncTitularByCnpjCpf(true);
+      });
+
+      window.addEventListener('message', (event) => {
+        void handleTitularCrmPopupMessage(event);
       });
 
       valorInput.addEventListener('input', () => {
@@ -1622,6 +1849,21 @@
           }
 
           const savedItem = payload.item;
+
+          if (!editingCodigo && isOrdemServicoRelacaoCrmPopup && window.opener && !window.opener.closed) {
+            window.opener.postMessage({
+              type: 'tegfinanc:veiculo-created',
+              context: 'ordem-servico-relacao-crm',
+              item: {
+                codigo: savedItem.codigo,
+                crm: savedItem.crm,
+                placas: savedItem.placas,
+              },
+            }, window.location.origin);
+            window.close();
+            return;
+          }
+
           feedback.textContent = editingCodigo
             ? `Veiculo ${savedItem.codigo} alterado com sucesso.`
             : `Veiculo ${savedItem.codigo} gravado com sucesso.`;
@@ -1754,12 +1996,30 @@
         void loadItems();
       });
 
+      firstPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage = 1;
+        void loadItems();
+      });
+
       nextPageButton.addEventListener('click', () => {
         if (currentPage >= totalPages) {
           return;
         }
 
         currentPage += 1;
+        void loadItems();
+      });
+
+      lastPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage = totalPages;
         void loadItems();
       });
 
@@ -1774,6 +2034,15 @@
         pageSize = nextPageSize;
         currentPage = 1;
         void loadItems();
+      });
+
+      firstRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage <= 1) {
+          return;
+        }
+
+        currentRejectionPage = 1;
+        void loadRejectionItems();
       });
 
       previousRejectionPageButton.addEventListener('click', () => {
@@ -1794,6 +2063,15 @@
         void loadRejectionItems();
       });
 
+      lastRejectionPageButton.addEventListener('click', () => {
+        if (currentRejectionPage >= totalRejectionPages) {
+          return;
+        }
+
+        currentRejectionPage = totalRejectionPages;
+        void loadRejectionItems();
+      });
+
       sortButton.addEventListener('click', () => {
         currentSortDirection = currentSortBy === 'placas' && currentSortDirection === 'asc' ? 'desc' : 'asc';
         currentSortBy = 'placas';
@@ -1807,7 +2085,12 @@
       void loadSeguradoraOptions();
       void loadMarcaModeloOptions();
 
-      hideForm();
+      if (isOrdemServicoRelacaoCrmPopup) {
+        startInsert({ crm: veiculoPopupInitialCrm, placa: veiculoPopupInitialPlaca });
+      } else {
+        hideForm();
+      }
+
       hideImportForm();
       hideRejectionPanel();
       void loadItems();

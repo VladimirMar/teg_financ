@@ -29,7 +29,7 @@
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="login-dre-form">
               <div class="dsc-popup-header dsc-popup-header-sticky">
                 <h2 id="login-dre-form-title">LOGIN X DRE</h2>
-                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-login-dre-form-modal-button" aria-label="Fechar formulario login x DRE">X</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-login-dre-form-modal-button" aria-label="Fechar formulario login x DRE">X</button>
               </div>
 
               <div class="dsc-form-row dsc-login-dre-form-row">
@@ -79,7 +79,7 @@
             <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="login-dre-bulk-form">
               <div class="dsc-popup-header dsc-popup-header-sticky">
                 <h2 id="login-dre-bulk-title">VINCULAR DRES</h2>
-                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-login-dre-bulk-modal-button" aria-label="Fechar vinculacao em massa de DRE">X</button>
+                <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-login-dre-bulk-modal-button" aria-label="Fechar vinculacao em massa de DRE">X</button>
               </div>
 
               <div class="dsc-form-row dsc-login-dre-form-row">
@@ -156,9 +156,11 @@
               <p class="dsc-feedback" id="login-dre-grid-feedback"></p>
 
               <div class="dsc-access-pagination">
-                <button type="button" class="dsc-btn dsc-btn-white" id="previous-login-dre-page-button">Anterior</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="first-login-dre-page-button" title="Primeiro registro">|◀</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="previous-login-dre-page-button" title="Registro anterior">◀</button>
                 <span id="login-dre-pagination-info">Pagina 1 de 1</span>
-                <button type="button" class="dsc-btn dsc-btn-white" id="next-login-dre-page-button">Proxima</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="next-login-dre-page-button" title="Proximo registro">▶</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="last-login-dre-page-button" title="Ultimo registro">▶|</button>
               </div>
             </div>
           </div>
@@ -198,8 +200,10 @@
       const gridBody = document.getElementById('login-dre-grid-body');
       const emptyState = document.getElementById('login-dre-empty-state');
       const totalLabel = document.getElementById('login-dre-total');
+      const firstPageButton = document.getElementById('first-login-dre-page-button');
       const previousPageButton = document.getElementById('previous-login-dre-page-button');
       const nextPageButton = document.getElementById('next-login-dre-page-button');
+      const lastPageButton = document.getElementById('last-login-dre-page-button');
       const paginationInfo = document.getElementById('login-dre-pagination-info');
       const pageSizeSelect = document.getElementById('login-dre-page-size');
       const sortLoginCodigoButton = document.getElementById('sort-login-codigo-button');
@@ -519,8 +523,10 @@
       const updatePagination = (totalItems) => {
         totalLabel.textContent = `${totalItems} item(ns) encontrados`;
         paginationInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
+        firstPageButton.disabled = currentPage <= 1;
         previousPageButton.disabled = currentPage <= 1;
         nextPageButton.disabled = currentPage >= totalPages;
+        lastPageButton.disabled = currentPage >= totalPages;
         if (pageSizeSelect) {
           pageSizeSelect.value = String(pageSize);
         }
@@ -844,6 +850,15 @@
         void loadItems();
       });
 
+      firstPageButton.addEventListener('click', () => {
+        if (currentPage <= 1) {
+          return;
+        }
+
+        currentPage = 1;
+        void loadItems();
+      });
+
       previousPageButton.addEventListener('click', () => {
         if (currentPage <= 1) {
           return;
@@ -859,6 +874,15 @@
         }
 
         currentPage += 1;
+        void loadItems();
+      });
+
+      lastPageButton.addEventListener('click', () => {
+        if (currentPage >= totalPages) {
+          return;
+        }
+
+        currentPage = totalPages;
         void loadItems();
       });
 
