@@ -335,6 +335,10 @@
       let currentSearch = '';
       let currentSortBy = 'data_evento';
       let currentSortDirection = 'desc';
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
+      let currentGridItems = [];
       let bannerTimeoutId = 0;
 
       const normalizeText = (value) => String(value || '').trim();
@@ -401,6 +405,20 @@
           params.set('search', currentSearch);
         }
 
+        if (useTailPageFetch) {
+          params.set('tail', '1');
+        }
+
+        if (previousPageCursor) {
+          params.set('beforeDataEvento', previousPageCursor.dataEvento);
+          params.set('beforeId', previousPageCursor.id);
+        }
+
+        if (nextPageCursor) {
+          params.set('afterDataEvento', nextPageCursor.dataEvento);
+          params.set('afterId', nextPageCursor.id);
+        }
+
         return `/api/veiculo-historico?${params.toString()}`;
       };
 
@@ -411,6 +429,7 @@
       };
 
       const renderGrid = (items) => {
+        currentGridItems = items;
         gridBody.innerHTML = '';
 
         if (!items.length) {
@@ -505,9 +524,13 @@
 
       const loadItems = async () => {
         setGridMessage('Carregando historico de veiculos...');
+        const requestUrl = buildUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
 
         try {
-          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const response = await fetch(requestUrl, { headers: { Accept: 'application/json' } });
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
@@ -550,6 +573,9 @@
         event.preventDefault();
         currentSearch = normalizeText(searchInput.value);
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -557,6 +583,9 @@
         searchInput.value = '';
         currentSearch = '';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -566,6 +595,9 @@
         }
 
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -575,6 +607,14 @@
         }
 
         currentPage -= 1;
+        useTailPageFetch = false;
+        nextPageCursor = null;
+        previousPageCursor = currentSortBy === 'data_evento' && currentSortDirection === 'desc' && currentGridItems.length
+          ? {
+              dataEvento: String(currentGridItems[0]?.data_evento || ''),
+              id: String(currentGridItems[0]?.id || ''),
+            }
+          : null;
         void loadItems();
       });
 
@@ -584,6 +624,14 @@
         }
 
         currentPage += 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = currentSortBy === 'data_evento' && currentSortDirection === 'desc' && currentGridItems.length
+          ? {
+              dataEvento: String(currentGridItems[currentGridItems.length - 1]?.data_evento || ''),
+              id: String(currentGridItems[currentGridItems.length - 1]?.id || ''),
+            }
+          : null;
         void loadItems();
       });
 
@@ -593,6 +641,9 @@
         }
 
         currentPage = totalPages;
+        useTailPageFetch = currentSortBy === 'data_evento' && currentSortDirection === 'desc';
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -606,6 +657,9 @@
 
         pageSize = nextPageSize;
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -613,6 +667,9 @@
         currentSortDirection = currentSortBy === 'data_evento' && currentSortDirection === 'desc' ? 'asc' : 'desc';
         currentSortBy = 'data_evento';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -620,6 +677,9 @@
         currentSortDirection = currentSortBy === 'placas' && currentSortDirection === 'asc' ? 'desc' : 'asc';
         currentSortBy = 'placas';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -627,6 +687,9 @@
         currentSortDirection = currentSortBy === 'crm' && currentSortDirection === 'asc' ? 'desc' : 'asc';
         currentSortBy = 'crm';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 

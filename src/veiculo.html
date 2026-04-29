@@ -90,7 +90,7 @@
 
             <div class="dsc-popup-overlay dsc-hidden" id="veiculo-form-modal" aria-hidden="true">
               <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="veiculo-form-title">
-                <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="veiculo-form">
+                <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="veiculo-form" novalidate>
                   <div class="dsc-popup-header dsc-popup-header-sticky">
                     <h2 id="veiculo-form-title">VEICULO</h2>
                     <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-veiculo-form-modal-button" aria-label="Fechar formulario de veiculo">X</button>
@@ -375,12 +375,6 @@
     </main>
 
     <script>
-      const pageSearchParams = new URLSearchParams(window.location.search);
-      const veiculoPopupMode = String(pageSearchParams.get('popupMode') || '').trim();
-      const veiculoPopupInitialCrm = String(pageSearchParams.get('crm') || '').trim();
-      const veiculoPopupInitialPlaca = String(pageSearchParams.get('placa') || '').trim();
-      const isOrdemServicoRelacaoCrmPopup = veiculoPopupMode === 'ordem-servico-relacao-crm';
-
       const form = document.getElementById('veiculo-form');
       const formModal = document.getElementById('veiculo-form-modal');
       const formTabButtons = Array.from(document.querySelectorAll('#veiculo-form-tabs .dsc-form-tab-button'));
@@ -481,6 +475,10 @@
       let currentSearch = '';
       let currentSortBy = 'codigo';
       let currentSortDirection = 'asc';
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
+      let currentGridItems = [];
       let currentRejectionPage = 1;
       let totalRejectionPages = 1;
       let currentRejectionSearch = '';
@@ -489,6 +487,8 @@
       let titularLookupRequestId = 0;
       let titularSuggestionRequestId = 0;
       let titularSuggestionTimeoutId = null;
+      let placaValidationRequestId = 0;
+      let placaValidationTimeoutId = null;
       let veiculoOrdemServicoRequestId = 0;
       let titularSuggestionOptions = [];
       let seguradoraOptions = [];
@@ -576,7 +576,16 @@
 
         const [day, month, year] = normalizedValue.split('/').map(Number);
         const parsed = new Date(year, month - 1, day);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
+
+        if (Number.isNaN(parsed.getTime())) {
+          return null;
+        }
+
+        if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) {
+          return null;
+        }
+
+        return parsed;
       };
       const enableFullDateSelection = (input) => {
         if (!input) {
@@ -923,6 +932,64 @@
 
       const isTodayOrFutureDate = (value) => Boolean(value) && value >= getCurrentDateInputValue();
 
+      const getComparableDateInputValue = (input) => {
+        if (!input) {
+          return '';
+        }
+
+        if (input.type === 'text') {
+          const parsedDate = parseEditableDateValue(input.value);
+          return parsedDate ? formatEditableDateInputValue(parsedDate) : '';
+        }
+
+        return input.value || '';
+      };
+
+      const validateValCrmField = () => {
+        const valCrm = getComparableDateInputValue(valCrmInput);
+
+        if (!valCrm) {
+          valCrmError.textContent = '';
+          return false;
+        }
+
+        if (!isTodayOrFutureDate(valCrm)) {
+          valCrmError.textContent = 'Validade do CRM nao pode ser passada.';
+          return true;
+        }
+
+        valCrmError.textContent = '';
+        return false;
+      };
+
+      const validateSeguroInicioField = () => {
+        seguroInicioError.textContent = '';
+        return false;
+      };
+
+      const validateSeguroTerminoField = () => {
+        const seguroInicio = getComparableDateInputValue(seguroInicioInput);
+        const seguroTermino = getComparableDateInputValue(seguroTerminoInput);
+
+        if (!seguroTermino) {
+          seguroTerminoError.textContent = '';
+          return false;
+        }
+
+        if (!isTodayOrFutureDate(seguroTermino)) {
+          seguroTerminoError.textContent = 'Data final do seguro nao pode ser passada.';
+          return true;
+        }
+
+        if (seguroInicio && seguroTermino < seguroInicio) {
+          seguroTerminoError.textContent = 'Data final do seguro deve ser maior ou igual a data inicial.';
+          return true;
+        }
+
+        seguroTerminoError.textContent = '';
+        return false;
+      };
+
       const syncSeguroTerminoMin = () => {
         const currentDate = getCurrentDateInputValue();
         seguroTerminoInput.min = seguroInicioInput.value && seguroInicioInput.value > currentDate
@@ -987,6 +1054,12 @@
         return error instanceof Error ? error.message : fallbackMessage;
       };
 
+      const pageSearchParams = new URLSearchParams(window.location.search);
+      const popupMode = String(pageSearchParams.get('popupMode') || '').trim().toLowerCase();
+      const popupCrm = normalizeCrm(String(pageSearchParams.get('crm') || ''));
+      const popupPlaca = normalizePlaca(String(pageSearchParams.get('placa') || ''));
+      const isOrdemServicoRelacaoCrmPopup = popupMode === 'ordem-servico-relacao-crm';
+
       const resetMessages = () => {
         crmError.textContent = '';
         placasError.textContent = '';
@@ -1012,6 +1085,24 @@
       const clearTitularLookupState = () => {
         titularInput.value = '';
         titularError.textContent = '';
+      };
+
+      const notifyOrdemServicoVeiculoSaved = (item) => {
+        if (!isOrdemServicoRelacaoCrmPopup || !window.opener || window.opener.closed) {
+          return false;
+        }
+
+        window.opener.postMessage({
+          type: 'tegfinanc:veiculo-created',
+          context: 'ordem-servico-relacao-crm',
+          item: {
+            codigo: item?.codigo || '',
+            crm: normalizeCrm(String(item?.crm || '')),
+            placas: normalizeText(String(item?.placas || ''), 20),
+          },
+        }, window.location.origin);
+
+        return true;
       };
 
       let titularCrmPopupWindow = null;
@@ -1149,6 +1240,89 @@
         if (tone) {
           ordemServicoFeedback.classList.add(`dsc-feedback-${tone}`);
         }
+      };
+
+      const fetchActiveOrdemServicoByPlaca = async (placa) => {
+        const normalizedPlaca = normalizePlaca(placa);
+
+        if (!normalizedPlaca || !isValidPlaca(normalizedPlaca)) {
+          return null;
+        }
+
+        const params = new URLSearchParams({ placa: normalizedPlaca });
+        const response = await fetch(`/api/ordem-servico/active-placa?${params.toString()}`, {
+          headers: { Accept: 'application/json' },
+        });
+        const payload = await readJsonResponse(response);
+
+        if (!response.ok) {
+          throw new Error(payload.message || 'Falha ao validar placa em OrdemServico ativa.');
+        }
+
+        return payload.item || null;
+      };
+
+      const buildOrdemServicoNumeroLabel = (item) => {
+        const termoAdesao = normalizeText(String(item?.termo_adesao || ''), 50);
+        const numOs = normalizeText(String(item?.num_os || ''), 20);
+        const revisao = normalizeText(String(item?.revisao || ''), 20);
+        const codigo = normalizeText(String(item?.codigo || ''), 20);
+        let label = [termoAdesao, numOs].filter(Boolean).join('-');
+
+        if (revisao) {
+          label += revisao.startsWith('-')
+            ? revisao
+            : `${label ? '-' : ''}${revisao}`;
+        }
+
+        return label || codigo;
+      };
+
+      const validateActiveOrdemServicoPlaca = async (placaValue = placasInput.value) => {
+        const normalizedPlaca = normalizePlaca(placaValue);
+
+        if (!normalizedPlaca || !isValidPlaca(normalizedPlaca)) {
+          placasError.textContent = '';
+          return true;
+        }
+
+        const activeItem = await fetchActiveOrdemServicoByPlaca(normalizedPlaca);
+
+        if (!activeItem) {
+          placasError.textContent = '';
+          return true;
+        }
+
+        placasError.textContent = `Placa registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeItem)}`;
+        return false;
+      };
+
+      const scheduleActiveOrdemServicoPlacaValidation = (placaValue = placasInput.value) => {
+        const normalizedPlaca = normalizePlaca(placaValue);
+
+        if (placaValidationTimeoutId) {
+          window.clearTimeout(placaValidationTimeoutId);
+          placaValidationTimeoutId = null;
+        }
+
+        if (!normalizedPlaca || !isValidPlaca(normalizedPlaca)) {
+          placaValidationRequestId += 1;
+          placasError.textContent = '';
+          return;
+        }
+
+        const requestId = ++placaValidationRequestId;
+        placaValidationTimeoutId = window.setTimeout(async () => {
+          try {
+            await validateActiveOrdemServicoPlaca(normalizedPlaca);
+          } catch (error) {
+            if (requestId !== placaValidationRequestId) {
+              return;
+            }
+
+            placasError.textContent = getRequestErrorMessage(error, 'Falha ao validar placa em OrdemServico ativa.');
+          }
+        }, 250);
       };
 
       const resetOrdemServicoGrid = (emptyMessage = 'Nenhuma Ordem de Serviço encontrada para a placa informada.') => {
@@ -1344,6 +1518,18 @@
           params.set('search', currentSearch);
         }
 
+        if (useTailPageFetch) {
+          params.set('tail', '1');
+        }
+
+        if (previousPageCursor) {
+          params.set('beforeCodigo', previousPageCursor);
+        }
+
+        if (nextPageCursor) {
+          params.set('afterCodigo', nextPageCursor);
+        }
+
         return `/api/veiculo?${params.toString()}`;
       };
 
@@ -1361,6 +1547,7 @@
       };
 
       const renderGrid = (items) => {
+        currentGridItems = items;
         gridBody.innerHTML = '';
 
         if (!items.length) {
@@ -1443,9 +1630,13 @@
 
       const loadItems = async () => {
         setGridMessage('Carregando veiculos...');
+        const requestUrl = buildUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
 
         try {
-          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const response = await fetch(requestUrl, { headers: { Accept: 'application/json' } });
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
@@ -1553,6 +1744,42 @@
         void syncTitularByCnpjCpf(false);
       };
 
+      const initializeOrdemServicoPopupMode = async () => {
+        if (!isOrdemServicoRelacaoCrmPopup) {
+          return;
+        }
+
+        if (!popupCrm) {
+          startInsert({ placa: popupPlaca });
+          feedback.textContent = 'Informe os dados do veiculo e salve para retornar a ordem de servico.';
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/veiculo/lookup?crm=${encodeURIComponent(popupCrm)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            if (response.status === 404) {
+              startInsert({ crm: popupCrm, placa: popupPlaca });
+              feedback.textContent = 'CRM nao encontrado. Cadastre o veiculo e salve para retornar a ordem de servico.';
+              return;
+            }
+
+            throw new Error(payload.message || 'Falha ao localizar veiculo.');
+          }
+
+          startEdit(payload.item || {});
+          feedback.textContent = 'Veiculo localizado pelo CRM. Ajuste os dados e salve para retornar a ordem de servico.';
+        } catch (error) {
+          startInsert({ crm: popupCrm, placa: popupPlaca });
+          feedback.textContent = getRequestErrorMessage(error, 'Falha ao localizar veiculo para a ordem de servico.');
+          feedback.classList.add('dsc-feedback-error');
+        }
+      };
+
       const handleDelete = async (item) => {
         if (!window.confirm(`Excluir o veiculo ${item.codigo} - ${item.placas || 'SEM PLACA'}?`)) {
           return;
@@ -1623,9 +1850,19 @@
       placasInput.addEventListener('input', () => {
         placasInput.value = formatPlacaDisplay(placasInput.value);
 
+        if (placasError.textContent.trim()) {
+          placasError.textContent = '';
+        }
+
+        scheduleActiveOrdemServicoPlacaValidation(placasInput.value);
+
         if (ordemServicoTabPanel.classList.contains('dsc-form-tab-panel-active')) {
           void loadOrdensServicoByPlaca();
         }
+      });
+
+      placasInput.addEventListener('blur', () => {
+        void validateActiveOrdemServicoPlaca();
       });
 
       formTabButtons.forEach((button) => {
@@ -1656,6 +1893,37 @@
 
       seguroInicioInput.addEventListener('input', () => {
         syncSeguroTerminoMin();
+        if (seguroInicioError.textContent.trim()) {
+          validateSeguroInicioField();
+        }
+        if (seguroTerminoError.textContent.trim()) {
+          validateSeguroTerminoField();
+        }
+      });
+
+      seguroInicioInput.addEventListener('blur', () => {
+        validateSeguroInicioField();
+        validateSeguroTerminoField();
+      });
+
+      valCrmInput.addEventListener('input', () => {
+        if (valCrmError.textContent.trim()) {
+          validateValCrmField();
+        }
+      });
+
+      valCrmInput.addEventListener('blur', () => {
+        validateValCrmField();
+      });
+
+      seguroTerminoInput.addEventListener('input', () => {
+        if (seguroTerminoError.textContent.trim()) {
+          validateSeguroTerminoField();
+        }
+      });
+
+      seguroTerminoInput.addEventListener('blur', () => {
+        validateSeguroTerminoField();
       });
 
       seguradoraInput.addEventListener('input', () => {
@@ -1763,29 +2031,15 @@
           hasError = true;
         }
 
-        if (valCrm && Number.isNaN(new Date(`${valCrm}T00:00:00`).getTime())) {
-          valCrmError.textContent = 'Validade do CRM invalida.';
-          hasError = true;
-        } else if (valCrm && !isTodayOrFutureDate(valCrm)) {
-          valCrmError.textContent = 'Validade do CRM nao pode ser passada.';
+        if (validateValCrmField()) {
           hasError = true;
         }
 
-        if (seguroInicio && Number.isNaN(new Date(`${seguroInicio}T00:00:00`).getTime())) {
-          seguroInicioError.textContent = 'Data inicial do seguro invalida.';
+        if (validateSeguroInicioField()) {
           hasError = true;
         }
 
-        if (seguroTermino && Number.isNaN(new Date(`${seguroTermino}T00:00:00`).getTime())) {
-          seguroTerminoError.textContent = 'Data final do seguro invalida.';
-          hasError = true;
-        } else if (seguroTermino && !isTodayOrFutureDate(seguroTermino)) {
-          seguroTerminoError.textContent = 'Data final do seguro nao pode ser passada.';
-          hasError = true;
-        }
-
-        if (seguroInicio && seguroTermino && seguroTermino < seguroInicio) {
-          seguroTerminoError.textContent = 'Data final do seguro deve ser maior ou igual a data inicial.';
+        if (validateSeguroTerminoField()) {
           hasError = true;
         }
 
@@ -1808,6 +2062,23 @@
         if (hasError) {
           feedback.textContent = 'Corrija os campos para continuar.';
           feedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        try {
+          const isActivePlacaValid = await validateActiveOrdemServicoPlaca(placas);
+
+          if (!isActivePlacaValid) {
+            feedback.textContent = 'Corrija os campos para continuar.';
+            feedback.classList.add('dsc-feedback-error');
+            return;
+          }
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao validar placa em OrdemServico ativa.');
+          placasError.textContent = message;
+          feedback.textContent = message;
+          feedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
           return;
         }
 
@@ -1845,30 +2116,26 @@
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
+            if (payload.errors?.placas) {
+              placasError.textContent = payload.errors.placas;
+            }
             throw new Error(payload.message || 'Falha ao gravar veiculo.');
           }
 
           const savedItem = payload.item;
-
-          if (!editingCodigo && isOrdemServicoRelacaoCrmPopup && window.opener && !window.opener.closed) {
-            window.opener.postMessage({
-              type: 'tegfinanc:veiculo-created',
-              context: 'ordem-servico-relacao-crm',
-              item: {
-                codigo: savedItem.codigo,
-                crm: savedItem.crm,
-                placas: savedItem.placas,
-              },
-            }, window.location.origin);
-            window.close();
-            return;
-          }
+          const shouldReturnToOrdemServico = notifyOrdemServicoVeiculoSaved(savedItem);
 
           feedback.textContent = editingCodigo
             ? `Veiculo ${savedItem.codigo} alterado com sucesso.`
             : `Veiculo ${savedItem.codigo} gravado com sucesso.`;
           feedback.classList.add('dsc-feedback-success');
           showBanner(feedback.textContent, 'success');
+
+          if (shouldReturnToOrdemServico) {
+            window.close();
+            return;
+          }
+
           hideForm();
           await loadItems();
         } catch (error) {
@@ -1963,6 +2230,9 @@
         event.preventDefault();
         currentSearch = searchInput.value.trim();
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1977,6 +2247,9 @@
         searchInput.value = '';
         currentSearch = '';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1993,6 +2266,11 @@
         }
 
         currentPage -= 1;
+        useTailPageFetch = false;
+        nextPageCursor = null;
+        previousPageCursor = currentSortBy === 'codigo' && currentSortDirection === 'asc' && currentGridItems.length
+          ? String(currentGridItems[0]?.codigo || '')
+          : null;
         void loadItems();
       });
 
@@ -2002,6 +2280,9 @@
         }
 
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -2011,6 +2292,11 @@
         }
 
         currentPage += 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = currentSortBy === 'codigo' && currentSortDirection === 'asc' && currentGridItems.length
+          ? String(currentGridItems[currentGridItems.length - 1]?.codigo || '')
+          : null;
         void loadItems();
       });
 
@@ -2020,6 +2306,9 @@
         }
 
         currentPage = totalPages;
+        useTailPageFetch = currentSortBy === 'codigo' && currentSortDirection === 'asc';
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -2033,6 +2322,9 @@
 
         pageSize = nextPageSize;
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -2085,15 +2377,12 @@
       void loadSeguradoraOptions();
       void loadMarcaModeloOptions();
 
-      if (isOrdemServicoRelacaoCrmPopup) {
-        startInsert({ crm: veiculoPopupInitialCrm, placa: veiculoPopupInitialPlaca });
-      } else {
-        hideForm();
-      }
+      hideForm();
 
       hideImportForm();
       hideRejectionPanel();
       void loadItems();
+      void initializeOrdemServicoPopupMode();
     </script>
   </body>
 </html>

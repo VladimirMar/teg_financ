@@ -457,6 +457,9 @@
       let totalPages = 1;
       let totalItems = 0;
       let currentItem = null;
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
 
       const normalizeRequestValue = (value) => String(value ?? '').trim();
 
@@ -534,6 +537,22 @@
         if (currentSearch) {
           params.set('search', currentSearch);
         }
+
+        if (useTailPageFetch) {
+          params.set('tail', '1');
+        }
+
+        if (previousPageCursor) {
+          params.set('beforeTermoAdesao', previousPageCursor.termoAdesao);
+          params.set('beforeAditivo', previousPageCursor.aditivo);
+          params.set('beforeCodigo', previousPageCursor.codigo);
+        }
+
+        if (nextPageCursor) {
+          params.set('afterTermoAdesao', nextPageCursor.termoAdesao);
+          params.set('afterAditivo', nextPageCursor.aditivo);
+          params.set('afterCodigo', nextPageCursor.codigo);
+        }
         return `/api/termo/data-assinatura-pendencias?${params.toString()}`;
       };
 
@@ -582,9 +601,13 @@
 
       const loadItems = async () => {
         setFeedback('Carregando pendencias de assinatura...');
+        const requestUrl = buildUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
 
         try {
-          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const response = await fetch(requestUrl, { headers: { Accept: 'application/json' } });
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
@@ -658,6 +681,9 @@
       const applyFilter = () => {
         currentSearch = normalizeRequestValue(searchInput.value);
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       };
 
@@ -676,6 +702,9 @@
         searchInput.value = '';
         currentSearch = '';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -694,6 +723,9 @@
         }
 
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -703,6 +735,15 @@
         }
 
         currentPage -= 1;
+        useTailPageFetch = false;
+        nextPageCursor = null;
+        previousPageCursor = currentItem
+          ? {
+              termoAdesao: String(currentItem.termo_adesao || ''),
+              aditivo: String(currentItem.aditivo || ''),
+              codigo: String(currentItem.codigo || ''),
+            }
+          : null;
         void loadItems();
       });
 
@@ -712,6 +753,15 @@
         }
 
         currentPage += 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = currentItem
+          ? {
+              termoAdesao: String(currentItem.termo_adesao || ''),
+              aditivo: String(currentItem.aditivo || ''),
+              codigo: String(currentItem.codigo || ''),
+            }
+          : null;
         void loadItems();
       });
 
@@ -721,6 +771,9 @@
         }
 
         currentPage = totalPages;
+        useTailPageFetch = true;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 

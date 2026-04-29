@@ -381,7 +381,7 @@
 
             <div class="dsc-popup-overlay dsc-hidden" id="credenciamento-termo-form-modal" aria-hidden="true">
               <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="credenciamento-termo-form-title">
-            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciamento-termo-form">
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="credenciamento-termo-form" novalidate>
               <div class="dsc-popup-header dsc-popup-header-sticky">
                 <h2 id="credenciamento-termo-form-title">CADASTRO DE TERMO</h2>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-credenciamento-termo-form-modal-button" aria-label="Fechar formulario de termo">X</button>
@@ -405,7 +405,7 @@
                     <span>Credenciado</span>
                     <input class="dsc-form-control dsc-form-control-auto-filled" id="credenciamento-termo-credenciado" type="text" maxlength="255" list="credenciamento-termo-credenciado-options" autocomplete="off" readonly />
                     <datalist id="credenciamento-termo-credenciado-options"></datalist>
-                    <p class="dsc-form-hint">Ao informar o CNPJ/CPF, a tela localiza a credenciada ativa correspondente.</p>
+                    <p class="dsc-form-hint" id="credenciamento-termo-credenciado-hint">Ao informar o CNPJ/CPF, a tela localiza a credenciada ativa correspondente.</p>
                     <div class="dsc-form-error" id="credenciamento-termo-credenciado-error"></div>
                   </label>
 
@@ -886,6 +886,7 @@
       const seiInput = document.getElementById('credenciamento-termo-sei');
       const credenciadoInput = document.getElementById('credenciamento-termo-credenciado');
       const credenciadoOptions = document.getElementById('credenciamento-termo-credenciado-options');
+      const credenciadoHint = document.getElementById('credenciamento-termo-credenciado-hint');
       const credenciadaCodigoInput = document.getElementById('credenciamento-termo-credenciada-codigo');
       const cnpjCpfInput = document.getElementById('credenciamento-termo-cnpj-cpf');
       const cnpjCpfOptions = document.getElementById('credenciamento-termo-cnpj-cpf-options');
@@ -955,6 +956,7 @@
       const dismissContratoButton = document.getElementById('dismiss-credenciamento-termo-contrato-button');
       const printContratoButton = document.getElementById('print-credenciamento-termo-contrato-button');
       const downloadContratoDocButton = document.getElementById('download-credenciamento-termo-contrato-doc-button');
+      const defaultCredenciadoHintText = 'Ao informar o CNPJ/CPF, a tela localiza a credenciada ativa correspondente.';
 
       const errors = {
         codigoXml: document.getElementById('credenciamento-termo-codigo-xml-error'),
@@ -1029,6 +1031,10 @@
       let currentSearch = '';
       let currentSortBy = 'codigo';
       let currentSortDirection = 'asc';
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
+      let currentGridItems = [];
       let currentRejectionPage = 1;
       let totalRejectionPages = 1;
       let currentRejectionSearch = '';
@@ -1193,7 +1199,15 @@
         const [day, month, year] = normalizedValue.split('/').map(Number);
         const parsed = new Date(year, month - 1, day);
 
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
+        if (Number.isNaN(parsed.getTime())) {
+          return null;
+        }
+
+        if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) {
+          return null;
+        }
+
+        return parsed;
       };
       const enableFullDateSelection = (input) => {
         if (!input) {
@@ -1241,6 +1255,7 @@
         input.addEventListener('blur', () => {
           const typedValue = String(input.value || '').trim();
           const parsedDate = parseReportDateToDate(typedValue);
+          input.dataset.dateValidationInvalid = typedValue && !parsedDate ? 'true' : '';
           const normalizedValue = parsedDate
             ? formatDateInputValue(parsedDate)
             : (input.dataset.dateOriginalValue || '');
@@ -1256,6 +1271,20 @@
         const result = new Date(value);
         result.setDate(result.getDate() + days);
         return result;
+      };
+
+      const validateDateFieldOnBlur = (input, errorElement, invalidMessage) => {
+        if (!input || !errorElement) {
+          return false;
+        }
+
+        if (input.dataset.dateValidationInvalid === 'true') {
+          errorElement.textContent = invalidMessage;
+          return true;
+        }
+
+        errorElement.textContent = '';
+        return false;
       };
       const addYearsToDate = (value, years) => {
         const result = new Date(value);
@@ -3709,6 +3738,28 @@
           params.set('search', currentSearch);
         }
 
+        if (useTailPageFetch) {
+          params.set('tail', '1');
+        }
+
+        if (previousPageCursor) {
+          if (previousPageCursor.codigo) {
+            params.set('beforeCodigo', previousPageCursor.codigo);
+          }
+          if (previousPageCursor.termoAdesao) {
+            params.set('beforeTermoAdesao', previousPageCursor.termoAdesao);
+          }
+        }
+
+        if (nextPageCursor) {
+          if (nextPageCursor.codigo) {
+            params.set('afterCodigo', nextPageCursor.codigo);
+          }
+          if (nextPageCursor.termoAdesao) {
+            params.set('afterTermoAdesao', nextPageCursor.termoAdesao);
+          }
+        }
+
         return `/api/termo?${params.toString()}`;
       };
 
@@ -3748,6 +3799,7 @@
       };
 
       const renderGrid = (items) => {
+        currentGridItems = items;
         gridBody.innerHTML = '';
 
         if (!items.length) {
@@ -3991,9 +4043,13 @@
 
       const loadItems = async () => {
         gridFeedback.textContent = 'Carregando registros...';
+        const requestUrl = buildUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
 
         try {
-          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const response = await fetch(requestUrl, { headers: { Accept: 'application/json' } });
           if (!response.ok) {
             throw new Error(await getRequestErrorMessage(response, 'Falha ao consultar registros.'));
           }
@@ -4070,12 +4126,42 @@
         }
       };
 
+      const updateCredenciadaDocumentSuggestionFeedback = (items = []) => {
+        const activeItems = Array.isArray(items)
+          ? items.filter((item) => normalizeText(item?.status || '', 50) === 'ATIVO')
+          : [];
+
+        const credenciadoLabels = activeItems
+          .map((item) => normalizeText(String(item?.credenciado || ''), 255))
+          .filter(Boolean);
+
+        credenciadoOptions.innerHTML = '<option value=""></option>' + credenciadoLabels
+          .map((credenciado) => `<option value="${credenciado}"></option>`)
+          .join('');
+
+        if (!getDocumentDigits(cnpjCpfInput.value)) {
+          credenciadoHint.textContent = defaultCredenciadoHintText;
+          return;
+        }
+
+        if (!activeItems.length) {
+          credenciadoHint.textContent = 'Nenhuma credenciada ativa encontrada para esse trecho do CNPJ/CPF.';
+          return;
+        }
+
+        const preview = credenciadoLabels.slice(0, 3).join('; ');
+        credenciadoHint.textContent = activeItems.length === 1
+          ? `Credenciada encontrada: ${preview}. Continue digitando ou saia do campo para carregar os dados.`
+          : `${activeItems.length} credenciadas possíveis: ${preview}${activeItems.length > 3 ? '; ...' : ''}`;
+      };
+
       const populateCredenciadaDocumentOptions = async (searchValue = '') => {
         const requestId = ++credenciadaSuggestionRequestId;
         const normalizedSearch = normalizeCnpjCpf(String(searchValue || ''));
 
         if (!getDocumentDigits(normalizedSearch).length) {
           cnpjCpfOptions.innerHTML = '<option value=""></option>';
+          updateCredenciadaDocumentSuggestionFeedback([]);
           return;
         }
 
@@ -4104,12 +4190,14 @@
             .join('');
 
           cnpjCpfOptions.innerHTML = '<option value=""></option>' + options;
+          updateCredenciadaDocumentSuggestionFeedback(payload.items || []);
         } catch {
           if (requestId !== credenciadaSuggestionRequestId) {
             return;
           }
 
           cnpjCpfOptions.innerHTML = '<option value=""></option>';
+          updateCredenciadaDocumentSuggestionFeedback([]);
         }
       };
 
@@ -4128,6 +4216,7 @@
           municipioInput.value = '';
           syncEspecificacaoSei();
           syncTextoCopia();
+          credenciadoHint.textContent = defaultCredenciadoHintText;
           return;
         }
 
@@ -4162,6 +4251,7 @@
           }
 
           errors.credenciado.textContent = '';
+          credenciadoHint.textContent = defaultCredenciadoHintText;
         } catch (error) {
           credenciadaCodigoInput.value = '';
           cnpjCpfInput.value = '';
@@ -4174,6 +4264,7 @@
           bairroInput.value = '';
           municipioInput.value = '';
           errors.credenciado.textContent = error instanceof Error ? error.message : 'Falha ao localizar credenciada.';
+          credenciadoHint.textContent = defaultCredenciadoHintText;
           syncTextoCopia();
         }
       };
@@ -4195,6 +4286,7 @@
           syncEspecificacaoSei();
           syncTextoCopia();
           errors.cnpjCpf.textContent = '';
+          credenciadoHint.textContent = defaultCredenciadoHintText;
           return;
         }
 
@@ -4230,6 +4322,7 @@
 
           errors.cnpjCpf.textContent = '';
           errors.credenciado.textContent = '';
+          credenciadoHint.textContent = defaultCredenciadoHintText;
 
           if (formMode === 'create') {
             seiInput.focus();
@@ -4247,6 +4340,7 @@
           syncEspecificacaoSei();
           syncTextoCopia();
           errors.cnpjCpf.textContent = error instanceof Error ? error.message : 'Falha ao localizar credenciada.';
+          credenciadoHint.textContent = defaultCredenciadoHintText;
         }
       };
 
@@ -4648,6 +4742,9 @@
       firstPageButton.addEventListener('click', () => {
         if (currentPage > 1) {
           currentPage = 1;
+          useTailPageFetch = false;
+          previousPageCursor = null;
+          nextPageCursor = null;
           void loadItems();
         }
       });
@@ -4655,6 +4752,14 @@
       previousPageButton.addEventListener('click', () => {
         if (currentPage > 1) {
           currentPage -= 1;
+          useTailPageFetch = false;
+          nextPageCursor = null;
+          previousPageCursor = currentGridItems.length
+            ? {
+                codigo: String(currentGridItems[0]?.codigo || ''),
+                termoAdesao: currentSortBy === 'termo_adesao' ? String(currentGridItems[0]?.termo_adesao || '') : '',
+              }
+            : null;
           void loadItems();
         }
       });
@@ -4662,6 +4767,14 @@
       nextPageButton.addEventListener('click', () => {
         if (currentPage < totalPages) {
           currentPage += 1;
+          useTailPageFetch = false;
+          previousPageCursor = null;
+          nextPageCursor = currentGridItems.length
+            ? {
+                codigo: String(currentGridItems[currentGridItems.length - 1]?.codigo || ''),
+                termoAdesao: currentSortBy === 'termo_adesao' ? String(currentGridItems[currentGridItems.length - 1]?.termo_adesao || '') : '',
+              }
+            : null;
           void loadItems();
         }
       });
@@ -4669,6 +4782,9 @@
       lastPageButton.addEventListener('click', () => {
         if (currentPage < totalPages) {
           currentPage = totalPages;
+          useTailPageFetch = currentSortDirection === 'asc' && (currentSortBy === 'codigo' || currentSortBy === 'termo_adesao');
+          previousPageCursor = null;
+          nextPageCursor = null;
           void loadItems();
         }
       });
@@ -4683,6 +4799,9 @@
 
         pageSize = nextPageSize;
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -4722,6 +4841,9 @@
           currentSortDirection = 'asc';
         }
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -4733,6 +4855,9 @@
           currentSortDirection = 'asc';
         }
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -4783,12 +4908,20 @@
         syncTextoCopia();
         errors.cnpjCpf.textContent = '';
 
-        if (getDocumentDigits(cnpjCpfInput.value).length >= 3) {
+        const documentDigitsLength = getDocumentDigits(cnpjCpfInput.value).length;
+
+        if ([11, 14].includes(documentDigitsLength)) {
+          void syncCredenciadaByDocument();
+          return;
+        }
+
+        if (documentDigitsLength >= 3) {
           void populateCredenciadaDocumentOptions(cnpjCpfInput.value);
           return;
         }
 
         cnpjCpfOptions.innerHTML = '<option value=""></option>';
+        updateCredenciadaDocumentSuggestionFeedback([]);
       });
 
       cnpjCpfInput.addEventListener('blur', () => {
@@ -4845,6 +4978,27 @@
       lastAditivoDataPublicacaoInput.addEventListener('input', () => {
         lastAditivoDataPublicacaoError.textContent = '';
         syncLastAditivoSituacaoPublicacao();
+      });
+
+      [
+        { input: inicioVigenciaInput, errorElement: errors.inicioVigencia, invalidMessage: 'Inicio de vigencia invalido.' },
+        { input: terminoVigenciaInput, errorElement: errors.terminoVigencia, invalidMessage: 'Termino de vigencia invalido.' },
+        { input: compDataAditivoInput, errorElement: errors.compDataAditivo, invalidMessage: 'Comp data do aditivo invalida.' },
+        { input: dataAssinaturaInput, errorElement: errors.dataAssinatura, invalidMessage: 'Data de assinatura invalida.' },
+        { input: dataPublicacaoInput, errorElement: errors.dataPublicacao, invalidMessage: 'Data de publicacao invalida.' },
+        { input: vencimentoGeralInput, errorElement: errors.vencimentoGeral, invalidMessage: 'Vencimento geral invalido.' },
+        { input: lastAditivoDataPublicacaoInput, errorElement: lastAditivoDataPublicacaoError, invalidMessage: 'Data de publicacao invalida.' },
+      ].forEach(({ input, errorElement, invalidMessage }) => {
+        input.addEventListener('input', () => {
+          input.dataset.dateValidationInvalid = '';
+          if (errorElement.textContent.trim()) {
+            errorElement.textContent = '';
+          }
+        });
+
+        input.addEventListener('blur', () => {
+          validateDateFieldOnBlur(input, errorElement, invalidMessage);
+        });
       });
 
       lastAditivoForm.addEventListener('submit', async (event) => {

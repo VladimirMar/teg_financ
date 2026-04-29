@@ -256,6 +256,10 @@
       let currentSearch = '';
       let currentSortBy = 'cep';
       let currentSortDirection = 'asc';
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
+      let currentGridItems = [];
       let currentRejectionPage = 1;
       let totalRejectionPages = 1;
       let currentRejectionSearch = '';
@@ -433,6 +437,7 @@
 
       // ---- Grid render ----
       const renderGrid = (items) => {
+        currentGridItems = items;
         const body = document.getElementById('cep-grid-body');
         body.innerHTML = '';
 
@@ -489,15 +494,22 @@
           sortDirection: currentSortDirection,
         });
         if (currentSearch) params.set('search', currentSearch);
+        if (useTailPageFetch) params.set('tail', '1');
+        if (previousPageCursor) params.set('beforeCep', previousPageCursor);
+        if (nextPageCursor) params.set('afterCep', nextPageCursor);
         return `${API_BASE}/api/cep?${params}`;
       };
 
       const loadItems = async () => {
         const gridFeedback = document.getElementById('cep-grid-feedback');
         gridFeedback.textContent = 'Carregando...';
+        const requestUrl = buildUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
 
         try {
-          const response = await fetch(buildUrl());
+          const response = await fetch(requestUrl);
           const data = await response.json();
 
           if (!response.ok) {
@@ -684,24 +696,55 @@
         document.getElementById('cep-search').value = '';
         currentSearch = '';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
       // ---- Pagination ----
       document.getElementById('first-cep-page-button').addEventListener('click', () => {
-        if (currentPage > 1) { currentPage = 1; void loadItems(); }
+        if (currentPage > 1) {
+          currentPage = 1;
+          useTailPageFetch = false;
+          previousPageCursor = null;
+          nextPageCursor = null;
+          void loadItems();
+        }
       });
 
       document.getElementById('previous-cep-page-button').addEventListener('click', () => {
-        if (currentPage > 1) { currentPage--; void loadItems(); }
+        if (currentPage > 1) {
+          currentPage -= 1;
+          useTailPageFetch = false;
+          nextPageCursor = null;
+          previousPageCursor = currentSortBy === 'cep' && currentSortDirection === 'asc' && currentGridItems.length
+            ? String(currentGridItems[0]?.cep || '')
+            : null;
+          void loadItems();
+        }
       });
 
       document.getElementById('next-cep-page-button').addEventListener('click', () => {
-        if (currentPage < totalPages) { currentPage++; void loadItems(); }
+        if (currentPage < totalPages) {
+          currentPage += 1;
+          useTailPageFetch = false;
+          previousPageCursor = null;
+          nextPageCursor = currentSortBy === 'cep' && currentSortDirection === 'asc' && currentGridItems.length
+            ? String(currentGridItems[currentGridItems.length - 1]?.cep || '')
+            : null;
+          void loadItems();
+        }
       });
 
       document.getElementById('last-cep-page-button').addEventListener('click', () => {
-        if (currentPage < totalPages) { currentPage = totalPages; void loadItems(); }
+        if (currentPage < totalPages) {
+          currentPage = totalPages;
+          useTailPageFetch = currentSortBy === 'cep' && currentSortDirection === 'asc';
+          previousPageCursor = null;
+          nextPageCursor = null;
+          void loadItems();
+        }
       });
 
       pageSizeSelect?.addEventListener('change', () => {
@@ -714,6 +757,9 @@
 
         pageSize = nextPageSize;
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -726,6 +772,9 @@
           currentSortDirection = 'asc';
         }
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -737,6 +786,9 @@
           currentSortDirection = 'asc';
         }
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 

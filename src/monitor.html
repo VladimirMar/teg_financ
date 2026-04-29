@@ -19,7 +19,7 @@
                 <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-monitor-button">Inserir registro</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-monitor-import-button">Importar XML</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-monitor-rejections-button">Recusas XML</button>
-                <input class="dsc-form-control dsc-access-filter-input" id="monitor-search" type="text" placeholder="Filtrar por codigo, monitor, CPF ou RG" />
+                <input class="dsc-form-control dsc-access-filter-input" id="monitor-search" type="text" placeholder="Filtrar por codigo, monitor ou CPF" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-monitor-filter-button">Limpar</button>
               </form>
@@ -37,7 +37,7 @@
               </div>
 
               <form class="dsc-access-filter-form" id="monitor-rejection-filter-form">
-                <input class="dsc-form-control dsc-access-filter-input" id="monitor-rejection-search" type="text" placeholder="Filtrar por arquivo, codigo, monitor, RG, tipo vinculo ou motivo" />
+                <input class="dsc-form-control dsc-access-filter-input" id="monitor-rejection-search" type="text" placeholder="Filtrar por arquivo, codigo, monitor, CPF, tipo vinculo ou motivo" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-monitor-rejection-filter-button">Limpar</button>
               </form>
@@ -52,7 +52,6 @@
                       <th>Codigo XML</th>
                       <th>Monitor XML</th>
                       <th>CPF XML</th>
-                      <th>RG XML</th>
                       <th>Tipo vinculo XML</th>
                       <th>Motivo da recusa</th>
                     </tr>
@@ -104,7 +103,7 @@
 
             <div class="dsc-popup-overlay dsc-hidden" id="monitor-form-modal" aria-hidden="true">
               <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="monitor-form-title">
-            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="monitor-form">
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="monitor-form" novalidate>
               <div class="dsc-popup-header dsc-popup-header-sticky">
                 <h2 id="monitor-form-title">MONITOR</h2>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-monitor-form-modal-button" aria-label="Fechar formulario de monitor">X</button>
@@ -135,11 +134,6 @@
                   <div class="dsc-form-error" id="monitor-cpf-error"></div>
                 </label>
 
-                <label class="dsc-field-group" for="monitor-rg">
-                  <span>RG</span>
-                  <input class="dsc-form-control" id="monitor-rg" type="text" placeholder="00.000.000-0" maxlength="20" />
-                  <div class="dsc-form-error" id="monitor-rg-error"></div>
-                </label>
               </div>
 
               <div class="dsc-form-row dsc-form-row-monitor-dates">
@@ -248,7 +242,6 @@
                         </button>
                       </th>
                       <th>CPF</th>
-                      <th>RG</th>
                       <th>Curso</th>
                       <th>Validade curso</th>
                       <th>Tipo vinculo</th>
@@ -282,13 +275,11 @@
       const codigoError = document.getElementById('monitor-codigo-error');
       const nomeInput = document.getElementById('monitor-nome');
       const cpfInput = document.getElementById('monitor-cpf');
-      const rgInput = document.getElementById('monitor-rg');
       const cursoInput = document.getElementById('monitor-curso');
       const validadeCursoInput = document.getElementById('monitor-validade-curso');
       const nascimentoInput = document.getElementById('monitor-nascimento');
       const nomeError = document.getElementById('monitor-nome-error');
       const cpfError = document.getElementById('monitor-cpf-error');
-      const rgError = document.getElementById('monitor-rg-error');
       const cursoError = document.getElementById('monitor-curso-error');
       const validadeCursoError = document.getElementById('monitor-validade-curso-error');
       const nascimentoError = document.getElementById('monitor-nascimento-error');
@@ -355,6 +346,10 @@
       let currentSearch = '';
       let currentSortBy = 'codigo';
       let currentSortDirection = 'asc';
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
+      let currentGridItems = [];
       let currentRejectionPage = 1;
       let totalRejectionPages = 1;
       let currentRejectionSearch = '';
@@ -421,8 +416,45 @@
 
         const [day, month, year] = normalizedValue.split('/').map(Number);
         const parsed = new Date(year, month - 1, day);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
+
+        if (Number.isNaN(parsed.getTime())) {
+          return null;
+        }
+
+        if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) {
+          return null;
+        }
+
+        return parsed;
       };
+      const formatEditableDateTyping = (value) => {
+        const digits = String(value ?? '').replace(/\D/g, '').slice(0, 8);
+
+        if (digits.length <= 2) {
+          return digits;
+        }
+
+        if (digits.length <= 4) {
+          return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+        }
+
+        return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+      };
+      const commitEditableDateInput = (input) => {
+        if (!input || input.type !== 'text') {
+          return;
+        }
+
+        const parsedDate = parseEditableDateValue(input.value);
+        input.type = 'date';
+        input.inputMode = '';
+        input.placeholder = '';
+        input.value = parsedDate
+          ? formatEditableDateInputValue(parsedDate)
+          : (input.dataset.dateOriginalValue || '');
+        delete input.dataset.dateOriginalValue;
+      };
+
       const enableFullDateSelection = (input) => {
         if (!input) {
           return;
@@ -450,9 +482,17 @@
           input.dataset.dateOriginalValue = input.value;
           input.type = 'text';
           input.inputMode = 'numeric';
-          input.placeholder = 'dd/mm/aaaa';
+          input.placeholder = 'dd/mm/yyyy';
           input.value = toEditableDateDisplay(input.value);
           selectAllContent();
+        });
+
+        input.addEventListener('input', () => {
+          if (input.type !== 'text') {
+            return;
+          }
+
+          input.value = formatEditableDateTyping(input.value);
         });
 
         input.addEventListener('mouseup', (event) => {
@@ -465,14 +505,7 @@
         });
 
         input.addEventListener('blur', () => {
-          const parsedDate = parseEditableDateValue(input.value);
-          input.type = 'date';
-          input.inputMode = '';
-          input.placeholder = '';
-          input.value = parsedDate
-            ? formatEditableDateInputValue(parsedDate)
-            : (input.dataset.dateOriginalValue || '');
-          delete input.dataset.dateOriginalValue;
+          commitEditableDateInput(input);
         });
       };
 
@@ -493,11 +526,6 @@
 
         return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
       };
-
-      const normalizeRg = (value) => value
-        .toUpperCase()
-        .replace(/[^0-9A-Z.\-/]/g, '')
-        .slice(0, 20);
 
       const formatDateLabel = (value) => value ? value.split('-').reverse().join('/') : '';
       const getCurrentDateInputValue = () => {
@@ -526,11 +554,11 @@
         const day = String(nextDay.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
       };
-      const isFutureDate = (value) => Boolean(value) && value > getCurrentDateInputValue();
+      const isTodayOrFutureDate = (value) => Boolean(value) && value >= getCurrentDateInputValue();
       const isCourseValidityOnOrAfterCourseDate = (cursoMonitor, validadeCurso) => Boolean(cursoMonitor) && Boolean(validadeCurso) && validadeCurso >= cursoMonitor;
       const syncValidadeCursoMin = () => {
-        const nextDate = getNextDateInputValue();
-        validadeCursoInput.min = cursoInput.value && cursoInput.value > nextDate ? cursoInput.value : nextDate;
+        const currentDate = getCurrentDateInputValue();
+        validadeCursoInput.min = cursoInput.value && cursoInput.value > currentDate ? cursoInput.value : currentDate;
       };
 
       const formatDateTimeLabel = (value) => {
@@ -609,11 +637,35 @@
         return error instanceof Error ? error.message : fallbackMessage;
       };
 
+      const pageSearchParams = new URLSearchParams(window.location.search);
+      const popupMode = String(pageSearchParams.get('popupMode') || '').trim().toLowerCase();
+      const popupCpf = normalizeCpf(String(pageSearchParams.get('cpf') || ''));
+      const isOrdemServicoMonitorPopup = popupMode === 'ordem-servico-monitor';
+      let activeCpfValidationRequestId = 0;
+      let activeCpfValidationTimeoutId = null;
+
+      const notifyOrdemServicoMonitorSaved = (item) => {
+        if (!isOrdemServicoMonitorPopup || !window.opener || window.opener.closed) {
+          return false;
+        }
+
+        window.opener.postMessage({
+          type: 'tegfinanc:monitor-created',
+          context: 'ordem-servico-monitor',
+          item: {
+            codigo: item?.codigo || '',
+            monitor: normalizeName(String(item?.monitor || '')),
+            cpf_monitor: normalizeCpf(String(item?.cpf_monitor || item?.cpfMonitor || '')),
+          },
+        }, window.location.origin);
+
+        return true;
+      };
+
       const resetMessages = () => {
         codigoError.textContent = '';
         nomeError.textContent = '';
         cpfError.textContent = '';
-        rgError.textContent = '';
         cursoError.textContent = '';
         validadeCursoError.textContent = '';
         nascimentoError.textContent = '';
@@ -624,7 +676,6 @@
         codigo: codigoError,
         monitor: nomeError,
         cpfMonitor: cpfError,
-        rgMonitor: rgError,
         cursoMonitor: cursoError,
         validadeCurso: validadeCursoError,
         nascimento: nascimentoError,
@@ -633,7 +684,6 @@
         codigo: codigoInput,
         monitor: nomeInput,
         cpfMonitor: cpfInput,
-        rgMonitor: rgInput,
         cursoMonitor: cursoInput,
         validadeCurso: validadeCursoInput,
         nascimento: nascimentoInput,
@@ -663,6 +713,76 @@
         }
       };
 
+      const getComparableDateInputValue = (input) => {
+        if (!input) {
+          return '';
+        }
+
+        if (input.type === 'text') {
+          const parsedDate = parseEditableDateValue(input.value);
+          return parsedDate ? formatEditableDateInputValue(parsedDate) : '';
+        }
+
+        return input.value || '';
+      };
+
+      const validateMonitorBirthDateField = () => {
+        const nascimento = getComparableDateInputValue(nascimentoInput);
+
+        if (!nascimento) {
+          nascimentoError.textContent = 'Informe a data de nascimento.';
+          return true;
+        }
+
+        if (!isBirthDateBeforeToday(nascimento)) {
+          nascimentoError.textContent = 'Data de nascimento deve ser anterior ao dia da inclusao.';
+          return true;
+        }
+
+        nascimentoError.textContent = '';
+        return false;
+      };
+
+      const validateMonitorValidityField = (showRequired = false) => {
+        const cursoMonitor = getComparableDateInputValue(cursoInput);
+        const validadeCurso = getComparableDateInputValue(validadeCursoInput);
+
+        if (!validadeCurso) {
+          validadeCursoError.textContent = showRequired ? 'Informe a validade do curso.' : '';
+          return showRequired;
+        }
+
+        if (!isTodayOrFutureDate(validadeCurso)) {
+          validadeCursoError.textContent = 'Validade do curso deve ser maior ou igual a hoje.';
+          return true;
+        }
+
+        if (cursoMonitor && !isCourseValidityOnOrAfterCourseDate(cursoMonitor, validadeCurso)) {
+          validadeCursoError.textContent = 'Validade do curso deve ser maior ou igual a data do curso.';
+          return true;
+        }
+
+        validadeCursoError.textContent = '';
+        return false;
+      };
+
+      const validateMonitorCourseField = () => {
+        const cursoMonitor = getComparableDateInputValue(cursoInput);
+
+        if (!cursoMonitor) {
+          cursoError.textContent = 'Informe a data do curso.';
+          return true;
+        }
+
+        if (!isTodayOrFutureDate(cursoMonitor)) {
+          cursoError.textContent = 'Data do curso deve ser maior ou igual a hoje.';
+          return true;
+        }
+
+        cursoError.textContent = '';
+        return false;
+      };
+
       const resetImportMessages = () => {
         importFileNameError.textContent = '';
         importFeedback.textContent = '';
@@ -683,6 +803,97 @@
         if (tone) {
           gridFeedback.classList.add(`dsc-feedback-${tone}`);
         }
+      };
+
+      const fetchActiveOrdemServicoByCpf = async (cpf) => {
+        const normalizedCpf = normalizeCpf(cpf);
+
+        if (normalizedCpf.replace(/\D/g, '').length !== 11) {
+          return null;
+        }
+
+        const params = new URLSearchParams({ cpf: normalizedCpf });
+        const response = await fetch(`/api/ordem-servico/active-cpf?${params.toString()}`, {
+          headers: { Accept: 'application/json' },
+        });
+        const payload = await readJsonResponse(response);
+
+        if (!response.ok) {
+          throw new Error(payload.message || 'Falha ao validar CPF em OrdemServico ativa.');
+        }
+
+        return payload.item || null;
+      };
+
+      const buildOrdemServicoNumeroLabel = (item) => {
+        const termoAdesao = String(item?.termo_adesao || '').trim();
+        const numOs = String(item?.num_os || '').trim();
+        const revisao = String(item?.revisao || '').trim();
+        const codigo = String(item?.codigo || '').trim();
+        let label = [termoAdesao, numOs].filter(Boolean).join('-');
+
+        if (revisao) {
+          label += revisao.startsWith('-')
+            ? revisao
+            : `${label ? '-' : ''}${revisao}`;
+        }
+
+        return label || codigo;
+      };
+
+      const validateActiveOrdemServicoCpf = async (cpfValue = cpfInput.value) => {
+        const normalizedCpf = normalizeCpf(cpfValue);
+
+        if (normalizedCpf.replace(/\D/g, '').length !== 11) {
+          cpfError.textContent = '';
+          return true;
+        }
+
+        const activeItem = await fetchActiveOrdemServicoByCpf(normalizedCpf);
+
+        if (!activeItem) {
+          cpfError.textContent = '';
+          return true;
+        }
+
+        cpfError.textContent = `CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeItem)}`;
+        return false;
+      };
+
+      const scheduleActiveOrdemServicoCpfValidation = (cpfValue = cpfInput.value) => {
+        const normalizedCpf = normalizeCpf(cpfValue);
+
+        if (activeCpfValidationTimeoutId) {
+          window.clearTimeout(activeCpfValidationTimeoutId);
+          activeCpfValidationTimeoutId = null;
+        }
+
+        if (normalizedCpf.replace(/\D/g, '').length !== 11) {
+          activeCpfValidationRequestId += 1;
+          cpfError.textContent = '';
+          return;
+        }
+
+        const requestId = ++activeCpfValidationRequestId;
+        activeCpfValidationTimeoutId = window.setTimeout(async () => {
+          try {
+            const activeItem = await fetchActiveOrdemServicoByCpf(normalizedCpf);
+
+            if (requestId !== activeCpfValidationRequestId) {
+              return;
+            }
+
+            cpfError.textContent = activeItem
+              ? `CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeItem)}`
+              : '';
+          } catch (error) {
+            if (requestId !== activeCpfValidationRequestId) {
+              return;
+            }
+
+            cpfError.textContent = getRequestErrorMessage(error, 'Falha ao validar CPF em OrdemServico ativa.');
+          }
+        }, 250);
       };
 
       const setActiveFormTab = (tabName = 'cadastro') => {
@@ -784,7 +995,7 @@
       };
 
       const setFormReadOnly = (isReadOnly) => {
-        [nomeInput, cpfInput, rgInput, cursoInput, validadeCursoInput, nascimentoInput].forEach((input) => {
+        [nomeInput, cpfInput, cursoInput, validadeCursoInput, nascimentoInput].forEach((input) => {
           input.readOnly = isReadOnly;
         });
         codigoInput.readOnly = true;
@@ -893,6 +1104,18 @@
           params.set('search', currentSearch);
         }
 
+        if (useTailPageFetch) {
+          params.set('tail', '1');
+        }
+
+        if (previousPageCursor) {
+          params.set('beforeCodigo', previousPageCursor);
+        }
+
+        if (nextPageCursor) {
+          params.set('afterCodigo', nextPageCursor);
+        }
+
         return `/api/monitor?${params.toString()}`;
       };
 
@@ -910,6 +1133,7 @@
       };
 
       const renderGrid = (items) => {
+        currentGridItems = items;
         gridBody.innerHTML = '';
 
         if (!items.length) {
@@ -925,7 +1149,6 @@
             <td>${item.codigo}</td>
             <td>${item.monitor}</td>
             <td>${item.cpf_monitor}</td>
-            <td>${item.rg_monitor || ''}</td>
             <td>${formatDateLabel(item.curso_monitor)}</td>
             <td>${formatDateLabel(item.validade_curso)}</td>
             <td>${item.tipo_vinculo || ''}</td>
@@ -961,7 +1184,6 @@
             <td>${item.codigo_xml || ''}</td>
             <td>${item.monitor_xml || ''}</td>
             <td>${item.cpf_monitor_xml || ''}</td>
-            <td>${item.rg_monitor_xml || ''}</td>
             <td>${item.tipo_vinculo_xml || ''}</td>
             <td>${item.motivo_recusa}</td>
           `;
@@ -993,9 +1215,13 @@
 
       const loadItems = async () => {
         setGridMessage('Carregando monitores...');
+        const requestUrl = buildUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
 
         try {
-          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const response = await fetch(requestUrl, { headers: { Accept: 'application/json' } });
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
@@ -1037,13 +1263,14 @@
         }
       };
 
-      const startInsert = () => {
+      const startInsert = ({ cpf = '' } = {}) => {
         editingCodigo = null;
         form.reset();
         codigoInput.value = '';
         setSelectedTipoVinculo('');
         resetMessages();
         showForm('create');
+        cpfInput.value = normalizeCpf(cpf);
       };
 
       const startEdit = (item) => {
@@ -1051,7 +1278,6 @@
         codigoInput.value = item.codigo;
         nomeInput.value = item.monitor;
         cpfInput.value = item.cpf_monitor;
-        rgInput.value = item.rg_monitor || '';
         cursoInput.value = item.curso_monitor || '';
         validadeCursoInput.value = item.validade_curso || '';
         nascimentoInput.value = item.nascimento || '';
@@ -1065,7 +1291,6 @@
         codigoInput.value = item.codigo;
         nomeInput.value = item.monitor;
         cpfInput.value = item.cpf_monitor;
-        rgInput.value = item.rg_monitor || '';
         cursoInput.value = item.curso_monitor || '';
         validadeCursoInput.value = item.validade_curso || '';
         nascimentoInput.value = item.nascimento || '';
@@ -1147,10 +1372,15 @@
 
       cpfInput.addEventListener('input', () => {
         cpfInput.value = normalizeCpf(cpfInput.value);
+        if (cpfError.textContent.trim()) {
+          cpfError.textContent = '';
+        }
+        scheduleActiveOrdemServicoCpfValidation(cpfInput.value);
       });
 
       cpfInput.addEventListener('blur', () => {
         void loadMonitorVinculosByCpf(cpfInput.value, vinculoTabPanel.classList.contains('dsc-form-tab-panel-active'));
+        void validateActiveOrdemServicoCpf(cpfInput.value);
       });
 
       formTabButtons.forEach((button) => {
@@ -1163,25 +1393,53 @@
         });
       });
 
-      rgInput.addEventListener('input', () => {
-        rgInput.value = normalizeRg(rgInput.value);
-      });
-
       cursoInput.addEventListener('input', () => {
         syncValidadeCursoMin();
+        if (cursoError.textContent.trim()) {
+          validateMonitorCourseField();
+        }
+        validateMonitorValidityField();
       });
 
-      cursoInput.max = getPreviousDateInputValue();
+      cursoInput.addEventListener('blur', () => {
+        validateMonitorCourseField();
+        validateMonitorValidityField(Boolean(validadeCursoInput.value));
+      });
+
+      nascimentoInput.addEventListener('input', () => {
+        if (nascimentoError.textContent.trim()) {
+          validateMonitorBirthDateField();
+        }
+      });
+
+      nascimentoInput.addEventListener('blur', () => {
+        validateMonitorBirthDateField();
+      });
+
+      validadeCursoInput.addEventListener('input', () => {
+        if (validadeCursoError.textContent.trim()) {
+          validateMonitorValidityField(true);
+          return;
+        }
+        validateMonitorValidityField();
+      });
+
+      validadeCursoInput.addEventListener('blur', () => {
+        validateMonitorValidityField(true);
+      });
+
+      cursoInput.min = getCurrentDateInputValue();
       nascimentoInput.max = getPreviousDateInputValue();
       syncValidadeCursoMin();
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
+        [nascimentoInput, cursoInput, validadeCursoInput].forEach(commitEditableDateInput);
+
         const codigo = editingCodigo ? normalizeCodigo(codigoInput.value) : '';
         const monitor = normalizeName(nomeInput.value);
         const cpfMonitor = normalizeCpf(cpfInput.value);
-        const rgMonitor = normalizeRg(rgInput.value);
         const cursoMonitor = cursoInput.value;
         const validadeCurso = validadeCursoInput.value;
         const nascimento = nascimentoInput.value;
@@ -1198,7 +1456,6 @@
         codigoInput.value = codigo;
         nomeInput.value = monitor;
         cpfInput.value = cpfMonitor;
-        rgInput.value = rgMonitor;
 
         if (editingCodigo && !codigo) {
           codigoError.textContent = 'Informe o codigo.';
@@ -1215,35 +1472,17 @@
           hasError = true;
         }
 
-        if (rgMonitor && !/^[0-9A-Z.\-/]{1,20}$/.test(rgMonitor)) {
-          rgError.textContent = 'RG invalido.';
-          hasError = true;
-        }
-
-        if (!nascimento) {
-          nascimentoError.textContent = 'Informe a data de nascimento.';
-          hasError = true;
-        } else if (!isBirthDateBeforeToday(nascimento)) {
-          nascimentoError.textContent = 'Data de nascimento deve ser anterior ao dia da inclusao.';
+        if (validateMonitorBirthDateField()) {
           hasError = true;
         }
 
         if (!cursoMonitor) {
-          cursoError.textContent = 'Informe a data do curso.';
-          hasError = true;
-        } else if (!isBirthDateBeforeToday(cursoMonitor)) {
-          cursoError.textContent = 'Data do curso deve ser anterior ao dia da inclusao.';
+          hasError = validateMonitorCourseField();
+        } else if (validateMonitorCourseField()) {
           hasError = true;
         }
 
-        if (!validadeCurso) {
-          validadeCursoError.textContent = 'Informe a validade do curso.';
-          hasError = true;
-        } else if (!isFutureDate(validadeCurso)) {
-          validadeCursoError.textContent = 'Validade do curso deve ser futura.';
-          hasError = true;
-        } else if (cursoMonitor && !isCourseValidityOnOrAfterCourseDate(cursoMonitor, validadeCurso)) {
-          validadeCursoError.textContent = 'Validade do curso deve ser maior ou igual a data do curso.';
+        if (validateMonitorValidityField(true)) {
           hasError = true;
         }
 
@@ -1254,11 +1493,28 @@
             codigo: codigoError.textContent,
             monitor: nomeError.textContent,
             cpfMonitor: cpfError.textContent,
-            rgMonitor: rgError.textContent,
             nascimento: nascimentoError.textContent,
             cursoMonitor: cursoError.textContent,
             validadeCurso: validadeCursoError.textContent,
           });
+          return;
+        }
+
+        try {
+          const isActiveCpfValid = await validateActiveOrdemServicoCpf(cpfMonitor);
+
+          if (!isActiveCpfValid) {
+            feedback.textContent = 'Corrija os campos para continuar.';
+            feedback.classList.add('dsc-feedback-error');
+            revealFirstFormError({ cpfMonitor: cpfError.textContent });
+            return;
+          }
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao validar CPF em OrdemServico ativa.');
+          cpfError.textContent = message;
+          feedback.textContent = message;
+          feedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
           return;
         }
 
@@ -1272,7 +1528,6 @@
             body: JSON.stringify({
               codigo: editingCodigo ? codigo : null,
               monitor,
-              rgMonitor,
               cpfMonitor,
               cursoMonitor,
               validadeCurso,
@@ -1298,11 +1553,18 @@
           }
 
           const savedItem = payload.item;
+          const shouldReturnToOrdemServico = notifyOrdemServicoMonitorSaved(savedItem);
           feedback.textContent = editingCodigo
             ? `Monitor ${savedItem.codigo} alterado com sucesso.`
             : `Monitor ${savedItem.codigo} gravado com sucesso.`;
           feedback.classList.add('dsc-feedback-success');
           showBanner(feedback.textContent, 'success');
+
+          if (shouldReturnToOrdemServico) {
+            window.close();
+            return;
+          }
+
           hideForm();
           await loadItems();
         } catch (error) {
@@ -1427,6 +1689,9 @@
         event.preventDefault();
         currentSearch = searchInput.value.trim();
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1441,6 +1706,9 @@
         searchInput.value = '';
         currentSearch = '';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1457,6 +1725,9 @@
         }
 
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1466,6 +1737,11 @@
         }
 
         currentPage -= 1;
+        useTailPageFetch = false;
+        nextPageCursor = null;
+        previousPageCursor = currentSortBy === 'codigo' && currentSortDirection === 'asc' && currentGridItems.length
+          ? String(currentGridItems[0]?.codigo || '')
+          : null;
         void loadItems();
       });
 
@@ -1475,6 +1751,11 @@
         }
 
         currentPage += 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = currentSortBy === 'codigo' && currentSortDirection === 'asc' && currentGridItems.length
+          ? String(currentGridItems[currentGridItems.length - 1]?.codigo || '')
+          : null;
         void loadItems();
       });
 
@@ -1484,6 +1765,9 @@
         }
 
         currentPage = totalPages;
+        useTailPageFetch = currentSortBy === 'codigo' && currentSortDirection === 'asc';
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1497,6 +1781,9 @@
 
         pageSize = nextPageSize;
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1548,6 +1835,10 @@
       hideForm();
       hideImportForm();
       hideRejectionPanel();
+      if (isOrdemServicoMonitorPopup) {
+        startInsert({ cpf: popupCpf });
+        feedback.textContent = 'Monitor nao encontrado. Cadastre o monitor e salve para retornar a Ordem de Servico.';
+      }
       void loadItems();
     </script>
   </body>

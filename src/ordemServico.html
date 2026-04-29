@@ -19,7 +19,7 @@
                 <button type="button" class="dsc-btn dsc-btn-blue dsc-access-insert-button" id="insert-ordem-servico-button">Inserir registro</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-ordem-servico-import-button">Importar XML</button>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-access-import-button" id="open-ordem-servico-rejections-button">Recusas XML</button>
-                <input class="dsc-form-control dsc-access-filter-input" id="ordem-servico-search" type="text" placeholder="Filtrar por termo, num OS, revisao, OS, credenciado, DRE, condutor, monitor ou CRM" />
+                <input class="dsc-form-control dsc-access-filter-input" id="ordem-servico-search" type="text" placeholder="Filtrar por termo, num OS, revisao, OS, credenciado, DRE, condutor, monitor, placa ou CRM" />
                 <button type="submit" class="dsc-btn dsc-btn-white">Filtrar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="clear-ordem-servico-filter-button">Limpar</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="open-ordem-servico-eol-button">Pendências EOL</button>
@@ -107,7 +107,7 @@
 
             <div class="dsc-popup-overlay dsc-hidden" id="ordem-servico-form-modal" aria-hidden="true">
               <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="ordem-servico-form-title">
-                <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="ordem-servico-form">
+                <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="ordem-servico-form" novalidate>
               <div class="dsc-popup-header dsc-popup-header-sticky">
                 <h2 id="ordem-servico-form-title">ORDEM DE SERVICO</h2>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-ordem-servico-form-modal-button" aria-label="Fechar formulario de ordem de servico">X</button>
@@ -306,24 +306,7 @@
                     <span>CRM</span>
                     <div class="dsc-inline-action-field dsc-inline-action-field-vinculo">
                       <input class="dsc-form-control" id="ordem-servico-crm" type="text" list="ordem-servico-crm-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CRM DO VEICULO" maxlength="10" />
-                      <button type="button" class="dsc-btn dsc-btn-white dsc-inline-action-button" id="ordem-servico-alterar-relacao-crm-veiculo" aria-label="Modificar relacao CRM x placa" title="Modificar relacao CRM x placa">
-                      <svg width="30" height="30" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <circle cx="32" cy="26" r="8" stroke="#111111" stroke-width="2.8"/>
-                        <circle cx="14" cy="14" r="5.5" stroke="#111111" stroke-width="2.8"/>
-                        <circle cx="32" cy="10" r="5.5" stroke="#111111" stroke-width="2.8"/>
-                        <circle cx="50" cy="14" r="5.5" stroke="#111111" stroke-width="2.8"/>
-                        <circle cx="14" cy="34" r="5.5" stroke="#111111" stroke-width="2.8"/>
-                        <circle cx="20" cy="50" r="7" stroke="#111111" stroke-width="2.8"/>
-                        <path d="M20 19L26 25" stroke="#36C8D0" stroke-width="2.8" stroke-linecap="round"/>
-                        <path d="M32 16V18" stroke="#36C8D0" stroke-width="2.8" stroke-linecap="round"/>
-                        <path d="M44 19L38 25" stroke="#36C8D0" stroke-width="2.8" stroke-linecap="round"/>
-                        <path d="M20 34H24" stroke="#36C8D0" stroke-width="2.8" stroke-linecap="round"/>
-                        <path d="M24 43L28 36" stroke="#36C8D0" stroke-width="2.8" stroke-linecap="round"/>
-                        <path d="M34 27C34 24.8 35.8 23 38 23C40.2 23 42 24.8 42 27V37H44C45.7 37 47 38.3 47 40V50H33L26 42C24.9 40.8 25 39 26.2 37.9C27.4 36.8 29.1 36.9 30.2 38L32 39.8V27C32 24.8 33.8 23 36 23" stroke="#111111" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M36 24V35" stroke="#111111" stroke-width="2.8" stroke-linecap="round"/>
-                        <path d="M40 28V35" stroke="#111111" stroke-width="2.8" stroke-linecap="round"/>
-                      </svg>
-                      </button>
+                      <button type="button" class="dsc-btn dsc-btn-white dsc-inline-action-button" id="open-veiculo-popup-button" aria-label="Abrir cadastro de veiculo" title="Abrir cadastro de veiculo">🔗</button>
                     </div>
                     <datalist id="ordem-servico-crm-options">
                       <option value=""></option>
@@ -351,39 +334,6 @@
                     <input class="dsc-form-control" id="ordem-servico-data-encerramento" type="date" />
                     <div class="dsc-form-error" id="ordem-servico-data-encerramento-error"></div>
                   </label>
-                </div>
-
-                <div class="dsc-popup-overlay dsc-hidden" id="ordem-servico-relacao-crm-modal" aria-hidden="true">
-                  <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="ordem-servico-relacao-crm-title">
-                    <section class="dsc-card dsc-form dsc-access-form dsc-hidden" id="ordem-servico-relacao-crm-panel">
-                      <div class="dsc-popup-header dsc-popup-header-with-compact-close dsc-popup-header-sticky">
-                        <div class="dsc-popup-header-copy">
-                          <h2 id="ordem-servico-relacao-crm-title">ALTERACAO DA RELACAO CRM COM VEICULO</h2>
-                          <span id="ordem-servico-relacao-crm-subtitle">Consulte o CRM e a placa vinculada ao veiculo.</span>
-                        </div>
-                        <button type="button" class="dsc-btn dsc-btn-white dsc-popup-close-button dsc-popup-compact-close-button" id="close-ordem-servico-relacao-crm-button" aria-label="Fechar alteracao da relacao CRM com veiculo">X</button>
-                      </div>
-
-                      <div class="dsc-form-row dsc-form-row-ordem-servico-operacional">
-                        <label class="dsc-field-group" for="ordem-servico-relacao-crm-input">
-                          <span>CRM</span>
-                          <input class="dsc-form-control" id="ordem-servico-relacao-crm-input" type="text" list="ordem-servico-crm-options" autocomplete="off" placeholder="CRM" maxlength="10" />
-                        </label>
-
-                        <label class="dsc-field-group" for="ordem-servico-relacao-placa-input">
-                          <span>Placa do veiculo</span>
-                          <input class="dsc-form-control" id="ordem-servico-relacao-placa-input" type="text" placeholder="PLACAS DO VEICULO" maxlength="8" />
-                        </label>
-                      </div>
-
-                      <div class="dsc-login-form-buttons dsc-access-form-buttons dsc-popup-footer-sticky">
-                        <button type="button" class="dsc-btn dsc-btn-white" id="cancel-ordem-servico-relacao-crm-button">Cancelar</button>
-                        <button type="button" class="dsc-btn dsc-btn-blue" id="apply-ordem-servico-relacao-crm-button">Aplicar</button>
-                      </div>
-
-                      <p class="dsc-feedback" id="ordem-servico-relacao-crm-feedback"></p>
-                    </section>
-                  </div>
                 </div>
               </section>
 
@@ -524,7 +474,6 @@
                       </th>
                       <th>Condutor</th>
                       <th>Monitor</th>
-                      <th>DRE</th>
                       <th>Placa</th>
                       <th>Situacao</th>
                       <th class="dsc-grid-actions-column">Acoes</th>
@@ -585,9 +534,9 @@
       const prepostoCondutorInput = document.getElementById('ordem-servico-preposto-condutor');
       const prepostoInicioInput = document.getElementById('ordem-servico-preposto-inicio');
       const prepostoDiasInput = document.getElementById('ordem-servico-preposto-dias');
-      const alterarRelacaoCrmVeiculoButton = document.getElementById('ordem-servico-alterar-relacao-crm-veiculo');
       const crmInput = document.getElementById('ordem-servico-crm');
       const crmOptionsList = document.getElementById('ordem-servico-crm-options');
+      const openVeiculoPopupButton = document.getElementById('open-veiculo-popup-button');
       const veiculoPlacasInput = document.getElementById('ordem-servico-veiculo-placas');
       const cpfMonitorInput = document.getElementById('ordem-servico-cpf-monitor');
       const cpfMonitorOptionsList = document.getElementById('ordem-servico-cpf-monitor-options');
@@ -668,14 +617,6 @@
       const summarySubtitle = document.getElementById('ordem-servico-summary-subtitle');
       const summaryContent = document.getElementById('ordem-servico-summary-content');
       const summaryFeedback = document.getElementById('ordem-servico-summary-feedback');
-      const relacaoCrmModal = document.getElementById('ordem-servico-relacao-crm-modal');
-      const relacaoCrmPanel = document.getElementById('ordem-servico-relacao-crm-panel');
-      const closeRelacaoCrmButton = document.getElementById('close-ordem-servico-relacao-crm-button');
-      const cancelRelacaoCrmButton = document.getElementById('cancel-ordem-servico-relacao-crm-button');
-      const applyRelacaoCrmButton = document.getElementById('apply-ordem-servico-relacao-crm-button');
-      const relacaoCrmInput = document.getElementById('ordem-servico-relacao-crm-input');
-      const relacaoPlacaInput = document.getElementById('ordem-servico-relacao-placa-input');
-      const relacaoCrmFeedback = document.getElementById('ordem-servico-relacao-crm-feedback');
       const emissaoModal = document.getElementById('ordem-servico-emissao-modal');
       const emissaoPanel = document.getElementById('ordem-servico-emissao-panel');
       const closeEmissaoButton = document.getElementById('close-ordem-servico-emissao-button');
@@ -716,6 +657,10 @@
       let currentSearch = '';
       let currentSortBy = 'chave';
       let currentSortDirection = 'asc';
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
+      let currentGridItems = [];
       let currentRejectionPage = 1;
       let totalRejectionPages = 1;
       let currentRejectionSearch = '';
@@ -741,15 +686,26 @@
       let monitorSuggestionTimeoutId = null;
       let veiculoSuggestionRequestId = 0;
       let veiculoSuggestionTimeoutId = null;
-      let relacaoCrmVeiculoPopupWindow = null;
       let tipoTrocaOptions = [];
       let dreOptions = [];
       let modalidadeOptions = [];
+      let dreOptionsLoadingPromise = null;
+      let modalidadeOptionsLoadingPromise = null;
+      let tipoTrocaOptionsLoadingPromise = null;
       let lastEmissaoDocumentMarkup = '';
       let lastEmissaoDocumentPrintMarkup = '';
       let lastEmissaoDocumentTitle = 'Emissao de documento';
       let lastEmissaoDocumentFileName = 'emissao-ordem-servico.doc';
       let shouldHideFormAfterEmissao = false;
+      let veiculoPopupWindow = null;
+      let condutorPopupWindow = null;
+      let monitorPopupWindow = null;
+      const activeConflictValidationState = {
+        cnpjCpf: { requestId: 0, timeoutId: null },
+        condutor: { requestId: 0, timeoutId: null },
+        monitor: { requestId: 0, timeoutId: null },
+        preposto: { requestId: 0, timeoutId: null },
+      };
 
       const normalizeCodigo = (value) => value.replace(/\D/g, '').slice(0, 10);
       const normalizeText = (value, maxLength = 255) => value.replace(/\s+/g, ' ').trimStart().toUpperCase().slice(0, maxLength);
@@ -874,7 +830,16 @@
 
         const [day, month, year] = normalizedValue.split('/').map(Number);
         const parsed = new Date(year, month - 1, day);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
+
+        if (Number.isNaN(parsed.getTime())) {
+          return null;
+        }
+
+        if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) {
+          return null;
+        }
+
+        return parsed;
       };
 
       const enableFullDateSelection = (input) => {
@@ -1150,155 +1115,6 @@
         summaryFeedback.textContent = '';
         summaryFeedback.className = 'dsc-feedback';
         syncPopupPageState();
-      };
-
-      const clearOrdemServicoRelacaoCrm = () => {
-        setPopupVisibility(relacaoCrmModal, false);
-        relacaoCrmPanel.classList.add('dsc-hidden');
-        relacaoCrmInput.value = '';
-        relacaoPlacaInput.value = '';
-        relacaoCrmFeedback.textContent = '';
-        relacaoCrmFeedback.className = 'dsc-feedback';
-        syncPopupPageState();
-      };
-
-      const focusOrdemServicoRelacaoCrm = () => {
-        if (relacaoCrmPanel.classList.contains('dsc-hidden')) {
-          return;
-        }
-
-        relacaoCrmInput.focus({ preventScroll: true });
-      };
-
-      const openOrdemServicoRelacaoCrm = () => {
-        relacaoCrmInput.value = normalizeCrm(crmInput.value);
-        relacaoPlacaInput.value = formatPlacaDisplay(veiculoPlacasInput.value);
-        relacaoCrmFeedback.textContent = '';
-        relacaoCrmFeedback.className = 'dsc-feedback';
-        setPopupVisibility(relacaoCrmModal, true);
-        relacaoCrmPanel.classList.remove('dsc-hidden');
-        syncPopupPageState();
-        focusOrdemServicoRelacaoCrm();
-      };
-
-      const openVeiculoPopupFromRelacaoCrm = ({ crm, placa }) => {
-        const popupUrl = new URL('/src/veiculo.html', window.location.origin);
-        popupUrl.searchParams.set('popupMode', 'ordem-servico-relacao-crm');
-
-        if (crm) {
-          popupUrl.searchParams.set('crm', crm);
-        }
-
-        if (placa) {
-          popupUrl.searchParams.set('placa', normalizePlaca(placa));
-        }
-
-        relacaoCrmVeiculoPopupWindow = window.open(
-          popupUrl.toString(),
-          'ordemServicoRelacaoCrmVeiculoPopup',
-          'width=1280,height=900,resizable=yes,scrollbars=yes',
-        );
-
-        if (!relacaoCrmVeiculoPopupWindow) {
-          throw new Error('Nao foi possivel abrir o cadastro de veiculo.');
-        }
-
-        relacaoCrmVeiculoPopupWindow.focus();
-      };
-
-      const handleVeiculoPopupMessage = async (event) => {
-        if (event.origin !== window.location.origin) {
-          return;
-        }
-
-        const payload = event.data;
-
-        if (!payload || payload.type !== 'tegfinanc:veiculo-created' || payload.context !== 'ordem-servico-relacao-crm') {
-          return;
-        }
-
-        const resolvedCrm = normalizeCrm(String(payload.item?.crm || relacaoCrmInput.value || ''));
-        const resolvedPlaca = formatPlacaDisplay(String(payload.item?.placas || relacaoPlacaInput.value || ''));
-
-        relacaoCrmInput.value = resolvedCrm;
-        relacaoPlacaInput.value = resolvedPlaca;
-        crmInput.value = resolvedCrm;
-        veiculoPlacasInput.value = resolvedPlaca;
-        crmError.textContent = '';
-        veiculoPlacasError.textContent = '';
-        relacaoCrmFeedback.textContent = '';
-        relacaoCrmFeedback.className = 'dsc-feedback';
-        clearOrdemServicoRelacaoCrm();
-        updateSaveButtonAvailability();
-        await validateActiveOrdemServicoPlaca({ placa: veiculoPlacasInput.value, errorElement: veiculoPlacasError });
-      };
-
-      const applyOrdemServicoRelacaoCrm = async () => {
-        const nextCrm = normalizeCrm(relacaoCrmInput.value);
-        const nextPlaca = formatPlacaDisplay(relacaoPlacaInput.value);
-        relacaoCrmInput.value = nextCrm;
-        relacaoPlacaInput.value = nextPlaca;
-        relacaoCrmFeedback.textContent = '';
-        relacaoCrmFeedback.className = 'dsc-feedback';
-
-        if (!nextCrm) {
-          relacaoCrmFeedback.textContent = 'Informe o CRM do veiculo.';
-          relacaoCrmFeedback.className = 'dsc-feedback dsc-feedback-error';
-          focusOrdemServicoRelacaoCrm();
-          return;
-        }
-
-        try {
-          let item = null;
-
-          if (nextPlaca) {
-            const response = await fetch('/api/veiculo/relacao-crm', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-                ...getAuditHeaders(),
-              },
-              body: JSON.stringify({
-                crm: nextCrm,
-                placas: nextPlaca,
-              }),
-            });
-            const payload = await readJsonResponse(response);
-
-            if (!response.ok) {
-              if (response.status === 404 && String(payload.message || '').toLowerCase().includes('placa nao encontrada')) {
-                relacaoCrmFeedback.textContent = 'Placa nao encontrada. Inclua o veiculo e retorne a OrdemServico.';
-                relacaoCrmFeedback.className = 'dsc-feedback dsc-feedback-error';
-                openVeiculoPopupFromRelacaoCrm({ crm: nextCrm, placa: nextPlaca });
-                return;
-              }
-
-              throw new Error(payload.message || 'Falha ao criar relacao CRM com veiculo.');
-            }
-
-            item = payload.item || null;
-          } else {
-            item = await fetchLookupItem(`/api/veiculo/lookup?crm=${encodeURIComponent(nextCrm)}`, 'Falha ao localizar veiculo.');
-          }
-
-          const resolvedCrm = normalizeCrm(String(item.crm || nextCrm));
-          const resolvedPlaca = formatPlacaDisplay(String(item.placas || ''));
-
-          relacaoCrmInput.value = resolvedCrm;
-          relacaoPlacaInput.value = resolvedPlaca;
-          crmInput.value = resolvedCrm;
-          veiculoPlacasInput.value = resolvedPlaca;
-          crmError.textContent = '';
-          veiculoPlacasError.textContent = '';
-          clearOrdemServicoRelacaoCrm();
-          updateSaveButtonAvailability();
-          await validateActiveOrdemServicoPlaca({ placa: veiculoPlacasInput.value, errorElement: veiculoPlacasError });
-        } catch (error) {
-          relacaoCrmFeedback.textContent = getRequestErrorMessage(error, 'Falha ao localizar veiculo.');
-          relacaoCrmFeedback.className = 'dsc-feedback dsc-feedback-error';
-          focusOrdemServicoRelacaoCrm();
-        }
       };
 
       const focusOrdemServicoSummary = () => {
@@ -2334,6 +2150,114 @@
         return `${year}-${month}-${day}`;
       };
 
+      const getComparableDateInputValue = (input) => {
+        if (!input) {
+          return '';
+        }
+
+        if (input.type === 'text') {
+          const parsedDate = parseEditableDateValue(input.value);
+          return parsedDate ? formatEditableDateInputValue(parsedDate) : '';
+        }
+
+        return input.value || '';
+      };
+
+      const shouldSkipVigenciaValidationForForm = () => formMode === 'substitute' || isSubstitutionInsertion || isActivationInsertion;
+
+      const validateVigenciaOsField = (showRequired = false) => {
+        const vigenciaOs = getComparableDateInputValue(vigenciaOsInput);
+
+        if (shouldSkipVigenciaValidationForForm()) {
+          vigenciaOsError.textContent = '';
+          return false;
+        }
+
+        if (editingCodigo === null && !vigenciaOs) {
+          vigenciaOsError.textContent = showRequired ? 'Informe a vigencia da OS.' : '';
+          return showRequired;
+        }
+
+        if (editingCodigo === null && activationSourceEncerramento && vigenciaOs && vigenciaOs <= activationSourceEncerramento) {
+          vigenciaOsError.textContent = `A vigência deve ser posterior ao encerramento do registro anterior (${activationSourceEncerramento}).`;
+          return true;
+        }
+
+        vigenciaOsError.textContent = '';
+        return false;
+      };
+
+      const validateDataAdmissaoCondutorField = () => {
+        const dataAdmissaoCondutor = getComparableDateInputValue(dataAdmissaoCondutorInput);
+
+        if (!dataAdmissaoCondutor) {
+          dataAdmissaoCondutorError.textContent = '';
+          return false;
+        }
+
+        if (dataAdmissaoCondutor > getCurrentDateInputValue()) {
+          dataAdmissaoCondutorError.textContent = 'A admissão do condutor não pode ser futura.';
+          return true;
+        }
+
+        dataAdmissaoCondutorError.textContent = '';
+        return false;
+      };
+
+      const validatePrepostoInicioField = (showRequired = false) => {
+        const hasPreposto = Boolean(possuiPrepostoInput.checked);
+        const prepostoInicio = getComparableDateInputValue(prepostoInicioInput);
+
+        if (!hasPreposto) {
+          prepostoInicioError.textContent = '';
+          return false;
+        }
+
+        if (!prepostoInicio) {
+          prepostoInicioError.textContent = showRequired ? 'Informe o início de preposto.' : '';
+          return showRequired;
+        }
+
+        prepostoInicioError.textContent = '';
+        return false;
+      };
+
+      const validateDataAdmissaoMonitorField = () => {
+        const dataAdmissaoMonitor = getComparableDateInputValue(dataAdmissaoMonitorInput);
+
+        if (!dataAdmissaoMonitor) {
+          dataAdmissaoMonitorError.textContent = '';
+          return false;
+        }
+
+        if (dataAdmissaoMonitor > getCurrentDateInputValue()) {
+          dataAdmissaoMonitorError.textContent = 'A admissão do monitor não pode ser futura.';
+          return true;
+        }
+
+        dataAdmissaoMonitorError.textContent = '';
+        return false;
+      };
+
+      const validateDataEncerramentoField = (showRequired = false) => {
+        const currentSituacao = normalizeKey(getSelectedSituacao());
+        const requiresDataEncerramento = currentSituacao === 'cancelado' || currentSituacao === 'inativo';
+        const dataEncerramento = getComparableDateInputValue(dataEncerramentoInput);
+
+        if (!requiresDataEncerramento) {
+          dataEncerramentoError.textContent = '';
+          return false;
+        }
+
+        if (!dataEncerramento) {
+          dataEncerramentoError.textContent = showRequired ? 'Informe a data de encerramento.' : '';
+          return showRequired;
+        }
+
+        dataEncerramentoError.textContent = '';
+        return false;
+      };
+
       const normalizeTermoAdesao = (value) => {
         const digits = value.replace(/\D/g, '').slice(0, 11);
 
@@ -2459,6 +2383,10 @@
       };
 
       const getRequestErrorMessage = (error, fallbackMessage) => {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return 'A consulta das Ordens de Servico excedeu o tempo limite. Tente novamente.';
+        }
+
         if (error instanceof TypeError) {
           return 'API indisponivel. Confirme se o backend esta em execucao na porta 3001.';
         }
@@ -2468,6 +2396,22 @@
         }
 
         return error instanceof Error ? error.message : fallbackMessage;
+      };
+
+      const fetchJsonWithTimeout = async (resource, options = {}, timeoutMs = 15000) => {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+          const response = await fetch(resource, {
+            ...options,
+            signal: controller.signal,
+          });
+          const payload = await readJsonResponse(response);
+          return { response, payload };
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
       };
 
       const showBanner = (message, tone = 'success') => {
@@ -2743,7 +2687,7 @@
       };
 
       const syncPopupPageState = () => {
-        const isPopupVisible = !formModal.classList.contains('dsc-hidden') || !importModal.classList.contains('dsc-hidden') || !rejectionModal.classList.contains('dsc-hidden') || !relacaoCrmModal.classList.contains('dsc-hidden');
+        const isPopupVisible = !formModal.classList.contains('dsc-hidden') || !importModal.classList.contains('dsc-hidden') || !rejectionModal.classList.contains('dsc-hidden');
         document.body.classList.toggle('dsc-popup-open', isPopupVisible);
       };
 
@@ -2840,7 +2784,6 @@
         tipoTrocaInput.value = '';
         setSelectedSituacao('Ativo');
         resetMessages();
-        clearOrdemServicoRelacaoCrm();
         clearOrdemServicoTermo();
         clearOrdemServicoSummary();
       };
@@ -2889,6 +2832,24 @@
 
         if (currentSearch) {
           params.set('search', currentSearch);
+        }
+
+        if (useTailPageFetch) {
+          params.set('tail', '1');
+        }
+
+        if (previousPageCursor) {
+          params.set('beforeTermoAdesao', previousPageCursor.termoAdesao);
+          params.set('beforeNumOs', previousPageCursor.numOs);
+          params.set('beforeRevisao', previousPageCursor.revisao);
+          params.set('beforeCodigo', previousPageCursor.codigo);
+        }
+
+        if (nextPageCursor) {
+          params.set('afterTermoAdesao', nextPageCursor.termoAdesao);
+          params.set('afterNumOs', nextPageCursor.numOs);
+          params.set('afterRevisao', nextPageCursor.revisao);
+          params.set('afterCodigo', nextPageCursor.codigo);
         }
 
         return `/api/ordem-servico?${params.toString()}`;
@@ -2985,6 +2946,12 @@
       };
 
       const loadDreOptions = async () => {
+        if (dreOptionsLoadingPromise) {
+          await dreOptionsLoadingPromise;
+          return;
+        }
+
+        dreOptionsLoadingPromise = (async () => {
         try {
           const response = await fetch('/api/dre?page=1&pageSize=50&sortBy=descricao&sortDirection=asc', {
             headers: { Accept: 'application/json' },
@@ -3001,6 +2968,23 @@
         }
 
         renderDreOptions();
+        })();
+
+        try {
+          await dreOptionsLoadingPromise;
+        } finally {
+          dreOptionsLoadingPromise = null;
+        }
+      };
+
+      const ensureDreOptionsLoaded = async (selectedValue = dreCodigoInput.value || '') => {
+        if (dreOptions.length > 0) {
+          renderDreOptions(selectedValue);
+          return;
+        }
+
+        await loadDreOptions();
+        renderDreOptions(selectedValue);
       };
 
       const renderModalidadeOptions = (selectedValue = modalidadeDescricaoInput.value || '') => {
@@ -3025,8 +3009,14 @@
       };
 
       const loadModalidadeOptions = async (selectedValue = modalidadeDescricaoInput.value || '') => {
+        if (modalidadeOptionsLoadingPromise) {
+          await modalidadeOptionsLoadingPromise;
+          return;
+        }
+
         modalidadeDescricaoInput.disabled = true;
 
+        modalidadeOptionsLoadingPromise = (async () => {
         try {
           const response = await fetch('/api/modalidade?page=1&pageSize=100&sortBy=descricao&sortDirection=asc', {
             headers: { Accept: 'application/json' },
@@ -3050,6 +3040,13 @@
         }
 
         modalidadeDescricaoInput.disabled = false;
+        })();
+
+        try {
+          await modalidadeOptionsLoadingPromise;
+        } finally {
+          modalidadeOptionsLoadingPromise = null;
+        }
       };
 
       const ensureModalidadeOptionsLoaded = async (selectedValue = modalidadeDescricaoInput.value || '') => {
@@ -3303,6 +3300,12 @@
       };
 
       const loadTipoTrocaOptions = async () => {
+        if (tipoTrocaOptionsLoadingPromise) {
+          await tipoTrocaOptionsLoadingPromise;
+          return;
+        }
+
+        tipoTrocaOptionsLoadingPromise = (async () => {
         try {
           const response = await fetch('/api/troca?page=1&pageSize=100&sortBy=descricao&sortDirection=asc', {
             headers: { Accept: 'application/json' },
@@ -3320,9 +3323,29 @@
           tipoTrocaOptions = [];
           renderTipoTrocaOptions('');
         }
+        })();
+
+        try {
+          await tipoTrocaOptionsLoadingPromise;
+        } finally {
+          tipoTrocaOptionsLoadingPromise = null;
+        }
+      };
+
+      const ensureTipoTrocaOptionsLoaded = async (selectedValue = tipoTrocaInput.value || '') => {
+        if (tipoTrocaOptions.length > 0) {
+          renderTipoTrocaOptions(selectedValue);
+          applyInsertSpecificRules();
+          return;
+        }
+
+        await loadTipoTrocaOptions();
+        renderTipoTrocaOptions(selectedValue);
+        applyInsertSpecificRules();
       };
 
       const renderGrid = (items) => {
+        currentGridItems = items;
         gridBody.innerHTML = '';
 
         if (!items.length) {
@@ -3339,7 +3362,6 @@
             <td>${item.credenciado || ''}</td>
             <td>${item.condutor || ''}</td>
             <td>${item.monitor || ''}</td>
-            <td>${item.dre_codigo || ''}</td>
             <td>${item.veiculo_placas || ''}</td>
             <td>${item.situacao || ''}</td>
             <td>
@@ -3389,10 +3411,15 @@
       const loadItems = async () => {
         setGridMessage('Carregando Ordens de Servico...');
         syncTopGridScrollbar();
+        const requestUrl = buildUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
 
         try {
-          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
-          const payload = await readJsonResponse(response);
+          const { response, payload } = await fetchJsonWithTimeout(requestUrl, {
+            headers: { Accept: 'application/json' },
+          });
 
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao carregar Ordens de Servico.');
@@ -3494,8 +3521,157 @@
           return true;
         }
 
+        if (roleLabel === 'preposto') {
+          errorElement.textContent = `CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeItem)}`;
+          return false;
+        }
+
         errorElement.textContent = `CPF do ${roleLabel} ja utilizado na OrdemServico ativa ${activeItem.codigo} como ${activeItem.papel}.`;
         return false;
+      };
+
+      const fetchActiveOrdemServicoByCnpjCpf = async (cnpjCpf, excludeCodigo = null) => {
+        const params = new URLSearchParams({ cnpjCpf });
+
+        if (Number.isInteger(excludeCodigo) && excludeCodigo > 0) {
+          params.set('excludeCodigo', String(excludeCodigo));
+        }
+
+        const response = await fetch(`/api/ordem-servico/active-cnpj-cpf?${params.toString()}`, {
+          headers: { Accept: 'application/json' },
+        });
+        const payload = await readJsonResponse(response);
+
+        if (!response.ok) {
+          throw new Error(payload.message || 'Falha ao validar CNPJ/CPF em OrdemServico ativa.');
+        }
+
+        return payload.item || null;
+      };
+
+      const buildOrdemServicoNumeroLabel = (item) => {
+        const termoAdesao = String(item?.termo_adesao || '').trim();
+        const numOs = String(item?.num_os || '').trim();
+        const revisao = String(item?.revisao || '').trim();
+        const codigo = String(item?.codigo || '').trim();
+        let label = [termoAdesao, numOs].filter(Boolean).join('-');
+
+        if (revisao) {
+          label += revisao.startsWith('-')
+            ? revisao
+            : `${label ? '-' : ''}${revisao}`;
+        }
+
+        return label || codigo;
+      };
+
+      const validateActiveOrdemServicoCnpjCpf = async ({ cnpjCpf, errorElement }) => {
+        const normalizedCnpjCpf = normalizeCnpjCpf(cnpjCpf);
+        const digits = getDocumentDigits(normalizedCnpjCpf);
+
+        if (!digits.length) {
+          errorElement.textContent = '';
+          return true;
+        }
+
+        if (getSelectedSituacao() !== 'Ativo') {
+          errorElement.textContent = '';
+          return true;
+        }
+
+        if (![11, 14].includes(digits.length)) {
+          errorElement.textContent = '';
+          return true;
+        }
+
+        const activeItem = await fetchActiveOrdemServicoByCnpjCpf(normalizedCnpjCpf, getActiveOrdemServicoExcludeCodigo());
+
+        if (!activeItem) {
+          errorElement.textContent = '';
+          return true;
+        }
+
+        errorElement.textContent = `CNPJ/CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeItem)}`;
+        return false;
+      };
+
+      const scheduleActiveOrdemServicoCpfValidation = ({ cpf, roleLabel, errorElement, state }) => {
+        const normalizedCpf = normalizeCpf(cpf);
+
+        if (state.timeoutId) {
+          window.clearTimeout(state.timeoutId);
+          state.timeoutId = null;
+        }
+
+        if (!getDocumentDigits(normalizedCpf) || getSelectedSituacao() !== 'Ativo') {
+          state.requestId += 1;
+          errorElement.textContent = '';
+          return;
+        }
+
+        const requestId = ++state.requestId;
+        state.timeoutId = window.setTimeout(async () => {
+          try {
+            const activeItem = await fetchActiveOrdemServicoByCpf(normalizedCpf, getActiveOrdemServicoExcludeCodigo());
+
+            if (requestId !== state.requestId) {
+              return;
+            }
+
+            if (!activeItem) {
+              errorElement.textContent = '';
+              return;
+            }
+
+            errorElement.textContent = roleLabel === 'preposto'
+              ? `CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeItem)}`
+              : `CPF do ${roleLabel} ja utilizado na OrdemServico ativa ${activeItem.codigo} como ${activeItem.papel}.`;
+          } catch (error) {
+            if (requestId !== state.requestId) {
+              return;
+            }
+
+            errorElement.textContent = getRequestErrorMessage(error, 'Falha ao validar CPF em OrdemServico ativa.');
+          }
+        }, 250);
+      };
+
+      const scheduleActiveOrdemServicoCnpjCpfValidation = ({ cnpjCpf, errorElement }) => {
+        const normalizedCnpjCpf = normalizeCnpjCpf(cnpjCpf);
+        const digits = getDocumentDigits(normalizedCnpjCpf);
+        const state = activeConflictValidationState.cnpjCpf;
+
+        if (state.timeoutId) {
+          window.clearTimeout(state.timeoutId);
+          state.timeoutId = null;
+        }
+
+        if (!digits.length || getSelectedSituacao() !== 'Ativo' || ![11, 14].includes(digits.length)) {
+          state.requestId += 1;
+          errorElement.textContent = '';
+          return;
+        }
+
+        const requestId = ++state.requestId;
+        state.timeoutId = window.setTimeout(async () => {
+          try {
+            const activeItem = await fetchActiveOrdemServicoByCnpjCpf(normalizedCnpjCpf, getActiveOrdemServicoExcludeCodigo());
+
+            if (requestId !== state.requestId) {
+              return;
+            }
+
+            errorElement.textContent = activeItem
+              ? `CNPJ/CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeItem)}`
+              : '';
+          } catch (error) {
+            if (requestId !== state.requestId) {
+              return;
+            }
+
+            errorElement.textContent = getRequestErrorMessage(error, 'Falha ao validar CNPJ/CPF em OrdemServico ativa.');
+          }
+        }, 250);
       };
 
       const fetchActiveOrdemServicoByPlaca = async (placa, excludeCodigo = null) => {
@@ -3594,6 +3770,7 @@
           credenciadoInput.value = normalizeText(String(item.credenciado || ''), 255);
           cnpjCpfInput.value = normalizeCnpjCpf(String(item.cnpj_cpf || cnpjCpf));
           cnpjCpfError.textContent = '';
+          await validateActiveOrdemServicoCnpjCpf({ cnpjCpf: cnpjCpfInput.value, errorElement: cnpjCpfError });
         } catch (error) {
           credenciadoInput.value = '';
           cnpjCpfError.textContent = getRequestErrorMessage(error, 'Falha ao localizar credenciado.');
@@ -3634,6 +3811,7 @@
           credenciadoInput.value = termoItem.credenciado || '';
           cnpjCpfError.textContent = '';
           credenciadoError.textContent = '';
+          await validateActiveOrdemServicoCnpjCpf({ cnpjCpf: cnpjCpfInput.value, errorElement: cnpjCpfError });
         } catch (error) {
           isInsertNewTerm = false;
           numOsInput.value = '';
@@ -3704,7 +3882,23 @@
         }
 
         try {
-          const item = await fetchLookupItem(`/api/condutor/lookup?cpf=${encodeURIComponent(cpf)}`, emptyMessage);
+          const response = await fetch(`/api/condutor/lookup?cpf=${encodeURIComponent(cpf)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            if (response.status === 404 && roleLabel === 'condutor') {
+              openCondutorCadastroPopup({ cpf });
+              errorElement.textContent = 'Condutor nao encontrado. Cadastre o condutor e retorne a Ordem de Servico.';
+              nameInputElement.value = '';
+              return;
+            }
+
+            throw new Error(payload.message || emptyMessage);
+          }
+
+          const item = payload.item;
           cpfInputElement.value = normalizeCpf(String(item.cpf_condutor || cpf));
           nameInputElement.value = normalizeText(String(item.condutor || ''), 255);
           await validateActiveOrdemServicoCpf({ cpf: cpfInputElement.value, roleLabel, errorElement });
@@ -3758,6 +3952,62 @@
         popupWindow.focus();
       };
 
+      const openCondutorCadastroPopup = ({ cpf = '' } = {}) => {
+        const popupUrl = new URL('/src/condutor.html', window.location.origin);
+        const normalizedCpf = normalizeCpf(String(cpf || ''));
+        const popupFeatures = [
+          'popup=yes',
+          'width=1120',
+          'height=860',
+          'resizable=yes',
+          'scrollbars=yes',
+        ].join(',');
+
+        popupUrl.searchParams.set('popupMode', 'ordem-servico-condutor');
+
+        if (normalizedCpf) {
+          popupUrl.searchParams.set('cpf', normalizedCpf);
+        }
+
+        condutorPopupWindow = window.open(popupUrl.toString(), 'tegfinanc-condutor-popup', popupFeatures);
+
+        if (!condutorPopupWindow) {
+          cpfCondutorError.textContent = 'Nao foi possivel abrir o cadastro de condutor.';
+          return;
+        }
+
+        cpfCondutorError.textContent = '';
+        condutorPopupWindow.focus();
+      };
+
+      const openMonitorCadastroPopup = ({ cpf = '' } = {}) => {
+        const popupUrl = new URL('/src/monitor.html', window.location.origin);
+        const normalizedCpf = normalizeCpf(String(cpf || ''));
+        const popupFeatures = [
+          'popup=yes',
+          'width=1120',
+          'height=860',
+          'resizable=yes',
+          'scrollbars=yes',
+        ].join(',');
+
+        popupUrl.searchParams.set('popupMode', 'ordem-servico-monitor');
+
+        if (normalizedCpf) {
+          popupUrl.searchParams.set('cpf', normalizedCpf);
+        }
+
+        monitorPopupWindow = window.open(popupUrl.toString(), 'tegfinanc-monitor-popup', popupFeatures);
+
+        if (!monitorPopupWindow) {
+          cpfMonitorError.textContent = 'Nao foi possivel abrir o cadastro de monitor.';
+          return;
+        }
+
+        cpfMonitorError.textContent = '';
+        monitorPopupWindow.focus();
+      };
+
       const syncMonitorByCpf = async () => {
         const cpf = normalizeCpf(cpfMonitorInput.value);
         cpfMonitorInput.value = cpf;
@@ -3769,7 +4019,23 @@
         }
 
         try {
-          const item = await fetchLookupItem(`/api/monitor/lookup?cpf=${encodeURIComponent(cpf)}`, 'Falha ao localizar monitor.');
+          const response = await fetch(`/api/monitor/lookup?cpf=${encodeURIComponent(cpf)}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const payload = await readJsonResponse(response);
+
+          if (!response.ok) {
+            if (response.status === 404) {
+              monitorInput.value = '';
+              cpfMonitorError.textContent = 'Monitor nao encontrado. Cadastre o monitor e retorne a Ordem de Servico.';
+              openMonitorCadastroPopup({ cpf });
+              return;
+            }
+
+            throw new Error(payload.message || 'Falha ao localizar monitor.');
+          }
+
+          const item = payload.item;
           cpfMonitorInput.value = normalizeCpf(String(item.cpf_monitor || cpf));
           monitorInput.value = normalizeText(String(item.monitor || ''), 255);
           await validateActiveOrdemServicoCpf({ cpf: cpfMonitorInput.value, roleLabel: 'monitor', errorElement: cpfMonitorError });
@@ -3799,10 +4065,8 @@
             if (response.status === 404) {
               veiculoPlacasInput.value = '';
               veiculoPlacasError.textContent = '';
-              crmError.textContent = '';
-              openOrdemServicoRelacaoCrm();
-              relacaoCrmFeedback.textContent = 'CRM nao encontrado. Informe a placa para criar a relacao.';
-              relacaoCrmFeedback.className = 'dsc-feedback dsc-feedback-error';
+              crmError.textContent = 'Veiculo nao encontrado. Cadastre o veiculo e retorne a Ordem de Servico.';
+              openVeiculoPopupFromCrm();
               return;
             }
 
@@ -3819,6 +4083,105 @@
           veiculoPlacasError.textContent = '';
           crmError.textContent = getRequestErrorMessage(error, 'Falha ao localizar veiculo.');
         }
+      };
+
+      const applyVeiculoPopupItem = async (item) => {
+        const crm = normalizeCrm(String(item?.crm || ''));
+        const placas = normalizeText(String(item?.placas || ''), 20);
+
+        crmInput.value = crm;
+        veiculoPlacasInput.value = placas;
+        crmError.textContent = '';
+        veiculoPlacasError.textContent = '';
+
+        if (placas) {
+          await validateActiveOrdemServicoPlaca({ placa: placas, errorElement: veiculoPlacasError });
+        }
+      };
+
+      const openVeiculoPopupFromCrm = () => {
+        const crm = normalizeCrm(crmInput.value);
+        const placa = normalizePlaca(veiculoPlacasInput.value);
+        const popupUrl = new URL('/src/veiculo.html', window.location.origin);
+        const popupFeatures = [
+          'popup=yes',
+          'width=1280',
+          'height=900',
+          'resizable=yes',
+          'scrollbars=yes',
+        ].join(',');
+
+        crmInput.value = crm;
+        popupUrl.searchParams.set('popupMode', 'ordem-servico-relacao-crm');
+
+        if (crm) {
+          popupUrl.searchParams.set('crm', crm);
+        }
+
+        if (placa) {
+          popupUrl.searchParams.set('placa', placa);
+        }
+
+        veiculoPopupWindow = window.open(popupUrl.toString(), 'tegfinanc-veiculo-popup', popupFeatures);
+
+        if (!veiculoPopupWindow) {
+          crmError.textContent = 'Nao foi possivel abrir o cadastro de veiculo.';
+          return;
+        }
+
+        crmError.textContent = '';
+        veiculoPopupWindow.focus();
+      };
+
+      const handleVeiculoPopupMessage = async (event) => {
+        if (event.origin !== window.location.origin) {
+          return;
+        }
+
+        const data = event.data;
+
+        if (!data || data.type !== 'tegfinanc:veiculo-created' || data.context !== 'ordem-servico-relacao-crm') {
+          return;
+        }
+
+        veiculoPopupWindow = null;
+        await applyVeiculoPopupItem(data.item || {});
+      };
+
+      const handleCondutorPopupMessage = async (event) => {
+        if (event.origin !== window.location.origin) {
+          return;
+        }
+
+        const data = event.data;
+
+        if (!data || data.type !== 'tegfinanc:condutor-created' || data.context !== 'ordem-servico-condutor') {
+          return;
+        }
+
+        condutorPopupWindow = null;
+        cpfCondutorInput.value = normalizeCpf(String(data.item?.cpf_condutor || data.item?.cpfCondutor || ''));
+        condutorInput.value = normalizeText(String(data.item?.condutor || ''), 255);
+        cpfCondutorError.textContent = '';
+        await validateActiveOrdemServicoCpf({ cpf: cpfCondutorInput.value, roleLabel: 'condutor', errorElement: cpfCondutorError });
+      };
+
+      const handleMonitorPopupMessage = async (event) => {
+        if (event.origin !== window.location.origin) {
+          return;
+        }
+
+        const data = event.data;
+
+        if (!data || data.type !== 'tegfinanc:monitor-created' || data.context !== 'ordem-servico-monitor') {
+          return;
+        }
+
+        monitorPopupWindow = null;
+        cpfMonitorInput.value = normalizeCpf(String(data.item?.cpf_monitor || data.item?.cpfMonitor || ''));
+        monitorInput.value = normalizeText(String(data.item?.monitor || ''), 255);
+        cpfMonitorError.textContent = '';
+        await validateActiveOrdemServicoCpf({ cpf: cpfMonitorInput.value, roleLabel: 'monitor', errorElement: cpfMonitorError });
       };
 
       const syncTipoTroca = async () => {
@@ -3876,7 +4239,9 @@
         applyIdentityFieldLock();
         syncPrepostoState({ clearValues: true });
         termoAdesaoInput.focus();
+        void ensureDreOptionsLoaded('');
         void ensureModalidadeOptionsLoaded('');
+        void ensureTipoTrocaOptionsLoaded('');
       };
 
       const handleStartInsert = async () => {
@@ -4000,7 +4365,9 @@
         applyIdentityFieldLock();
         syncPrepostoState();
         situacaoRadios.forEach((radio) => { radio.disabled = true; });
+        void ensureDreOptionsLoaded(dreCodigoInput.value);
         void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
+        void ensureTipoTrocaOptionsLoaded(tipoTrocaInput.value);
         await handleAddRevisao();
         armSaveChangeRequirement();
         revisaoInput.focus();
@@ -4057,7 +4424,9 @@
         applyInsertSpecificRules();
         applyIdentityFieldLock();
         syncPrepostoState();
+        void ensureDreOptionsLoaded(dreCodigoInput.value);
         void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
+        void ensureTipoTrocaOptionsLoaded(tipoTrocaInput.value);
       };
 
       const startEdit = (item) => {
@@ -4125,7 +4494,9 @@
         applyIdentityFieldLock();
         syncPrepostoState();
         situacaoRadios.forEach((radio) => { radio.disabled = false; });
+        void ensureDreOptionsLoaded(dreCodigoInput.value);
         void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
+        void ensureTipoTrocaOptionsLoaded(tipoTrocaInput.value);
         await handleAddRevisao();
         revisaoInput.focus();
         revisaoInput.select();
@@ -4253,25 +4624,25 @@
 
       cnpjCpfInput.addEventListener('input', () => {
         cnpjCpfInput.value = normalizeCnpjCpf(cnpjCpfInput.value);
+        if (cnpjCpfError.textContent.trim()) {
+          cnpjCpfError.textContent = '';
+        }
+        scheduleActiveOrdemServicoCnpjCpfValidation({ cnpjCpf: cnpjCpfInput.value, errorElement: cnpjCpfError });
       });
 
       vigenciaOsInput.addEventListener('input', () => {
-        const shouldSkipVigenciaValidation = formMode === 'substitute' || isSubstitutionInsertion || isActivationInsertion;
+        validateVigenciaOsField(Boolean(vigenciaOsError.textContent.trim()));
+      });
 
-        if (shouldSkipVigenciaValidation) {
-          vigenciaOsError.textContent = '';
-          return;
-        }
-
-        if (!vigenciaOsInput.value) {
-          vigenciaOsError.textContent = '';
-          return;
-        }
-
-        vigenciaOsError.textContent = '';
+      vigenciaOsInput.addEventListener('blur', () => {
+        validateVigenciaOsField(true);
       });
 
       dataEmissaoInput.addEventListener('input', () => {
+        dataEmissaoError.textContent = '';
+      });
+
+      dataEmissaoInput.addEventListener('blur', () => {
         dataEmissaoError.textContent = '';
       });
 
@@ -4292,10 +4663,26 @@
       cpfCondutorInput.addEventListener('input', () => {
         cpfCondutorInput.value = normalizeCpf(cpfCondutorInput.value);
         queueSuggestionLoad(condutorSuggestionTimeoutId, (timeoutId) => { condutorSuggestionTimeoutId = timeoutId; }, (value) => loadCondutorSuggestions(value, cpfCondutorOptionsList, 'condutor'), () => cpfCondutorInput.value);
+        scheduleActiveOrdemServicoCpfValidation({
+          cpf: cpfCondutorInput.value,
+          roleLabel: 'condutor',
+          errorElement: cpfCondutorError,
+          state: activeConflictValidationState.condutor,
+        });
       });
 
       cpfCondutorInput.addEventListener('blur', () => {
         void syncCondutorByCpf(cpfCondutorInput, condutorInput, cpfCondutorError, 'Falha ao localizar condutor.', 'condutor');
+      });
+
+      dataAdmissaoCondutorInput.addEventListener('input', () => {
+        if (dataAdmissaoCondutorError.textContent.trim()) {
+          validateDataAdmissaoCondutorField();
+        }
+      });
+
+      dataAdmissaoCondutorInput.addEventListener('blur', () => {
+        validateDataAdmissaoCondutorField();
       });
 
       openVinculoCondutorPopupButton.addEventListener('click', () => {
@@ -4308,11 +4695,21 @@
 
       cpfPrepostoInput.addEventListener('input', () => {
         cpfPrepostoInput.value = normalizeCpf(cpfPrepostoInput.value);
+        if (cpfPrepostoError.textContent.trim()) {
+          cpfPrepostoError.textContent = '';
+        }
         queueSuggestionLoad(prepostoSuggestionTimeoutId, (timeoutId) => { prepostoSuggestionTimeoutId = timeoutId; }, (value) => loadCondutorSuggestions(value, cpfPrepostoOptionsList, 'preposto'), () => cpfPrepostoInput.value);
+        scheduleActiveOrdemServicoCpfValidation({
+          cpf: cpfPrepostoInput.value,
+          roleLabel: 'preposto',
+          errorElement: cpfPrepostoError,
+          state: activeConflictValidationState.preposto,
+        });
       });
 
       possuiPrepostoInput.addEventListener('change', () => {
         syncPrepostoState({ clearValues: !possuiPrepostoInput.checked });
+        validatePrepostoInicioField(Boolean(possuiPrepostoInput.checked));
         updateSaveButtonAvailability();
       });
 
@@ -4324,24 +4721,14 @@
         prepostoDiasInput.value = normalizeIntegerInput(prepostoDiasInput.value, 2);
       });
 
-      alterarRelacaoCrmVeiculoButton.addEventListener('click', () => {
-        openOrdemServicoRelacaoCrm();
+      prepostoInicioInput.addEventListener('input', () => {
+        if (prepostoInicioError.textContent.trim()) {
+          validatePrepostoInicioField(Boolean(possuiPrepostoInput.checked));
+        }
       });
 
-      relacaoCrmInput.addEventListener('input', () => {
-        relacaoCrmInput.value = normalizeCrm(relacaoCrmInput.value);
-        relacaoCrmFeedback.textContent = '';
-        relacaoCrmFeedback.className = 'dsc-feedback';
-      });
-
-      relacaoPlacaInput.addEventListener('input', () => {
-        relacaoPlacaInput.value = formatPlacaDisplay(relacaoPlacaInput.value);
-        relacaoCrmFeedback.textContent = '';
-        relacaoCrmFeedback.className = 'dsc-feedback';
-      });
-
-      window.addEventListener('message', (event) => {
-        void handleVeiculoPopupMessage(event);
+      prepostoInicioInput.addEventListener('blur', () => {
+        validatePrepostoInicioField(Boolean(possuiPrepostoInput.checked));
       });
 
       window.addEventListener('resize', syncOrdemServicoCodigoRowLayout);
@@ -4355,13 +4742,49 @@
         void syncVeiculoByCrm();
       });
 
+      openVeiculoPopupButton.addEventListener('click', () => {
+        openVeiculoPopupFromCrm();
+      });
+
       cpfMonitorInput.addEventListener('input', () => {
         cpfMonitorInput.value = normalizeCpf(cpfMonitorInput.value);
         queueSuggestionLoad(monitorSuggestionTimeoutId, (timeoutId) => { monitorSuggestionTimeoutId = timeoutId; }, loadMonitorSuggestions, () => cpfMonitorInput.value);
+        scheduleActiveOrdemServicoCpfValidation({
+          cpf: cpfMonitorInput.value,
+          roleLabel: 'monitor',
+          errorElement: cpfMonitorError,
+          state: activeConflictValidationState.monitor,
+        });
       });
 
       cpfMonitorInput.addEventListener('blur', () => {
         void syncMonitorByCpf();
+      });
+
+      dataAdmissaoMonitorInput.addEventListener('input', () => {
+        if (dataAdmissaoMonitorError.textContent.trim()) {
+          validateDataAdmissaoMonitorField();
+        }
+      });
+
+      dataAdmissaoMonitorInput.addEventListener('blur', () => {
+        validateDataAdmissaoMonitorField();
+      });
+
+      dataEncerramentoInput.addEventListener('input', () => {
+        if (dataEncerramentoError.textContent.trim()) {
+          validateDataEncerramentoField(true);
+        }
+      });
+
+      dataEncerramentoInput.addEventListener('blur', () => {
+        validateDataEncerramentoField(true);
+      });
+
+      situacaoRadios.forEach((radio) => {
+        radio.addEventListener('change', () => {
+          validateDataEncerramentoField(false);
+        });
       });
 
       tipoTrocaInput.addEventListener('input', () => {
@@ -4383,6 +4806,12 @@
         if (!summaryModal.classList.contains('dsc-hidden')) {
           clearOrdemServicoSummary();
         }
+      });
+
+      window.addEventListener('message', (event) => {
+        void handleVeiculoPopupMessage(event);
+        void handleCondutorPopupMessage(event);
+        void handleMonitorPopupMessage(event);
       });
 
       anotacaoInput.addEventListener('input', () => {
@@ -4473,11 +4902,7 @@
           hasError = true;
         }
 
-        if (editingCodigo === null && !shouldSkipVigenciaValidation && !payload.vigenciaOs) {
-          vigenciaOsError.textContent = 'Informe a vigencia da OS.';
-          hasError = true;
-        } else if (editingCodigo === null && !shouldSkipVigenciaValidation && activationSourceEncerramento && payload.vigenciaOs <= activationSourceEncerramento) {
-          vigenciaOsError.textContent = `A vig\u00eancia deve ser posterior ao encerramento do registro anterior (${activationSourceEncerramento}).`;
+        if (validateVigenciaOsField(true)) {
           hasError = true;
         }
 
@@ -4491,13 +4916,11 @@
         }
 
 
-        if (payload.dataAdmissaoCondutor && payload.dataAdmissaoCondutor > getCurrentDateInputValue()) {
-          dataAdmissaoCondutorError.textContent = 'A admissão do condutor não pode ser futura.';
+        if (validateDataAdmissaoCondutorField()) {
           hasError = true;
         }
 
-        if (payload.dataAdmissaoMonitor && payload.dataAdmissaoMonitor > getCurrentDateInputValue()) {
-          dataAdmissaoMonitorError.textContent = 'A admissão do monitor não pode ser futura.';
+        if (validateDataAdmissaoMonitorField()) {
           hasError = true;
         }
 
@@ -4513,8 +4936,7 @@
             hasError = true;
           }
 
-          if (!payload.prepostoInicio) {
-            prepostoInicioError.textContent = 'Informe o início de preposto.';
+          if (validatePrepostoInicioField(true)) {
             hasError = true;
           }
 
@@ -4534,14 +4956,41 @@
           hasError = true;
         }
 
-        if ((payload.situacao === 'Cancelado' || payload.situacao === 'Inativo') && !payload.dataEncerramento) {
-          dataEncerramentoError.textContent = 'Informe a data de encerramento.';
+        if (validateDataEncerramentoField(true)) {
           hasError = true;
         }
 
         if (hasError) {
           feedback.textContent = 'Corrija os campos para continuar.';
           feedback.classList.add('dsc-feedback-error');
+          return;
+        }
+
+        try {
+          const isActiveCnpjCpfValid = await validateActiveOrdemServicoCnpjCpf({ cnpjCpf: payload.cnpjCpf, errorElement: cnpjCpfError });
+
+          if (!isActiveCnpjCpfValid) {
+            feedback.textContent = 'Corrija os campos para continuar.';
+            feedback.classList.add('dsc-feedback-error');
+            return;
+          }
+
+          if (hasPrepostoEnabled) {
+            const activePrepostoItem = await fetchActiveOrdemServicoByCpf(payload.cpfPreposto, getActiveOrdemServicoExcludeCodigo());
+
+            if (activePrepostoItem) {
+              cpfPrepostoError.textContent = `CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activePrepostoItem)}`;
+              feedback.textContent = 'Corrija os campos para continuar.';
+              feedback.classList.add('dsc-feedback-error');
+              return;
+            }
+
+            cpfPrepostoError.textContent = '';
+          }
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao validar dados em OrdemServico ativa.');
+          feedback.textContent = message;
+          feedback.className = 'dsc-feedback dsc-feedback-error';
           return;
         }
 
@@ -4569,6 +5018,14 @@
           const responsePayload = await readJsonResponse(response);
 
           if (!response.ok) {
+            if (responsePayload.errors?.cnpjCpf) {
+              cnpjCpfError.textContent = responsePayload.errors.cnpjCpf;
+            }
+
+            if (responsePayload.errors?.cpfPreposto) {
+              cpfPrepostoError.textContent = responsePayload.errors.cpfPreposto;
+            }
+
             throw new Error(responsePayload.message || 'Falha ao salvar OrdemServico.');
           }
 
@@ -4649,6 +5106,9 @@
         event.preventDefault();
         currentSearch = searchInput.value.trim();
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -4656,6 +5116,9 @@
         searchInput.value = '';
         currentSearch = '';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -4680,6 +5143,9 @@
         firstPageButton.addEventListener('click', () => {
           if (currentPage > 1) {
             currentPage = 1;
+            useTailPageFetch = false;
+            previousPageCursor = null;
+            nextPageCursor = null;
             void loadItems();
           }
         });
@@ -4687,6 +5153,21 @@
       previousPageButton.addEventListener('click', () => {
         if (currentPage > 1) {
           currentPage -= 1;
+          useTailPageFetch = false;
+          nextPageCursor = null;
+
+          if (currentSortBy === 'chave' && currentSortDirection === 'asc' && currentGridItems.length > 0) {
+            const firstItem = currentGridItems[0] || {};
+            previousPageCursor = {
+              termoAdesao: String(firstItem.termo_adesao || ''),
+              numOs: String(firstItem.num_os || ''),
+              revisao: String(firstItem.revisao || ''),
+              codigo: String(firstItem.codigo || ''),
+            };
+          } else {
+            previousPageCursor = null;
+          }
+
           void loadItems();
         }
       });
@@ -4694,6 +5175,21 @@
       nextPageButton.addEventListener('click', () => {
         if (currentPage < totalPages) {
           currentPage += 1;
+          useTailPageFetch = false;
+          previousPageCursor = null;
+
+          if (currentSortBy === 'chave' && currentSortDirection === 'asc' && currentGridItems.length > 0) {
+            const lastItem = currentGridItems[currentGridItems.length - 1] || {};
+            nextPageCursor = {
+              termoAdesao: String(lastItem.termo_adesao || ''),
+              numOs: String(lastItem.num_os || ''),
+              revisao: String(lastItem.revisao || ''),
+              codigo: String(lastItem.codigo || ''),
+            };
+          } else {
+            nextPageCursor = null;
+          }
+
           void loadItems();
         }
       });
@@ -4701,6 +5197,9 @@
       lastPageButton.addEventListener('click', () => {
         if (currentPage < totalPages) {
           currentPage = totalPages;
+          useTailPageFetch = currentSortBy === 'chave' && currentSortDirection === 'asc';
+          previousPageCursor = null;
+          nextPageCursor = null;
           void loadItems();
         }
       });
@@ -4715,6 +5214,9 @@
 
         pageSize = nextPageSize;
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -4755,6 +5257,9 @@
         }
 
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       };
 
@@ -4776,11 +5281,6 @@
       closeFormModalButton.addEventListener('click', hideForm);
       closeTermoButton.addEventListener('click', clearOrdemServicoTermo);
       closeSummaryButton.addEventListener('click', clearOrdemServicoSummary);
-      closeRelacaoCrmButton.addEventListener('click', clearOrdemServicoRelacaoCrm);
-      cancelRelacaoCrmButton.addEventListener('click', clearOrdemServicoRelacaoCrm);
-      applyRelacaoCrmButton.addEventListener('click', () => {
-        void applyOrdemServicoRelacaoCrm();
-      });
       closeEmissaoButton.addEventListener('click', clearOrdemServicoEmissao);
       dismissEmissaoButton.addEventListener('click', clearOrdemServicoEmissao);
       showTermoButton.addEventListener('click', () => {
@@ -4802,11 +5302,6 @@
       summaryModal.addEventListener('click', (event) => {
         if (event.target === summaryModal) {
           clearOrdemServicoSummary();
-        }
-      });
-      relacaoCrmModal.addEventListener('click', (event) => {
-        if (event.target === relacaoCrmModal) {
-          clearOrdemServicoRelacaoCrm();
         }
       });
       emissaoModal.addEventListener('click', (event) => {
@@ -4929,9 +5424,6 @@
       renderDreOptions('');
       renderModalidadeOptions('');
       renderTipoTrocaOptions('');
-      void loadDreOptions();
-      void loadModalidadeOptions();
-      void loadTipoTrocaOptions();
       void loadItems();
     </script>
   </body>

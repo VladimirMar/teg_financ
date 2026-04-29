@@ -157,6 +157,10 @@
       let currentSearch = '';
       let currentSortBy = 'codigo';
       let currentSortDirection = 'asc';
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
+      let currentGridItems = [];
       let editingCodigo = null;
       let formMode = 'create';
       let bannerTimeoutId = null;
@@ -281,10 +285,23 @@
           params.set('search', currentSearch);
         }
 
+        if (useTailPageFetch) {
+          params.set('tail', '1');
+        }
+
+        if (previousPageCursor) {
+          params.set('beforeCodigo', previousPageCursor);
+        }
+
+        if (nextPageCursor) {
+          params.set('afterCodigo', nextPageCursor);
+        }
+
         return `/api/access?${params.toString()}`;
       };
 
       const renderGrid = (items) => {
+        currentGridItems = items;
         accessGridBody.innerHTML = '';
 
         if (!items.length) {
@@ -327,9 +344,13 @@
 
       const loadAccesses = async () => {
         setGridMessage('Carregando acessos...');
+        const requestUrl = buildAccessUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
 
         try {
-          const response = await fetch(buildAccessUrl(), {
+          const response = await fetch(requestUrl, {
             headers: {
               Accept: 'application/json',
             },
@@ -544,6 +565,9 @@
         event.preventDefault();
         currentSearch = accessSearchInput.value.trim();
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadAccesses();
       });
 
@@ -551,6 +575,9 @@
         accessSearchInput.value = '';
         currentSearch = '';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadAccesses();
       });
 
@@ -560,6 +587,9 @@
         }
 
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadAccesses();
       });
 
@@ -569,6 +599,11 @@
         }
 
         currentPage -= 1;
+        useTailPageFetch = false;
+        nextPageCursor = null;
+        previousPageCursor = currentSortBy === 'codigo' && currentSortDirection === 'asc' && currentGridItems.length
+          ? String(currentGridItems[0]?.codigo || '')
+          : null;
         void loadAccesses();
       });
 
@@ -578,6 +613,11 @@
         }
 
         currentPage += 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = currentSortBy === 'codigo' && currentSortDirection === 'asc' && currentGridItems.length
+          ? String(currentGridItems[currentGridItems.length - 1]?.codigo || '')
+          : null;
         void loadAccesses();
       });
 
@@ -587,6 +627,9 @@
         }
 
         currentPage = totalPages;
+        useTailPageFetch = currentSortBy === 'codigo' && currentSortDirection === 'asc';
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadAccesses();
       });
 
@@ -600,6 +643,9 @@
 
         pageSize = nextPageSize;
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadAccesses();
       });
 
@@ -607,6 +653,9 @@
         currentSortBy = 'email';
         currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadAccesses();
       });
 

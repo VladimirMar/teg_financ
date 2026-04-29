@@ -104,7 +104,7 @@
 
             <div class="dsc-popup-overlay dsc-hidden" id="condutor-form-modal" aria-hidden="true">
               <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="condutor-form-title">
-            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="condutor-form">
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="condutor-form" novalidate>
               <div class="dsc-popup-header dsc-popup-header-sticky">
                 <h2 id="condutor-form-title">CONDUTOR</h2>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-condutor-form-modal-button" aria-label="Fechar formulario de condutor">X</button>
@@ -344,6 +344,10 @@
       let currentSearch = '';
       let currentSortBy = 'codigo';
       let currentSortDirection = 'asc';
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
+      let currentGridItems = [];
       let currentRejectionPage = 1;
       let totalRejectionPages = 1;
       let currentRejectionSearch = '';
@@ -409,7 +413,43 @@
 
         const [day, month, year] = normalizedValue.split('/').map(Number);
         const parsed = new Date(year, month - 1, day);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
+
+        if (Number.isNaN(parsed.getTime())) {
+          return null;
+        }
+
+        if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) {
+          return null;
+        }
+
+        return parsed;
+      };
+      const formatEditableDateTyping = (value) => {
+        const digits = String(value ?? '').replace(/\D/g, '').slice(0, 8);
+
+        if (digits.length <= 2) {
+          return digits;
+        }
+
+        if (digits.length <= 4) {
+          return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+        }
+
+        return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+      };
+      const commitEditableDateInput = (input) => {
+        if (!input || input.type !== 'text') {
+          return;
+        }
+
+        const parsedDate = parseEditableDateValue(input.value);
+        input.type = 'date';
+        input.inputMode = '';
+        input.placeholder = '';
+        input.value = parsedDate
+          ? formatEditableDateInputValue(parsedDate)
+          : (input.dataset.dateOriginalValue || '');
+        delete input.dataset.dateOriginalValue;
       };
       const enableFullDateSelection = (input) => {
         if (!input) {
@@ -438,9 +478,17 @@
           input.dataset.dateOriginalValue = input.value;
           input.type = 'text';
           input.inputMode = 'numeric';
-          input.placeholder = 'dd/mm/aaaa';
+          input.placeholder = 'dd/mm/yyyy';
           input.value = toEditableDateDisplay(input.value);
           selectAllContent();
+        });
+
+        input.addEventListener('input', () => {
+          if (input.type !== 'text') {
+            return;
+          }
+
+          input.value = formatEditableDateTyping(input.value);
         });
 
         input.addEventListener('mouseup', (event) => {
@@ -453,14 +501,7 @@
         });
 
         input.addEventListener('blur', () => {
-          const parsedDate = parseEditableDateValue(input.value);
-          input.type = 'date';
-          input.inputMode = '';
-          input.placeholder = '';
-          input.value = parsedDate
-            ? formatEditableDateInputValue(parsedDate)
-            : (input.dataset.dateOriginalValue || '');
-          delete input.dataset.dateOriginalValue;
+          commitEditableDateInput(input);
         });
       };
       const normalizeCpf = (value) => {
@@ -502,16 +543,7 @@
         return `${year}-${month}-${day}`;
       };
 
-      const getNextDateInputValue = () => {
-        const nextDay = new Date();
-        nextDay.setDate(nextDay.getDate() + 1);
-        const year = nextDay.getFullYear();
-        const month = String(nextDay.getMonth() + 1).padStart(2, '0');
-        const day = String(nextDay.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      };
-
-      const isFutureDate = (value) => Boolean(value) && value > getCurrentDateInputValue();
+      const isTodayOrFutureDate = (value) => Boolean(value) && value >= getCurrentDateInputValue();
       const formatDateTimeLabel = (value) => {
         if (!value) {
           return '';
@@ -588,6 +620,60 @@
         return error instanceof Error ? error.message : fallbackMessage;
       };
 
+      const pageSearchParams = new URLSearchParams(window.location.search);
+      const popupMode = String(pageSearchParams.get('popupMode') || '').trim().toLowerCase();
+      const popupCpf = normalizeCpf(String(pageSearchParams.get('cpf') || ''));
+      const isOrdemServicoCondutorPopup = popupMode === 'ordem-servico-condutor';
+      let activeCpfValidationRequestId = 0;
+      let activeCpfValidationTimeoutId = null;
+
+      const notifyOrdemServicoCondutorSaved = (item) => {
+        if (!isOrdemServicoCondutorPopup || !window.opener || window.opener.closed) {
+          return false;
+        }
+
+        window.opener.postMessage({
+          type: 'tegfinanc:condutor-created',
+          context: 'ordem-servico-condutor',
+          item: {
+            codigo: item?.codigo || '',
+            condutor: normalizeName(String(item?.condutor || '')),
+            cpf_condutor: normalizeCpf(String(item?.cpf_condutor || item?.cpfCondutor || '')),
+          },
+        }, window.location.origin);
+
+        return true;
+      };
+
+      const finalizeOrdemServicoCondutorReturn = (message) => {
+        if (!isOrdemServicoCondutorPopup) {
+          return false;
+        }
+
+        if (window.opener && !window.opener.closed && typeof window.opener.focus === 'function') {
+          window.opener.focus();
+        }
+
+        window.close();
+
+        window.setTimeout(() => {
+          if (window.closed) {
+            return;
+          }
+
+          document.body.innerHTML = `
+            <main style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;background:#f3f7fb;font-family:Segoe UI,Tahoma,sans-serif;">
+              <section style="max-width:640px;width:100%;background:#ffffff;border:1px solid #d8e3ec;border-radius:16px;padding:32px;box-shadow:0 20px 40px rgba(17,24,39,0.08);text-align:center;">
+                <h1 style="margin:0 0 12px;font-size:28px;line-height:1.2;color:#102a43;">Cadastro enviado para a Ordem de Servico</h1>
+                <p style="margin:0;font-size:16px;line-height:1.5;color:#334e68;">${message || 'Os dados do condutor ja foram devolvidos para a Ordem de Servico. Voce pode fechar esta janela.'}</p>
+              </section>
+            </main>
+          `;
+        }, 150);
+
+        return true;
+      };
+
       const resetMessages = () => {
         nomeError.textContent = '';
         cpfError.textContent = '';
@@ -636,6 +722,36 @@
         }
       };
 
+      const getComparableDateInputValue = (input) => {
+        if (!input) {
+          return '';
+        }
+
+        if (input.type === 'text') {
+          const parsedDate = parseEditableDateValue(input.value);
+          return parsedDate ? formatEditableDateInputValue(parsedDate) : '';
+        }
+
+        return input.value || '';
+      };
+
+      const validateCondutorValidityField = (input, errorElement, emptyMessage, rangeMessage, showRequired = false) => {
+        const comparableDate = getComparableDateInputValue(input);
+
+        if (!comparableDate) {
+          errorElement.textContent = showRequired ? emptyMessage : '';
+          return showRequired;
+        }
+
+        if (!isTodayOrFutureDate(comparableDate)) {
+          errorElement.textContent = rangeMessage;
+          return true;
+        }
+
+        errorElement.textContent = '';
+        return false;
+      };
+
       const resetImportMessages = () => {
         importFileNameError.textContent = '';
         importFeedback.textContent = '';
@@ -656,6 +772,97 @@
         if (tone) {
           gridFeedback.classList.add(`dsc-feedback-${tone}`);
         }
+      };
+
+      const fetchActiveOrdemServicoByCpf = async (cpf) => {
+        const normalizedCpf = normalizeCpf(cpf);
+
+        if (normalizedCpf.replace(/\D/g, '').length !== 11) {
+          return null;
+        }
+
+        const params = new URLSearchParams({ cpf: normalizedCpf });
+        const response = await fetch(`/api/ordem-servico/active-cpf?${params.toString()}`, {
+          headers: { Accept: 'application/json' },
+        });
+        const payload = await readJsonResponse(response);
+
+        if (!response.ok) {
+          throw new Error(payload.message || 'Falha ao validar CPF em OrdemServico ativa.');
+        }
+
+        return payload.item || null;
+      };
+
+      const buildOrdemServicoNumeroLabel = (item) => {
+        const termoAdesao = String(item?.termo_adesao || '').trim();
+        const numOs = String(item?.num_os || '').trim();
+        const revisao = String(item?.revisao || '').trim();
+        const codigo = String(item?.codigo || '').trim();
+        let label = [termoAdesao, numOs].filter(Boolean).join('-');
+
+        if (revisao) {
+          label += revisao.startsWith('-')
+            ? revisao
+            : `${label ? '-' : ''}${revisao}`;
+        }
+
+        return label || codigo;
+      };
+
+      const validateActiveOrdemServicoCpf = async (cpfValue = cpfInput.value) => {
+        const normalizedCpf = normalizeCpf(cpfValue);
+
+        if (normalizedCpf.replace(/\D/g, '').length !== 11) {
+          cpfError.textContent = '';
+          return true;
+        }
+
+        const activeItem = await fetchActiveOrdemServicoByCpf(normalizedCpf);
+
+        if (!activeItem) {
+          cpfError.textContent = '';
+          return true;
+        }
+
+        cpfError.textContent = `CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeItem)}`;
+        return false;
+      };
+
+      const scheduleActiveOrdemServicoCpfValidation = (cpfValue = cpfInput.value) => {
+        const normalizedCpf = normalizeCpf(cpfValue);
+
+        if (activeCpfValidationTimeoutId) {
+          window.clearTimeout(activeCpfValidationTimeoutId);
+          activeCpfValidationTimeoutId = null;
+        }
+
+        if (normalizedCpf.replace(/\D/g, '').length !== 11) {
+          activeCpfValidationRequestId += 1;
+          cpfError.textContent = '';
+          return;
+        }
+
+        const requestId = ++activeCpfValidationRequestId;
+        activeCpfValidationTimeoutId = window.setTimeout(async () => {
+          try {
+            const activeItem = await fetchActiveOrdemServicoByCpf(normalizedCpf);
+
+            if (requestId !== activeCpfValidationRequestId) {
+              return;
+            }
+
+            cpfError.textContent = activeItem
+              ? `CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeItem)}`
+              : '';
+          } catch (error) {
+            if (requestId !== activeCpfValidationRequestId) {
+              return;
+            }
+
+            cpfError.textContent = getRequestErrorMessage(error, 'Falha ao validar CPF em OrdemServico ativa.');
+          }
+        }, 250);
       };
 
       const setActiveFormTab = (tabName = 'cadastro') => {
@@ -879,6 +1086,18 @@
           params.set('search', currentSearch);
         }
 
+        if (useTailPageFetch) {
+          params.set('tail', '1');
+        }
+
+        if (previousPageCursor) {
+          params.set('beforeCodigo', previousPageCursor);
+        }
+
+        if (nextPageCursor) {
+          params.set('afterCodigo', nextPageCursor);
+        }
+
         return `/api/condutor?${params.toString()}`;
       };
 
@@ -896,6 +1115,7 @@
       };
 
       const renderGrid = (items) => {
+        currentGridItems = items;
         gridBody.innerHTML = '';
 
         if (!items.length) {
@@ -978,9 +1198,13 @@
 
       const loadItems = async () => {
         setGridMessage('Carregando condutores...');
+        const requestUrl = buildUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
 
         try {
-          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const response = await fetch(requestUrl, { headers: { Accept: 'application/json' } });
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
@@ -1022,12 +1246,13 @@
         }
       };
 
-      const startInsert = () => {
+      const startInsert = ({ cpf = '' } = {}) => {
         editingCodigo = null;
         form.reset();
         setSelectedTipoVinculo('');
         resetMessages();
         showForm('create');
+        cpfInput.value = normalizeCpf(cpf);
       };
 
       const startEdit = (item) => {
@@ -1125,10 +1350,15 @@
 
       cpfInput.addEventListener('input', () => {
         cpfInput.value = normalizeCpf(cpfInput.value);
+        if (cpfError.textContent.trim()) {
+          cpfError.textContent = '';
+        }
+        scheduleActiveOrdemServicoCpfValidation(cpfInput.value);
       });
 
       cpfInput.addEventListener('blur', () => {
         void loadCondutorVinculosByCpf(cpfInput.value, vinculoTabPanel.classList.contains('dsc-form-tab-panel-active'));
+        void validateActiveOrdemServicoCpf(cpfInput.value);
       });
 
       formTabButtons.forEach((button) => {
@@ -1145,11 +1375,36 @@
         crmcInput.value = normalizeCrmc(crmcInput.value);
       });
 
-      validadeCrmcInput.min = getNextDateInputValue();
-      validadeCursoInput.min = getNextDateInputValue();
+      validadeCrmcInput.min = getCurrentDateInputValue();
+      validadeCursoInput.min = getCurrentDateInputValue();
+
+      [validadeCrmcInput, validadeCursoInput].forEach((input) => {
+        input.addEventListener('input', () => {
+          const errorElement = input === validadeCrmcInput ? validadeCrmcError : validadeCursoError;
+          validateCondutorValidityField(
+            input,
+            errorElement,
+            input === validadeCrmcInput ? 'Informe a validade do CRMC.' : 'Informe a validade do curso.',
+            input === validadeCrmcInput ? 'Validade do CRMC deve ser maior ou igual a hoje.' : 'Validade do curso deve ser maior ou igual a hoje.',
+            Boolean(errorElement.textContent.trim()),
+          );
+        });
+
+        input.addEventListener('blur', () => {
+          validateCondutorValidityField(
+            input,
+            input === validadeCrmcInput ? validadeCrmcError : validadeCursoError,
+            input === validadeCrmcInput ? 'Informe a validade do CRMC.' : 'Informe a validade do curso.',
+            input === validadeCrmcInput ? 'Validade do CRMC deve ser maior ou igual a hoje.' : 'Validade do curso deve ser maior ou igual a hoje.',
+            true,
+          );
+        });
+      });
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
+
+        [validadeCrmcInput, validadeCursoInput].forEach(commitEditableDateInput);
 
         const condutor = normalizeName(nomeInput.value);
         const cpfCondutor = normalizeCpf(cpfInput.value);
@@ -1186,19 +1441,11 @@
           hasError = true;
         }
 
-        if (!validadeCrmc) {
-          validadeCrmcError.textContent = 'Informe a validade do CRMC.';
-          hasError = true;
-        } else if (!isFutureDate(validadeCrmc)) {
-          validadeCrmcError.textContent = 'Validade do CRMC deve ser futura.';
+        if (validateCondutorValidityField(validadeCrmcInput, validadeCrmcError, 'Informe a validade do CRMC.', 'Validade do CRMC deve ser maior ou igual a hoje.', true)) {
           hasError = true;
         }
 
-        if (!validadeCurso) {
-          validadeCursoError.textContent = 'Informe a validade do curso.';
-          hasError = true;
-        } else if (!isFutureDate(validadeCurso)) {
-          validadeCursoError.textContent = 'Validade do curso deve ser futura.';
+        if (validateCondutorValidityField(validadeCursoInput, validadeCursoError, 'Informe a validade do curso.', 'Validade do curso deve ser maior ou igual a hoje.', true)) {
           hasError = true;
         }
 
@@ -1212,6 +1459,24 @@
             validadeCrmc: validadeCrmcError.textContent,
             validadeCurso: validadeCursoError.textContent,
           });
+          return;
+        }
+
+        try {
+          const isActiveCpfValid = await validateActiveOrdemServicoCpf(cpfCondutor);
+
+          if (!isActiveCpfValid) {
+            feedback.textContent = 'Corrija os campos para continuar.';
+            feedback.classList.add('dsc-feedback-error');
+            revealFirstFormError({ cpfCondutor: cpfError.textContent });
+            return;
+          }
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao validar CPF em OrdemServico ativa.');
+          cpfError.textContent = message;
+          feedback.textContent = message;
+          feedback.classList.add('dsc-feedback-error');
+          showBanner(message, 'error');
           return;
         }
 
@@ -1251,11 +1516,18 @@
           }
 
           const savedItem = payload.item;
+          const shouldReturnToOrdemServico = notifyOrdemServicoCondutorSaved(savedItem);
           feedback.textContent = editingCodigo
             ? `Condutor ${savedItem.codigo} alterado com sucesso.`
             : `Condutor ${savedItem.codigo} gravado com sucesso.`;
           feedback.classList.add('dsc-feedback-success');
           showBanner(feedback.textContent, 'success');
+
+          if (shouldReturnToOrdemServico) {
+            finalizeOrdemServicoCondutorReturn(feedback.textContent);
+            return;
+          }
+
           hideForm();
           await loadItems();
         } catch (error) {
@@ -1380,6 +1652,9 @@
         event.preventDefault();
         currentSearch = searchInput.value.trim();
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1394,6 +1669,9 @@
         searchInput.value = '';
         currentSearch = '';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1410,6 +1688,9 @@
         }
 
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1419,6 +1700,11 @@
         }
 
         currentPage -= 1;
+        useTailPageFetch = false;
+        nextPageCursor = null;
+        previousPageCursor = currentSortBy === 'codigo' && currentSortDirection === 'asc' && currentGridItems.length
+          ? String(currentGridItems[0]?.codigo || '')
+          : null;
         void loadItems();
       });
 
@@ -1428,6 +1714,11 @@
         }
 
         currentPage += 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = currentSortBy === 'codigo' && currentSortDirection === 'asc' && currentGridItems.length
+          ? String(currentGridItems[currentGridItems.length - 1]?.codigo || '')
+          : null;
         void loadItems();
       });
 
@@ -1437,6 +1728,9 @@
         }
 
         currentPage = totalPages;
+        useTailPageFetch = currentSortBy === 'codigo' && currentSortDirection === 'asc';
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1450,6 +1744,9 @@
 
         pageSize = nextPageSize;
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1501,6 +1798,10 @@
       hideForm();
       hideImportForm();
       hideRejectionPanel();
+      if (isOrdemServicoCondutorPopup) {
+        startInsert({ cpf: popupCpf });
+        feedback.textContent = 'Condutor nao encontrado. Cadastre o condutor e salve para retornar a Ordem de Servico.';
+      }
       void loadItems();
     </script>
   </body>

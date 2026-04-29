@@ -105,7 +105,7 @@
 
             <div class="dsc-popup-overlay dsc-hidden" id="vinculo-form-modal" aria-hidden="true">
               <div class="dsc-popup-shell dsc-popup-shell-ordem-servico" role="dialog" aria-modal="true" aria-labelledby="vinculo-form-title">
-            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="vinculo-form">
+            <form class="dsc-card dsc-form dsc-access-form dsc-hidden" id="vinculo-form" novalidate>
               <div class="dsc-popup-header dsc-popup-header-sticky">
                 <h2 id="vinculo-form-title">VINCULO MONITOR</h2>
                 <button type="button" class="dsc-btn dsc-btn-white dsc-popup-compact-close-button" id="close-vinculo-form-modal-button" aria-label="Fechar formulario de vinculo do monitor">X</button>
@@ -311,6 +311,9 @@
           pageSize: 20,
           totalPages: 1,
           search: '',
+          useTailPageFetch: false,
+          previousPageCursor: null,
+          nextPageCursor: null,
           editingId: null,
           formMode: 'create',
           rejections: [],
@@ -434,7 +437,16 @@
 
           const [day, month, year] = normalizedValue.split('/').map(Number);
           const parsed = new Date(year, month - 1, day);
-          return Number.isNaN(parsed.getTime()) ? null : parsed;
+
+          if (Number.isNaN(parsed.getTime())) {
+            return null;
+          }
+
+          if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) {
+            return null;
+          }
+
+          return parsed;
         };
 
         const enableFullDateSelection = (input) => {
@@ -479,7 +491,9 @@
           });
 
           input.addEventListener('blur', () => {
-            const parsedDate = parseEditableDateValue(input.value);
+            const typedValue = String(input.value ?? '').trim();
+            const parsedDate = parseEditableDateValue(typedValue);
+            input.dataset.dateValidationInvalid = typedValue && !parsedDate ? 'true' : '';
             input.type = 'date';
             input.inputMode = '';
             input.placeholder = '';
@@ -494,6 +508,16 @@
           Object.values(formErrors).forEach((element) => {
             element.textContent = '';
           });
+        };
+
+        const validateDateFieldOnBlur = (input, errorElement, invalidMessage) => {
+          if (input.dataset.dateValidationInvalid === 'true') {
+            errorElement.textContent = invalidMessage;
+            return true;
+          }
+
+          errorElement.textContent = '';
+          return false;
         };
 
         const setFormReadOnly = (isReadOnly) => {
@@ -671,6 +695,18 @@
             params.set('search', state.search);
           }
 
+          if (state.useTailPageFetch) {
+            params.set('tail', '1');
+          }
+
+          if (state.previousPageCursor) {
+            params.set('beforeId', state.previousPageCursor);
+          }
+
+          if (state.nextPageCursor) {
+            params.set('afterId', state.nextPageCursor);
+          }
+
           return `/api/vinculo-monitor?${params.toString()}`;
         };
 
@@ -783,9 +819,13 @@
 
         const loadItems = async () => {
           setFeedback(gridFeedback, 'Carregando vinculos do monitor...');
+          const requestUrl = buildListUrl();
+          state.useTailPageFetch = false;
+          state.previousPageCursor = null;
+          state.nextPageCursor = null;
 
           try {
-            const response = await fetch(buildListUrl(), {
+            const response = await fetch(requestUrl, {
               headers: { Accept: 'application/json' },
             });
             const payload = await readJsonResponse(response);
@@ -846,6 +886,9 @@
           event.preventDefault();
           state.page = 1;
           state.search = searchInput.value.trim();
+          state.useTailPageFetch = false;
+          state.previousPageCursor = null;
+          state.nextPageCursor = null;
           await loadItems();
         });
 
@@ -853,12 +896,18 @@
           searchInput.value = '';
           state.search = '';
           state.page = 1;
+          state.useTailPageFetch = false;
+          state.previousPageCursor = null;
+          state.nextPageCursor = null;
           await loadItems();
         });
 
         firstPageButton.addEventListener('click', async () => {
           if (state.page > 1) {
             state.page = 1;
+            state.useTailPageFetch = false;
+            state.previousPageCursor = null;
+            state.nextPageCursor = null;
             await loadItems();
           }
         });
@@ -866,6 +915,9 @@
         previousPageButton.addEventListener('click', async () => {
           if (state.page > 1) {
             state.page -= 1;
+            state.useTailPageFetch = false;
+            state.nextPageCursor = null;
+            state.previousPageCursor = state.items.length ? String(state.items[0]?.id || '') : null;
             await loadItems();
           }
         });
@@ -873,6 +925,9 @@
         nextPageButton.addEventListener('click', async () => {
           if (state.page < state.totalPages) {
             state.page += 1;
+            state.useTailPageFetch = false;
+            state.previousPageCursor = null;
+            state.nextPageCursor = state.items.length ? String(state.items[state.items.length - 1]?.id || '') : null;
             await loadItems();
           }
         });
@@ -880,6 +935,9 @@
         lastPageButton.addEventListener('click', async () => {
           if (state.page < state.totalPages) {
             state.page = state.totalPages;
+            state.useTailPageFetch = true;
+            state.previousPageCursor = null;
+            state.nextPageCursor = null;
             await loadItems();
           }
         });
@@ -894,6 +952,9 @@
 
           state.pageSize = nextPageSize;
           state.page = 1;
+          state.useTailPageFetch = false;
+          state.previousPageCursor = null;
+          state.nextPageCursor = null;
           await loadItems();
         });
 
@@ -1020,6 +1081,22 @@
           if (cpfCondutorInput.value.trim()) {
             void resolveMonitor();
           }
+        });
+
+        [
+          { input: dataOsInput, errorElement: formErrors.dataOs, invalidMessage: 'Informe uma data_OS valida.' },
+          { input: dataAdmissaoInput, errorElement: formErrors.dataAdmissaoMonitor, invalidMessage: 'Informe uma data de admissao valida.' },
+        ].forEach(({ input, errorElement, invalidMessage }) => {
+          input.addEventListener('input', () => {
+            input.dataset.dateValidationInvalid = '';
+            if (errorElement.textContent.trim()) {
+              errorElement.textContent = '';
+            }
+          });
+
+          input.addEventListener('blur', () => {
+            validateDateFieldOnBlur(input, errorElement, invalidMessage);
+          });
         });
 
         form.addEventListener('submit', async (event) => {

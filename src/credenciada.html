@@ -494,6 +494,10 @@
       let currentSearch = '';
       let currentSortBy = 'codigo';
       let currentSortDirection = 'asc';
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
+      let currentGridItems = [];
       let currentRejectionPage = 1;
       let totalRejectionPages = 1;
       let currentRejectionSearch = '';
@@ -1037,6 +1041,18 @@
           params.set('search', currentSearch);
         }
 
+        if (useTailPageFetch) {
+          params.set('tail', '1');
+        }
+
+        if (previousPageCursor) {
+          params.set('beforeCodigo', previousPageCursor);
+        }
+
+        if (nextPageCursor) {
+          params.set('afterCodigo', nextPageCursor);
+        }
+
         return `/api/credenciada?${params.toString()}`;
       };
 
@@ -1054,6 +1070,7 @@
       };
 
       const renderGrid = (items) => {
+        currentGridItems = items;
         gridBody.innerHTML = '';
 
         if (!items.length) {
@@ -1134,9 +1151,13 @@
 
       const loadItems = async () => {
         setGridMessage('Carregando credenciadas...');
+        const requestUrl = buildUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
 
         try {
-          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const response = await fetch(requestUrl, { headers: { Accept: 'application/json' } });
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
@@ -1653,6 +1674,9 @@
         event.preventDefault();
         currentSearch = searchInput.value.trim();
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1667,6 +1691,9 @@
         searchInput.value = '';
         currentSearch = '';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1683,6 +1710,9 @@
         }
 
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1692,6 +1722,11 @@
         }
 
         currentPage -= 1;
+        useTailPageFetch = false;
+        nextPageCursor = null;
+        previousPageCursor = currentSortBy === 'codigo' && currentSortDirection === 'asc' && currentGridItems.length
+          ? String(currentGridItems[0]?.codigo || '')
+          : null;
         void loadItems();
       });
 
@@ -1701,6 +1736,11 @@
         }
 
         currentPage += 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = currentSortBy === 'codigo' && currentSortDirection === 'asc' && currentGridItems.length
+          ? String(currentGridItems[currentGridItems.length - 1]?.codigo || '')
+          : null;
         void loadItems();
       });
 
@@ -1710,6 +1750,9 @@
         }
 
         currentPage = totalPages;
+        useTailPageFetch = currentSortBy === 'codigo' && currentSortDirection === 'asc';
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1723,6 +1766,9 @@
 
         pageSize = nextPageSize;
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 

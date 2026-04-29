@@ -641,6 +641,9 @@
       let totalPages = 1;
       let totalItems = 0;
       let currentItem = null;
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
 
       const normalizeRequestValue = (value) => String(value ?? '').trim();
 
@@ -712,6 +715,24 @@
         const params = new URLSearchParams({ page: String(currentPage), pageSize: String(pageSize) });
         if (currentSearch) {
           params.set('search', currentSearch);
+        }
+
+        if (useTailPageFetch) {
+          params.set('tail', '1');
+        }
+
+        if (previousPageCursor) {
+          params.set('beforeTermoAdesao', previousPageCursor.termoAdesao);
+          params.set('beforeNumOs', previousPageCursor.numOs);
+          params.set('beforeRevisao', previousPageCursor.revisao);
+          params.set('beforeCodigo', previousPageCursor.codigo);
+        }
+
+        if (nextPageCursor) {
+          params.set('afterTermoAdesao', nextPageCursor.termoAdesao);
+          params.set('afterNumOs', nextPageCursor.numOs);
+          params.set('afterRevisao', nextPageCursor.revisao);
+          params.set('afterCodigo', nextPageCursor.codigo);
         }
         return `/api/ordem-servico/data-eol-pendencias?${params.toString()}`;
       };
@@ -797,8 +818,12 @@
 
       const loadItems = async () => {
         setFeedback('Carregando pendencias de data EOL...');
+        const requestUrl = buildUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         try {
-          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const response = await fetch(requestUrl, { headers: { Accept: 'application/json' } });
           const payload = await readJsonResponse(response);
           if (!response.ok) {
             throw new Error(payload.message || 'Falha ao carregar pendencias de data EOL.');
@@ -863,6 +888,9 @@
       const applyFilter = () => {
         currentSearch = normalizeRequestValue(searchInput.value);
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       };
 
@@ -881,6 +909,9 @@
         searchInput.value = '';
         currentSearch = '';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -898,6 +929,9 @@
           return;
         }
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -906,6 +940,16 @@
           return;
         }
         currentPage -= 1;
+        useTailPageFetch = false;
+        nextPageCursor = null;
+        previousPageCursor = currentItem
+          ? {
+              termoAdesao: String(currentItem.termo_adesao || ''),
+              numOs: String(currentItem.num_os || ''),
+              revisao: String(currentItem.revisao || ''),
+              codigo: String(currentItem.codigo || ''),
+            }
+          : null;
         void loadItems();
       });
 
@@ -914,6 +958,16 @@
           return;
         }
         currentPage += 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = currentItem
+          ? {
+              termoAdesao: String(currentItem.termo_adesao || ''),
+              numOs: String(currentItem.num_os || ''),
+              revisao: String(currentItem.revisao || ''),
+              codigo: String(currentItem.codigo || ''),
+            }
+          : null;
         void loadItems();
       });
 
@@ -922,6 +976,9 @@
           return;
         }
         currentPage = totalPages;
+        useTailPageFetch = true;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 

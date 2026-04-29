@@ -288,6 +288,10 @@
       let totalPages = 1;
       let currentSearch = '';
       let currentSortDirection = 'desc';
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
+      let currentGridItems = [];
       let editingDataReferencia = null;
       let formMode = 'create';
       let bannerTimeoutId = null;
@@ -605,6 +609,18 @@
           params.set('search', currentSearch);
         }
 
+        if (useTailPageFetch) {
+          params.set('tail', '1');
+        }
+
+        if (previousPageCursor) {
+          params.set('beforeDataReferencia', previousPageCursor);
+        }
+
+        if (nextPageCursor) {
+          params.set('afterDataReferencia', nextPageCursor);
+        }
+
         return `/api/emissao-documento-parametro?${params.toString()}`;
       };
 
@@ -618,6 +634,7 @@
       };
 
       const renderGrid = (items) => {
+        currentGridItems = items;
         gridBody.innerHTML = '';
 
         if (!items.length) {
@@ -659,10 +676,14 @@
 
       const loadItems = async () => {
         setGridMessage('Carregando parametros gerais...');
+        const requestUrl = buildUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
 
         try {
           await ensureDefaultAuditTemplateItem();
-          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const response = await fetch(requestUrl, { headers: { Accept: 'application/json' } });
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
@@ -1072,6 +1093,9 @@
         event.preventDefault();
         currentSearch = searchInput.value.trim();
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1079,6 +1103,9 @@
         searchInput.value = '';
         currentSearch = '';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1088,6 +1115,9 @@
         }
 
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1097,6 +1127,11 @@
         }
 
         currentPage -= 1;
+        useTailPageFetch = false;
+        nextPageCursor = null;
+        previousPageCursor = currentSortDirection === 'desc' && currentGridItems.length
+          ? String(currentGridItems[0]?.data_referencia || '')
+          : null;
         void loadItems();
       });
 
@@ -1106,6 +1141,11 @@
         }
 
         currentPage += 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = currentSortDirection === 'desc' && currentGridItems.length
+          ? String(currentGridItems[currentGridItems.length - 1]?.data_referencia || '')
+          : null;
         void loadItems();
       });
 
@@ -1115,6 +1155,9 @@
         }
 
         currentPage = totalPages;
+        useTailPageFetch = currentSortDirection === 'desc';
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -1128,12 +1171,18 @@
 
         pageSize = nextPageSize;
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
       sortDataButton.addEventListener('click', () => {
         currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 

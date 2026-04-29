@@ -564,6 +564,11 @@
   min-width: 120px;
 }
 
+.management-pagination-button-icon {
+  min-width: 44px;
+  padding-inline: 12px;
+}
+
 .management-pagination-info,
 .dre-pagination-info {
   color: var(--text-soft);

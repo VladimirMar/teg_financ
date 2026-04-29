@@ -184,6 +184,7 @@ const ordemServicoDataEolPendenciasPath = '/api/ordem-servico/data-eol-pendencia
 const ordemServicoNextNumOsPath = '/api/ordem-servico/next-num-os'
 const ordemServicoNextRevisaoPath = '/api/ordem-servico/next-revisao'
 const ordemServicoActiveCpfPath = '/api/ordem-servico/active-cpf'
+const ordemServicoActiveCnpjCpfPath = '/api/ordem-servico/active-cnpj-cpf'
 const ordemServicoActivePlacaPath = '/api/ordem-servico/active-placa'
 const ordemServicoImportXmlPath = '/api/ordem-servico/import-xml'
 const ordemServicoImportRejectionsPath = '/api/ordem-servico/import-rejections'
@@ -1257,6 +1258,27 @@ const findCondutorByCpf = async (cpfCondutor, executor = pool) => {
   return result.rows[0] ?? null
 }
 
+const findCondutorCpfConflict = async (cpfCondutor, originalCodigo = null, executor = pool) => {
+  const digits = extractDocumentDigits(cpfCondutor)
+
+  if (!digits) {
+    return null
+  }
+
+  const result = await executor.query(
+    `SELECT
+       ${condutorSelectClause}
+     FROM condutor
+     WHERE regexp_replace(COALESCE(cpf_condutor, ''), '[^0-9]', '', 'g') = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    [digits, originalCodigo],
+  )
+
+  return result.rows[0] ?? null
+}
+
 const getNextCondutorCodigo = async (executor = pool) => {
   const result = await executor.query(
     `SELECT COALESCE(MAX(codigo), 0) + 1 AS next_codigo
@@ -1284,6 +1306,77 @@ const findMonitorByCpf = async (cpfMonitor, executor = pool) => {
   )
 
   return result.rows[0] ?? null
+}
+
+const findMonitorCpfConflict = async (cpfMonitor, originalCodigo = null, executor = pool) => {
+  const digits = extractDocumentDigits(cpfMonitor)
+
+  if (!digits) {
+    return null
+  }
+
+  const result = await executor.query(
+    `SELECT
+       ${monitorSelectClause}
+     FROM monitor
+     WHERE regexp_replace(COALESCE(cpf_monitor, ''), '[^0-9]', '', 'g') = $1
+       AND ($2::int IS NULL OR codigo <> $2)
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    [digits, originalCodigo],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const getCondutorPersistenceError = async (error, fallbackMessage, cpfCondutor = '') => {
+  if (error && error.code === '23505' && String(error.constraint || '').includes('condutor_cpf_unique_idx')) {
+    const duplicateCpfItem = await findCondutorCpfConflict(cpfCondutor)
+    const duplicateName = normalizeCondutorName(String(duplicateCpfItem?.condutor || ''))
+    const duplicateMessage = duplicateName
+      ? `CPF registrado no cadastro de: ${duplicateName}`
+      : 'CPF registrado no cadastro de: CONDUTOR'
+
+    return {
+      status: 409,
+      message: duplicateMessage,
+      errors: { cpfCondutor: duplicateMessage },
+    }
+  }
+
+  return {
+    status: 500,
+    message: error instanceof Error ? error.message : fallbackMessage,
+  }
+}
+
+const getMonitorPersistenceError = async (error, fallbackMessage, cpfMonitor = '') => {
+  if (error && error.code === '23505' && String(error.constraint || '').includes('monitor_cpf_unique_idx')) {
+    const duplicateCpfItem = await findMonitorCpfConflict(cpfMonitor)
+    const duplicateName = normalizeCondutorName(String(duplicateCpfItem?.monitor || ''))
+    const duplicateMessage = duplicateName
+      ? `CPF registrado no cadastro de: ${duplicateName}`
+      : 'CPF registrado no cadastro de: MONITOR'
+
+    return {
+      status: 409,
+      message: duplicateMessage,
+      errors: { cpfMonitor: duplicateMessage },
+    }
+  }
+
+  return {
+    status: 500,
+    message: error instanceof Error ? error.message : fallbackMessage,
+  }
+}
+
+const formatActiveOrdemServicoLabel = (item) => {
+  return [
+    item?.termo_adesao,
+    item?.num_os,
+    item?.revisao,
+  ].filter(Boolean).join('-') || String(item?.codigo || '').trim()
 }
 
 const findActiveOrdemServicoByCpf = async (cpfValue, { excludeCodigo = null } = {}, executor = pool) => {
@@ -1315,6 +1408,34 @@ const findActiveOrdemServicoByCpf = async (cpfValue, { excludeCodigo = null } = 
          OR regexp_replace(COALESCE(cpf_preposto, ''), '[^0-9]', '', 'g') = $1
          OR regexp_replace(COALESCE(cpf_monitor, ''), '[^0-9]', '', 'g') = $1
        )
+     ORDER BY codigo ASC
+     LIMIT 1`,
+    [digits, Number.isInteger(normalizedExcludeCodigo) && normalizedExcludeCodigo > 0 ? normalizedExcludeCodigo : null],
+  )
+
+  return result.rows[0] ?? null
+}
+
+const findActiveOrdemServicoByCnpjCpf = async (cnpjCpfValue, { excludeCodigo = null } = {}, executor = pool) => {
+  const digits = extractDocumentDigits(cnpjCpfValue)
+  const normalizedExcludeCodigo = normalizeCondutorCodigo(excludeCodigo)
+
+  if (!digits || ![11, 14].includes(digits.length)) {
+    return null
+  }
+
+  const result = await executor.query(
+    `SELECT
+       codigo,
+       termo_adesao,
+       num_os,
+       revisao,
+       situacao,
+       COALESCE(BTRIM((SELECT cr.cnpj_cpf FROM credenciada cr WHERE cr.codigo = (SELECT credenciada_codigo FROM ${credenciamentoTermoTableName} WHERE codigo = ${ordemServicoTableName}.termo_codigo))), '') AS cnpj_cpf
+     FROM ${ordemServicoTableName}
+     WHERE UPPER(BTRIM(COALESCE(situacao, ''))) = 'ATIVO'
+       AND ($2::int IS NULL OR codigo <> $2)
+       AND regexp_replace(COALESCE((SELECT cr.cnpj_cpf FROM credenciada cr WHERE cr.codigo = (SELECT credenciada_codigo FROM ${credenciamentoTermoTableName} WHERE codigo = ${ordemServicoTableName}.termo_codigo)), ''), '[^0-9]', '', 'g') = $1
      ORDER BY codigo ASC
      LIMIT 1`,
     [digits, Number.isInteger(normalizedExcludeCodigo) && normalizedExcludeCodigo > 0 ? normalizedExcludeCodigo : null],
@@ -1920,6 +2041,22 @@ const normalizeVehicleMoney = (value) => {
 
   const parsed = Number(normalizedValue)
   return Number.isFinite(parsed) ? Number(parsed.toFixed(2)) : Number.NaN
+
+  const buildOrdemServicoNumeroLabel = (item) => {
+    const termoAdesao = normalizeRequestValue(item?.termo_adesao)
+    const numOs = normalizeRequestValue(item?.num_os)
+    const revisao = normalizeRequestValue(item?.revisao)
+    const codigo = normalizeRequestValue(item?.codigo)
+    let label = [termoAdesao, numOs].filter(Boolean).join('-')
+
+    if (revisao) {
+      label += revisao.startsWith('-')
+        ? revisao
+        : `${label ? '-' : ''}${revisao}`
+    }
+
+    return label || codigo
+  }
 }
 
 const normalizeTipoDeVeiculo = (value) => {
@@ -3307,7 +3444,6 @@ const condutorImportRecusaSelectClause = `
 const monitorSelectClause = `
   codigo::text AS codigo,
   BTRIM(monitor) AS monitor,
-  COALESCE(BTRIM(rg_monitor), '') AS rg_monitor,
   BTRIM(cpf_monitor) AS cpf_monitor,
   TO_CHAR(curso_monitor::date, 'YYYY-MM-DD') AS curso_monitor,
   TO_CHAR(validade_curso::date, 'YYYY-MM-DD') AS validade_curso,
@@ -3965,9 +4101,53 @@ const importCondutorXmlFile = async (fileName) => {
     }
 
     for (const record of normalizedRecords) {
-      const existingResult = await client.query('SELECT 1 FROM condutor WHERE codigo = $1 LIMIT 1', [record.codigo])
+      const existingByCodeResult = await client.query('SELECT codigo::text AS codigo FROM condutor WHERE codigo = $1 LIMIT 1', [record.codigo])
+      const existingByCpfItem = await findCondutorByCpf(record.cpfCondutor, client)
+      const existingByCodeCodigo = Number(existingByCodeResult.rows[0]?.codigo || 0)
+      const existingByCpfCodigo = Number(existingByCpfItem?.codigo || 0)
 
-      if (existingResult.rowCount > 0) {
+      if (existingByCodeCodigo > 0 && existingByCpfCodigo > 0 && existingByCodeCodigo !== existingByCpfCodigo) {
+        const skippedRecord = {
+          index: record.index,
+          codigoXml: String(record.codigo || ''),
+          condutorXml: record.condutor,
+          cpfCondutorXml: record.cpfCondutor,
+          crmcXml: record.crmc,
+          tipoVinculoXml: record.tipoVinculo,
+          message: 'CPF do condutor ja vinculado a outro codigo cadastrado.',
+        }
+
+        skippedRecords.push(skippedRecord)
+        await client.query(
+          `INSERT INTO condutor_import_recusa (
+             arquivo_xml,
+             linha_xml,
+             codigo_xml,
+             condutor_xml,
+             cpf_condutor_xml,
+             crmc_xml,
+             tipo_vinculo_xml,
+             motivo_recusa,
+             data_importacao
+           )
+           VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, ''), NULLIF($7, ''), $8, NOW())`,
+          [
+            sanitizedFileName,
+            skippedRecord.index,
+            skippedRecord.codigoXml,
+            skippedRecord.condutorXml,
+            skippedRecord.cpfCondutorXml,
+            skippedRecord.crmcXml,
+            skippedRecord.tipoVinculoXml,
+            skippedRecord.message,
+          ],
+        )
+        continue
+      }
+
+      const targetCodigo = existingByCodeCodigo > 0 ? existingByCodeCodigo : existingByCpfCodigo
+
+      if (targetCodigo > 0) {
         await client.query(
           `UPDATE condutor
            SET condutor = $1,
@@ -3987,7 +4167,7 @@ const importCondutorXmlFile = async (fileName) => {
             record.validadeCurso,
             record.tipoVinculo,
             record.historico,
-            record.codigo,
+            targetCodigo,
           ],
         )
         updated += 1
@@ -4124,29 +4304,72 @@ const importMonitorXmlFile = async (fileName) => {
     }
 
     for (const record of normalizedRecords) {
-      const existingResult = await client.query('SELECT 1 FROM monitor WHERE codigo = $1 LIMIT 1', [record.codigo])
+      const existingByCodeResult = await client.query('SELECT codigo::text AS codigo FROM monitor WHERE codigo = $1 LIMIT 1', [record.codigo])
+      const existingByCpfItem = await findMonitorByCpf(record.cpfMonitor, client)
+      const existingByCodeCodigo = Number(existingByCodeResult.rows[0]?.codigo || 0)
+      const existingByCpfCodigo = Number(existingByCpfItem?.codigo || 0)
 
-      if (existingResult.rowCount > 0) {
+      if (existingByCodeCodigo > 0 && existingByCpfCodigo > 0 && existingByCodeCodigo !== existingByCpfCodigo) {
+        const skippedRecord = {
+          index: record.index,
+          codigoXml: String(record.codigo || ''),
+          monitorXml: record.monitor,
+          cpfMonitorXml: record.cpfMonitor,
+          rgMonitorXml: record.rgMonitor,
+          tipoVinculoXml: record.tipoVinculo,
+          message: 'CPF do monitor ja vinculado a outro codigo cadastrado.',
+        }
+
+        skippedRecords.push(skippedRecord)
+        await client.query(
+          `INSERT INTO monitor_import_recusa (
+             arquivo_xml,
+             linha_xml,
+             codigo_xml,
+             monitor_xml,
+             cpf_monitor_xml,
+             rg_monitor_xml,
+             tipo_vinculo_xml,
+             motivo_recusa,
+             data_importacao
+           )
+           VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, ''), NULLIF($7, ''), $8, NOW())`,
+          [
+            sanitizedFileName,
+            skippedRecord.index,
+            skippedRecord.codigoXml,
+            skippedRecord.monitorXml,
+            skippedRecord.cpfMonitorXml,
+            skippedRecord.rgMonitorXml,
+            skippedRecord.tipoVinculoXml,
+            skippedRecord.message,
+          ],
+        )
+        continue
+      }
+
+      const targetCodigo = existingByCodeCodigo > 0 ? existingByCodeCodigo : existingByCpfCodigo
+
+      if (targetCodigo > 0) {
         await client.query(
           `UPDATE monitor
            SET monitor = $1,
-               rg_monitor = NULLIF($2, ''),
-               cpf_monitor = $3,
-               curso_monitor = NULLIF($4, '')::date,
-               validade_curso = NULLIF($5, '')::date,
-               tipo_vinculo = NULLIF($6, ''),
-               nascimento = NULLIF($7, '')::date,
+               rg_monitor = NULL,
+               cpf_monitor = $2,
+               curso_monitor = NULLIF($3, '')::date,
+               validade_curso = NULLIF($4, '')::date,
+               tipo_vinculo = NULLIF($5, ''),
+               nascimento = NULLIF($6, '')::date,
                data_modificacao = NOW()
-           WHERE codigo = $8`,
+           WHERE codigo = $7`,
           [
             record.monitor,
-            record.rgMonitor,
             record.cpfMonitor,
             record.cursoMonitor,
             record.validadeCurso,
             record.tipoVinculo,
             record.nascimento,
-            record.codigo,
+            targetCodigo,
           ],
         )
         updated += 1
@@ -4157,7 +4380,6 @@ const importMonitorXmlFile = async (fileName) => {
         `INSERT INTO monitor (
            codigo,
            monitor,
-           rg_monitor,
            cpf_monitor,
            curso_monitor,
            validade_curso,
@@ -4166,11 +4388,10 @@ const importMonitorXmlFile = async (fileName) => {
            data_inclusao,
            data_modificacao
          )
-         VALUES ($1, $2, NULLIF($3, ''), $4, NULLIF($5, '')::date, NULLIF($6, '')::date, NULLIF($7, ''), NULLIF($8, '')::date, NOW(), NOW())`,
+         VALUES ($1, $2, $3, NULLIF($4, '')::date, NULLIF($5, '')::date, NULLIF($6, ''), NULLIF($7, '')::date, NOW(), NOW())`,
         [
           record.codigo,
           record.monitor,
-          record.rgMonitor,
           record.cpfMonitor,
           record.cursoMonitor,
           record.validadeCurso,
@@ -6502,6 +6723,7 @@ const validateEmissaoDocumentoParametroPayload = async ({
 
 const isDateBeforeToday = (value) => isDateInputValid(value) && value < getCurrentDateInputValue()
 const isDateAfterToday = (value) => isDateInputValid(value) && value > getCurrentDateInputValue()
+const isDateOnOrAfterToday = (value) => isDateInputValid(value) && value >= getCurrentDateInputValue()
 
 const validateCondutorPayload = async ({
   codigo,
@@ -6563,8 +6785,8 @@ const validateCondutorPayload = async ({
     return { status: 400, payload: { message: 'Validade do CRMC invalida.' } }
   }
 
-  if (!isDateAfterToday(normalizedValidadeCrmc)) {
-    return { status: 400, payload: { message: 'Validade do CRMC deve ser futura.' } }
+  if (!isDateOnOrAfterToday(normalizedValidadeCrmc)) {
+    return { status: 400, payload: { message: 'Validade do CRMC deve ser maior ou igual a hoje.' } }
   }
 
   if (!normalizedValidadeCurso) {
@@ -6575,8 +6797,8 @@ const validateCondutorPayload = async ({
     return { status: 400, payload: { message: 'Validade do curso invalida.' } }
   }
 
-  if (!isDateAfterToday(normalizedValidadeCurso)) {
-    return { status: 400, payload: { message: 'Validade do curso deve ser futura.' } }
+  if (!isDateOnOrAfterToday(normalizedValidadeCurso)) {
+    return { status: 400, payload: { message: 'Validade do curso deve ser maior ou igual a hoje.' } }
   }
 
   if (normalizedTipoVinculo === null) {
@@ -6594,6 +6816,58 @@ const validateCondutorPayload = async ({
 
   if (duplicateCodeResult.rowCount > 0) {
     return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
+  }
+
+  const existingCondutorItem = Number.isInteger(originalCodigo) && originalCodigo > 0
+    ? await findCondutorByCodigo(originalCodigo)
+    : null
+  const originalCpf = normalizeCpf(existingCondutorItem?.cpf_condutor ?? '')
+  const isCpfChange = !originalCpf || originalCpf !== normalizedCpf
+
+  if (isCpfChange && originalCpf) {
+    const activeOriginalCondutor = await findActiveOrdemServicoByCpf(originalCpf)
+
+    if (activeOriginalCondutor) {
+      const duplicateMessage = `CPF registrada na OS num.: ${formatActiveOrdemServicoLabel(activeOriginalCondutor)}`
+
+      return {
+        status: 409,
+        payload: {
+          message: duplicateMessage,
+          errors: { cpfCondutor: duplicateMessage },
+        },
+      }
+    }
+  }
+
+  if (isCpfChange || !existingCondutorItem) {
+    const activeOrdemServicoCondutor = await findActiveOrdemServicoByCpf(normalizedCpf)
+
+    if (activeOrdemServicoCondutor) {
+      const duplicateMessage = `CPF registrada na OS num.: ${formatActiveOrdemServicoLabel(activeOrdemServicoCondutor)}`
+
+      return {
+        status: 409,
+        payload: {
+          message: duplicateMessage,
+          errors: { cpfCondutor: duplicateMessage },
+        },
+      }
+    }
+  }
+
+  const duplicateCpfItem = await findCondutorCpfConflict(normalizedCpf, originalCodigo)
+
+  if (duplicateCpfItem) {
+    const duplicateMessage = `CPF registrado no cadastro de: ${normalizeCondutorName(String(duplicateCpfItem.condutor || ''))}`
+
+    return {
+      status: 409,
+      payload: {
+        message: duplicateMessage,
+        errors: { cpfCondutor: duplicateMessage },
+      },
+    }
   }
 
   return {
@@ -6614,7 +6888,6 @@ const validateCondutorPayload = async ({
 const validateMonitorPayload = async ({
   codigo,
   monitor,
-  rgMonitor,
   cpfMonitor,
   cursoMonitor,
   validadeCurso,
@@ -6624,7 +6897,6 @@ const validateMonitorPayload = async ({
 }) => {
   const normalizedCodigo = normalizeCondutorCodigo(codigo)
   const normalizedMonitor = normalizeCondutorName(monitor)
-  const normalizedRgMonitor = normalizeMonitorRg(rgMonitor)
   const normalizedCpfMonitor = normalizeCpf(cpfMonitor)
   const normalizedCursoMonitor = normalizeRequestValue(cursoMonitor)
   const normalizedValidadeCurso = normalizeRequestValue(validadeCurso)
@@ -6655,10 +6927,6 @@ const validateMonitorPayload = async ({
     return { status: 400, payload: { message: 'CPF do monitor deve conter 11 digitos.' } }
   }
 
-  if (normalizedRgMonitor && !isMonitorRgValid(normalizedRgMonitor)) {
-    return { status: 400, payload: { message: 'RG do monitor invalido.' } }
-  }
-
   if (!normalizedNascimento) {
     return { status: 400, payload: { message: 'Data de nascimento e obrigatoria.' } }
   }
@@ -6675,16 +6943,16 @@ const validateMonitorPayload = async ({
     return { status: 400, payload: { message: 'Data do curso invalida.' } }
   }
 
-  if (normalizedCursoMonitor && !isDateBeforeToday(normalizedCursoMonitor)) {
-    return { status: 400, payload: { message: 'Data do curso deve ser anterior ao dia da inclusao.' } }
+  if (normalizedCursoMonitor && !isDateOnOrAfterToday(normalizedCursoMonitor)) {
+    return { status: 400, payload: { message: 'Data do curso deve ser maior ou igual a hoje.' } }
   }
 
   if (normalizedValidadeCurso && !isDateInputValid(normalizedValidadeCurso)) {
     return { status: 400, payload: { message: 'Validade do curso invalida.' } }
   }
 
-  if (normalizedValidadeCurso && !isDateAfterToday(normalizedValidadeCurso)) {
-    return { status: 400, payload: { message: 'Validade do curso deve ser futura.' } }
+  if (normalizedValidadeCurso && !isDateOnOrAfterToday(normalizedValidadeCurso)) {
+    return { status: 400, payload: { message: 'Validade do curso deve ser maior ou igual a hoje.' } }
   }
 
   if (normalizedCursoMonitor && normalizedValidadeCurso && normalizedValidadeCurso < normalizedCursoMonitor) {
@@ -6716,12 +6984,63 @@ const validateMonitorPayload = async ({
     return { status: 409, payload: { message: 'Codigo ja cadastrado.' } }
   }
 
+  const existingMonitorItem = Number.isInteger(originalCodigo) && originalCodigo > 0
+    ? await findMonitorByCodigo(originalCodigo)
+    : null
+  const originalCpfMonitor = normalizeCpf(existingMonitorItem?.cpf_monitor ?? '')
+  const isCpfMonitorChange = !originalCpfMonitor || originalCpfMonitor !== normalizedCpfMonitor
+
+  if (isCpfMonitorChange && originalCpfMonitor) {
+    const activeOriginalMonitor = await findActiveOrdemServicoByCpf(originalCpfMonitor)
+
+    if (activeOriginalMonitor) {
+      const duplicateMessage = `CPF registrada na OS num.: ${formatActiveOrdemServicoLabel(activeOriginalMonitor)}`
+
+      return {
+        status: 409,
+        payload: {
+          message: duplicateMessage,
+          errors: { cpfMonitor: duplicateMessage },
+        },
+      }
+    }
+  }
+
+  if (isCpfMonitorChange || !existingMonitorItem) {
+    const activeOrdemServicoMonitor = await findActiveOrdemServicoByCpf(normalizedCpfMonitor)
+
+    if (activeOrdemServicoMonitor) {
+      const duplicateMessage = `CPF registrada na OS num.: ${formatActiveOrdemServicoLabel(activeOrdemServicoMonitor)}`
+
+      return {
+        status: 409,
+        payload: {
+          message: duplicateMessage,
+          errors: { cpfMonitor: duplicateMessage },
+        },
+      }
+    }
+  }
+
+  const duplicateCpfItem = await findMonitorCpfConflict(normalizedCpfMonitor, originalCodigo)
+
+  if (duplicateCpfItem) {
+    const duplicateMessage = `CPF registrado no cadastro de: ${normalizeCondutorName(String(duplicateCpfItem.monitor || ''))}`
+
+    return {
+      status: 409,
+      payload: {
+        message: duplicateMessage,
+        errors: { cpfMonitor: duplicateMessage },
+      },
+    }
+  }
+
   return {
     status: 200,
     payload: {
       codigo: normalizedCodigo,
       monitor: normalizedMonitor,
-      rgMonitor: normalizedRgMonitor,
       cpfMonitor: normalizedCpfMonitor,
       cursoMonitor: normalizedCursoMonitor,
       validadeCurso: normalizedValidadeCurso,
@@ -6933,7 +7252,46 @@ const validateVeiculoPayload = async ({
     }
   }
 
+  if (Number.isInteger(originalCodigo) && originalCodigo > 0) {
+    const existingVeiculoItem = await fetchVeiculoAuditItemByCodigo(pool, originalCodigo)
+    const originalPlaca = normalizeVehiclePlaca(existingVeiculoItem?.placas ?? '')
+
+    if (originalPlaca && originalPlaca !== normalizedPlacas) {
+      const activeOriginalPlacaItem = await findActiveOrdemServicoByPlaca(originalPlaca)
+
+      if (activeOriginalPlacaItem) {
+        const duplicateMessage = `Placa registrada na OS num.: ${[
+          activeOriginalPlacaItem.termo_adesao,
+          activeOriginalPlacaItem.num_os,
+          activeOriginalPlacaItem.revisao,
+        ].filter(Boolean).join('-') || activeOriginalPlacaItem.codigo}`
+
+        return {
+          status: 409,
+          payload: {
+            message: duplicateMessage,
+            errors: { placas: duplicateMessage },
+          },
+        }
+      }
+    }
+  }
+
   if (normalizedPlacas) {
+    const activeOrdemServicoItem = await findActiveOrdemServicoByPlaca(normalizedPlacas)
+
+    if (activeOrdemServicoItem) {
+      const duplicateMessage = `Placa registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeOrdemServicoItem)}`
+
+      return {
+        status: 409,
+        payload: {
+          message: duplicateMessage,
+          errors: { placas: duplicateMessage },
+        },
+      }
+    }
+
     const duplicatePlacaResult = await pool.query(
       `SELECT 1
        FROM veiculo
@@ -8183,6 +8541,26 @@ if (importMode && !normalizedCredenciado && !normalizedCnpjCpf) {
           ? normalizedCodigo
           : null
 
+    if (normalizedCnpjCpf && isCnpjCpfValid(normalizedCnpjCpf)) {
+      const activeOrdemServicoByCnpjCpf = await findActiveOrdemServicoByCnpjCpf(
+        normalizedCnpjCpf,
+        { excludeCodigo: activeCpfExcludeCodigo },
+        conexao ?? pool,
+      )
+
+      if (activeOrdemServicoByCnpjCpf) {
+        const duplicateMessage = `CNPJ/CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeOrdemServicoByCnpjCpf)}`
+
+        return {
+          status: 409,
+          payload: {
+            message: duplicateMessage,
+            errors: { cnpjCpf: duplicateMessage },
+          },
+        }
+      }
+    }
+
     const cpfChecks = [
       { cpf: normalizedCpfCondutor, label: 'condutor' },
       { cpf: normalizedCpfPreposto, label: 'preposto' },
@@ -8201,6 +8579,18 @@ if (importMode && !normalizedCredenciado && !normalizedCnpjCpf) {
       )
 
       if (activeOrdemServico) {
+        if (cpfCheck.label === 'preposto') {
+          const duplicateMessage = `CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeOrdemServico)}`
+
+          return {
+            status: 409,
+            payload: {
+              message: duplicateMessage,
+              errors: { cpfPreposto: duplicateMessage },
+            },
+          }
+        }
+
         return {
           status: 409,
           payload: {
@@ -8781,6 +9171,24 @@ const ensureDatabaseSchema = async () => {
   await pool.query('SELECT setval(\'condutor_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM condutor), 0), 1), true)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS login_codigo_unique_idx ON login (codigo)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS condutor_codigo_unique_idx ON condutor (codigo)')
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM (
+          SELECT regexp_replace(COALESCE(cpf_condutor, ''), '[^0-9]', '', 'g') AS cpf_digits
+          FROM condutor
+        ) AS condutor_cpfs
+        WHERE cpf_digits <> ''
+        GROUP BY cpf_digits
+        HAVING COUNT(*) > 1
+      ) THEN
+        EXECUTE 'CREATE UNIQUE INDEX IF NOT EXISTS condutor_cpf_unique_idx ON condutor ((regexp_replace(COALESCE(cpf_condutor, ''''), ''[^0-9]'', '''', ''g''))) WHERE regexp_replace(COALESCE(cpf_condutor, ''''), ''[^0-9]'', '''', ''g'') <> ''''';
+      END IF;
+    END
+    $$
+  `)
   await pool.query('CREATE INDEX IF NOT EXISTS condutor_import_recusa_data_idx ON condutor_import_recusa (data_importacao DESC)')
   await pool.query('CREATE INDEX IF NOT EXISTS condutor_import_recusa_arquivo_idx ON condutor_import_recusa (arquivo_xml)')
   await pool.query('CREATE SEQUENCE IF NOT EXISTS monitor_codigo_seq START WITH 1 INCREMENT BY 1')
@@ -8825,6 +9233,24 @@ const ensureDatabaseSchema = async () => {
   `)
   await pool.query('SELECT setval(\'monitor_codigo_seq\', GREATEST(COALESCE((SELECT MAX(codigo) FROM monitor), 0), 1), true)')
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS monitor_codigo_unique_idx ON monitor (codigo)')
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM (
+          SELECT regexp_replace(COALESCE(cpf_monitor, ''), '[^0-9]', '', 'g') AS cpf_digits
+          FROM monitor
+        ) AS monitor_cpfs
+        WHERE cpf_digits <> ''
+        GROUP BY cpf_digits
+        HAVING COUNT(*) > 1
+      ) THEN
+        EXECUTE 'CREATE UNIQUE INDEX IF NOT EXISTS monitor_cpf_unique_idx ON monitor ((regexp_replace(COALESCE(cpf_monitor, ''''), ''[^0-9]'', '''', ''g''))) WHERE regexp_replace(COALESCE(cpf_monitor, ''''), ''[^0-9]'', '''', ''g'') <> ''''';
+      END IF;
+    END
+    $$
+  `)
   await pool.query('CREATE INDEX IF NOT EXISTS monitor_import_recusa_data_idx ON monitor_import_recusa (data_importacao DESC)')
   await pool.query('CREATE INDEX IF NOT EXISTS monitor_import_recusa_arquivo_idx ON monitor_import_recusa (arquivo_xml)')
   await pool.query('CREATE SEQUENCE IF NOT EXISTS veiculo_codigo_seq START WITH 1 INCREMENT BY 1')
@@ -10232,6 +10658,11 @@ const server = createServer(async (request, response) => {
         : 'ASC'
       const normalizedSortBy = sortBy === 'lista' ? 'descricao' : sortBy
       const sortDirection = normalizedSortBy === 'descricao' ? requestedSortDirection : 'ASC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeCodigo') ?? '')
+      const afterCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterCodigo') ?? '')
+      const beforeCodigo = beforeCodigoRaw ? Number(beforeCodigoRaw) : Number.NaN
+      const afterCodigo = afterCodigoRaw ? Number(afterCodigoRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const filters = []
       const values = []
@@ -10257,26 +10688,69 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total FROM tipo_troca ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT ${trocaSelectClause}
-         FROM tipo_troca
-         ${whereClause}
-         ORDER BY ${orderByClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const shouldUseTailQuery = tail && normalizedSortBy === 'codigo' && sortDirection === 'ASC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && normalizedSortBy === 'codigo' && sortDirection === 'ASC' && !Number.isNaN(beforeCodigo)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && normalizedSortBy === 'codigo' && sortDirection === 'ASC' && !Number.isNaN(afterCodigo)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${trocaSelectClause}
+             FROM tipo_troca
+             ${whereClause}
+             ORDER BY CAST(codigo AS integer) DESC, CAST(controle AS integer) ASC
+             LIMIT $${tailValues.length}
+           ) AS troca_tail
+           ORDER BY CAST(codigo AS integer) ASC, CAST(controle AS integer) ASC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeCodigo, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${trocaSelectClause}
+             FROM tipo_troca
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} CAST(codigo AS integer) < $${values.length + 1}
+             ORDER BY CAST(codigo AS integer) DESC, CAST(controle AS integer) ASC
+             LIMIT $${previousValues.length}
+           ) AS troca_prev
+           ORDER BY CAST(codigo AS integer) ASC, CAST(controle AS integer) ASC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterCodigo, pageSize]
+        result = await pool.query(
+          `SELECT ${trocaSelectClause}
+           FROM tipo_troca
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} CAST(codigo AS integer) > $${values.length + 1}
+           ORDER BY CAST(codigo AS integer) ASC, CAST(controle AS integer) ASC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT ${trocaSelectClause}
+           FROM tipo_troca
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: normalizedSortBy === 'controle' || normalizedSortBy === 'descricao' ? normalizedSortBy : 'codigo',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -10300,6 +10774,17 @@ const server = createServer(async (request, response) => {
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
         ? 'DESC'
         : 'ASC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeTermoAdesao = normalizeRequestValue(requestUrl.searchParams.get('beforeTermoAdesao') ?? '')
+      const beforeNumOs = normalizeRequestValue(requestUrl.searchParams.get('beforeNumOs') ?? '')
+      const beforeRevisao = normalizeRequestValue(requestUrl.searchParams.get('beforeRevisao') ?? '')
+      const beforeCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeCodigo') ?? '')
+      const beforeCodigo = beforeCodigoRaw ? Number(beforeCodigoRaw) : Number.NaN
+      const afterTermoAdesao = normalizeRequestValue(requestUrl.searchParams.get('afterTermoAdesao') ?? '')
+      const afterNumOs = normalizeRequestValue(requestUrl.searchParams.get('afterNumOs') ?? '')
+      const afterRevisao = normalizeRequestValue(requestUrl.searchParams.get('afterRevisao') ?? '')
+      const afterCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterCodigo') ?? '')
+      const afterCodigo = afterCodigoRaw ? Number(afterCodigoRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
@@ -10324,6 +10809,7 @@ const server = createServer(async (request, response) => {
           OR COALESCE(BTRIM(dre_codigo), '') ILIKE UPPER($${values.length})
           OR COALESCE(BTRIM(condutor), '') ILIKE UPPER($${values.length})
           OR COALESCE(BTRIM(monitor), '') ILIKE UPPER($${values.length})
+          OR COALESCE(BTRIM(veiculo_placas), '') ILIKE UPPER($${values.length})
           OR COALESCE(BTRIM(crm), '') ILIKE UPPER($${values.length})
         )`)
       }
@@ -10334,26 +10820,136 @@ const server = createServer(async (request, response) => {
         values,
       )
 
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT
-           ${ordemServicoSelectClause}
-         FROM ${ordemServicoTableName}
-         ${whereClause}
-         ORDER BY ${orderByClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const shouldUseTailQuery = tail && sortBy === 'chave' && sortDirection === 'ASC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery
+        && sortBy === 'chave'
+        && sortDirection === 'ASC'
+        && !Number.isNaN(beforeCodigo)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery
+        && !shouldUsePreviousCursorQuery
+        && sortBy === 'chave'
+        && sortDirection === 'ASC'
+        && !Number.isNaN(afterCodigo)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT *
+           FROM (
+             SELECT
+               ${ordemServicoSelectClause}
+             FROM ${ordemServicoTableName}
+             ${whereClause}
+             ORDER BY
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.termo_adesao, ''))) DESC,
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.num_os, ''))) DESC,
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.revisao, ''))) DESC,
+               ${ordemServicoTableName}.codigo DESC
+             LIMIT $${tailValues.length}
+           ) AS ordem_servico_tail
+           ORDER BY
+             UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC,
+             UPPER(BTRIM(COALESCE(num_os, ''))) ASC,
+             UPPER(BTRIM(COALESCE(revisao, ''))) ASC,
+             CAST(codigo AS integer) ASC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [
+          ...values,
+          beforeTermoAdesao.toUpperCase(),
+          beforeNumOs.toUpperCase(),
+          beforeRevisao.toUpperCase(),
+          beforeCodigo,
+          pageSize,
+        ]
+        result = await pool.query(
+          `SELECT *
+           FROM (
+             SELECT
+               ${ordemServicoSelectClause}
+             FROM ${ordemServicoTableName}
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.termo_adesao, ''))),
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.num_os, ''))),
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.revisao, ''))),
+               ${ordemServicoTableName}.codigo
+             ) < (
+               $${values.length + 1},
+               $${values.length + 2},
+               $${values.length + 3},
+               $${values.length + 4}
+             )
+             ORDER BY
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.termo_adesao, ''))) DESC,
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.num_os, ''))) DESC,
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.revisao, ''))) DESC,
+               ${ordemServicoTableName}.codigo DESC
+             LIMIT $${previousValues.length}
+           ) AS ordem_servico_prev
+           ORDER BY
+             UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC,
+             UPPER(BTRIM(COALESCE(num_os, ''))) ASC,
+             UPPER(BTRIM(COALESCE(revisao, ''))) ASC,
+             CAST(codigo AS integer) ASC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [
+          ...values,
+          afterTermoAdesao.toUpperCase(),
+          afterNumOs.toUpperCase(),
+          afterRevisao.toUpperCase(),
+          afterCodigo,
+          pageSize,
+        ]
+        result = await pool.query(
+          `SELECT
+             ${ordemServicoSelectClause}
+           FROM ${ordemServicoTableName}
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+             UPPER(BTRIM(COALESCE(${ordemServicoTableName}.termo_adesao, ''))),
+             UPPER(BTRIM(COALESCE(${ordemServicoTableName}.num_os, ''))),
+             UPPER(BTRIM(COALESCE(${ordemServicoTableName}.revisao, ''))),
+             ${ordemServicoTableName}.codigo
+           ) > (
+             $${values.length + 1},
+             $${values.length + 2},
+             $${values.length + 3},
+             $${values.length + 4}
+           )
+           ORDER BY
+             UPPER(BTRIM(COALESCE(${ordemServicoTableName}.termo_adesao, ''))) ASC,
+             UPPER(BTRIM(COALESCE(${ordemServicoTableName}.num_os, ''))) ASC,
+             UPPER(BTRIM(COALESCE(${ordemServicoTableName}.revisao, ''))) ASC,
+             ${ordemServicoTableName}.codigo ASC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT
+             ${ordemServicoSelectClause}
+           FROM ${ordemServicoTableName}
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: sortBy === 'num_os' || sortBy === 'credenciado' || sortBy === 'chave' ? sortBy : 'chave',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -10373,6 +10969,17 @@ const server = createServer(async (request, response) => {
       const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
       const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
       const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 20) || 20, 1), 100)
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeTermoAdesao = normalizeOrdemServicoTermoAdesao(requestUrl.searchParams.get('beforeTermoAdesao') ?? '')
+      const beforeNumOs = normalizeRequestValue(requestUrl.searchParams.get('beforeNumOs') ?? '').toUpperCase()
+      const beforeRevisao = normalizeRequestValue(requestUrl.searchParams.get('beforeRevisao') ?? '').toUpperCase()
+      const beforeCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeCodigo') ?? '')
+      const afterTermoAdesao = normalizeOrdemServicoTermoAdesao(requestUrl.searchParams.get('afterTermoAdesao') ?? '')
+      const afterNumOs = normalizeRequestValue(requestUrl.searchParams.get('afterNumOs') ?? '').toUpperCase()
+      const afterRevisao = normalizeRequestValue(requestUrl.searchParams.get('afterRevisao') ?? '').toUpperCase()
+      const afterCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterCodigo') ?? '')
+      const beforeCodigo = beforeCodigoRaw ? Number(beforeCodigoRaw) : Number.NaN
+      const afterCodigo = afterCodigoRaw ? Number(afterCodigoRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = ['data_eol IS NULL']
@@ -10399,27 +11006,105 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total FROM ${ordemServicoTableName} ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT ${ordemServicoSelectClause}
-         FROM ${ordemServicoTableName}
-         ${whereClause}
-         ORDER BY ${ordemServicoCompositeKeyOrderClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
-
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const shouldUseTailQuery = tail
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && beforeTermoAdesao && !Number.isNaN(beforeCodigo)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && afterTermoAdesao && !Number.isNaN(afterCodigo)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${ordemServicoSelectClause}
+             FROM ${ordemServicoTableName}
+             ${whereClause}
+             ORDER BY
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.termo_adesao, ''))) DESC,
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.num_os, ''))) DESC,
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.revisao, ''))) DESC,
+               ${ordemServicoTableName}.codigo DESC
+             LIMIT $${tailValues.length}
+           ) AS ordem_servico_eol_tail
+           ORDER BY
+             UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC,
+             UPPER(BTRIM(COALESCE(num_os, ''))) ASC,
+             UPPER(BTRIM(COALESCE(revisao, ''))) ASC,
+             CAST(codigo AS integer) ASC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeTermoAdesao.toUpperCase(), beforeNumOs, beforeRevisao, beforeCodigo, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${ordemServicoSelectClause}
+             FROM ${ordemServicoTableName}
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.termo_adesao, ''))),
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.num_os, ''))),
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.revisao, ''))),
+               ${ordemServicoTableName}.codigo
+             ) < (
+               $${values.length + 1},
+               $${values.length + 2},
+               $${values.length + 3},
+               $${values.length + 4}
+             )
+             ORDER BY
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.termo_adesao, ''))) DESC,
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.num_os, ''))) DESC,
+               UPPER(BTRIM(COALESCE(${ordemServicoTableName}.revisao, ''))) DESC,
+               ${ordemServicoTableName}.codigo DESC
+             LIMIT $${previousValues.length}
+           ) AS ordem_servico_eol_prev
+           ORDER BY
+             UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC,
+             UPPER(BTRIM(COALESCE(num_os, ''))) ASC,
+             UPPER(BTRIM(COALESCE(revisao, ''))) ASC,
+             CAST(codigo AS integer) ASC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterTermoAdesao.toUpperCase(), afterNumOs, afterRevisao, afterCodigo, pageSize]
+        result = await pool.query(
+          `SELECT ${ordemServicoSelectClause}
+           FROM ${ordemServicoTableName}
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+             UPPER(BTRIM(COALESCE(${ordemServicoTableName}.termo_adesao, ''))),
+             UPPER(BTRIM(COALESCE(${ordemServicoTableName}.num_os, ''))),
+             UPPER(BTRIM(COALESCE(${ordemServicoTableName}.revisao, ''))),
+             ${ordemServicoTableName}.codigo
+           ) > (
+             $${values.length + 1},
+             $${values.length + 2},
+             $${values.length + 3},
+             $${values.length + 4}
+           )
+           ORDER BY ${ordemServicoCompositeKeyOrderClause}
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT ${ordemServicoSelectClause}
+           FROM ${ordemServicoTableName}
+           ${whereClause}
+           ORDER BY ${ordemServicoCompositeKeyOrderClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
       })
     } catch (error) {
       const message = error instanceof Error
@@ -10577,6 +11262,9 @@ const server = createServer(async (request, response) => {
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'desc').toLowerCase() === 'asc'
         ? 'ASC'
         : 'DESC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeDataReferencia = normalizeRequestValue(requestUrl.searchParams.get('beforeDataReferencia') ?? '')
+      const afterDataReferencia = normalizeRequestValue(requestUrl.searchParams.get('afterDataReferencia') ?? '')
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
@@ -10597,27 +11285,86 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total FROM ${emissaoDocumentoParametroTableName} ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT
-           ${emissaoDocumentoParametroSelectClause}
-         FROM ${emissaoDocumentoParametroTableName}
-         ${whereClause}
-         ORDER BY TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') ${sortDirection}, BTRIM(data_referencia) ${sortDirection}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const orderByClause = `TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') ${sortDirection}, BTRIM(data_referencia) ${sortDirection}`
+      const shouldUseTailQuery = tail && sortDirection === 'DESC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && sortDirection === 'DESC' && Boolean(beforeDataReferencia)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && sortDirection === 'DESC' && Boolean(afterDataReferencia)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${emissaoDocumentoParametroSelectClause}
+             FROM ${emissaoDocumentoParametroTableName}
+             ${whereClause}
+             ORDER BY TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') ASC, BTRIM(data_referencia) ASC
+             LIMIT $${tailValues.length}
+           ) AS emissao_parametro_tail
+           ORDER BY TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') DESC, BTRIM(data_referencia) DESC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeDataReferencia, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${emissaoDocumentoParametroSelectClause}
+             FROM ${emissaoDocumentoParametroTableName}
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+               TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') > TO_DATE($${values.length + 1}, 'DD/MM/YYYY')
+               OR (
+                 TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') = TO_DATE($${values.length + 1}, 'DD/MM/YYYY')
+                 AND BTRIM(data_referencia) > BTRIM($${values.length + 1})
+               )
+             )
+             ORDER BY TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') ASC, BTRIM(data_referencia) ASC
+             LIMIT $${previousValues.length}
+           ) AS emissao_parametro_prev
+           ORDER BY TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') DESC, BTRIM(data_referencia) DESC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterDataReferencia, pageSize]
+        result = await pool.query(
+          `SELECT
+             ${emissaoDocumentoParametroSelectClause}
+           FROM ${emissaoDocumentoParametroTableName}
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+             TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') < TO_DATE($${values.length + 1}, 'DD/MM/YYYY')
+             OR (
+               TO_DATE(BTRIM(data_referencia), 'DD/MM/YYYY') = TO_DATE($${values.length + 1}, 'DD/MM/YYYY')
+               AND BTRIM(data_referencia) < BTRIM($${values.length + 1})
+             )
+           )
+           ORDER BY ${orderByClause}
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT
+             ${emissaoDocumentoParametroSelectClause}
+           FROM ${emissaoDocumentoParametroTableName}
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: 'data_referencia',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -10806,6 +11553,26 @@ const server = createServer(async (request, response) => {
     return
   }
 
+  if (request.method === 'GET' && pathname === ordemServicoActiveCnpjCpfPath) {
+    try {
+      const cnpjCpf = normalizeCnpjCpf(requestUrl.searchParams.get('cnpjCpf') ?? '')
+      const excludeCodigo = normalizeCondutorCodigo(requestUrl.searchParams.get('excludeCodigo'))
+
+      if (!cnpjCpf || !isCnpjCpfValid(cnpjCpf)) {
+        sendJson(response, 400, { message: 'CNPJ/CPF deve conter 11 ou 14 digitos.' })
+        return
+      }
+
+      const item = await findActiveOrdemServicoByCnpjCpf(cnpjCpf, { excludeCodigo })
+      sendJson(response, 200, { active: Boolean(item), item })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao validar CNPJ/CPF em OrdemServico ativa.'
+      sendJson(response, 500, { message })
+    }
+
+    return
+  }
+
   if (request.method === 'GET' && pathname === ordemServicoActivePlacaPath) {
     try {
       const placa = normalizeVehiclePlaca(requestUrl.searchParams.get('placa') ?? '')
@@ -10979,6 +11746,11 @@ const server = createServer(async (request, response) => {
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
         ? 'DESC'
         : 'ASC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeCodigo') ?? '')
+      const afterCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterCodigo') ?? '')
+      const beforeCodigo = beforeCodigoRaw ? Number(beforeCodigoRaw) : Number.NaN
+      const afterCodigo = afterCodigoRaw ? Number(afterCodigoRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
@@ -11003,26 +11775,69 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total FROM login ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT codigo::text AS codigo, BTRIM(nome) AS nome, TRIM(email) AS email
-         FROM login
-         ${whereClause}
-         ORDER BY ${orderByClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const shouldUseTailQuery = tail && sortBy === 'codigo' && sortDirection === 'ASC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && sortBy === 'codigo' && sortDirection === 'ASC' && !Number.isNaN(beforeCodigo)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && sortBy === 'codigo' && sortDirection === 'ASC' && !Number.isNaN(afterCodigo)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT codigo::text AS codigo, BTRIM(nome) AS nome, TRIM(email) AS email
+             FROM login
+             ${whereClause}
+             ORDER BY codigo DESC
+             LIMIT $${tailValues.length}
+           ) AS access_tail
+           ORDER BY CAST(codigo AS integer) ASC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeCodigo, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT codigo::text AS codigo, BTRIM(nome) AS nome, TRIM(email) AS email
+             FROM login
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} codigo < $${values.length + 1}
+             ORDER BY codigo DESC
+             LIMIT $${previousValues.length}
+           ) AS access_prev
+           ORDER BY CAST(codigo AS integer) ASC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterCodigo, pageSize]
+        result = await pool.query(
+          `SELECT codigo::text AS codigo, BTRIM(nome) AS nome, TRIM(email) AS email
+           FROM login
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} codigo > $${values.length + 1}
+           ORDER BY codigo ASC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT codigo::text AS codigo, BTRIM(nome) AS nome, TRIM(email) AS email
+           FROM login
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: sortBy === 'nome' || sortBy === 'email' ? sortBy : 'codigo',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -11046,6 +11861,11 @@ const server = createServer(async (request, response) => {
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
         ? 'DESC'
         : 'ASC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeCodigo') ?? '')
+      const afterCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterCodigo') ?? '')
+      const beforeCodigo = beforeCodigoRaw ? Number(beforeCodigoRaw) : Number.NaN
+      const afterCodigo = afterCodigoRaw ? Number(afterCodigoRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
@@ -11068,27 +11888,71 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total FROM condutor ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT
-           ${condutorSelectClause}
-         FROM condutor
-         ${whereClause}
-         ORDER BY ${orderByClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const shouldUseTailQuery = tail && sortBy === 'codigo' && sortDirection === 'ASC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && sortBy === 'codigo' && sortDirection === 'ASC' && !Number.isNaN(beforeCodigo)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && sortBy === 'codigo' && sortDirection === 'ASC' && !Number.isNaN(afterCodigo)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${condutorSelectClause}
+             FROM condutor
+             ${whereClause}
+             ORDER BY codigo DESC
+             LIMIT $${tailValues.length}
+           ) AS condutor_tail
+           ORDER BY CAST(codigo AS integer) ASC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeCodigo, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${condutorSelectClause}
+             FROM condutor
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} codigo < $${values.length + 1}
+             ORDER BY codigo DESC
+             LIMIT $${previousValues.length}
+           ) AS condutor_prev
+           ORDER BY CAST(codigo AS integer) ASC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterCodigo, pageSize]
+        result = await pool.query(
+          `SELECT
+             ${condutorSelectClause}
+           FROM condutor
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} codigo > $${values.length + 1}
+           ORDER BY codigo ASC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT
+             ${condutorSelectClause}
+           FROM condutor
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: sortBy === 'condutor' ? 'condutor' : 'codigo',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -11112,6 +11976,11 @@ const server = createServer(async (request, response) => {
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
         ? 'DESC'
         : 'ASC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeCodigo') ?? '')
+      const afterCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterCodigo') ?? '')
+      const beforeCodigo = beforeCodigoRaw ? Number(beforeCodigoRaw) : Number.NaN
+      const afterCodigo = afterCodigoRaw ? Number(afterCodigoRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
@@ -11125,7 +11994,6 @@ const server = createServer(async (request, response) => {
           CAST(codigo AS text) ILIKE $${values.length}
           OR UPPER(BTRIM(monitor)) ILIKE UPPER($${values.length})
           OR BTRIM(cpf_monitor) ILIKE $${values.length}
-          OR COALESCE(BTRIM(rg_monitor), '') ILIKE UPPER($${values.length})
         )`)
       }
 
@@ -11134,27 +12002,71 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total FROM monitor ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT
-           ${monitorSelectClause}
-         FROM monitor
-         ${whereClause}
-         ORDER BY ${orderByClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const shouldUseTailQuery = tail && sortBy === 'codigo' && sortDirection === 'ASC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && sortBy === 'codigo' && sortDirection === 'ASC' && !Number.isNaN(beforeCodigo)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && sortBy === 'codigo' && sortDirection === 'ASC' && !Number.isNaN(afterCodigo)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${monitorSelectClause}
+             FROM monitor
+             ${whereClause}
+             ORDER BY codigo DESC
+             LIMIT $${tailValues.length}
+           ) AS monitor_tail
+           ORDER BY CAST(codigo AS integer) ASC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeCodigo, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${monitorSelectClause}
+             FROM monitor
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} codigo < $${values.length + 1}
+             ORDER BY codigo DESC
+             LIMIT $${previousValues.length}
+           ) AS monitor_prev
+           ORDER BY CAST(codigo AS integer) ASC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterCodigo, pageSize]
+        result = await pool.query(
+          `SELECT
+             ${monitorSelectClause}
+           FROM monitor
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} codigo > $${values.length + 1}
+           ORDER BY codigo ASC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT
+             ${monitorSelectClause}
+           FROM monitor
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: sortBy === 'monitor' ? 'monitor' : 'codigo',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -11238,12 +12150,17 @@ const server = createServer(async (request, response) => {
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
         ? 'DESC'
         : 'ASC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeCodigo') ?? '')
+      const afterCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterCodigo') ?? '')
+      const beforeCodigo = beforeCodigoRaw ? Number(beforeCodigoRaw) : Number.NaN
+      const afterCodigo = afterCodigoRaw ? Number(afterCodigoRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
       const orderByClause = sortBy === 'placas'
-        ? `UPPER(BTRIM(placas)) ${sortDirection}, codigo ASC`
-        : `codigo ${sortDirection}`
+        ? `UPPER(BTRIM(placas)) ${sortDirection}, CAST(codigo AS integer) ASC`
+        : `CAST(codigo AS integer) ${sortDirection}`
 
       if (search) {
         values.push(`%${search}%`)
@@ -11261,27 +12178,73 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total FROM veiculo ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT
-           ${veiculoSelectClause}
-         FROM veiculo
-         ${whereClause}
-         ORDER BY ${orderByClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const shouldUseTailQuery = tail && sortBy === 'codigo' && sortDirection === 'ASC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && sortBy === 'codigo' && sortDirection === 'ASC' && !Number.isNaN(beforeCodigo)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && sortBy === 'codigo' && sortDirection === 'ASC' && !Number.isNaN(afterCodigo)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${veiculoSelectClause}
+             FROM veiculo
+             ${whereClause}
+             ORDER BY CAST(codigo AS integer) DESC
+             LIMIT $${tailValues.length}
+           ) AS veiculo_tail
+           ORDER BY CAST(codigo AS integer) ASC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeCodigo, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${veiculoSelectClause}
+             FROM veiculo
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} CAST(codigo AS integer) < $${values.length + 1}
+             ORDER BY CAST(codigo AS integer) DESC
+             LIMIT $${previousValues.length}
+           ) AS veiculo_prev
+           ORDER BY CAST(codigo AS integer) ASC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterCodigo, pageSize]
+        result = await pool.query(
+          `SELECT
+             ${veiculoSelectClause}
+           FROM veiculo
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} CAST(codigo AS integer) > $${values.length + 1}
+           ORDER BY CAST(codigo AS integer) ASC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT
+             ${veiculoSelectClause}
+           FROM veiculo
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: sortBy === 'placas' ? 'placas' : 'codigo',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -11305,6 +12268,13 @@ const server = createServer(async (request, response) => {
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'desc').toLowerCase() === 'asc'
         ? 'ASC'
         : 'DESC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeDataEvento = normalizeRequestValue(requestUrl.searchParams.get('beforeDataEvento') ?? '')
+      const beforeIdRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeId') ?? '')
+      const afterDataEvento = normalizeRequestValue(requestUrl.searchParams.get('afterDataEvento') ?? '')
+      const afterIdRaw = normalizeRequestValue(requestUrl.searchParams.get('afterId') ?? '')
+      const beforeId = beforeIdRaw ? Number(beforeIdRaw) : Number.NaN
+      const afterId = afterIdRaw ? Number(afterIdRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
@@ -11335,27 +12305,79 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total FROM ${veiculoHistoricoTableName} ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT
-           ${veiculoHistoricoSelectClause}
-         FROM ${veiculoHistoricoTableName}
-         ${whereClause}
-         ORDER BY ${orderByClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const shouldUseTailQuery = tail && sortBy === 'data_evento' && sortDirection === 'DESC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && sortBy === 'data_evento' && sortDirection === 'DESC' && beforeDataEvento && !Number.isNaN(beforeId)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && sortBy === 'data_evento' && sortDirection === 'DESC' && afterDataEvento && !Number.isNaN(afterId)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${veiculoHistoricoSelectClause}
+             FROM ${veiculoHistoricoTableName}
+             ${whereClause}
+             ORDER BY data_evento ASC, id ASC
+             LIMIT $${tailValues.length}
+           ) AS veiculo_historico_tail
+           ORDER BY data_evento DESC, id DESC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeDataEvento, beforeId, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${veiculoHistoricoSelectClause}
+             FROM ${veiculoHistoricoTableName}
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+               data_evento > $${values.length + 1}
+               OR (data_evento = $${values.length + 1} AND id > $${values.length + 2})
+             )
+             ORDER BY data_evento ASC, id ASC
+             LIMIT $${previousValues.length}
+           ) AS veiculo_historico_prev
+           ORDER BY data_evento DESC, id DESC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterDataEvento, afterId, pageSize]
+        result = await pool.query(
+          `SELECT
+             ${veiculoHistoricoSelectClause}
+           FROM ${veiculoHistoricoTableName}
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+             data_evento < $${values.length + 1}
+             OR (data_evento = $${values.length + 1} AND id < $${values.length + 2})
+           )
+           ORDER BY data_evento DESC, id DESC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT
+             ${veiculoHistoricoSelectClause}
+           FROM ${veiculoHistoricoTableName}
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: ['veiculo_codigo', 'placas', 'crm'].includes(sortBy) ? sortBy : 'data_evento',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -11383,6 +12405,13 @@ const server = createServer(async (request, response) => {
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
         ? 'DESC'
         : 'ASC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeCodigo') ?? '')
+      const afterCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterCodigo') ?? '')
+      const beforeTermoAdesao = normalizeOrdemServicoTermoAdesao(requestUrl.searchParams.get('beforeTermoAdesao') ?? '')
+      const afterTermoAdesao = normalizeOrdemServicoTermoAdesao(requestUrl.searchParams.get('afterTermoAdesao') ?? '')
+      const beforeCodigo = beforeCodigoRaw ? Number(beforeCodigoRaw) : Number.NaN
+      const afterCodigo = afterCodigoRaw ? Number(afterCodigoRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
@@ -11438,20 +12467,126 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total FROM ${credenciamentoTermoTableName} ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT
-           ${credenciamentoTermoSelectClause}
-         FROM ${credenciamentoTermoTableName}
-         ${whereClause}
-         ORDER BY ${orderByClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const useCodigoCursor = sortBy === 'codigo' && sortDirection === 'ASC'
+      const useTermoCursor = sortBy === 'termo_adesao' && sortDirection === 'ASC'
+      const shouldUseTailQuery = tail && (useCodigoCursor || useTermoCursor)
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && (
+        (useCodigoCursor && !Number.isNaN(beforeCodigo))
+        || (useTermoCursor && beforeTermoAdesao && !Number.isNaN(beforeCodigo))
+      )
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && (
+        (useCodigoCursor && !Number.isNaN(afterCodigo))
+        || (useTermoCursor && afterTermoAdesao && !Number.isNaN(afterCodigo))
+      )
+
+      let result
+
+      if (shouldUseTailQuery && useCodigoCursor) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${credenciamentoTermoSelectClause}
+             FROM ${credenciamentoTermoTableName}
+             ${whereClause}
+             ORDER BY CAST(codigo AS integer) DESC
+             LIMIT $${tailValues.length}
+           ) AS termo_tail
+           ORDER BY CAST(codigo AS integer) ASC`,
+          tailValues,
+        )
+      } else if (shouldUseTailQuery && useTermoCursor) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${credenciamentoTermoSelectClause}
+             FROM ${credenciamentoTermoTableName}
+             ${whereClause}
+             ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) DESC, CAST(codigo AS integer) DESC
+             LIMIT $${tailValues.length}
+           ) AS termo_tail
+           ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC, CAST(codigo AS integer) ASC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery && useCodigoCursor) {
+        const previousValues = [...values, beforeCodigo, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${credenciamentoTermoSelectClause}
+             FROM ${credenciamentoTermoTableName}
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} CAST(codigo AS integer) < $${values.length + 1}
+             ORDER BY CAST(codigo AS integer) DESC
+             LIMIT $${previousValues.length}
+           ) AS termo_prev
+           ORDER BY CAST(codigo AS integer) ASC`,
+          previousValues,
+        )
+      } else if (shouldUsePreviousCursorQuery && useTermoCursor) {
+        const previousValues = [...values, beforeTermoAdesao.toUpperCase(), beforeCodigo, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${credenciamentoTermoSelectClause}
+             FROM ${credenciamentoTermoTableName}
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+               UPPER(BTRIM(COALESCE(termo_adesao, ''))),
+               CAST(codigo AS integer)
+             ) < (
+               $${values.length + 1},
+               $${values.length + 2}
+             )
+             ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) DESC, CAST(codigo AS integer) DESC
+             LIMIT $${previousValues.length}
+           ) AS termo_prev
+           ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC, CAST(codigo AS integer) ASC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery && useCodigoCursor) {
+        const nextValues = [...values, afterCodigo, pageSize]
+        result = await pool.query(
+          `SELECT
+             ${credenciamentoTermoSelectClause}
+           FROM ${credenciamentoTermoTableName}
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} CAST(codigo AS integer) > $${values.length + 1}
+           ORDER BY CAST(codigo AS integer) ASC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else if (shouldUseNextCursorQuery && useTermoCursor) {
+        const nextValues = [...values, afterTermoAdesao.toUpperCase(), afterCodigo, pageSize]
+        result = await pool.query(
+          `SELECT
+             ${credenciamentoTermoSelectClause}
+           FROM ${credenciamentoTermoTableName}
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+             UPPER(BTRIM(COALESCE(termo_adesao, ''))),
+             CAST(codigo AS integer)
+           ) > (
+             $${values.length + 1},
+             $${values.length + 2}
+           )
+           ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC, CAST(codigo AS integer) ASC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT
+             ${credenciamentoTermoSelectClause}
+           FROM ${credenciamentoTermoTableName}
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
+
       const items = result.rows.map((item) => ({
         ...item,
         valorContratoExtenso: buildCurrencyExtenso(item.valor_contrato),
@@ -11460,9 +12595,9 @@ const server = createServer(async (request, response) => {
       sendJson(response, 200, {
         items,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: ['termo_adesao', 'credenciado', 'aditivo', 'status_termo'].includes(sortBy) ? sortBy : 'codigo',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -11482,6 +12617,17 @@ const server = createServer(async (request, response) => {
       const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
       const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
       const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 20) || 20, 1), 100)
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeTermoAdesao = normalizeOrdemServicoTermoAdesao(requestUrl.searchParams.get('beforeTermoAdesao') ?? '')
+      const beforeAditivoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeAditivo') ?? '')
+      const beforeCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeCodigo') ?? '')
+      const afterTermoAdesao = normalizeOrdemServicoTermoAdesao(requestUrl.searchParams.get('afterTermoAdesao') ?? '')
+      const afterAditivoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterAditivo') ?? '')
+      const afterCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterCodigo') ?? '')
+      const beforeAditivo = beforeAditivoRaw ? Number(beforeAditivoRaw) : Number.NaN
+      const beforeCodigo = beforeCodigoRaw ? Number(beforeCodigoRaw) : Number.NaN
+      const afterAditivo = afterAditivoRaw ? Number(afterAditivoRaw) : Number.NaN
+      const afterCodigo = afterCodigoRaw ? Number(afterCodigoRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = ['data_assinatura IS NULL']
@@ -11504,27 +12650,85 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total FROM ${credenciamentoTermoTableName} ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT ${credenciamentoTermoSelectClause}
-         FROM ${credenciamentoTermoTableName}
-         ${whereClause}
-         ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC, COALESCE(aditivo, 0) ASC, CAST(codigo AS integer) ASC
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
-
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const shouldUseTailQuery = tail
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && beforeTermoAdesao && !Number.isNaN(beforeAditivo) && !Number.isNaN(beforeCodigo)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && afterTermoAdesao && !Number.isNaN(afterAditivo) && !Number.isNaN(afterCodigo)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${credenciamentoTermoSelectClause}
+             FROM ${credenciamentoTermoTableName}
+             ${whereClause}
+             ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) DESC, COALESCE(aditivo, 0) DESC, CAST(codigo AS integer) DESC
+             LIMIT $${tailValues.length}
+           ) AS termo_assinatura_tail
+           ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC, COALESCE(NULLIF(aditivo, '')::integer, 0) ASC, CAST(codigo AS integer) ASC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeTermoAdesao.toUpperCase(), beforeAditivo, beforeCodigo, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${credenciamentoTermoSelectClause}
+             FROM ${credenciamentoTermoTableName}
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+               UPPER(BTRIM(COALESCE(termo_adesao, ''))),
+               COALESCE(aditivo, 0),
+               CAST(codigo AS integer)
+             ) < (
+               $${values.length + 1},
+               $${values.length + 2},
+               $${values.length + 3}
+             )
+             ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) DESC, COALESCE(aditivo, 0) DESC, CAST(codigo AS integer) DESC
+             LIMIT $${previousValues.length}
+           ) AS termo_assinatura_prev
+           ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC, COALESCE(NULLIF(aditivo, '')::integer, 0) ASC, CAST(codigo AS integer) ASC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterTermoAdesao.toUpperCase(), afterAditivo, afterCodigo, pageSize]
+        result = await pool.query(
+          `SELECT ${credenciamentoTermoSelectClause}
+           FROM ${credenciamentoTermoTableName}
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+             UPPER(BTRIM(COALESCE(termo_adesao, ''))),
+             COALESCE(aditivo, 0),
+             CAST(codigo AS integer)
+           ) > (
+             $${values.length + 1},
+             $${values.length + 2},
+             $${values.length + 3}
+           )
+           ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC, COALESCE(aditivo, 0) ASC, CAST(codigo AS integer) ASC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT ${credenciamentoTermoSelectClause}
+           FROM ${credenciamentoTermoTableName}
+           ${whereClause}
+           ORDER BY UPPER(BTRIM(COALESCE(termo_adesao, ''))) ASC, COALESCE(aditivo, 0) ASC, CAST(codigo AS integer) ASC
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
       })
     } catch (error) {
       const message = error instanceof Error
@@ -11639,6 +12843,11 @@ const server = createServer(async (request, response) => {
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'desc').toLowerCase() === 'asc'
         ? 'ASC'
         : 'DESC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeIdRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeId') ?? '')
+      const afterIdRaw = normalizeRequestValue(requestUrl.searchParams.get('afterId') ?? '')
+      const beforeId = beforeIdRaw ? Number(beforeIdRaw) : Number.NaN
+      const afterId = afterIdRaw ? Number(afterIdRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
@@ -11672,27 +12881,73 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total ${fromClause} ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT
-           ${vinculoCondutorSelectClause}
-         ${fromClause}
-         ${whereClause}
-         ORDER BY ${orderByClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const shouldUseTailQuery = tail && sortBy === 'id' && sortDirection === 'DESC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && sortBy === 'id' && sortDirection === 'DESC' && !Number.isNaN(beforeId)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && sortBy === 'id' && sortDirection === 'DESC' && !Number.isNaN(afterId)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${vinculoCondutorSelectClause}
+             ${fromClause}
+             ${whereClause}
+             ORDER BY vc.id ASC
+             LIMIT $${tailValues.length}
+           ) AS vinculo_condutor_tail
+           ORDER BY id DESC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeId, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${vinculoCondutorSelectClause}
+             ${fromClause}
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} vc.id > $${values.length + 1}
+             ORDER BY vc.id ASC
+             LIMIT $${previousValues.length}
+           ) AS vinculo_condutor_prev
+           ORDER BY id DESC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterId, pageSize]
+        result = await pool.query(
+          `SELECT
+             ${vinculoCondutorSelectClause}
+           ${fromClause}
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} vc.id < $${values.length + 1}
+           ORDER BY vc.id DESC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT
+             ${vinculoCondutorSelectClause}
+           ${fromClause}
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: sortBy === 'credenciado' || sortBy === 'cpf_condutor' ? sortBy : 'id',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -11881,6 +13136,11 @@ const server = createServer(async (request, response) => {
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'desc').toLowerCase() === 'asc'
         ? 'ASC'
         : 'DESC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeIdRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeId') ?? '')
+      const afterIdRaw = normalizeRequestValue(requestUrl.searchParams.get('afterId') ?? '')
+      const beforeId = beforeIdRaw ? Number(beforeIdRaw) : Number.NaN
+      const afterId = afterIdRaw ? Number(afterIdRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
@@ -11913,27 +13173,73 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total ${fromClause} ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT
-           ${vinculoMonitorSelectClause}
-         ${fromClause}
-         ${whereClause}
-         ORDER BY ${orderByClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const shouldUseTailQuery = tail && sortBy === 'id' && sortDirection === 'DESC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && sortBy === 'id' && sortDirection === 'DESC' && !Number.isNaN(beforeId)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && sortBy === 'id' && sortDirection === 'DESC' && !Number.isNaN(afterId)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${vinculoMonitorSelectClause}
+             ${fromClause}
+             ${whereClause}
+             ORDER BY vm.id ASC
+             LIMIT $${tailValues.length}
+           ) AS vinculo_monitor_tail
+           ORDER BY id DESC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeId, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${vinculoMonitorSelectClause}
+             ${fromClause}
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} vm.id > $${values.length + 1}
+             ORDER BY vm.id ASC
+             LIMIT $${previousValues.length}
+           ) AS vinculo_monitor_prev
+           ORDER BY id DESC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterId, pageSize]
+        result = await pool.query(
+          `SELECT
+             ${vinculoMonitorSelectClause}
+           ${fromClause}
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} vm.id < $${values.length + 1}
+           ORDER BY vm.id DESC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT
+             ${vinculoMonitorSelectClause}
+           ${fromClause}
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: sortBy === 'credenciado' || sortBy === 'cpf_monitor' ? sortBy : 'id',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -12242,6 +13548,9 @@ const server = createServer(async (request, response) => {
       const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
       const sortBy = requestUrl.searchParams.get('sortBy') === 'municipio' ? 'municipio' : 'cep'
       const sortDirection = requestUrl.searchParams.get('sortDirection') === 'desc' ? 'DESC' : 'ASC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeCep = normalizeRequestValue(requestUrl.searchParams.get('beforeCep') ?? '')
+      const afterCep = normalizeRequestValue(requestUrl.searchParams.get('afterCep') ?? '')
       const params = []
 
       let whereClause = ''
@@ -12265,19 +13574,63 @@ const server = createServer(async (request, response) => {
       const safePage = Math.min(page, totalPages)
       const offset = (safePage - 1) * pageSize
 
-      const result = await pool.query(
-        `SELECT ${cepSelectClause}
-         FROM ${cepTableName}
-         ${whereClause}
-         ORDER BY ${sortBy} ${sortDirection}
-         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-        [...params, pageSize, offset],
-      )
+      const shouldUseTailQuery = tail && sortBy === 'cep' && sortDirection === 'ASC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && sortBy === 'cep' && sortDirection === 'ASC' && Boolean(beforeCep)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && sortBy === 'cep' && sortDirection === 'ASC' && Boolean(afterCep)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...params, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${cepSelectClause}
+             FROM ${cepTableName}
+             ${whereClause}
+             ORDER BY COALESCE(BTRIM(cep), '') DESC
+             LIMIT $${tailValues.length}
+           ) AS cep_tail
+           ORDER BY COALESCE(BTRIM(cep), '') ASC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...params, beforeCep, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${cepSelectClause}
+             FROM ${cepTableName}
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} COALESCE(BTRIM(cep), '') < BTRIM($${params.length + 1})
+             ORDER BY COALESCE(BTRIM(cep), '') DESC
+             LIMIT $${previousValues.length}
+           ) AS cep_prev
+           ORDER BY COALESCE(BTRIM(cep), '') ASC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...params, afterCep, pageSize]
+        result = await pool.query(
+          `SELECT ${cepSelectClause}
+           FROM ${cepTableName}
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} COALESCE(BTRIM(cep), '') > BTRIM($${params.length + 1})
+           ORDER BY COALESCE(BTRIM(cep), '') ASC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        result = await pool.query(
+          `SELECT ${cepSelectClause}
+           FROM ${cepTableName}
+           ${whereClause}
+           ORDER BY ${sortBy} ${sortDirection}
+           LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+          [...params, pageSize, offset],
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page: safePage,
+        page: shouldUseTailQuery ? totalPages : safePage,
         pageSize,
         totalPages,
         sortBy,
@@ -12353,12 +13706,18 @@ const server = createServer(async (request, response) => {
   if (request.method === 'GET' && pathname === '/api/credenciada') {
     try {
       const search = normalizeRequestValue(requestUrl.searchParams.get('search') ?? '')
+      const searchDigits = extractDocumentDigits(search)
       const page = Math.max(Number(requestUrl.searchParams.get('page') ?? 1) || 1, 1)
       const pageSize = Math.min(Math.max(Number(requestUrl.searchParams.get('pageSize') ?? 5) || 5, 1), 50)
       const sortBy = normalizeRequestValue(requestUrl.searchParams.get('sortBy') ?? 'codigo')
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
         ? 'DESC'
         : 'ASC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeCodigo') ?? '')
+      const afterCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterCodigo') ?? '')
+      const beforeCodigo = beforeCodigoRaw ? Number(beforeCodigoRaw) : Number.NaN
+      const afterCodigo = afterCodigoRaw ? Number(afterCodigoRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
@@ -12368,12 +13727,23 @@ const server = createServer(async (request, response) => {
 
       if (search) {
         values.push(`%${search}%`)
+        const textSearchParamIndex = values.length
+
+        if (searchDigits) {
+          values.push(`%${searchDigits}%`)
+        }
+
+        const digitsSearchClause = searchDigits
+          ? ` OR regexp_replace(COALESCE(cnpj_cpf, ''), '[^0-9]', '', 'g') ILIKE $${values.length}`
+          : ''
+
         filters.push(`(
-          CAST(codigo AS text) ILIKE $${values.length}
-          OR UPPER(BTRIM(credenciado)) ILIKE UPPER($${values.length})
-          OR BTRIM(cnpj_cpf) ILIKE $${values.length}
-          OR UPPER(COALESCE(BTRIM(representante), '')) ILIKE UPPER($${values.length})
-          OR UPPER(COALESCE((SELECT BTRIM(c.municipio) FROM ceps c WHERE c.cep = BTRIM(credenciada.cep)), '')) ILIKE UPPER($${values.length})
+          CAST(codigo AS text) ILIKE $${textSearchParamIndex}
+          OR UPPER(BTRIM(credenciado)) ILIKE UPPER($${textSearchParamIndex})
+          OR BTRIM(cnpj_cpf) ILIKE $${textSearchParamIndex}
+          ${digitsSearchClause}
+          OR UPPER(COALESCE(BTRIM(representante), '')) ILIKE UPPER($${textSearchParamIndex})
+          OR UPPER(COALESCE((SELECT BTRIM(c.municipio) FROM ceps c WHERE c.cep = BTRIM(credenciada.cep)), '')) ILIKE UPPER($${textSearchParamIndex})
         )`)
       }
 
@@ -12382,27 +13752,71 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total FROM credenciada ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT
-           ${credenciadaSelectClause}
-         FROM credenciada
-         ${whereClause}
-         ORDER BY ${orderByClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
       const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const shouldUseTailQuery = tail && sortBy === 'codigo' && sortDirection === 'ASC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && sortBy === 'codigo' && sortDirection === 'ASC' && !Number.isNaN(beforeCodigo)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && sortBy === 'codigo' && sortDirection === 'ASC' && !Number.isNaN(afterCodigo)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${credenciadaSelectClause}
+             FROM credenciada
+             ${whereClause}
+             ORDER BY codigo DESC
+             LIMIT $${tailValues.length}
+           ) AS credenciada_tail
+           ORDER BY CAST(codigo AS integer) ASC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeCodigo, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT ${credenciadaSelectClause}
+             FROM credenciada
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} codigo < $${values.length + 1}
+             ORDER BY codigo DESC
+             LIMIT $${previousValues.length}
+           ) AS credenciada_prev
+           ORDER BY CAST(codigo AS integer) ASC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterCodigo, pageSize]
+        result = await pool.query(
+          `SELECT
+             ${credenciadaSelectClause}
+           FROM credenciada
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} codigo > $${values.length + 1}
+           ORDER BY codigo ASC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT
+             ${credenciadaSelectClause}
+           FROM credenciada
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: sortBy === 'credenciado' ? 'credenciado' : 'codigo',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -12510,6 +13924,15 @@ const server = createServer(async (request, response) => {
       const sortDirection = normalizeRequestValue(requestUrl.searchParams.get('sortDirection') ?? 'asc').toLowerCase() === 'desc'
         ? 'DESC'
         : 'ASC'
+      const tail = normalizeRequestValue(requestUrl.searchParams.get('tail') ?? '') === '1'
+      const beforeLoginCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeLoginCodigo') ?? '')
+      const beforeDreCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('beforeDreCodigo') ?? '')
+      const afterLoginCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterLoginCodigo') ?? '')
+      const afterDreCodigoRaw = normalizeRequestValue(requestUrl.searchParams.get('afterDreCodigo') ?? '')
+      const beforeLoginCodigo = beforeLoginCodigoRaw ? Number(beforeLoginCodigoRaw) : Number.NaN
+      const beforeDreCodigo = beforeDreCodigoRaw ? Number(beforeDreCodigoRaw) : Number.NaN
+      const afterLoginCodigo = afterLoginCodigoRaw ? Number(afterLoginCodigoRaw) : Number.NaN
+      const afterDreCodigo = afterDreCodigoRaw ? Number(afterDreCodigoRaw) : Number.NaN
       const offset = (page - 1) * pageSize
       const values = []
       const filters = []
@@ -12542,30 +13965,84 @@ const server = createServer(async (request, response) => {
         `SELECT COUNT(*)::int AS total ${fromClause} ${whereClause}`,
         values,
       )
-
-      values.push(pageSize)
-      values.push(offset)
-      const result = await pool.query(
-        `SELECT
+      const total = countResult.rows[0]?.total ?? 0
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+      const selectClause = `
            relation.login_codigo::text AS login_codigo,
            BTRIM(login_table.nome) AS login_nome,
            relation.dre_codigo::text AS dre_codigo,
-           BTRIM(CAST(dre_table.descricao AS text)) AS dre_descricao
-         ${fromClause}
-         ${whereClause}
-         ORDER BY ${orderByClause}
-         LIMIT $${values.length - 1}
-         OFFSET $${values.length}`,
-        values,
-      )
-      const total = countResult.rows[0]?.total ?? 0
+           BTRIM(CAST(dre_table.descricao AS text)) AS dre_descricao`
+      const shouldUseTailQuery = tail && sortBy === 'login_codigo' && sortDirection === 'ASC'
+      const shouldUsePreviousCursorQuery = !shouldUseTailQuery && sortBy === 'login_codigo' && sortDirection === 'ASC' && !Number.isNaN(beforeLoginCodigo) && !Number.isNaN(beforeDreCodigo)
+      const shouldUseNextCursorQuery = !shouldUseTailQuery && !shouldUsePreviousCursorQuery && sortBy === 'login_codigo' && sortDirection === 'ASC' && !Number.isNaN(afterLoginCodigo) && !Number.isNaN(afterDreCodigo)
+
+      let result
+
+      if (shouldUseTailQuery) {
+        const tailValues = [...values, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${selectClause}
+             ${fromClause}
+             ${whereClause}
+             ORDER BY relation.login_codigo DESC, relation.dre_codigo DESC
+             LIMIT $${tailValues.length}
+           ) AS login_dre_tail
+           ORDER BY CAST(login_codigo AS integer) ASC, CAST(dre_codigo AS integer) ASC`,
+          tailValues,
+        )
+      } else if (shouldUsePreviousCursorQuery) {
+        const previousValues = [...values, beforeLoginCodigo, beforeDreCodigo, pageSize]
+        result = await pool.query(
+          `SELECT * FROM (
+             SELECT
+               ${selectClause}
+             ${fromClause}
+             ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+               relation.login_codigo < $${values.length + 1}
+               OR (relation.login_codigo = $${values.length + 1} AND relation.dre_codigo < $${values.length + 2})
+             )
+             ORDER BY relation.login_codigo DESC, relation.dre_codigo DESC
+             LIMIT $${previousValues.length}
+           ) AS login_dre_prev
+           ORDER BY CAST(login_codigo AS integer) ASC, CAST(dre_codigo AS integer) ASC`,
+          previousValues,
+        )
+      } else if (shouldUseNextCursorQuery) {
+        const nextValues = [...values, afterLoginCodigo, afterDreCodigo, pageSize]
+        result = await pool.query(
+          `SELECT
+             ${selectClause}
+           ${fromClause}
+           ${whereClause}${whereClause ? ' AND' : ' WHERE'} (
+             relation.login_codigo > $${values.length + 1}
+             OR (relation.login_codigo = $${values.length + 1} AND relation.dre_codigo > $${values.length + 2})
+           )
+           ORDER BY relation.login_codigo ASC, relation.dre_codigo ASC
+           LIMIT $${nextValues.length}`,
+          nextValues,
+        )
+      } else {
+        const pagedValues = [...values, pageSize, offset]
+        result = await pool.query(
+          `SELECT
+             ${selectClause}
+           ${fromClause}
+           ${whereClause}
+           ORDER BY ${orderByClause}
+           LIMIT $${pagedValues.length - 1}
+           OFFSET $${pagedValues.length}`,
+          pagedValues,
+        )
+      }
 
       sendJson(response, 200, {
         items: result.rows,
         total,
-        page,
+        page: shouldUseTailQuery ? totalPages : page,
         pageSize,
-        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalPages,
         sortBy: ['login_nome', 'dre_codigo', 'dre_descricao'].includes(sortBy) ? sortBy : 'login_codigo',
         sortDirection: sortDirection.toLowerCase(),
       })
@@ -13180,11 +14657,11 @@ const server = createServer(async (request, response) => {
         client.release()
       }
     } catch (error) {
-      const message = error instanceof Error
-        ? error.message
-        : 'Erro ao cadastrar condutor.'
-
-      sendJson(response, 500, { message })
+      const persistenceError = await getCondutorPersistenceError(error, 'Erro ao cadastrar condutor.', body?.cpfCondutor)
+      sendJson(response, persistenceError.status, {
+        message: persistenceError.message,
+        ...(persistenceError.errors ? { errors: persistenceError.errors } : {}),
+      })
     }
 
     return
@@ -13234,8 +14711,10 @@ const server = createServer(async (request, response) => {
   }
 
   if (request.method === 'POST' && pathname === '/api/monitor') {
+    let body = null
+
     try {
-      const body = await readJsonBody(request)
+      body = await readJsonBody(request)
       const client = await pool.connect()
 
       try {
@@ -13245,7 +14724,6 @@ const server = createServer(async (request, response) => {
       const validationResult = await validateMonitorPayload({
         codigo: nextCodigo,
         monitor: body.monitor,
-        rgMonitor: body.rgMonitor,
         cpfMonitor: body.cpfMonitor,
         cursoMonitor: body.cursoMonitor,
         validadeCurso: body.validadeCurso,
@@ -13263,7 +14741,6 @@ const server = createServer(async (request, response) => {
         `INSERT INTO monitor (
            codigo,
            monitor,
-           rg_monitor,
            cpf_monitor,
            curso_monitor,
            validade_curso,
@@ -13272,12 +14749,11 @@ const server = createServer(async (request, response) => {
            data_inclusao,
            data_modificacao
          )
-         VALUES ($1, $2, NULLIF($3, ''), $4, NULLIF($5, '')::date, NULLIF($6, '')::date, NULLIF($7, ''), NULLIF($8, '')::date, NOW(), NOW())
+         VALUES ($1, $2, $3, NULLIF($4, '')::date, NULLIF($5, '')::date, NULLIF($6, ''), NULLIF($7, '')::date, NOW(), NOW())
          RETURNING ${monitorSelectClause}`,
         [
           validationResult.payload.codigo,
           validationResult.payload.monitor,
-          validationResult.payload.rgMonitor,
           validationResult.payload.cpfMonitor,
           validationResult.payload.cursoMonitor,
           validationResult.payload.validadeCurso,
@@ -13298,11 +14774,11 @@ const server = createServer(async (request, response) => {
         client.release()
       }
     } catch (error) {
-      const message = error instanceof Error
-        ? error.message
-        : 'Erro ao cadastrar monitor.'
-
-      sendJson(response, 500, { message })
+      const persistenceError = await getMonitorPersistenceError(error, 'Erro ao cadastrar monitor.', body?.cpfMonitor)
+      sendJson(response, persistenceError.status, {
+        message: persistenceError.message,
+        ...(persistenceError.errors ? { errors: persistenceError.errors } : {}),
+      })
     }
 
     return
@@ -13411,97 +14887,6 @@ const server = createServer(async (request, response) => {
     } catch (error) {
       const persistenceError = getVeiculoPersistenceError(error, 'Erro ao cadastrar veiculo.')
 
-      sendJson(response, persistenceError.status, { message: persistenceError.message })
-    }
-
-    return
-  }
-
-  if (request.method === 'POST' && pathname === '/api/veiculo/relacao-crm') {
-    try {
-      const body = await readJsonBody(request)
-      const actor = resolveRequestActor(request)
-      const sourcePlaca = normalizeVehiclePlaca(body.placas)
-      const nextCrm = normalizeVehicleCrm(body.crm)
-
-      if (!nextCrm) {
-        sendJson(response, 400, { message: 'CRM e obrigatorio.' })
-        return
-      }
-
-      if (!sourcePlaca) {
-        sendJson(response, 400, { message: 'Placa do veiculo e obrigatoria.' })
-        return
-      }
-
-      if (!isVehicleCrmValid(nextCrm)) {
-        sendJson(response, 400, { message: 'CRM invalido.' })
-        return
-      }
-
-      const client = await pool.connect()
-
-      try {
-        await client.query('BEGIN')
-        const sourceItem = await fetchVeiculoAuditItemByPlaca(client, sourcePlaca)
-
-        if (!sourceItem) {
-          await client.query('ROLLBACK')
-          sendJson(response, 404, { message: 'Placa nao encontrada na tabela veiculo.' })
-          return
-        }
-
-        const conflictingCrmItem = await fetchVeiculoAuditItemByCrm(client, nextCrm)
-
-        if (conflictingCrmItem && Number(conflictingCrmItem.codigo) !== Number(sourceItem.codigo)) {
-          await client.query('ROLLBACK')
-          sendJson(response, 409, { message: 'CRM ja cadastrado para outra placa.' })
-          return
-        }
-
-        if (normalizeVehicleCrm(sourceItem.crm) === nextCrm) {
-          const currentItem = await findVeiculoByPlaca(sourcePlaca)
-          await client.query('COMMIT')
-          sendJson(response, 200, { item: currentItem, sourceItem: currentItem })
-          return
-        }
-
-        await insertVeiculoHistoricoEntry(client, sourceItem, {
-          acao: 'RELACAO_CRM',
-          realizadoPor: actor,
-        })
-
-        const updatedItem = await updateVeiculoByCodigo(client, Number(sourceItem.codigo), {
-          crm: nextCrm,
-          placas: sourceItem.placas,
-          ano: sourceItem.ano,
-          capDetran: sourceItem.cap_detran,
-          capTeg: sourceItem.cap_teg,
-          capTegCreche: sourceItem.cap_teg_creche,
-          capAcessivel: sourceItem.cap_acessivel,
-          valCrm: sourceItem.val_crm,
-          seguradora: sourceItem.seguradora,
-          seguroInicio: sourceItem.seguro_inicio,
-          seguroTermino: sourceItem.seguro_termino,
-          tipoDeBancada: sourceItem.tipo_de_bancada,
-          tipoDeVeiculo: sourceItem.tipo_de_veiculo,
-          marcaModelo: sourceItem.marca_modelo,
-          titular: sourceItem.titular,
-          cnpjCpf: sourceItem.cnpj_cpf,
-          valorVeiculo: sourceItem.valor_veiculo,
-          osEspecial: sourceItem.os_especial,
-        })
-
-        await client.query('COMMIT')
-        sendJson(response, 200, { item: updatedItem, sourceItem })
-      } catch (error) {
-        await client.query('ROLLBACK')
-        throw error
-      } finally {
-        client.release()
-      }
-    } catch (error) {
-      const persistenceError = getVeiculoPersistenceError(error, 'Erro ao criar nova relacao CRM com veiculo.')
       sendJson(response, persistenceError.status, { message: persistenceError.message })
     }
 
@@ -14875,9 +16260,10 @@ const server = createServer(async (request, response) => {
   }
 
   if (request.method === 'PUT' && getCondutorCodigoFromUrl(pathname)) {
+    let body = null
     try {
       const originalCodigo = Number(getCondutorCodigoFromUrl(pathname))
-      const body = await readJsonBody(request)
+      body = await readJsonBody(request)
 
       if (!Number.isInteger(originalCodigo) || originalCodigo <= 0) {
         sendJson(response, 400, { message: 'Codigo original invalido.' })
@@ -14941,20 +16327,21 @@ const server = createServer(async (request, response) => {
         item: updateResult.rows[0],
       })
     } catch (error) {
-      const message = error instanceof Error
-        ? error.message
-        : 'Erro ao alterar condutor.'
-
-      sendJson(response, 500, { message })
+      const persistenceError = await getCondutorPersistenceError(error, 'Erro ao alterar condutor.', body?.cpfCondutor)
+      sendJson(response, persistenceError.status, {
+        message: persistenceError.message,
+        ...(persistenceError.errors ? { errors: persistenceError.errors } : {}),
+      })
     }
 
     return
   }
 
   if (request.method === 'PUT' && getMonitorCodigoFromUrl(pathname)) {
+    let body = null
     try {
       const originalCodigo = Number(getMonitorCodigoFromUrl(pathname))
-      const body = await readJsonBody(request)
+      body = await readJsonBody(request)
 
       if (!Number.isInteger(originalCodigo) || originalCodigo <= 0) {
         sendJson(response, 400, { message: 'Codigo original invalido.' })
@@ -14974,7 +16361,6 @@ const server = createServer(async (request, response) => {
       const validationResult = await validateMonitorPayload({
         codigo: body.codigo,
         monitor: body.monitor,
-        rgMonitor: body.rgMonitor,
         cpfMonitor: body.cpfMonitor,
         cursoMonitor: body.cursoMonitor,
         validadeCurso: body.validadeCurso,
@@ -14992,19 +16378,18 @@ const server = createServer(async (request, response) => {
         `UPDATE monitor
          SET codigo = $1,
              monitor = $2,
-             rg_monitor = NULLIF($3, ''),
-             cpf_monitor = $4,
-             curso_monitor = NULLIF($5, '')::date,
-             validade_curso = NULLIF($6, '')::date,
-             tipo_vinculo = NULLIF($7, ''),
-             nascimento = NULLIF($8, '')::date,
+             rg_monitor = NULL,
+             cpf_monitor = $3,
+             curso_monitor = NULLIF($4, '')::date,
+             validade_curso = NULLIF($5, '')::date,
+             tipo_vinculo = NULLIF($6, ''),
+             nascimento = NULLIF($7, '')::date,
              data_modificacao = NOW()
-         WHERE codigo = $9
+         WHERE codigo = $8
          RETURNING ${monitorSelectClause}`,
         [
           validationResult.payload.codigo,
           validationResult.payload.monitor,
-          validationResult.payload.rgMonitor,
           validationResult.payload.cpfMonitor,
           validationResult.payload.cursoMonitor,
           validationResult.payload.validadeCurso,
@@ -15018,11 +16403,11 @@ const server = createServer(async (request, response) => {
         item: updateResult.rows[0],
       })
     } catch (error) {
-      const message = error instanceof Error
-        ? error.message
-        : 'Erro ao alterar monitor.'
-
-      sendJson(response, 500, { message })
+      const persistenceError = await getMonitorPersistenceError(error, 'Erro ao alterar monitor.', body?.cpfMonitor)
+      sendJson(response, persistenceError.status, {
+        message: persistenceError.message,
+        ...(persistenceError.errors ? { errors: persistenceError.errors } : {}),
+      })
     }
 
     return

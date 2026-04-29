@@ -2229,22 +2229,46 @@ function App() {
                 <div className="management-pagination">
                   <button
                     type="button"
-                    className="secondary-button management-pagination-button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
+                    onClick={() => setDrePage(1)}
+                    disabled={!canGoToPreviousDrePage || isLoadingDre}
+                    title="Primeiro registro"
+                    aria-label="Primeiro registro"
+                  >
+                    |◀
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
                     onClick={() => setDrePage((currentPage) => currentPage - 1)}
                     disabled={!canGoToPreviousDrePage || isLoadingDre}
+                    title="Registro anterior"
+                    aria-label="Registro anterior"
                   >
-                    Anterior
+                    ◀
                   </button>
                   <span className="management-pagination-info">
                     Pagina {drePage} de {dreTotalPages}
                   </span>
                   <button
                     type="button"
-                    className="secondary-button management-pagination-button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
                     onClick={() => setDrePage((currentPage) => currentPage + 1)}
                     disabled={!canGoToNextDrePage || isLoadingDre}
+                    title="Proximo registro"
+                    aria-label="Proximo registro"
                   >
-                    Proxima
+                    ▶
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
+                    onClick={() => setDrePage(dreTotalPages)}
+                    disabled={!canGoToNextDrePage || isLoadingDre}
+                    title="Ultimo registro"
+                    aria-label="Ultimo registro"
+                  >
+                    ▶|
                   </button>
                 </div>
               </div>
@@ -2420,22 +2444,46 @@ function App() {
                 <div className="management-pagination">
                   <button
                     type="button"
-                    className="secondary-button management-pagination-button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
+                    onClick={() => setModalidadePage(1)}
+                    disabled={!canGoToPreviousModalidadePage || isLoadingModalidade}
+                    title="Primeiro registro"
+                    aria-label="Primeiro registro"
+                  >
+                    |◀
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
                     onClick={() => setModalidadePage((currentPage) => currentPage - 1)}
                     disabled={!canGoToPreviousModalidadePage || isLoadingModalidade}
+                    title="Registro anterior"
+                    aria-label="Registro anterior"
                   >
-                    Anterior
+                    ◀
                   </button>
                   <span className="management-pagination-info">
                     Pagina {modalidadePage} de {modalidadeTotalPages}
                   </span>
                   <button
                     type="button"
-                    className="secondary-button management-pagination-button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
                     onClick={() => setModalidadePage((currentPage) => currentPage + 1)}
                     disabled={!canGoToNextModalidadePage || isLoadingModalidade}
+                    title="Proximo registro"
+                    aria-label="Proximo registro"
                   >
-                    Proxima
+                    ▶
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
+                    onClick={() => setModalidadePage(modalidadeTotalPages)}
+                    disabled={!canGoToNextModalidadePage || isLoadingModalidade}
+                    title="Ultimo registro"
+                    aria-label="Ultimo registro"
+                  >
+                    ▶|
                   </button>
                 </div>
               </div>
@@ -2633,22 +2681,46 @@ function App() {
                 <div className="management-pagination">
                   <button
                     type="button"
-                    className="secondary-button management-pagination-button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
+                    onClick={() => setTitularPage(1)}
+                    disabled={!canGoToPreviousTitularPage || isLoadingTitular}
+                    title="Primeiro registro"
+                    aria-label="Primeiro registro"
+                  >
+                    |◀
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
                     onClick={() => setTitularPage((currentPage) => currentPage - 1)}
                     disabled={!canGoToPreviousTitularPage || isLoadingTitular}
+                    title="Registro anterior"
+                    aria-label="Registro anterior"
                   >
-                    Anterior
+                    ◀
                   </button>
                   <span className="management-pagination-info">
                     Pagina {titularPage} de {titularTotalPages}
                   </span>
                   <button
                     type="button"
-                    className="secondary-button management-pagination-button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
                     onClick={() => setTitularPage((currentPage) => currentPage + 1)}
                     disabled={!canGoToNextTitularPage || isLoadingTitular}
+                    title="Proximo registro"
+                    aria-label="Proximo registro"
                   >
-                    Proxima
+                    ▶
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
+                    onClick={() => setTitularPage(titularTotalPages)}
+                    disabled={!canGoToNextTitularPage || isLoadingTitular}
+                    title="Ultimo registro"
+                    aria-label="Ultimo registro"
+                  >
+                    ▶|
                   </button>
                 </div>
               </div>
@@ -2823,22 +2895,46 @@ function App() {
                 <div className="management-pagination">
                   <button
                     type="button"
-                    className="secondary-button management-pagination-button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
+                    onClick={() => setMarcaModeloPage(1)}
+                    disabled={!canGoToPreviousMarcaModeloPage || isLoadingMarcaModelo}
+                    title="Primeiro registro"
+                    aria-label="Primeiro registro"
+                  >
+                    |◀
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
                     onClick={() => setMarcaModeloPage((currentPage) => currentPage - 1)}
                     disabled={!canGoToPreviousMarcaModeloPage || isLoadingMarcaModelo}
+                    title="Registro anterior"
+                    aria-label="Registro anterior"
                   >
-                    Anterior
+                    ◀
                   </button>
                   <span className="management-pagination-info">
                     Pagina {marcaModeloPage} de {marcaModeloTotalPages}
                   </span>
                   <button
                     type="button"
-                    className="secondary-button management-pagination-button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
                     onClick={() => setMarcaModeloPage((currentPage) => currentPage + 1)}
                     disabled={!canGoToNextMarcaModeloPage || isLoadingMarcaModelo}
+                    title="Proximo registro"
+                    aria-label="Proximo registro"
                   >
-                    Proxima
+                    ▶
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
+                    onClick={() => setMarcaModeloPage(marcaModeloTotalPages)}
+                    disabled={!canGoToNextMarcaModeloPage || isLoadingMarcaModelo}
+                    title="Ultimo registro"
+                    aria-label="Ultimo registro"
+                  >
+                    ▶|
                   </button>
                 </div>
               </div>
@@ -3033,22 +3129,46 @@ function App() {
                 <div className="management-pagination">
                   <button
                     type="button"
-                    className="secondary-button management-pagination-button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
+                    onClick={() => setSeguradoraPage(1)}
+                    disabled={!canGoToPreviousSeguradoraPage || isLoadingSeguradora}
+                    title="Primeiro registro"
+                    aria-label="Primeiro registro"
+                  >
+                    |◀
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
                     onClick={() => setSeguradoraPage((currentPage) => currentPage - 1)}
                     disabled={!canGoToPreviousSeguradoraPage || isLoadingSeguradora}
+                    title="Registro anterior"
+                    aria-label="Registro anterior"
                   >
-                    Anterior
+                    ◀
                   </button>
                   <span className="management-pagination-info">
                     Pagina {seguradoraPage} de {seguradoraTotalPages}
                   </span>
                   <button
                     type="button"
-                    className="secondary-button management-pagination-button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
                     onClick={() => setSeguradoraPage((currentPage) => currentPage + 1)}
                     disabled={!canGoToNextSeguradoraPage || isLoadingSeguradora}
+                    title="Proximo registro"
+                    aria-label="Proximo registro"
                   >
-                    Proxima
+                    ▶
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button management-pagination-button management-pagination-button-icon"
+                    onClick={() => setSeguradoraPage(seguradoraTotalPages)}
+                    disabled={!canGoToNextSeguradoraPage || isLoadingSeguradora}
+                    title="Ultimo registro"
+                    aria-label="Ultimo registro"
+                  >
+                    ▶|
                   </button>
                 </div>
               </div>

@@ -220,6 +220,10 @@
       let currentSearch = '';
       let currentSortBy = 'login_codigo';
       let currentSortDirection = 'asc';
+      let useTailPageFetch = false;
+      let previousPageCursor = null;
+      let nextPageCursor = null;
+      let currentGridItems = [];
       let editingPair = null;
       let bannerTimeoutId = null;
       let loginOptions = [];
@@ -488,10 +492,25 @@
           params.set('search', currentSearch);
         }
 
+        if (useTailPageFetch) {
+          params.set('tail', '1');
+        }
+
+        if (previousPageCursor) {
+          params.set('beforeLoginCodigo', previousPageCursor.loginCodigo);
+          params.set('beforeDreCodigo', previousPageCursor.dreCodigo);
+        }
+
+        if (nextPageCursor) {
+          params.set('afterLoginCodigo', nextPageCursor.loginCodigo);
+          params.set('afterDreCodigo', nextPageCursor.dreCodigo);
+        }
+
         return `/api/login-dre?${params.toString()}`;
       };
 
       const renderGrid = (items) => {
+        currentGridItems = items;
         gridBody.innerHTML = '';
 
         if (!items.length) {
@@ -536,9 +555,13 @@
 
       const loadItems = async () => {
         setGridMessage('Carregando relacionamentos...');
+        const requestUrl = buildUrl();
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
 
         try {
-          const response = await fetch(buildUrl(), { headers: { Accept: 'application/json' } });
+          const response = await fetch(requestUrl, { headers: { Accept: 'application/json' } });
           const payload = await readJsonResponse(response);
 
           if (!response.ok) {
@@ -840,6 +863,9 @@
         event.preventDefault();
         currentSearch = searchInput.value.trim();
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -847,6 +873,9 @@
         searchInput.value = '';
         currentSearch = '';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -856,6 +885,9 @@
         }
 
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -865,6 +897,14 @@
         }
 
         currentPage -= 1;
+        useTailPageFetch = false;
+        nextPageCursor = null;
+        previousPageCursor = currentSortBy === 'login_codigo' && currentSortDirection === 'asc' && currentGridItems.length
+          ? {
+              loginCodigo: String(currentGridItems[0]?.login_codigo || ''),
+              dreCodigo: String(currentGridItems[0]?.dre_codigo || ''),
+            }
+          : null;
         void loadItems();
       });
 
@@ -874,6 +914,14 @@
         }
 
         currentPage += 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = currentSortBy === 'login_codigo' && currentSortDirection === 'asc' && currentGridItems.length
+          ? {
+              loginCodigo: String(currentGridItems[currentGridItems.length - 1]?.login_codigo || ''),
+              dreCodigo: String(currentGridItems[currentGridItems.length - 1]?.dre_codigo || ''),
+            }
+          : null;
         void loadItems();
       });
 
@@ -883,6 +931,9 @@
         }
 
         currentPage = totalPages;
+        useTailPageFetch = currentSortBy === 'login_codigo' && currentSortDirection === 'asc';
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -896,6 +947,9 @@
 
         pageSize = nextPageSize;
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -903,6 +957,9 @@
         currentSortDirection = currentSortBy === 'login_codigo' && currentSortDirection === 'asc' ? 'desc' : 'asc';
         currentSortBy = 'login_codigo';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
@@ -910,6 +967,9 @@
         currentSortDirection = currentSortBy === 'dre_codigo' && currentSortDirection === 'asc' ? 'desc' : 'asc';
         currentSortBy = 'dre_codigo';
         currentPage = 1;
+        useTailPageFetch = false;
+        previousPageCursor = null;
+        nextPageCursor = null;
         void loadItems();
       });
 
