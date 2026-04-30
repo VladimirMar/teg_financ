@@ -1854,33 +1854,23 @@
       };
       const syncEmitRescisaoButtonState = () => {
         const isBusy = emitRescisaoButton.textContent === 'Gerando termo de rescisao...';
-        const hasPersistedRescisao = String(persistedStatusTermo || '').trim().toUpperCase() === 'RESCINDIDO'
-          && String(persistedDataRescisao || '').trim() !== '';
 
         if (isBusy) {
           return;
         }
 
         emitRescisaoButton.disabled = formMode === 'create'
-          || !editingCodigo
-          || !hasPersistedRescisao
-          || !isStatusTermoRescindido()
-          || !String(dataRescisaoInput.value || '').trim();
+          || !editingCodigo;
       };
       const syncEmitDespachoRescisaoButtonState = () => {
         const isBusy = emitDespachoRescisaoButton.textContent === 'Gerando despacho de rescisao...';
-        const hasPersistedRescisao = String(persistedStatusTermo || '').trim().toUpperCase() === 'RESCINDIDO'
-          && String(persistedDataRescisao || '').trim() !== '';
 
         if (isBusy) {
           return;
         }
 
         emitDespachoRescisaoButton.disabled = formMode === 'create'
-          || !editingCodigo
-          || !hasPersistedRescisao
-          || !isStatusTermoRescindido()
-          || !String(dataRescisaoInput.value || '').trim();
+          || !editingCodigo;
       };
       const syncLastAditivoEditorButtonState = async () => {
         const isBusy = editLastAditivoButton.textContent === 'Carregando ultimo aditivo...'
