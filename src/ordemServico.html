@@ -211,10 +211,7 @@
                 <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-middle">
                   <label class="dsc-field-group" for="ordem-servico-cpf-condutor">
                     <span>CPF condutor</span>
-                    <div class="dsc-inline-action-field dsc-inline-action-field-vinculo">
-                      <input class="dsc-form-control" id="ordem-servico-cpf-condutor" type="text" inputmode="numeric" list="ordem-servico-cpf-condutor-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO CONDUTOR" maxlength="14" />
-                      <button type="button" class="dsc-btn dsc-btn-white dsc-inline-action-button" id="open-vinculo-condutor-popup-button" aria-label="Consultar vínculos do condutor" title="Consultar vínculos do condutor">🔗</button>
-                    </div>
+                    <input class="dsc-form-control" id="ordem-servico-cpf-condutor" type="text" inputmode="numeric" list="ordem-servico-cpf-condutor-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO CONDUTOR" maxlength="14" />
                     <datalist id="ordem-servico-cpf-condutor-options">
                       <option value=""></option>
                     </datalist>
@@ -223,7 +220,10 @@
 
                   <label class="dsc-field-group" for="ordem-servico-condutor">
                     <span>Condutor</span>
-                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-condutor" type="text" placeholder="CONDUTOR" maxlength="255" readonly />
+                    <div class="dsc-inline-action-field dsc-inline-action-field-vinculo dsc-inline-action-field-vinculo-compact">
+                      <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-condutor" type="text" placeholder="CONDUTOR" maxlength="255" readonly />
+                      <button type="button" class="dsc-btn dsc-btn-white dsc-inline-action-button" id="open-vinculo-condutor-popup-button" aria-label="Consultar vínculos do condutor" title="Consultar vínculos do condutor">🔗</button>
+                    </div>
                     <div class="dsc-form-error" id="ordem-servico-condutor-error"></div>
                   </label>
 
@@ -274,10 +274,7 @@
                 <div class="dsc-form-row dsc-form-row-ordem-servico-vinculos-final">
                   <label class="dsc-field-group" for="ordem-servico-cpf-monitor">
                     <span>CPF monitor</span>
-                    <div class="dsc-inline-action-field dsc-inline-action-field-vinculo">
-                      <input class="dsc-form-control" id="ordem-servico-cpf-monitor" type="text" inputmode="numeric" list="ordem-servico-cpf-monitor-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO MONITOR" maxlength="14" />
-                      <button type="button" class="dsc-btn dsc-btn-white dsc-inline-action-button" id="open-vinculo-monitor-popup-button" aria-label="Consultar vínculos do monitor" title="Consultar vínculos do monitor">🔗</button>
-                    </div>
+                    <input class="dsc-form-control" id="ordem-servico-cpf-monitor" type="text" inputmode="numeric" list="ordem-servico-cpf-monitor-options" autocomplete="off" placeholder="DIGITE PARA SUGERIR O CPF DO MONITOR" maxlength="14" />
                     <datalist id="ordem-servico-cpf-monitor-options">
                       <option value=""></option>
                     </datalist>
@@ -286,7 +283,10 @@
 
                   <label class="dsc-field-group" for="ordem-servico-monitor">
                     <span>Monitor</span>
-                    <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-monitor" type="text" placeholder="MONITOR" maxlength="255" readonly />
+                    <div class="dsc-inline-action-field dsc-inline-action-field-vinculo dsc-inline-action-field-vinculo-compact">
+                      <input class="dsc-form-control dsc-form-control-auto-filled" id="ordem-servico-monitor" type="text" placeholder="MONITOR" maxlength="255" readonly />
+                      <button type="button" class="dsc-btn dsc-btn-white dsc-inline-action-button" id="open-vinculo-monitor-popup-button" aria-label="Consultar vínculos do monitor" title="Consultar vínculos do monitor">🔗</button>
+                    </div>
                     <div class="dsc-form-error" id="ordem-servico-monitor-error"></div>
                   </label>
 
@@ -329,11 +329,6 @@
                     <div class="dsc-form-error" id="ordem-servico-tipo-troca-error"></div>
                   </label>
 
-                  <label class="dsc-field-group" for="ordem-servico-data-encerramento">
-                    <span>Encerramento</span>
-                    <input class="dsc-form-control" id="ordem-servico-data-encerramento" type="date" />
-                    <div class="dsc-form-error" id="ordem-servico-data-encerramento-error"></div>
-                  </label>
                 </div>
               </section>
 
@@ -362,6 +357,12 @@
                       </label>
                     </div>
                   </fieldset>
+
+                  <label class="dsc-field-group" for="ordem-servico-data-encerramento">
+                    <span>Encerramento</span>
+                    <input class="dsc-form-control" id="ordem-servico-data-encerramento" type="date" />
+                    <div class="dsc-form-error" id="ordem-servico-data-encerramento-error"></div>
+                  </label>
 
                   <label class="dsc-field-group" for="ordem-servico-codigo-access">
                     <span>Codigo Access</span>
@@ -672,6 +673,9 @@
       let isActivationInsertion = false;
       let substitutionSourceCodigo = null;
       let activationSourceEncerramento = null;
+      let originalCpfCondutorValue = '';
+      let originalCpfMonitorValue = '';
+      let originalVeiculoPlacaValue = '';
       let initialTrackedFormState = null;
       let requireFormChangeToSave = false;
       let suppressTermoBlurValidation = false;
@@ -700,6 +704,9 @@
       let veiculoPopupWindow = null;
       let condutorPopupWindow = null;
       let monitorPopupWindow = null;
+      const pageSearchParams = new URLSearchParams(window.location.search);
+      const isCredenciamentoTermoPopup = pageSearchParams.get('popupMode') === 'credenciamento-termo';
+      let termoPopupBootstrapDone = false;
       const activeConflictValidationState = {
         cnpjCpf: { requestId: 0, timeoutId: null },
         condutor: { requestId: 0, timeoutId: null },
@@ -842,6 +849,35 @@
         return parsed;
       };
 
+      const formatEditableDateTyping = (value) => {
+        const digits = String(value ?? '').replace(/\D/g, '').slice(0, 8);
+
+        if (digits.length <= 2) {
+          return digits;
+        }
+
+        if (digits.length <= 4) {
+          return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+        }
+
+        return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+      };
+
+      const commitEditableDateInput = (input) => {
+        if (!input || input.type !== 'text') {
+          return;
+        }
+
+        const parsedDate = parseEditableDateValue(input.value);
+        input.type = 'date';
+        input.inputMode = '';
+        input.placeholder = '';
+        input.value = parsedDate
+          ? formatEditableDateInputValue(parsedDate)
+          : (input.dataset.dateOriginalValue || '');
+        delete input.dataset.dateOriginalValue;
+      };
+
       const enableFullDateSelection = (input) => {
         if (!input) {
           return;
@@ -869,9 +905,17 @@
           input.dataset.dateOriginalValue = input.value;
           input.type = 'text';
           input.inputMode = 'numeric';
-          input.placeholder = 'dd/mm/aaaa';
+          input.placeholder = 'dd/mm/yyyy';
           input.value = toEditableDateDisplay(input.value);
           selectAllContent();
+        });
+
+        input.addEventListener('input', () => {
+          if (input.type !== 'text') {
+            return;
+          }
+
+          input.value = formatEditableDateTyping(input.value);
         });
 
         input.addEventListener('mouseup', (event) => {
@@ -884,14 +928,7 @@
         });
 
         input.addEventListener('blur', () => {
-          const parsedDate = parseEditableDateValue(input.value);
-          input.type = 'date';
-          input.inputMode = '';
-          input.placeholder = '';
-          input.value = parsedDate
-            ? formatEditableDateInputValue(parsedDate)
-            : (input.dataset.dateOriginalValue || '');
-          delete input.dataset.dateOriginalValue;
+          commitEditableDateInput(input);
         });
       };
 
@@ -2241,7 +2278,7 @@
 
       const validateDataEncerramentoField = (showRequired = false) => {
         const currentSituacao = normalizeKey(getSelectedSituacao());
-        const requiresDataEncerramento = currentSituacao === 'cancelado' || currentSituacao === 'inativo';
+        const requiresDataEncerramento = currentSituacao === 'cancelado';
         const dataEncerramento = getComparableDateInputValue(dataEncerramentoInput);
 
         if (!requiresDataEncerramento) {
@@ -2256,6 +2293,26 @@
 
         dataEncerramentoError.textContent = '';
         return false;
+      };
+
+      const syncDataEncerramentoState = ({ clearWhenDisabled = false } = {}) => {
+        const hasTermoAdesao = Boolean(normalizeTermoAdesao(termoAdesaoInput.value));
+        const canEditByMode = formMode !== 'view' && (editingCodigo !== null || hasTermoAdesao);
+        const isEditable = normalizeKey(getSelectedSituacao()) === 'cancelado' && canEditByMode;
+
+        if (dataEncerramentoInput.type === 'text') {
+          commitEditableDateInput(dataEncerramentoInput);
+        }
+
+        dataEncerramentoInput.disabled = !isEditable;
+
+        if (!isEditable) {
+          if (clearWhenDisabled) {
+            dataEncerramentoInput.value = '';
+          }
+
+          dataEncerramentoError.textContent = '';
+        }
       };
 
       const normalizeTermoAdesao = (value) => {
@@ -2345,6 +2402,7 @@
         situacaoRadios.forEach((radio) => {
           radio.checked = radio === selectedRadio;
         });
+        syncDataEncerramentoState();
       };
 
       const readJsonResponse = async (response) => {
@@ -2628,6 +2686,7 @@
           getInsertGuardControls().forEach((element) => {
             element.disabled = false;
           });
+          syncDataEncerramentoState();
           termoAdesaoError.textContent = '';
           return true;
         }
@@ -2645,6 +2704,7 @@
         closeSummaryButton.disabled = false;
 
         applyInsertSpecificRules();
+        syncDataEncerramentoState();
 
         if (!hasTermoAdesao && focusIfMissing) {
           termoAdesaoInput.focus();
@@ -2772,6 +2832,9 @@
         isActivationInsertion = false;
         substitutionSourceCodigo = null;
         activationSourceEncerramento = null;
+        originalCpfCondutorValue = '';
+        originalCpfMonitorValue = '';
+        originalVeiculoPlacaValue = '';
         shouldHideFormAfterEmissao = false;
         suppressTermoBlurValidation = false;
         clearLookupFields();
@@ -3504,6 +3567,14 @@
       };
 
       const validateActiveOrdemServicoCpf = async ({ cpf, roleLabel, errorElement }) => {
+        const normalizedCpf = normalizeCpf(cpf);
+
+        if ((roleLabel === 'condutor' && originalCpfCondutorValue && normalizedCpf === originalCpfCondutorValue)
+          || (roleLabel === 'monitor' && originalCpfMonitorValue && normalizedCpf === originalCpfMonitorValue)) {
+          errorElement.textContent = '';
+          return true;
+        }
+
         if (!getDocumentDigits(cpf)) {
           errorElement.textContent = '';
           return true;
@@ -3565,34 +3636,9 @@
         return label || codigo;
       };
 
-      const validateActiveOrdemServicoCnpjCpf = async ({ cnpjCpf, errorElement }) => {
-        const normalizedCnpjCpf = normalizeCnpjCpf(cnpjCpf);
-        const digits = getDocumentDigits(normalizedCnpjCpf);
-
-        if (!digits.length) {
-          errorElement.textContent = '';
-          return true;
-        }
-
-        if (getSelectedSituacao() !== 'Ativo') {
-          errorElement.textContent = '';
-          return true;
-        }
-
-        if (![11, 14].includes(digits.length)) {
-          errorElement.textContent = '';
-          return true;
-        }
-
-        const activeItem = await fetchActiveOrdemServicoByCnpjCpf(normalizedCnpjCpf, getActiveOrdemServicoExcludeCodigo());
-
-        if (!activeItem) {
-          errorElement.textContent = '';
-          return true;
-        }
-
-        errorElement.textContent = `CNPJ/CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeItem)}`;
-        return false;
+      const validateActiveOrdemServicoCnpjCpf = async ({ errorElement }) => {
+        errorElement.textContent = '';
+        return true;
       };
 
       const scheduleActiveOrdemServicoCpfValidation = ({ cpf, roleLabel, errorElement, state }) => {
@@ -3603,7 +3649,9 @@
           state.timeoutId = null;
         }
 
-        if (!getDocumentDigits(normalizedCpf) || getSelectedSituacao() !== 'Ativo') {
+        if ((roleLabel === 'condutor' && originalCpfCondutorValue && normalizedCpf === originalCpfCondutorValue)
+          || (roleLabel === 'monitor' && originalCpfMonitorValue && normalizedCpf === originalCpfMonitorValue)
+          || !getDocumentDigits(normalizedCpf) || getSelectedSituacao() !== 'Ativo') {
           state.requestId += 1;
           errorElement.textContent = '';
           return;
@@ -3636,9 +3684,7 @@
         }, 250);
       };
 
-      const scheduleActiveOrdemServicoCnpjCpfValidation = ({ cnpjCpf, errorElement }) => {
-        const normalizedCnpjCpf = normalizeCnpjCpf(cnpjCpf);
-        const digits = getDocumentDigits(normalizedCnpjCpf);
+      const scheduleActiveOrdemServicoCnpjCpfValidation = ({ errorElement }) => {
         const state = activeConflictValidationState.cnpjCpf;
 
         if (state.timeoutId) {
@@ -3646,32 +3692,8 @@
           state.timeoutId = null;
         }
 
-        if (!digits.length || getSelectedSituacao() !== 'Ativo' || ![11, 14].includes(digits.length)) {
-          state.requestId += 1;
-          errorElement.textContent = '';
-          return;
-        }
-
-        const requestId = ++state.requestId;
-        state.timeoutId = window.setTimeout(async () => {
-          try {
-            const activeItem = await fetchActiveOrdemServicoByCnpjCpf(normalizedCnpjCpf, getActiveOrdemServicoExcludeCodigo());
-
-            if (requestId !== state.requestId) {
-              return;
-            }
-
-            errorElement.textContent = activeItem
-              ? `CNPJ/CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeItem)}`
-              : '';
-          } catch (error) {
-            if (requestId !== state.requestId) {
-              return;
-            }
-
-            errorElement.textContent = getRequestErrorMessage(error, 'Falha ao validar CNPJ/CPF em OrdemServico ativa.');
-          }
-        }, 250);
+        state.requestId += 1;
+        errorElement.textContent = '';
       };
 
       const fetchActiveOrdemServicoByPlaca = async (placa, excludeCodigo = null) => {
@@ -3694,6 +3716,13 @@
       };
 
       const validateActiveOrdemServicoPlaca = async ({ placa, errorElement }) => {
+        const normalizedPlaca = normalizePlaca(placa);
+
+        if (originalVeiculoPlacaValue && normalizedPlaca === originalVeiculoPlacaValue) {
+          errorElement.textContent = '';
+          return true;
+        }
+
         if (!placa) {
           errorElement.textContent = '';
           return true;
@@ -3871,7 +3900,7 @@
         }
       };
 
-      const syncCondutorByCpf = async (cpfInputElement, nameInputElement, errorElement, emptyMessage, roleLabel) => {
+      const syncCondutorByCpf = async (cpfInputElement, nameInputElement, errorElement, emptyMessage, roleLabel, { openMissingPopup = true } = {}) => {
         const cpf = normalizeCpf(cpfInputElement.value);
         cpfInputElement.value = cpf;
 
@@ -3889,7 +3918,9 @@
 
           if (!response.ok) {
             if (response.status === 404 && roleLabel === 'condutor') {
-              openCondutorCadastroPopup({ cpf });
+              if (openMissingPopup) {
+                openCondutorCadastroPopup({ cpf });
+              }
               errorElement.textContent = 'Condutor nao encontrado. Cadastre o condutor e retorne a Ordem de Servico.';
               nameInputElement.value = '';
               return;
@@ -3952,16 +3983,29 @@
         popupWindow.focus();
       };
 
-      const openCondutorCadastroPopup = ({ cpf = '' } = {}) => {
-        const popupUrl = new URL('/src/condutor.html', window.location.origin);
-        const normalizedCpf = normalizeCpf(String(cpf || ''));
-        const popupFeatures = [
+      const buildCenteredPopupFeatures = ({ width, height }) => {
+        const screenLeft = typeof window.screenLeft === 'number' ? window.screenLeft : window.screenX;
+        const screenTop = typeof window.screenTop === 'number' ? window.screenTop : window.screenY;
+        const outerWidth = window.outerWidth || document.documentElement.clientWidth || width;
+        const outerHeight = window.outerHeight || document.documentElement.clientHeight || height;
+        const left = Math.max(screenLeft + Math.round((outerWidth - width) / 2), 0);
+        const top = Math.max(screenTop + Math.round((outerHeight - height) / 2), 0);
+
+        return [
           'popup=yes',
-          'width=1120',
-          'height=860',
+          `width=${width}`,
+          `height=${height}`,
+          `left=${left}`,
+          `top=${top}`,
           'resizable=yes',
           'scrollbars=yes',
         ].join(',');
+      };
+
+      const openCondutorCadastroPopup = ({ cpf = '' } = {}) => {
+        const popupUrl = new URL('/src/condutor.html', window.location.origin);
+        const normalizedCpf = normalizeCpf(String(cpf || ''));
+        const popupFeatures = buildCenteredPopupFeatures({ width: 1120, height: 860 });
 
         popupUrl.searchParams.set('popupMode', 'ordem-servico-condutor');
 
@@ -3983,13 +4027,7 @@
       const openMonitorCadastroPopup = ({ cpf = '' } = {}) => {
         const popupUrl = new URL('/src/monitor.html', window.location.origin);
         const normalizedCpf = normalizeCpf(String(cpf || ''));
-        const popupFeatures = [
-          'popup=yes',
-          'width=1120',
-          'height=860',
-          'resizable=yes',
-          'scrollbars=yes',
-        ].join(',');
+        const popupFeatures = buildCenteredPopupFeatures({ width: 1120, height: 860 });
 
         popupUrl.searchParams.set('popupMode', 'ordem-servico-monitor');
 
@@ -4008,7 +4046,7 @@
         monitorPopupWindow.focus();
       };
 
-      const syncMonitorByCpf = async () => {
+      const syncMonitorByCpf = async ({ openMissingPopup = true } = {}) => {
         const cpf = normalizeCpf(cpfMonitorInput.value);
         cpfMonitorInput.value = cpf;
 
@@ -4028,7 +4066,9 @@
             if (response.status === 404) {
               monitorInput.value = '';
               cpfMonitorError.textContent = 'Monitor nao encontrado. Cadastre o monitor e retorne a Ordem de Servico.';
-              openMonitorCadastroPopup({ cpf });
+              if (openMissingPopup) {
+                openMonitorCadastroPopup({ cpf });
+              }
               return;
             }
 
@@ -4045,7 +4085,7 @@
         }
       };
 
-      const syncVeiculoByCrm = async () => {
+      const syncVeiculoByCrm = async ({ openMissingPopup = true } = {}) => {
         const crm = normalizeCrm(crmInput.value);
         crmInput.value = crm;
 
@@ -4066,7 +4106,9 @@
               veiculoPlacasInput.value = '';
               veiculoPlacasError.textContent = '';
               crmError.textContent = 'Veiculo nao encontrado. Cadastre o veiculo e retorne a Ordem de Servico.';
-              openVeiculoPopupFromCrm();
+              if (openMissingPopup) {
+                openVeiculoPopupFromCrm();
+              }
               return;
             }
 
@@ -4103,13 +4145,7 @@
         const crm = normalizeCrm(crmInput.value);
         const placa = normalizePlaca(veiculoPlacasInput.value);
         const popupUrl = new URL('/src/veiculo.html', window.location.origin);
-        const popupFeatures = [
-          'popup=yes',
-          'width=1280',
-          'height=900',
-          'resizable=yes',
-          'scrollbars=yes',
-        ].join(',');
+        const popupFeatures = buildCenteredPopupFeatures({ width: 1280, height: 900 });
 
         crmInput.value = crm;
         popupUrl.searchParams.set('popupMode', 'ordem-servico-relacao-crm');
@@ -4207,6 +4243,50 @@
         }
       };
 
+      const refreshRelatedFieldsOnFormEntry = async () => {
+        const refreshTasks = [];
+
+        if (getDocumentDigits(cnpjCpfInput.value)) {
+          refreshTasks.push(syncCredenciadaByDocument());
+        }
+
+        if (normalizeText(dreCodigoInput.value, 30)) {
+          refreshTasks.push(syncDreByCodigo());
+        }
+
+        if (getDocumentDigits(cpfCondutorInput.value)) {
+          refreshTasks.push(syncCondutorByCpf(
+            cpfCondutorInput,
+            condutorInput,
+            cpfCondutorError,
+            'Falha ao localizar condutor.',
+            'condutor',
+            { openMissingPopup: false },
+          ));
+        }
+
+        if (possuiPrepostoInput.checked && getDocumentDigits(cpfPrepostoInput.value)) {
+          refreshTasks.push(syncCondutorByCpf(
+            cpfPrepostoInput,
+            prepostoCondutorInput,
+            cpfPrepostoError,
+            'Falha ao localizar preposto.',
+            'preposto',
+            { openMissingPopup: false },
+          ));
+        }
+
+        if (getDocumentDigits(cpfMonitorInput.value)) {
+          refreshTasks.push(syncMonitorByCpf({ openMissingPopup: false }));
+        }
+
+        if (normalizeCrm(crmInput.value)) {
+          refreshTasks.push(syncVeiculoByCrm({ openMissingPopup: false }));
+        }
+
+        await Promise.allSettled(refreshTasks);
+      };
+
       const startInsert = ({ termoAdesao = '' } = {}) => {
         form.reset();
         clearLookupFields();
@@ -4217,6 +4297,9 @@
         isActivationInsertion = false;
         substitutionSourceCodigo = null;
         activationSourceEncerramento = null;
+        originalCpfCondutorValue = '';
+        originalCpfMonitorValue = '';
+        originalVeiculoPlacaValue = '';
         tipoTrocaInput.value = '';
         termoAdesaoInput.value = normalizeTermoAdesao(String(termoAdesao || ''));
         numOsInput.value = '001';
@@ -4255,6 +4338,49 @@
         searchInput.value = termoAdesao;
         startInsert({ termoAdesao });
         await syncNextNumOsByTermo();
+      };
+
+      const bootstrapInsertFromTermoPopup = async () => {
+        if (termoPopupBootstrapDone || !isCredenciamentoTermoPopup) {
+          return;
+        }
+
+        const autoOpenMode = normalizeKey(pageSearchParams.get('autoOpen') || '');
+        const termoAdesao = normalizeTermoAdesao(pageSearchParams.get('termoAdesao') || '');
+
+        if (autoOpenMode !== 'insert' || !termoAdesao) {
+          return;
+        }
+
+        termoPopupBootstrapDone = true;
+        searchInput.value = termoAdesao;
+        startInsert({ termoAdesao });
+
+        try {
+          const termoItem = await fetchLookupItem(`/api/termo/lookup?termoAdesao=${encodeURIComponent(termoAdesao)}`, 'Termo de adesao nao encontrado ou nao ativo');
+          const termoStatus = normalizeKey(String(termoItem.status_termo || termoItem.statusTermo || ''));
+
+          if (termoStatus !== 'ativo') {
+            throw new Error('Termo nao ativo.');
+          }
+
+          await syncNextNumOsByTermo();
+
+          vigenciaOsInput.value = String(termoItem.inicio_vigencia || termoItem.inicioVigencia || '').trim().split(' ')[0];
+          cnpjCpfInput.value = normalizeCnpjCpf(String(termoItem.cnpjCpf || termoItem.cnpj_cpf || ''));
+          credenciadoInput.value = normalizeText(String(termoItem.credenciado || termoItem.empresa || ''), 255);
+          termoAdesaoError.textContent = '';
+          cnpjCpfError.textContent = '';
+          credenciadoError.textContent = '';
+          syncOsConcatInput();
+          applyInsertSpecificRules();
+          await validateActiveOrdemServicoCnpjCpf({ cnpjCpf: cnpjCpfInput.value, errorElement: cnpjCpfError });
+          termoAdesaoInput.focus();
+        } catch (error) {
+          const message = getRequestErrorMessage(error, 'Falha ao preparar a OrdemServico a partir do termo.');
+          feedback.textContent = message;
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+        }
       };
 
       const handleAddNumOs = async () => {
@@ -4324,6 +4450,9 @@
         isActivationInsertion = false;
         substitutionSourceCodigo = Number(item.codigo) || null;
         activationSourceEncerramento = null;
+        originalCpfCondutorValue = normalizeCpf(String(item.cpf_condutor || ''));
+        originalCpfMonitorValue = normalizeCpf(String(item.cpf_monitor || ''));
+        originalVeiculoPlacaValue = normalizePlaca(String(item.veiculo_placas || ''));
         termoAdesaoInput.value = normalizeTermoAdesao(String(item.termo_adesao || ''));
         numOsInput.value = normalizeNumOs(String(item.num_os || ''));
         revisaoInput.value = normalizeRevisao(String(item.revisao || ''));
@@ -4365,6 +4494,7 @@
         applyIdentityFieldLock();
         syncPrepostoState();
         situacaoRadios.forEach((radio) => { radio.disabled = true; });
+        void refreshRelatedFieldsOnFormEntry();
         void ensureDreOptionsLoaded(dreCodigoInput.value);
         void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
         void ensureTipoTrocaOptionsLoaded(tipoTrocaInput.value);
@@ -4384,6 +4514,9 @@
         isActivationInsertion = false;
         substitutionSourceCodigo = null;
         activationSourceEncerramento = null;
+        originalCpfCondutorValue = normalizeCpf(String(item.cpf_condutor || ''));
+        originalCpfMonitorValue = normalizeCpf(String(item.cpf_monitor || ''));
+        originalVeiculoPlacaValue = normalizePlaca(String(item.veiculo_placas || ''));
         termoAdesaoInput.value = normalizeTermoAdesao(String(item.termo_adesao || ''));
         numOsInput.value = normalizeNumOs(String(item.num_os || ''));
         revisaoInput.value = normalizeRevisao(item.revisao || '');
@@ -4424,6 +4557,7 @@
         applyInsertSpecificRules();
         applyIdentityFieldLock();
         syncPrepostoState();
+        void refreshRelatedFieldsOnFormEntry();
         void ensureDreOptionsLoaded(dreCodigoInput.value);
         void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
         void ensureTipoTrocaOptionsLoaded(tipoTrocaInput.value);
@@ -4453,6 +4587,9 @@
         isActivationInsertion = true;
         substitutionSourceCodigo = Number(item.codigo) || null;
         activationSourceEncerramento = item.data_encerramento || null;
+        originalCpfCondutorValue = normalizeCpf(String(item.cpf_condutor || ''));
+        originalCpfMonitorValue = normalizeCpf(String(item.cpf_monitor || ''));
+        originalVeiculoPlacaValue = normalizePlaca(String(item.veiculo_placas || ''));
         termoAdesaoInput.value = normalizeTermoAdesao(String(item.termo_adesao || ''));
         numOsInput.value = normalizeNumOs(String(item.num_os || ''));
         revisaoInput.value = normalizeRevisao(String(item.revisao || ''));
@@ -4494,6 +4631,7 @@
         applyIdentityFieldLock();
         syncPrepostoState();
         situacaoRadios.forEach((radio) => { radio.disabled = false; });
+        void refreshRelatedFieldsOnFormEntry();
         void ensureDreOptionsLoaded(dreCodigoInput.value);
         void ensureModalidadeOptionsLoaded(modalidadeDescricaoInput.value || deriveModalidadeFromDreDescricao(dreDescricaoInput.value));
         void ensureTipoTrocaOptionsLoaded(tipoTrocaInput.value);
@@ -4742,6 +4880,13 @@
         void syncVeiculoByCrm();
       });
 
+      veiculoPlacasInput.addEventListener('blur', () => {
+        void validateActiveOrdemServicoPlaca({
+          placa: normalizePlaca(veiculoPlacasInput.value),
+          errorElement: veiculoPlacasError,
+        });
+      });
+
       openVeiculoPopupButton.addEventListener('click', () => {
         openVeiculoPopupFromCrm();
       });
@@ -4783,6 +4928,7 @@
 
       situacaoRadios.forEach((radio) => {
         radio.addEventListener('change', () => {
+          syncDataEncerramentoState({ clearWhenDisabled: true });
           validateDataEncerramentoField(false);
         });
       });
@@ -5425,6 +5571,7 @@
       renderModalidadeOptions('');
       renderTipoTrocaOptions('');
       void loadItems();
+      void bootstrapInsertFromTermoPopup();
     </script>
   </body>
 </html>

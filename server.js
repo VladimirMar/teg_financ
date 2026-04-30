@@ -3663,6 +3663,7 @@ const credenciamentoTermoSelectClause = `
   TO_CHAR(inicio_vigencia::date, 'YYYY-MM-DD') AS inicio_vigencia,
   TO_CHAR(termino_vigencia::date, 'YYYY-MM-DD') AS termino_vigencia,
   TO_CHAR(comp_data_aditivo::date, 'YYYY-MM-DD') AS comp_data_aditivo,
+  TO_CHAR(data_rescisao::date, 'YYYY-MM-DD') AS data_rescisao,
   COALESCE(BTRIM(status_aditivo), '') AS status_aditivo,
   TO_CHAR(data_pub_aditivo::date, 'YYYY-MM-DD') AS data_pub_aditivo,
   check_aditivo::text AS check_aditivo,
@@ -3889,6 +3890,27 @@ const fetchOrdemServicoItemByCodigo = async (executor, codigo) => {
   )
 
   return result.rows[0] ?? null
+}
+
+const cancelActiveOrdemServicosByTermoAdesao = async (executor, termoAdesao, dataEncerramento) => {
+  const normalizedTermoAdesao = normalizeOrdemServicoTermoAdesao(termoAdesao)
+  const normalizedDataEncerramento = normalizeXmlDateInput(dataEncerramento) || normalizeRequestValue(dataEncerramento)
+
+  if (!normalizedTermoAdesao || !normalizedDataEncerramento) {
+    return 0
+  }
+
+  const result = await executor.query(
+    `UPDATE ${ordemServicoTableName}
+        SET situacao = 'Cancelado',
+            data_encerramento = NULLIF($2, '')::date,
+            data_modificacao = NOW()
+      WHERE REGEXP_REPLACE(COALESCE(BTRIM(termo_adesao), ''), '\\D', '', 'g') = REGEXP_REPLACE($1, '\\D', '', 'g')
+        AND UPPER(BTRIM(COALESCE(situacao, ''))) = 'ATIVO'`,
+    [normalizedTermoAdesao, normalizedDataEncerramento],
+  )
+
+  return result.rowCount ?? 0
 }
 
 const rebalanceOrdemServicoRevisions = async (executor, osValues = null) => {
@@ -7180,6 +7202,10 @@ const validateVeiculoPayload = async ({
     return { status: 400, payload: { message: 'Data inicial do seguro invalida.' } }
   }
 
+  if (normalizedSeguroInicio && normalizedSeguroInicio < getCurrentDateInputValue()) {
+    return { status: 400, payload: { message: 'Data inicial do seguro deve ser maior ou igual a hoje.' } }
+  }
+
   if (normalizedSeguroTermino && !isDateInputValid(normalizedSeguroTermino)) {
     return { status: 400, payload: { message: 'Data final do seguro invalida.' } }
   }
@@ -7533,6 +7559,7 @@ const validateCredenciamentoTermoPayload = async ({
   inicioVigencia,
   terminoVigencia,
   compDataAditivo,
+  dataRescisao,
   statusAditivo,
   dataPubAditivo,
   checkAditivo,
@@ -7563,6 +7590,7 @@ const validateCredenciamentoTermoPayload = async ({
   const normalizedInicioVigencia = normalizeXmlDateInput(inicioVigencia) || normalizeRequestValue(inicioVigencia)
   const normalizedTerminoVigencia = normalizeXmlDateInput(terminoVigencia) || normalizeRequestValue(terminoVigencia)
   const normalizedCompDataAditivo = normalizeXmlDateInput(compDataAditivo) || normalizeRequestValue(compDataAditivo)
+  const normalizedDataRescisao = normalizeXmlDateInput(dataRescisao) || normalizeRequestValue(dataRescisao)
   const normalizedStatusAditivo = normalizeCredenciadaText(statusAditivo, 100)
   const normalizedDataPubAditivo = normalizeXmlDateInput(dataPubAditivo) || normalizeRequestValue(dataPubAditivo)
   const normalizedCheckAditivo = normalizeIntegerValue(checkAditivo)
@@ -7608,6 +7636,10 @@ const validateCredenciamentoTermoPayload = async ({
     errors.compDataAditivo = 'Comp data do aditivo invalida.'
   }
 
+  if (normalizedDataRescisao && !isDateInputValid(normalizedDataRescisao)) {
+    errors.dataRescisao = 'Data de rescisao invalida.'
+  }
+
   if (normalizedDataPubAditivo && !isDateInputValid(normalizedDataPubAditivo)) {
     errors.dataPubAditivo = 'Data de publicacao do aditivo invalida.'
   }
@@ -7644,6 +7676,14 @@ const validateCredenciamentoTermoPayload = async ({
     errors.statusTermo = 'Status do termo invalido.'
   }
 
+  if (normalizedStatusTermo === 'RESCINDIDO' && !normalizedDataRescisao) {
+    errors.dataRescisao = 'Data de rescisao e obrigatoria quando o status do termo for Rescindido.'
+  }
+
+  if (normalizedStatusTermo === 'RESCINDIDO' && normalizedDataRescisao && normalizedDataRescisao < getCurrentDateInputValue()) {
+    errors.dataRescisao = 'Data de rescisao deve ser maior ou igual a hoje.'
+  }
+
   let credenciadaItem = null
 
   if (Number.isInteger(normalizedCredenciadaCodigo) && normalizedCredenciadaCodigo > 0) {
@@ -7678,6 +7718,7 @@ const validateCredenciamentoTermoPayload = async ({
       inicioVigencia: normalizedInicioVigencia,
       terminoVigencia: normalizedTerminoVigencia,
       compDataAditivo: normalizedCompDataAditivo,
+      dataRescisao: normalizedStatusTermo === 'RESCINDIDO' ? normalizedDataRescisao : '',
       statusAditivo: normalizedStatusAditivo,
       dataPubAditivo: normalizedDataPubAditivo,
       checkAditivo: normalizedCheckAditivo,
@@ -7776,6 +7817,9 @@ const buildCredenciamentoTermoCreatePayload = (payload, latestTermoItem) => {
     inicioVigencia,
     terminoVigencia,
     compDataAditivo: pickCredenciamentoTermoTextValue(payload.compDataAditivo, latestTermoItem?.comp_data_aditivo),
+    dataRescisao: (pickCredenciamentoTermoTextValue(payload.statusTermo, latestTermoItem?.status_termo) || 'ATIVO').toUpperCase() === 'RESCINDIDO'
+      ? pickCredenciamentoTermoTextValue(payload.dataRescisao, latestTermoItem?.data_rescisao)
+      : '',
     statusAditivo: 'PUBLICAR',
     dataPubAditivo: pickCredenciamentoTermoTextValue(payload.dataPubAditivo, latestTermoItem?.data_pub_aditivo),
     checkAditivo: pickCredenciamentoTermoIntegerValue(payload.checkAditivo, latestTermoItem?.check_aditivo) ?? 0,
@@ -8149,12 +8193,31 @@ const normalizeContractTemplateType = (value) => normalizeRequestValue(value)
   .normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '')
 
+const credenciamentoDespachoRescisaoTemplatePath = path.join(workspaceRoot, 'documento', 'Despacho Rescisão PF e PJ.docx')
+const credenciamentoRescisaoPfTemplatePath = path.join(workspaceRoot, 'documento', 'Termo de Rescisão PF.docx')
+const credenciamentoRescisaoPjTemplatePath = path.join(workspaceRoot, 'documento', 'Termo de Rescisão PJ.docx')
+
 const buildCredenciamentoContratoFileName = (termoAdesao, typeLabel, templateReference) => {
   const cleanedTermo = String(termoAdesao ?? '').trim().replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '')
   const cleanedTemplateName = path.basename(String(templateReference ?? '').trim() || '')
   const extension = cleanedTemplateName.toLowerCase().endsWith('.docx') ? '.docx' : '.docx'
   const typeSuffix = normalizeContractTemplateType(typeLabel) === 'PESSOA FISICA' ? 'pf' : 'pj'
   return `${cleanedTermo || 'termo'}-contrato-${typeSuffix}${extension}`
+}
+
+const buildCredenciamentoRescisaoFileName = (termoAdesao, typeLabel, templateReference) => {
+  const cleanedTermo = String(termoAdesao ?? '').trim().replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '')
+  const cleanedTemplateName = path.basename(String(templateReference ?? '').trim() || '')
+  const extension = cleanedTemplateName.toLowerCase().endsWith('.docx') ? '.docx' : '.docx'
+  const typeSuffix = normalizeContractTemplateType(typeLabel) === 'PESSOA FISICA' ? 'pf' : 'pj'
+  return `${cleanedTermo || 'termo'}-rescisao-${typeSuffix}${extension}`
+}
+
+const buildCredenciamentoDespachoRescisaoFileName = (termoAdesao, templateReference) => {
+  const cleanedTermo = String(termoAdesao ?? '').trim().replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '')
+  const cleanedTemplateName = path.basename(String(templateReference ?? '').trim() || '')
+  const extension = cleanedTemplateName.toLowerCase().endsWith('.docx') ? '.docx' : '.docx'
+  return `${cleanedTermo || 'termo'}-despacho-rescisao${extension}`
 }
 
 const resolveContractTemplatePath = (templateReference) => {
@@ -8279,6 +8342,57 @@ const buildCredenciamentoContratoDocx = async ({ templateBuffer, body, parametro
   return zip.generateAsync({ type: 'nodebuffer' })
 }
 
+const buildRescisaoTemplateReplacements = ({ termoItem }) => {
+  const normalizedTermoAdesao = normalizeOrdemServicoTermoAdesao(termoItem?.termo_adesao || termoItem?.termoAdesao || '')
+  const normalizedCnpjCpf = normalizeCnpjCpf(termoItem?.cnpj_cpf || termoItem?.cnpjCpf || '')
+  const replacements = {
+    termo_adesao: normalizedTermoAdesao,
+    termo: normalizedTermoAdesao,
+    sei: normalizeRequestValue(termoItem?.sei),
+    credenciado: normalizeRequestValue(termoItem?.credenciado || termoItem?.empresa),
+    cnpj_cpf: normalizedCnpjCpf,
+    cpf_cnpj: normalizedCnpjCpf,
+    representante: normalizeRequestValue(termoItem?.representante),
+    cpf_representante: normalizeRequestValue(termoItem?.cpf_representante || termoItem?.cpfRepresentante),
+    logradouro: normalizeRequestValue(termoItem?.logradouro),
+    bairro: normalizeRequestValue(termoItem?.bairro),
+    municipio: normalizeRequestValue(termoItem?.municipio),
+    minicipio: normalizeRequestValue(termoItem?.municipio),
+    inicio_vigencia: normalizeContractDateKey(termoItem?.inicio_vigencia || termoItem?.inicioVigencia),
+    data_rescisao: normalizeContractDateKey(termoItem?.data_rescisao || termoItem?.dataRescisao),
+  }
+
+  return Object.entries(replacements).reduce((lookup, [key, value]) => {
+    const normalizedKey = normalizeContractTemplateKey(key)
+
+    if (normalizedKey && value != null && value !== '') {
+      lookup[normalizedKey] = String(value)
+    }
+
+    return lookup
+  }, {})
+}
+
+const buildCredenciamentoRescisaoDocx = async ({ templateBuffer, termoItem }) => {
+  const zip = await JSZip.loadAsync(templateBuffer)
+  const replacements = buildRescisaoTemplateReplacements({ termoItem })
+  const wordXmlPaths = Object.keys(zip.files).filter((fileName) => /^word\/(document|header\d+|footer\d+|footnotes|endnotes)\.xml$/i.test(fileName))
+
+  await Promise.all(wordXmlPaths.map(async (fileName) => {
+    const entry = zip.file(fileName)
+
+    if (!entry) {
+      return
+    }
+
+    const xmlContent = await entry.async('string')
+    const resolvedXmlContent = applyContractTemplateTokens(xmlContent, replacements)
+    zip.file(fileName, resolvedXmlContent)
+  }))
+
+  return zip.generateAsync({ type: 'nodebuffer' })
+}
+
 const escapeContractPreviewHtml = (value) => String(value ?? '')
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
@@ -8292,6 +8406,12 @@ const decodeContractPreviewXmlText = (value) => String(value ?? '')
   .replace(/&apos;/g, "'")
   .replace(/&amp;/g, '&')
 
+const stripContractPreviewDecodedTags = (value) => String(value ?? '')
+  .replace(/^.*?\bo:spt="[^"]*"[^>]*>/i, '')
+  .replace(/<\?(?:xml|mso:[^>]+)[^>]*>/gi, '')
+  .replace(/<\/?(?:v:[^>]+|o:[^>]+|w10:[^>]+|m:[^>]+|xml)[^>]*>/gi, '')
+  .replace(/<\/?[A-Za-z][^>]*>/g, '')
+
 const extractContractPreviewParagraphs = (xmlContent) => {
   const cleanedXml = String(xmlContent ?? '')
     .replace(/<w:instrText\b[\s\S]*?<\/w:instrText>/gi, '')
@@ -8299,16 +8419,20 @@ const extractContractPreviewParagraphs = (xmlContent) => {
   const paragraphMatches = cleanedXml.match(/<w:p\b[\s\S]*?<\/w:p>/gi) ?? []
 
   return paragraphMatches
-    .map((paragraphXml) => decodeContractPreviewXmlText(paragraphXml
-      .replace(/<w:tab\b[^>]*\/>/gi, '    ')
-      .replace(/<w:(?:br|cr)\b[^>]*\/>/gi, '\n')
-      .replace(/<w:t\b[^>]*>/gi, '')
-      .replace(/<\/w:t>/gi, '')
-      .replace(/<[^>]+>/g, ''))
-      .replace(/\u00a0/g, ' ')
-      .replace(/\r/g, '')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim())
+    .map((paragraphXml) => {
+      const decodedText = decodeContractPreviewXmlText(paragraphXml
+        .replace(/<w:tab\b[^>]*\/>/gi, '    ')
+        .replace(/<w:(?:br|cr)\b[^>]*\/>/gi, '\n')
+        .replace(/<w:t\b[^>]*>/gi, '')
+        .replace(/<\/w:t>/gi, '')
+        .replace(/<[^>]+>/g, ''))
+
+      return stripContractPreviewDecodedTags(decodedText)
+        .replace(/\u00a0/g, ' ')
+        .replace(/\r/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
+    })
 }
 
 const getContractPreviewPathWeight = (fileName) => {
@@ -8540,26 +8664,6 @@ if (importMode && !normalizedCredenciado && !normalizedCnpjCpf) {
         : Number.isInteger(normalizedCodigo) && normalizedCodigo > 0
           ? normalizedCodigo
           : null
-
-    if (normalizedCnpjCpf && isCnpjCpfValid(normalizedCnpjCpf)) {
-      const activeOrdemServicoByCnpjCpf = await findActiveOrdemServicoByCnpjCpf(
-        normalizedCnpjCpf,
-        { excludeCodigo: activeCpfExcludeCodigo },
-        conexao ?? pool,
-      )
-
-      if (activeOrdemServicoByCnpjCpf) {
-        const duplicateMessage = `CNPJ/CPF registrada na OS num.: ${buildOrdemServicoNumeroLabel(activeOrdemServicoByCnpjCpf)}`
-
-        return {
-          status: 409,
-          payload: {
-            message: duplicateMessage,
-            errors: { cnpjCpf: duplicateMessage },
-          },
-        }
-      }
-    }
 
     const cpfChecks = [
       { cpf: normalizedCpfCondutor, label: 'condutor' },
@@ -9652,6 +9756,7 @@ const ensureDatabaseSchema = async () => {
       inicio_vigencia date,
       termino_vigencia date,
       comp_data_aditivo date,
+      data_rescisao date,
       status_aditivo varchar(100),
       data_pub_aditivo date,
       check_aditivo integer NOT NULL,
@@ -9689,6 +9794,7 @@ const ensureDatabaseSchema = async () => {
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS inicio_vigencia date`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS termino_vigencia date`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS comp_data_aditivo date`)
+  await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS data_rescisao date`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS status_aditivo varchar(100)`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS data_pub_aditivo date`)
   await pool.query(`ALTER TABLE ${credenciamentoTermoTableName} ADD COLUMN IF NOT EXISTS check_aditivo integer`)
@@ -14904,6 +15010,16 @@ const server = createServer(async (request, response) => {
         return
       }
 
+      if (validationResult.payload.statusTermo === 'RESCINDIDO' && body.confirmRescisao !== true) {
+        sendJson(response, 400, {
+          message: 'Confirme a rescisao do termo para continuar.',
+          errors: {
+            statusTermo: 'Confirme a rescisao do termo antes de gravar.',
+          },
+        })
+        return
+      }
+
       const client = await pool.connect()
 
       try {
@@ -14980,6 +15096,7 @@ const server = createServer(async (request, response) => {
              inicio_vigencia,
              termino_vigencia,
              comp_data_aditivo,
+             data_rescisao,
              status_aditivo,
              data_pub_aditivo,
              check_aditivo,
@@ -14996,7 +15113,7 @@ const server = createServer(async (request, response) => {
              data_inclusao,
              data_modificacao
            )
-           VALUES ($1, $2, $3, NULLIF($4, ''), $5, NULLIF($6, ''), NULLIF($7, ''), NULLIF($8, '')::date, NULLIF($9, '')::date, NULLIF($10, '')::date, NULLIF($11, ''), NULLIF($12, '')::date, $13, NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), $17, NULLIF($18, '')::date, NULLIF($19, '')::date, $20, NULLIF($21, '')::date, NULLIF($22, ''), NULLIF($23, ''), NOW(), NOW())
+           VALUES ($1, $2, $3, NULLIF($4, ''), $5, NULLIF($6, ''), NULLIF($7, ''), NULLIF($8, '')::date, NULLIF($9, '')::date, NULLIF($10, '')::date, NULLIF($11, '')::date, NULLIF($12, ''), NULLIF($13, '')::date, $14, NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, ''), $18, NULLIF($19, '')::date, NULLIF($20, '')::date, $21, NULLIF($22, '')::date, NULLIF($23, ''), NULLIF($24, ''), NOW(), NOW())
            RETURNING codigo`,
           [
               createPayload.codigoXml,
@@ -15009,6 +15126,7 @@ const server = createServer(async (request, response) => {
               createPayload.inicioVigencia,
               createPayload.terminoVigencia,
               createPayload.compDataAditivo,
+              createPayload.dataRescisao,
               createPayload.statusAditivo,
               createPayload.dataPubAditivo,
               createPayload.checkAditivo,
@@ -15025,10 +15143,20 @@ const server = createServer(async (request, response) => {
           ],
         )
 
+        let canceledOrdemServicos = 0
+
+        if (createPayload.statusTermo === 'RESCINDIDO' && createPayload.dataRescisao) {
+          canceledOrdemServicos = await cancelActiveOrdemServicosByTermoAdesao(
+            client,
+            createPayload.termoAdesao,
+            createPayload.dataRescisao,
+          )
+        }
+
         await client.query('COMMIT')
 
         const item = await fetchCredenciamentoTermoItemByCodigo(pool, insertResult.rows[0].codigo)
-        sendJson(response, 201, { item })
+        sendJson(response, 201, { item, canceledOrdemServicos })
       } catch (error) {
         await client.query('ROLLBACK')
         throw error
@@ -15159,6 +15287,135 @@ const server = createServer(async (request, response) => {
       const message = error instanceof Error
         ? error.message
         : 'Erro ao emitir contrato.'
+
+      sendJson(response, statusCode, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/termo/emitir-rescisao') {
+    try {
+      const body = await readJsonBody(request)
+      const wantsPreviewPayload = body?.preview === true || String(request.headers.accept ?? '').includes('application/json')
+      const normalizedCodigo = normalizeCondutorCodigo(body.codigo)
+      const normalizedTermoAdesao = normalizeOrdemServicoTermoAdesao(body.termoAdesao)
+      const termoItem = Number.isInteger(normalizedCodigo) && normalizedCodigo > 0
+        ? await fetchCredenciamentoTermoItemByCodigo(pool, normalizedCodigo)
+        : normalizedTermoAdesao
+          ? await findCredenciamentoTermoByTermoAdesao(normalizedTermoAdesao)
+          : null
+
+      if (!termoItem) {
+        sendJson(response, 404, { message: 'Termo nao encontrado para emitir a rescisao.' })
+        return
+      }
+
+      const statusTermo = normalizeCredenciadaText(termoItem.status_termo || termoItem.statusTermo, 100)
+
+      if (statusTermo !== 'RESCINDIDO') {
+        sendJson(response, 400, { message: 'O termo precisa estar com status Rescindido para emitir o termo de rescisao.' })
+        return
+      }
+
+      if (!normalizeRequestValue(termoItem.data_rescisao || termoItem.dataRescisao)) {
+        sendJson(response, 400, { message: 'Data de rescisao obrigatoria para emitir o termo de rescisao.' })
+        return
+      }
+
+      const tipoTermo = normalizeContractTemplateType(termoItem.tipo_termo || termoItem.tipoTermo)
+      const cnpjCpfDigits = String(termoItem.cnpj_cpf || termoItem.cnpjCpf || '').replace(/\D/g, '')
+      const isPessoaFisica = tipoTermo === 'PESSOA FISICA' || cnpjCpfDigits.length === 11
+      const templateReference = isPessoaFisica ? credenciamentoRescisaoPfTemplatePath : credenciamentoRescisaoPjTemplatePath
+      const templateBuffer = await readContractTemplateBuffer(templateReference)
+      const generatedBuffer = await buildCredenciamentoRescisaoDocx({ templateBuffer, termoItem })
+      const downloadFileName = buildCredenciamentoRescisaoFileName(termoItem.termo_adesao || termoItem.termoAdesao, tipoTermo, templateReference)
+
+      if (wantsPreviewPayload) {
+        const previewMarkup = await buildCredenciamentoContratoPreviewMarkup(generatedBuffer)
+
+        sendJson(response, 200, {
+          fileName: downloadFileName,
+          templateReference,
+          previewMarkup,
+        })
+        return
+      }
+
+      response.writeHead(200, {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition': `attachment; filename="${downloadFileName}"`,
+        'Cache-Control': 'no-store',
+      })
+      response.end(generatedBuffer)
+    } catch (error) {
+      const statusCode = Number.isInteger(error?.statusCode) ? error.statusCode : 500
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao emitir termo de rescisao.'
+
+      sendJson(response, statusCode, { message })
+    }
+
+    return
+  }
+
+  if (request.method === 'POST' && pathname === '/api/termo/emitir-despacho-rescisao') {
+    try {
+      const body = await readJsonBody(request)
+      const wantsPreviewPayload = body?.preview === true || String(request.headers.accept ?? '').includes('application/json')
+      const normalizedCodigo = normalizeCondutorCodigo(body.codigo)
+      const normalizedTermoAdesao = normalizeOrdemServicoTermoAdesao(body.termoAdesao)
+      const termoItem = Number.isInteger(normalizedCodigo) && normalizedCodigo > 0
+        ? await fetchCredenciamentoTermoItemByCodigo(pool, normalizedCodigo)
+        : normalizedTermoAdesao
+          ? await findCredenciamentoTermoByTermoAdesao(normalizedTermoAdesao)
+          : null
+
+      if (!termoItem) {
+        sendJson(response, 404, { message: 'Termo nao encontrado para emitir o despacho de rescisao.' })
+        return
+      }
+
+      const statusTermo = normalizeCredenciadaText(termoItem.status_termo || termoItem.statusTermo, 100)
+
+      if (statusTermo !== 'RESCINDIDO') {
+        sendJson(response, 400, { message: 'O termo precisa estar com status Rescindido para emitir o despacho de rescisao.' })
+        return
+      }
+
+      if (!normalizeRequestValue(termoItem.data_rescisao || termoItem.dataRescisao)) {
+        sendJson(response, 400, { message: 'Data de rescisao obrigatoria para emitir o despacho de rescisao.' })
+        return
+      }
+
+      const templateReference = credenciamentoDespachoRescisaoTemplatePath
+      const templateBuffer = await readContractTemplateBuffer(templateReference)
+      const generatedBuffer = await buildCredenciamentoRescisaoDocx({ templateBuffer, termoItem })
+      const downloadFileName = buildCredenciamentoDespachoRescisaoFileName(termoItem.termo_adesao || termoItem.termoAdesao, templateReference)
+
+      if (wantsPreviewPayload) {
+        const previewMarkup = await buildCredenciamentoContratoPreviewMarkup(generatedBuffer)
+
+        sendJson(response, 200, {
+          fileName: downloadFileName,
+          templateReference,
+          previewMarkup,
+        })
+        return
+      }
+
+      response.writeHead(200, {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition': `attachment; filename="${downloadFileName}"`,
+        'Cache-Control': 'no-store',
+      })
+      response.end(generatedBuffer)
+    } catch (error) {
+      const statusCode = Number.isInteger(error?.statusCode) ? error.statusCode : 500
+      const message = error instanceof Error
+        ? error.message
+        : 'Erro ao emitir despacho de rescisao.'
 
       sendJson(response, statusCode, { message })
     }
@@ -16561,24 +16818,39 @@ const server = createServer(async (request, response) => {
         return
       }
 
-      const existingItem = await fetchCredenciamentoTermoItemByCodigo(pool, originalCodigo)
-
-      if (!existingItem) {
-        sendJson(response, 404, { message: 'Credenciamento termo nao encontrado.' })
+      if (validationResult.payload.statusTermo === 'RESCINDIDO' && body.confirmRescisao !== true) {
+        sendJson(response, 400, {
+          message: 'Confirme a rescisao do termo para continuar.',
+          errors: {
+            statusTermo: 'Confirme a rescisao do termo antes de gravar.',
+          },
+        })
         return
       }
 
-      const nextDataPublicacao = normalizeRequestValue(validationResult.payload.dataPublicacao)
-      const currentDataPublicacao = normalizeRequestValue(existingItem.data_publicacao)
-      const nextSituacaoPublicacao = nextDataPublicacao && nextDataPublicacao !== currentDataPublicacao
-        ? 'PUBLICADO'
-        : validationResult.payload.situacaoPublicacao
-      const nextCheckAditivo = Number.isInteger(validationResult.payload.checkAditivo)
-        ? validationResult.payload.checkAditivo
-        : pickCredenciamentoTermoIntegerValue(existingItem.check_aditivo, 0) ?? 0
+      const client = await pool.connect()
 
-      const updateResult = await pool.query(
-        `UPDATE ${credenciamentoTermoTableName}
+      try {
+        await client.query('BEGIN')
+        const existingItem = await fetchCredenciamentoTermoItemByCodigo(client, originalCodigo)
+
+        if (!existingItem) {
+          await client.query('ROLLBACK')
+          sendJson(response, 404, { message: 'Credenciamento termo nao encontrado.' })
+          return
+        }
+
+        const nextDataPublicacao = normalizeRequestValue(validationResult.payload.dataPublicacao)
+        const currentDataPublicacao = normalizeRequestValue(existingItem.data_publicacao)
+        const nextSituacaoPublicacao = nextDataPublicacao && nextDataPublicacao !== currentDataPublicacao
+          ? 'PUBLICADO'
+          : validationResult.payload.situacaoPublicacao
+        const nextCheckAditivo = Number.isInteger(validationResult.payload.checkAditivo)
+          ? validationResult.payload.checkAditivo
+          : pickCredenciamentoTermoIntegerValue(existingItem.check_aditivo, 0) ?? 0
+
+        const updateResult = await client.query(
+          `UPDATE ${credenciamentoTermoTableName}
          SET codigo_xml = $1,
              credenciada_codigo = $2,
              termo_adesao = $3,
@@ -16589,23 +16861,24 @@ const server = createServer(async (request, response) => {
              inicio_vigencia = NULLIF($8, '')::date,
              termino_vigencia = NULLIF($9, '')::date,
              comp_data_aditivo = NULLIF($10, '')::date,
-             status_aditivo = NULLIF($11, ''),
-             data_pub_aditivo = NULLIF($12, '')::date,
-             check_aditivo = $13,
-             status_termo = NULLIF($14, ''),
-             tipo_termo = NULLIF($15, ''),
-             especificacao_sei = NULLIF($16, ''),
-             valor_contrato = $17,
-             data_assinatura = NULLIF($18, '')::date,
-            data_publicacao = NULLIF($19, '')::date,
-            valor_contrato_atualizado = $20,
-            vencimento_geral = NULLIF($21, '')::date,
-            mes_renovacao = NULLIF($22, ''),
-            tp_optante = NULLIF($23, ''),
+             data_rescisao = NULLIF($11, '')::date,
+             status_aditivo = NULLIF($12, ''),
+             data_pub_aditivo = NULLIF($13, '')::date,
+             check_aditivo = $14,
+             status_termo = NULLIF($15, ''),
+             tipo_termo = NULLIF($16, ''),
+             especificacao_sei = NULLIF($17, ''),
+             valor_contrato = $18,
+             data_assinatura = NULLIF($19, '')::date,
+            data_publicacao = NULLIF($20, '')::date,
+            valor_contrato_atualizado = $21,
+            vencimento_geral = NULLIF($22, '')::date,
+            mes_renovacao = NULLIF($23, ''),
+            tp_optante = NULLIF($24, ''),
              data_modificacao = NOW()
-           WHERE codigo = $24
+           WHERE codigo = $25
          RETURNING codigo`,
-        [
+          [
           validationResult.payload.codigoXml,
           validationResult.payload.credenciadaCodigo,
           validationResult.payload.termoAdesao,
@@ -16616,6 +16889,7 @@ const server = createServer(async (request, response) => {
           validationResult.payload.inicioVigencia,
           validationResult.payload.terminoVigencia,
           validationResult.payload.compDataAditivo,
+          validationResult.payload.dataRescisao,
           validationResult.payload.statusAditivo,
           validationResult.payload.dataPubAditivo,
           nextCheckAditivo,
@@ -16629,17 +16903,36 @@ const server = createServer(async (request, response) => {
           validationResult.payload.vencimentoGeral,
           validationResult.payload.mesRenovacao,
           validationResult.payload.tpOptante,
-          originalCodigo,
-        ],
-      )
+            originalCodigo,
+          ],
+        )
 
-      if (updateResult.rowCount === 0) {
-        sendJson(response, 404, { message: 'Credenciamento termo nao encontrado.' })
-        return
+        let canceledOrdemServicos = 0
+
+        if (validationResult.payload.statusTermo === 'RESCINDIDO' && validationResult.payload.dataRescisao) {
+          canceledOrdemServicos = await cancelActiveOrdemServicosByTermoAdesao(
+            client,
+            validationResult.payload.termoAdesao,
+            validationResult.payload.dataRescisao,
+          )
+        }
+
+        if (updateResult.rowCount === 0) {
+          await client.query('ROLLBACK')
+          sendJson(response, 404, { message: 'Credenciamento termo nao encontrado.' })
+          return
+        }
+
+        await client.query('COMMIT')
+
+        const item = await fetchCredenciamentoTermoItemByCodigo(pool, originalCodigo)
+        sendJson(response, 200, { item, canceledOrdemServicos })
+      } catch (error) {
+        await client.query('ROLLBACK')
+        throw error
+      } finally {
+        client.release()
       }
-
-      const item = await fetchCredenciamentoTermoItemByCodigo(pool, originalCodigo)
-      sendJson(response, 200, { item })
     } catch (error) {
       const persistenceError = getCredenciamentoTermoPersistenceError(error, 'Erro ao alterar credenciamento termo.')
       sendJson(response, persistenceError.status, { message: persistenceError.message })

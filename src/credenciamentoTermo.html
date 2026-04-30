@@ -479,17 +479,29 @@
                     <div class="dsc-form-error" id="credenciamento-termo-situacao-emissao-error"></div>
                   </label>
 
-                  <label class="dsc-field-group" for="credenciamento-termo-status-termo">
+                  <div class="dsc-field-group">
                     <span>Status termo</span>
-                    <input class="dsc-form-control" id="credenciamento-termo-status-termo" type="text" maxlength="100" list="credenciamento-termo-status-termo-options" />
-                    <datalist id="credenciamento-termo-status-termo-options">
-                      <option value="Ativo"></option>
-                      <option value="Inativo"></option>
-                      <option value="Substituido"></option>
-                      <option value="Rescindido"></option>
-                    </datalist>
+                    <input id="credenciamento-termo-status-termo" type="hidden" />
+                    <div class="dsc-radio-group" role="group" aria-labelledby="credenciamento-termo-status-termo-label">
+                      <label class="dsc-radio-option" id="credenciamento-termo-status-termo-label" for="credenciamento-termo-status-termo-ativo">
+                        <input id="credenciamento-termo-status-termo-ativo" name="credenciamento-termo-status-termo-option" type="checkbox" value="ATIVO" data-label="Ativo" />
+                        <span>Ativo</span>
+                      </label>
+                      <label class="dsc-radio-option" for="credenciamento-termo-status-termo-inativo">
+                        <input id="credenciamento-termo-status-termo-inativo" name="credenciamento-termo-status-termo-option" type="checkbox" value="INATIVO" data-label="Inativo" />
+                        <span>Inativo</span>
+                      </label>
+                      <label class="dsc-radio-option" for="credenciamento-termo-status-termo-substituido">
+                        <input id="credenciamento-termo-status-termo-substituido" name="credenciamento-termo-status-termo-option" type="checkbox" value="SUBSTITUIDO" data-label="Substituido" />
+                        <span>Substituido</span>
+                      </label>
+                      <label class="dsc-radio-option" for="credenciamento-termo-status-termo-rescindido">
+                        <input id="credenciamento-termo-status-termo-rescindido" name="credenciamento-termo-status-termo-option" type="checkbox" value="RESCINDIDO" data-label="Rescindido" />
+                        <span>Rescindido</span>
+                      </label>
+                    </div>
                     <div class="dsc-form-error" id="credenciamento-termo-status-termo-error"></div>
-                  </label>
+                  </div>
 
                   <label class="dsc-field-group" for="credenciamento-termo-status-aditivo">
                     <span>Status aditivo</span>
@@ -521,6 +533,12 @@
                     <span>Data de comparecimento</span>
                     <input class="dsc-form-control" id="credenciamento-termo-comp-data-aditivo" type="date" />
                     <div class="dsc-form-error" id="credenciamento-termo-comp-data-aditivo-error"></div>
+                  </label>
+
+                  <label class="dsc-field-group" for="credenciamento-termo-data-rescisao">
+                    <span>Data de rescisao</span>
+                    <input class="dsc-form-control" id="credenciamento-termo-data-rescisao" type="date" disabled />
+                    <div class="dsc-form-error" id="credenciamento-termo-data-rescisao-error"></div>
                   </label>
 
                 </div>
@@ -632,6 +650,8 @@
                 <button type="button" class="dsc-btn dsc-btn-white" id="show-credenciamento-termo-despacho-button">Despacho da Publicacao</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="show-credenciamento-termo-aditivo-button">Termo Aditivo</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="emit-credenciamento-termo-contrato-button">Emiss&atilde;o Contrato</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="emit-credenciamento-termo-despacho-rescisao-button">Despacho Rescisao</button>
+                <button type="button" class="dsc-btn dsc-btn-white" id="emit-credenciamento-termo-rescisao-button">Termo Rescisao</button>
                 <button type="button" class="dsc-btn dsc-btn-white" id="cancel-credenciamento-termo-button">Cancelar</button>
               </div>
 
@@ -755,6 +775,50 @@
               </section>
             </div>
 
+            <div class="dsc-summary-overlay dsc-hidden" id="credenciamento-termo-despacho-rescisao-modal" aria-hidden="true">
+              <section class="dsc-card dsc-hidden" id="credenciamento-termo-despacho-rescisao-panel" role="dialog" aria-modal="true" aria-labelledby="credenciamento-termo-despacho-rescisao-title">
+                <div class="dsc-ordem-servico-summary-header">
+                  <div>
+                    <h2 id="credenciamento-termo-despacho-rescisao-title">Despacho Rescisao</h2>
+                    <p class="dsc-ordem-servico-summary-subtitle" id="credenciamento-termo-despacho-rescisao-subtitle">Despacho de rescisao ainda nao gerado.</p>
+                  </div>
+                  <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-credenciamento-termo-despacho-rescisao-button" aria-label="Fechar despacho de rescisao">X</button>
+                </div>
+
+                <div id="credenciamento-termo-despacho-rescisao-content"></div>
+
+                <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
+                  <button type="button" class="dsc-btn dsc-btn-blue" id="print-credenciamento-termo-despacho-rescisao-button">Imprimir</button>
+                  <button type="button" class="dsc-btn dsc-btn-white" id="download-credenciamento-termo-despacho-rescisao-doc-button">Gerar .docx</button>
+                  <button type="button" class="dsc-btn dsc-btn-white" id="dismiss-credenciamento-termo-despacho-rescisao-button">Fechar</button>
+                </div>
+
+                <p class="dsc-feedback" id="credenciamento-termo-despacho-rescisao-feedback"></p>
+              </section>
+            </div>
+
+            <div class="dsc-summary-overlay dsc-hidden" id="credenciamento-termo-rescisao-modal" aria-hidden="true">
+              <section class="dsc-card dsc-hidden" id="credenciamento-termo-rescisao-panel" role="dialog" aria-modal="true" aria-labelledby="credenciamento-termo-rescisao-title">
+                <div class="dsc-ordem-servico-summary-header">
+                  <div>
+                    <h2 id="credenciamento-termo-rescisao-title">Termo Rescisao</h2>
+                    <p class="dsc-ordem-servico-summary-subtitle" id="credenciamento-termo-rescisao-subtitle">Termo de rescisao ainda nao gerado.</p>
+                  </div>
+                  <button type="button" class="dsc-btn dsc-btn-white dsc-popup-icon-close-button" id="close-credenciamento-termo-rescisao-button" aria-label="Fechar termo de rescisao">X</button>
+                </div>
+
+                <div id="credenciamento-termo-rescisao-content"></div>
+
+                <div class="dsc-login-form-buttons dsc-mt20 dsc-access-form-buttons dsc-popup-footer-sticky">
+                  <button type="button" class="dsc-btn dsc-btn-blue" id="print-credenciamento-termo-rescisao-button">Imprimir</button>
+                  <button type="button" class="dsc-btn dsc-btn-white" id="download-credenciamento-termo-rescisao-doc-button">Gerar .docx</button>
+                  <button type="button" class="dsc-btn dsc-btn-white" id="dismiss-credenciamento-termo-rescisao-button">Fechar</button>
+                </div>
+
+                <p class="dsc-feedback" id="credenciamento-termo-rescisao-feedback"></p>
+              </section>
+            </div>
+
             <div class="dsc-card dsc-access-grid-card">
               <div class="dsc-access-grid-header" style="align-items: flex-start; justify-content: space-between; flex-direction: row;">
                 <div class="dsc-access-grid-header-copy">
@@ -839,6 +903,8 @@
       const showDespachoButton = document.getElementById('show-credenciamento-termo-despacho-button');
       const showAditivoButton = document.getElementById('show-credenciamento-termo-aditivo-button');
       const emitContratoButton = document.getElementById('emit-credenciamento-termo-contrato-button');
+      const emitDespachoRescisaoButton = document.getElementById('emit-credenciamento-termo-despacho-rescisao-button');
+      const emitRescisaoButton = document.getElementById('emit-credenciamento-termo-rescisao-button');
       const closeFormModalButton = document.getElementById('close-credenciamento-termo-form-modal-button');
       const importButton = document.getElementById('open-credenciamento-termo-import-button');
       const rejectionButton = document.getElementById('open-credenciamento-termo-rejections-button');
@@ -893,11 +959,14 @@
       const situacaoPublicacaoInput = document.getElementById('credenciamento-termo-situacao-publicacao');
       const situacaoEmissaoInput = document.getElementById('credenciamento-termo-situacao-emissao');
       const statusTermoInput = document.getElementById('credenciamento-termo-status-termo');
+      const statusTermoOptionInputs = Array.from(document.querySelectorAll('input[name="credenciamento-termo-status-termo-option"]'));
+      const firstStatusTermoOptionInput = statusTermoOptionInputs[0] || statusTermoInput;
       const statusAditivoInput = document.getElementById('credenciamento-termo-status-aditivo');
       const statusAditivoFieldGroup = statusAditivoInput.closest('.dsc-field-group');
       const inicioVigenciaInput = document.getElementById('credenciamento-termo-inicio-vigencia');
       const terminoVigenciaInput = document.getElementById('credenciamento-termo-termino-vigencia');
       const compDataAditivoInput = document.getElementById('credenciamento-termo-comp-data-aditivo');
+      const dataRescisaoInput = document.getElementById('credenciamento-termo-data-rescisao');
       const tipoTermoInput = document.getElementById('credenciamento-termo-tipo-termo');
       const representanteInput = document.getElementById('credenciamento-termo-representante');
       const cpfRepresentanteInput = document.getElementById('credenciamento-termo-cpf-representante');
@@ -956,7 +1025,28 @@
       const dismissContratoButton = document.getElementById('dismiss-credenciamento-termo-contrato-button');
       const printContratoButton = document.getElementById('print-credenciamento-termo-contrato-button');
       const downloadContratoDocButton = document.getElementById('download-credenciamento-termo-contrato-doc-button');
+      const despachoRescisaoModal = document.getElementById('credenciamento-termo-despacho-rescisao-modal');
+      const despachoRescisaoPanel = document.getElementById('credenciamento-termo-despacho-rescisao-panel');
+      const despachoRescisaoTitle = document.getElementById('credenciamento-termo-despacho-rescisao-title');
+      const despachoRescisaoSubtitle = document.getElementById('credenciamento-termo-despacho-rescisao-subtitle');
+      const despachoRescisaoContent = document.getElementById('credenciamento-termo-despacho-rescisao-content');
+      const despachoRescisaoFeedback = document.getElementById('credenciamento-termo-despacho-rescisao-feedback');
+      const closeDespachoRescisaoButton = document.getElementById('close-credenciamento-termo-despacho-rescisao-button');
+      const dismissDespachoRescisaoButton = document.getElementById('dismiss-credenciamento-termo-despacho-rescisao-button');
+      const printDespachoRescisaoButton = document.getElementById('print-credenciamento-termo-despacho-rescisao-button');
+      const downloadDespachoRescisaoDocButton = document.getElementById('download-credenciamento-termo-despacho-rescisao-doc-button');
+      const rescisaoModal = document.getElementById('credenciamento-termo-rescisao-modal');
+      const rescisaoPanel = document.getElementById('credenciamento-termo-rescisao-panel');
+      const rescisaoTitle = document.getElementById('credenciamento-termo-rescisao-title');
+      const rescisaoSubtitle = document.getElementById('credenciamento-termo-rescisao-subtitle');
+      const rescisaoContent = document.getElementById('credenciamento-termo-rescisao-content');
+      const rescisaoFeedback = document.getElementById('credenciamento-termo-rescisao-feedback');
+      const closeRescisaoButton = document.getElementById('close-credenciamento-termo-rescisao-button');
+      const dismissRescisaoButton = document.getElementById('dismiss-credenciamento-termo-rescisao-button');
+      const printRescisaoButton = document.getElementById('print-credenciamento-termo-rescisao-button');
+      const downloadRescisaoDocButton = document.getElementById('download-credenciamento-termo-rescisao-doc-button');
       const defaultCredenciadoHintText = 'Ao informar o CNPJ/CPF, a tela localiza a credenciada ativa correspondente.';
+      let isFormReadOnly = false;
 
       const errors = {
         codigoXml: document.getElementById('credenciamento-termo-codigo-xml-error'),
@@ -973,6 +1063,7 @@
         inicioVigencia: document.getElementById('credenciamento-termo-inicio-vigencia-error'),
         terminoVigencia: document.getElementById('credenciamento-termo-termino-vigencia-error'),
         compDataAditivo: document.getElementById('credenciamento-termo-comp-data-aditivo-error'),
+        dataRescisao: document.getElementById('credenciamento-termo-data-rescisao-error'),
         tipoTermo: document.getElementById('credenciamento-termo-tipo-termo-error'),
         representante: document.getElementById('credenciamento-termo-representante-error'),
         cpfRepresentante: document.getElementById('credenciamento-termo-cpf-representante-error'),
@@ -999,11 +1090,12 @@
         cnpjCpf: cnpjCpfInput,
         situacaoPublicacao: situacaoPublicacaoInput,
         situacaoEmissao: situacaoEmissaoInput,
-        statusTermo: statusTermoInput,
+        statusTermo: firstStatusTermoOptionInput,
         statusAditivo: statusAditivoInput,
         inicioVigencia: inicioVigenciaInput,
         terminoVigencia: terminoVigenciaInput,
         compDataAditivo: compDataAditivoInput,
+        dataRescisao: dataRescisaoInput,
         tipoTermo: tipoTermoInput,
         representante: representanteInput,
         cpfRepresentante: cpfRepresentanteInput,
@@ -1054,8 +1146,18 @@
       let lastTermoContratoMarkup = '';
       let lastTermoContratoPrintMarkup = '';
       let lastTermoContratoFileName = 'contrato-termo.docx';
+      let lastTermoDespachoRescisaoMarkup = '';
+      let lastTermoDespachoRescisaoPrintMarkup = '';
+      let lastTermoDespachoRescisaoFileName = 'despacho-rescisao-termo.docx';
+      let lastTermoRescisaoMarkup = '';
+      let lastTermoRescisaoPrintMarkup = '';
+      let lastTermoRescisaoFileName = 'termo-rescisao.docx';
       let isExistingTermCreateBlocked = false;
       let lastTermoContratoRequestPayload = null;
+      let lastTermoDespachoRescisaoRequestPayload = null;
+      let lastTermoRescisaoRequestPayload = null;
+      let persistedStatusTermo = '';
+      let persistedDataRescisao = '';
       let nextAditivoRequestId = 0;
       let credenciadaSuggestionRequestId = 0;
       let inheritedAditivoTermoAdesao = '';
@@ -1115,6 +1217,19 @@
         }
 
         return normalizedValue;
+      };
+      const formatReportDateTyping = (value) => {
+        const digits = String(value ?? '').replace(/\D/g, '').slice(0, 8);
+
+        if (digits.length <= 2) {
+          return digits;
+        }
+
+        if (digits.length <= 4) {
+          return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+        }
+
+        return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
       };
       const toComparableReportDateValue = (value) => {
         const normalizedValue = normalizeReportDateKey(value);
@@ -1238,11 +1353,20 @@
           input.dataset.dateOriginalValue = input.value;
           input.type = 'text';
           input.inputMode = 'numeric';
-          input.placeholder = 'dd/mm/aaaa';
+          input.placeholder = 'dd/mm/yyyy';
           input.value = displayValue;
 
           selectAllContent();
         });
+
+        input.addEventListener('input', () => {
+          if (input.type !== 'text') {
+            return;
+          }
+
+          input.value = formatReportDateTyping(input.value);
+        });
+
         input.addEventListener('mouseup', (event) => {
           if (input.type !== 'text') {
             return;
@@ -1419,6 +1543,32 @@
 
         dataPublicacaoFieldGroup?.classList.toggle('dsc-hidden', shouldHidePublicationDates);
       };
+      const getTodayDateInputValue = () => formatDateInputValue(new Date());
+      const isStatusTermoRescindido = () => normalizeText(statusTermoInput.value, 100).toUpperCase() === 'RESCINDIDO';
+      const syncDataRescisaoState = () => {
+        const shouldEnable = !isFormReadOnly && isStatusTermoRescindido();
+        dataRescisaoInput.min = getTodayDateInputValue();
+
+        dataRescisaoInput.disabled = !shouldEnable;
+        dataRescisaoInput.readOnly = !shouldEnable;
+        dataRescisaoInput.required = isStatusTermoRescindido();
+
+        if (!isStatusTermoRescindido()) {
+          dataRescisaoInput.dataset.dateValidationInvalid = '';
+          errors.dataRescisao.textContent = '';
+        }
+      };
+      const setStatusTermoValue = (value = '') => {
+        const normalizedValue = normalizeText(value, 100);
+        const upperValue = normalizedValue.toUpperCase();
+        const selectedOption = statusTermoOptionInputs.find((input) => input.value === upperValue);
+
+        statusTermoInput.value = selectedOption?.dataset.label || normalizedValue;
+        statusTermoOptionInputs.forEach((input) => {
+          input.checked = input.value === upperValue;
+        });
+        syncDataRescisaoState();
+      };
       const syncSaveButtonState = () => {
         const isReadOnlyMode = formMode === 'view';
         saveButton.classList.toggle('dsc-hidden', isReadOnlyMode);
@@ -1495,12 +1645,13 @@
 
         situacaoPublicacaoInput.value = 'Publicar';
         situacaoEmissaoInput.value = 'Emitir';
-        statusTermoInput.value = 'Ativo';
+        setStatusTermoValue('Ativo');
         statusAditivoInput.value = 'Publicar';
         setSuggestedAditivo('0');
         inicioVigenciaInput.value = inicioVigencia;
         terminoVigenciaInput.value = terminoVigencia;
         compDataAditivoInput.value = formatDateInputValue(new Date());
+        dataRescisaoInput.value = '';
         dataPublicacaoInput.value = '';
         vencimentoGeralInput.value = vencimentoGeral;
         syncDerivedTermoFields();
@@ -1521,11 +1672,12 @@
         syncTextoCopia();
         situacaoPublicacaoInput.value = '';
         situacaoEmissaoInput.value = '';
-        statusTermoInput.value = '';
+        setStatusTermoValue('');
         statusAditivoInput.value = '';
         inicioVigenciaInput.value = '';
         terminoVigenciaInput.value = '';
         compDataAditivoInput.value = '';
+        dataRescisaoInput.value = '';
         tipoTermoInput.value = '';
         representanteInput.value = '';
         cpfRepresentanteInput.value = '';
@@ -1558,11 +1710,12 @@
         syncTextoCopia();
         situacaoPublicacaoInput.value = item.situacao_publicacao || '';
         situacaoEmissaoInput.value = item.situacao_emissao || '';
-        statusTermoInput.value = item.status_termo || '';
+        setStatusTermoValue(item.status_termo || '');
         statusAditivoInput.value = item.status_aditivo || '';
         inicioVigenciaInput.value = item.inicio_vigencia || '';
         terminoVigenciaInput.value = item.termino_vigencia || '';
         compDataAditivoInput.value = item.comp_data_aditivo || '';
+        dataRescisaoInput.value = item.data_rescisao || '';
         tipoTermoInput.value = normalizeTipoTermoLabel(item.tipo_pessoa || item.tipo_termo || '');
         representanteInput.value = item.representante || '';
         cpfRepresentanteInput.value = item.cpf_representante || '';
@@ -1698,6 +1851,36 @@
         }
 
         emitContratoButton.disabled = getValorContratoAmount() <= 0;
+      };
+      const syncEmitRescisaoButtonState = () => {
+        const isBusy = emitRescisaoButton.textContent === 'Gerando termo de rescisao...';
+        const hasPersistedRescisao = String(persistedStatusTermo || '').trim().toUpperCase() === 'RESCINDIDO'
+          && String(persistedDataRescisao || '').trim() !== '';
+
+        if (isBusy) {
+          return;
+        }
+
+        emitRescisaoButton.disabled = formMode === 'create'
+          || !editingCodigo
+          || !hasPersistedRescisao
+          || !isStatusTermoRescindido()
+          || !String(dataRescisaoInput.value || '').trim();
+      };
+      const syncEmitDespachoRescisaoButtonState = () => {
+        const isBusy = emitDespachoRescisaoButton.textContent === 'Gerando despacho de rescisao...';
+        const hasPersistedRescisao = String(persistedStatusTermo || '').trim().toUpperCase() === 'RESCINDIDO'
+          && String(persistedDataRescisao || '').trim() !== '';
+
+        if (isBusy) {
+          return;
+        }
+
+        emitDespachoRescisaoButton.disabled = formMode === 'create'
+          || !editingCodigo
+          || !hasPersistedRescisao
+          || !isStatusTermoRescindido()
+          || !String(dataRescisaoInput.value || '').trim();
       };
       const syncLastAditivoEditorButtonState = async () => {
         const isBusy = editLastAditivoButton.textContent === 'Carregando ultimo aditivo...'
@@ -1999,6 +2182,16 @@
         const suffix = normalizedType.includes('FISICA') ? 'pf' : 'pj';
         return `${cleanedTermo || 'termo'}-contrato-${suffix}.doc`;
       };
+      const buildTermoRescisaoFileName = (termoAdesao, tipoTermo) => {
+        const cleanedTermo = String(termoAdesao ?? '').trim().replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '');
+        const normalizedType = String(tipoTermo ?? '').trim().toUpperCase();
+        const suffix = normalizedType.includes('FISICA') ? 'pf' : 'pj';
+        return `${cleanedTermo || 'termo'}-rescisao-${suffix}.docx`;
+      };
+      const buildDespachoRescisaoFileName = (termoAdesao) => {
+        const cleanedTermo = String(termoAdesao ?? '').trim().replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '');
+        return `${cleanedTermo || 'termo'}-despacho-rescisao.docx`;
+      };
       const buildContratoRequestPayload = (requestedDate) => ({
         preview: true,
         requestedDate,
@@ -2041,6 +2234,50 @@
 
         return responseBody;
       };
+      const buildRescisaoRequestPayload = () => ({
+        preview: true,
+        codigo: editingCodigo,
+        termoAdesao: normalizeTermoAdesao(termoAdesaoInput.value),
+      });
+      const requestGeneratedRescisaoPreview = async (payload) => {
+        const response = await fetch('/api/termo/emitir-rescisao', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+        const responseBody = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          throw new Error(responseBody?.message || 'Falha ao gerar a visualizacao do termo de rescisao.');
+        }
+
+        return responseBody;
+      };
+      const buildDespachoRescisaoRequestPayload = () => ({
+        preview: true,
+        codigo: editingCodigo,
+        termoAdesao: normalizeTermoAdesao(termoAdesaoInput.value),
+      });
+      const requestGeneratedDespachoRescisaoPreview = async (payload) => {
+        const response = await fetch('/api/termo/emitir-despacho-rescisao', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+        const responseBody = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          throw new Error(responseBody?.message || 'Falha ao gerar a visualizacao do despacho de rescisao.');
+        }
+
+        return responseBody;
+      };
       const downloadGeneratedContratoDocx = async () => {
         if (!lastTermoContratoRequestPayload) {
           contratoFeedback.textContent = 'Gere o contrato antes de exportar o arquivo .docx.';
@@ -2068,6 +2305,70 @@
 
         link.href = downloadUrl;
         link.download = lastTermoContratoFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+      };
+      const downloadGeneratedRescisaoDocx = async () => {
+        if (!lastTermoRescisaoRequestPayload) {
+          rescisaoFeedback.textContent = 'Gere o termo de rescisao antes de exportar o arquivo .docx.';
+          rescisaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        const response = await fetch('/api/termo/emitir-rescisao', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ...lastTermoRescisaoRequestPayload, preview: false }),
+        });
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          throw new Error(errorPayload?.message || 'Falha ao exportar o termo de rescisao.');
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = downloadUrl;
+        link.download = lastTermoRescisaoFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+      };
+      const downloadGeneratedDespachoRescisaoDocx = async () => {
+        if (!lastTermoDespachoRescisaoRequestPayload) {
+          despachoRescisaoFeedback.textContent = 'Gere o despacho de rescisao antes de exportar o arquivo .docx.';
+          despachoRescisaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        const response = await fetch('/api/termo/emitir-despacho-rescisao', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ...lastTermoDespachoRescisaoRequestPayload, preview: false }),
+        });
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          throw new Error(errorPayload?.message || 'Falha ao exportar o despacho de rescisao.');
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = downloadUrl;
+        link.download = lastTermoDespachoRescisaoFileName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -2451,6 +2752,18 @@
         lastTermoContratoFileName = 'contrato-termo.docx';
         lastTermoContratoRequestPayload = null;
       };
+      const resetDespachoRescisaoState = () => {
+        lastTermoDespachoRescisaoMarkup = '';
+        lastTermoDespachoRescisaoPrintMarkup = '';
+        lastTermoDespachoRescisaoFileName = 'despacho-rescisao-termo.docx';
+        lastTermoDespachoRescisaoRequestPayload = null;
+      };
+      const resetRescisaoState = () => {
+        lastTermoRescisaoMarkup = '';
+        lastTermoRescisaoPrintMarkup = '';
+        lastTermoRescisaoFileName = 'termo-rescisao.docx';
+        lastTermoRescisaoRequestPayload = null;
+      };
       const hideDespacho = () => {
         despachoModal.classList.add('dsc-hidden');
         despachoModal.setAttribute('aria-hidden', 'true');
@@ -2469,6 +2782,18 @@
         contratoPanel.classList.add('dsc-hidden');
         syncPopupPageState();
       };
+      const hideDespachoRescisao = () => {
+        despachoRescisaoModal.classList.add('dsc-hidden');
+        despachoRescisaoModal.setAttribute('aria-hidden', 'true');
+        despachoRescisaoPanel.classList.add('dsc-hidden');
+        syncPopupPageState();
+      };
+      const hideRescisao = () => {
+        rescisaoModal.classList.add('dsc-hidden');
+        rescisaoModal.setAttribute('aria-hidden', 'true');
+        rescisaoPanel.classList.add('dsc-hidden');
+        syncPopupPageState();
+      };
       const resetAditivoScrollPosition = () => {
         aditivoModal.scrollTop = 0;
         aditivoPanel.scrollTop = 0;
@@ -2478,6 +2803,16 @@
         contratoModal.scrollTop = 0;
         contratoPanel.scrollTop = 0;
         contratoContent.scrollTop = 0;
+      };
+      const resetDespachoRescisaoScrollPosition = () => {
+        despachoRescisaoModal.scrollTop = 0;
+        despachoRescisaoPanel.scrollTop = 0;
+        despachoRescisaoContent.scrollTop = 0;
+      };
+      const resetRescisaoScrollPosition = () => {
+        rescisaoModal.scrollTop = 0;
+        rescisaoPanel.scrollTop = 0;
+        rescisaoContent.scrollTop = 0;
       };
       const buildDespachoMarkup = ({ parametroItem, includePrefeituraImage = false, requestedDate }) => {
         const termoAdesao = formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento');
@@ -3208,6 +3543,120 @@
 
         printFrame.srcdoc = buildTermoContratoDocumentHtml(lastTermoContratoPrintMarkup || lastTermoContratoMarkup);
       };
+      const downloadTermoRescisaoAsDoc = () => {
+        if (!lastTermoRescisaoMarkup) {
+          rescisaoFeedback.textContent = 'Gere o termo de rescisao antes de exportar o arquivo .docx.';
+          rescisaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        downloadGeneratedRescisaoDocx()
+          .then(() => {
+            rescisaoFeedback.textContent = `Arquivo ${lastTermoRescisaoFileName} gerado com sucesso.`;
+            rescisaoFeedback.className = 'dsc-feedback dsc-feedback-success';
+          })
+          .catch((error) => {
+            rescisaoFeedback.textContent = error instanceof Error ? error.message : 'Falha ao exportar o termo de rescisao.';
+            rescisaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          });
+      };
+      const downloadTermoDespachoRescisaoAsDoc = () => {
+        if (!lastTermoDespachoRescisaoMarkup) {
+          despachoRescisaoFeedback.textContent = 'Gere o despacho de rescisao antes de exportar o arquivo .docx.';
+          despachoRescisaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        downloadGeneratedDespachoRescisaoDocx()
+          .then(() => {
+            despachoRescisaoFeedback.textContent = `Arquivo ${lastTermoDespachoRescisaoFileName} gerado com sucesso.`;
+            despachoRescisaoFeedback.className = 'dsc-feedback dsc-feedback-success';
+          })
+          .catch((error) => {
+            despachoRescisaoFeedback.textContent = error instanceof Error ? error.message : 'Falha ao exportar o despacho de rescisao.';
+            despachoRescisaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          });
+      };
+      const handlePrintRescisao = () => {
+        if (!lastTermoRescisaoMarkup) {
+          rescisaoFeedback.textContent = 'Gere o termo de rescisao antes de imprimir.';
+          rescisaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        let printFrame = document.getElementById('credenciamento-termo-rescisao-print-frame');
+
+        if (!(printFrame instanceof HTMLIFrameElement)) {
+          printFrame = document.createElement('iframe');
+          printFrame.id = 'credenciamento-termo-rescisao-print-frame';
+          printFrame.style.position = 'fixed';
+          printFrame.style.right = '0';
+          printFrame.style.bottom = '0';
+          printFrame.style.width = '0';
+          printFrame.style.height = '0';
+          printFrame.style.border = '0';
+          printFrame.style.opacity = '0';
+          printFrame.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(printFrame);
+        }
+
+        printFrame.onload = () => {
+          const printWindow = printFrame.contentWindow;
+
+          if (!printWindow) {
+            rescisaoFeedback.textContent = 'Nao foi possivel abrir a visualizacao de impressao.';
+            rescisaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+            return;
+          }
+
+          printWindow.focus();
+          printWindow.print();
+          rescisaoFeedback.textContent = 'Visualizacao de impressao preparada.';
+          rescisaoFeedback.className = 'dsc-feedback dsc-feedback-success';
+        };
+
+        printFrame.srcdoc = buildTermoContratoDocumentHtml(lastTermoRescisaoPrintMarkup || lastTermoRescisaoMarkup);
+      };
+      const handlePrintDespachoRescisao = () => {
+        if (!lastTermoDespachoRescisaoMarkup) {
+          despachoRescisaoFeedback.textContent = 'Gere o despacho de rescisao antes de imprimir.';
+          despachoRescisaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        let printFrame = document.getElementById('credenciamento-termo-despacho-rescisao-print-frame');
+
+        if (!(printFrame instanceof HTMLIFrameElement)) {
+          printFrame = document.createElement('iframe');
+          printFrame.id = 'credenciamento-termo-despacho-rescisao-print-frame';
+          printFrame.style.position = 'fixed';
+          printFrame.style.right = '0';
+          printFrame.style.bottom = '0';
+          printFrame.style.width = '0';
+          printFrame.style.height = '0';
+          printFrame.style.border = '0';
+          printFrame.style.opacity = '0';
+          printFrame.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(printFrame);
+        }
+
+        printFrame.onload = () => {
+          const printWindow = printFrame.contentWindow;
+
+          if (!printWindow) {
+            despachoRescisaoFeedback.textContent = 'Nao foi possivel abrir a visualizacao de impressao.';
+            despachoRescisaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+            return;
+          }
+
+          printWindow.focus();
+          printWindow.print();
+          despachoRescisaoFeedback.textContent = 'Visualizacao de impressao preparada.';
+          despachoRescisaoFeedback.className = 'dsc-feedback dsc-feedback-success';
+        };
+
+        printFrame.srcdoc = buildTermoContratoDocumentHtml(lastTermoDespachoRescisaoPrintMarkup || lastTermoDespachoRescisaoMarkup);
+      };
       const handleShowAditivo = async () => {
         aditivoModal.classList.remove('dsc-hidden');
         aditivoModal.setAttribute('aria-hidden', 'false');
@@ -3403,6 +3852,166 @@
         }
       };
 
+      const handleEmitRescisao = async () => {
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+
+        resetMessages();
+
+        if (!editingCodigo || formMode === 'create') {
+          feedback.textContent = 'Salve o termo antes de emitir o termo de rescisao.';
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        if (!isStatusTermoRescindido()) {
+          errors.statusTermo.textContent = 'Selecione o status Rescindido para emitir o termo de rescisao.';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+          revealFirstFormError({ statusTermo: errors.statusTermo.textContent });
+          return;
+        }
+
+        if (!String(dataRescisaoInput.value || '').trim()) {
+          errors.dataRescisao.textContent = 'Informe a data de rescisao para emitir o termo de rescisao.';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+          revealFirstFormError({ dataRescisao: errors.dataRescisao.textContent });
+          return;
+        }
+
+        if (!termoAdesao) {
+          errors.termoAdesao.textContent = 'Informe o termo de adesao para emitir o termo de rescisao.';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+          revealFirstFormError({ termoAdesao: errors.termoAdesao.textContent });
+          return;
+        }
+
+        rescisaoModal.classList.remove('dsc-hidden');
+        rescisaoModal.setAttribute('aria-hidden', 'false');
+        rescisaoPanel.classList.remove('dsc-hidden');
+        syncPopupPageState();
+        resetRescisaoScrollPosition();
+
+        emitRescisaoButton.disabled = true;
+        emitRescisaoButton.textContent = 'Gerando termo de rescisao...';
+        rescisaoTitle.textContent = 'Termo Rescisao';
+        rescisaoSubtitle.textContent = `Montando termo de rescisao para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}...`;
+        rescisaoFeedback.textContent = 'Gerando visualizacao...';
+        rescisaoFeedback.className = 'dsc-feedback';
+        rescisaoContent.innerHTML = '';
+        resetRescisaoState();
+
+        try {
+          const payload = buildRescisaoRequestPayload();
+          const responseBody = await requestGeneratedRescisaoPreview(payload);
+
+          lastTermoRescisaoRequestPayload = payload;
+          lastTermoRescisaoMarkup = String(responseBody?.previewMarkup || '').trim();
+          lastTermoRescisaoPrintMarkup = lastTermoRescisaoMarkup;
+          lastTermoRescisaoFileName = String(responseBody?.fileName || '').trim() || buildTermoRescisaoFileName(termoAdesao, tipoTermoInput.value);
+
+          if (!lastTermoRescisaoMarkup) {
+            throw new Error('Nao foi possivel montar a visualizacao do termo de rescisao.');
+          }
+
+          rescisaoSubtitle.textContent = `Termo de rescisao pronto para ${formatSummaryValue(termoAdesao, 'Termo em preenchimento')}.`;
+          rescisaoContent.innerHTML = lastTermoRescisaoMarkup;
+          resetRescisaoScrollPosition();
+          rescisaoFeedback.textContent = '';
+          rescisaoFeedback.className = 'dsc-feedback';
+        } catch (error) {
+          rescisaoContent.innerHTML = '';
+          rescisaoSubtitle.textContent = 'Nao foi possivel gerar o termo de rescisao.';
+          rescisaoFeedback.textContent = error instanceof Error ? error.message : 'Falha ao gerar o termo de rescisao.';
+          rescisaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          resetRescisaoState();
+        } finally {
+          syncEmitRescisaoButtonState();
+          emitRescisaoButton.textContent = 'Termo Rescisao';
+        }
+      };
+
+      const handleEmitDespachoRescisao = async () => {
+        const termoAdesao = normalizeTermoAdesao(termoAdesaoInput.value);
+
+        resetMessages();
+
+        if (!editingCodigo || formMode === 'create') {
+          feedback.textContent = 'Salve o termo antes de emitir o despacho de rescisao.';
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+          return;
+        }
+
+        if (!isStatusTermoRescindido()) {
+          errors.statusTermo.textContent = 'Selecione o status Rescindido para emitir o despacho de rescisao.';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+          revealFirstFormError({ statusTermo: errors.statusTermo.textContent });
+          return;
+        }
+
+        if (!String(dataRescisaoInput.value || '').trim()) {
+          errors.dataRescisao.textContent = 'Informe a data de rescisao para emitir o despacho de rescisao.';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+          revealFirstFormError({ dataRescisao: errors.dataRescisao.textContent });
+          return;
+        }
+
+        if (!termoAdesao) {
+          errors.termoAdesao.textContent = 'Informe o termo de adesao para emitir o despacho de rescisao.';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          feedback.className = 'dsc-feedback dsc-feedback-error';
+          revealFirstFormError({ termoAdesao: errors.termoAdesao.textContent });
+          return;
+        }
+
+        despachoRescisaoModal.classList.remove('dsc-hidden');
+        despachoRescisaoModal.setAttribute('aria-hidden', 'false');
+        despachoRescisaoPanel.classList.remove('dsc-hidden');
+        syncPopupPageState();
+        resetDespachoRescisaoScrollPosition();
+
+        emitDespachoRescisaoButton.disabled = true;
+        emitDespachoRescisaoButton.textContent = 'Gerando despacho de rescisao...';
+        despachoRescisaoTitle.textContent = 'Despacho Rescisao';
+        despachoRescisaoSubtitle.textContent = `Montando despacho de rescisao para ${formatSummaryValue(termoAdesaoInput.value, 'Termo em preenchimento')}...`;
+        despachoRescisaoFeedback.textContent = 'Gerando visualizacao...';
+        despachoRescisaoFeedback.className = 'dsc-feedback';
+        despachoRescisaoContent.innerHTML = '';
+        resetDespachoRescisaoState();
+
+        try {
+          const payload = buildDespachoRescisaoRequestPayload();
+          const responseBody = await requestGeneratedDespachoRescisaoPreview(payload);
+
+          lastTermoDespachoRescisaoRequestPayload = payload;
+          lastTermoDespachoRescisaoMarkup = String(responseBody?.previewMarkup || '').trim();
+          lastTermoDespachoRescisaoPrintMarkup = lastTermoDespachoRescisaoMarkup;
+          lastTermoDespachoRescisaoFileName = String(responseBody?.fileName || '').trim() || buildDespachoRescisaoFileName(termoAdesao);
+
+          if (!lastTermoDespachoRescisaoMarkup) {
+            throw new Error('Nao foi possivel montar a visualizacao do despacho de rescisao.');
+          }
+
+          despachoRescisaoSubtitle.textContent = `Despacho de rescisao pronto para ${formatSummaryValue(termoAdesao, 'Termo em preenchimento')}.`;
+          despachoRescisaoContent.innerHTML = lastTermoDespachoRescisaoMarkup;
+          resetDespachoRescisaoScrollPosition();
+          despachoRescisaoFeedback.textContent = '';
+          despachoRescisaoFeedback.className = 'dsc-feedback';
+        } catch (error) {
+          despachoRescisaoContent.innerHTML = '';
+          despachoRescisaoSubtitle.textContent = 'Nao foi possivel gerar o despacho de rescisao.';
+          despachoRescisaoFeedback.textContent = error instanceof Error ? error.message : 'Falha ao gerar o despacho de rescisao.';
+          despachoRescisaoFeedback.className = 'dsc-feedback dsc-feedback-error';
+          resetDespachoRescisaoState();
+        } finally {
+          syncEmitDespachoRescisaoButtonState();
+          emitDespachoRescisaoButton.textContent = 'Despacho Rescisao';
+        }
+      };
+
       const resetMessages = () => {
         Object.values(errors).forEach((element) => {
           if (element) {
@@ -3484,6 +4093,7 @@
         inicioVigenciaInput,
         terminoVigenciaInput,
         compDataAditivoInput,
+        dataRescisaoInput,
         tipoTermoInput,
         representanteInput,
         cpfRepresentanteInput,
@@ -3500,8 +4110,12 @@
       ];
 
       const setFormReadOnly = (isReadOnly) => {
+        isFormReadOnly = isReadOnly;
         formInputs.forEach((input) => {
           input.readOnly = isReadOnly;
+        });
+        statusTermoOptionInputs.forEach((input) => {
+          input.disabled = isReadOnly;
         });
         termoAdesaoInput.readOnly = true;
         aditivoInput.readOnly = true;
@@ -3513,9 +4127,12 @@
         valorContratoAtualizadoInput.readOnly = true;
         mesRenovacaoInput.readOnly = true;
         tpOptanteInput.disabled = isReadOnly;
+        syncDataRescisaoState();
         syncSaveButtonState();
         syncAditivoDependentFieldState();
         syncEmitContratoButtonState();
+        syncEmitRescisaoButtonState();
+        syncEmitDespachoRescisaoButtonState();
         void syncDespachoButtonState();
         void syncLastAditivoEditorButtonState();
       };
@@ -3533,7 +4150,9 @@
           || !linkedAditivosModal.classList.contains('dsc-hidden')
           || !despachoModal.classList.contains('dsc-hidden')
           || !aditivoModal.classList.contains('dsc-hidden')
-          || !contratoModal.classList.contains('dsc-hidden');
+          || !contratoModal.classList.contains('dsc-hidden')
+          || !despachoRescisaoModal.classList.contains('dsc-hidden')
+          || !rescisaoModal.classList.contains('dsc-hidden');
         document.body.classList.toggle('dsc-popup-open', isPopupVisible);
       };
 
@@ -3557,6 +4176,8 @@
 
       const clearForm = () => {
         editingCodigo = null;
+        persistedStatusTermo = '';
+        persistedDataRescisao = '';
         formMode = 'create';
         isExistingTermCreateBlocked = false;
         formTitle.textContent = 'CADASTRO DE TERMO';
@@ -3572,9 +4193,13 @@
         resetDespachoState();
         resetAditivoState();
         resetContratoState();
+        resetDespachoRescisaoState();
+        resetRescisaoState();
         inheritedAditivoTermoAdesao = '';
         applyCreateTermoDefaults();
         syncSaveButtonState();
+        syncEmitDespachoRescisaoButtonState();
+        syncEmitRescisaoButtonState();
         void syncDespachoButtonState();
         void syncLastAditivoEditorButtonState();
       };
@@ -3582,6 +4207,8 @@
       const fillForm = (item) => {
         isExistingTermCreateBlocked = false;
         editingCodigo = item.codigo;
+        persistedStatusTermo = String(item.status_termo || '').trim();
+        persistedDataRescisao = String(item.data_rescisao || '').trim();
         formTitle.textContent = 'CADASTRO DE TERMO';
         codigoXmlInput.value = item.codigo_xml || '';
         aditivoInput.value = item.aditivo || '';
@@ -3593,11 +4220,12 @@
         syncTextoCopia();
         situacaoPublicacaoInput.value = item.situacao_publicacao || '';
         situacaoEmissaoInput.value = item.situacao_emissao || '';
-        statusTermoInput.value = item.status_termo || '';
+        setStatusTermoValue(item.status_termo || '');
         statusAditivoInput.value = item.status_aditivo || '';
         inicioVigenciaInput.value = item.inicio_vigencia || '';
         terminoVigenciaInput.value = item.termino_vigencia || '';
         compDataAditivoInput.value = item.comp_data_aditivo || '';
+        dataRescisaoInput.value = item.data_rescisao || '';
         tipoTermoInput.value = normalizeTipoTermoLabel(item.tipo_pessoa || item.tipo_termo || '');
         representanteInput.value = item.representante || '';
         cpfRepresentanteInput.value = item.cpf_representante || '';
@@ -3616,8 +4244,28 @@
         tpOptanteInput.value = item.tp_optante || '';
         syncDerivedTermoFields();
         syncAditivoDependentFieldState();
+        resetDespachoRescisaoState();
+        resetRescisaoState();
+        syncEmitContratoButtonState();
+        syncEmitDespachoRescisaoButtonState();
+        syncEmitRescisaoButtonState();
         void syncDespachoButtonState();
         void syncLastAditivoEditorButtonState();
+      };
+
+      const refreshRelatedFieldsOnFormEntry = async () => {
+        if (formMode === 'create') {
+          return;
+        }
+
+        if (getDocumentDigits(cnpjCpfInput.value).length) {
+          await syncCredenciadaByDocument();
+          return;
+        }
+
+        if (credenciadoInput.value.trim()) {
+          await syncCredenciadaByName();
+        }
       };
 
       const resetLastAditivoEditorForm = () => {
@@ -3723,6 +4371,34 @@
         currentLinkedAditivosSourceItem = null;
         setPopupVisibility(linkedAditivosModal, false);
         syncPopupPageState();
+      };
+
+      const openOrdemServicoPopupFromTermo = (termoPayload) => {
+        const termoAdesao = normalizeTermoAdesao(String(termoPayload?.termoAdesao || termoPayload?.termo_adesao || ''));
+
+        if (!termoAdesao) {
+          return;
+        }
+
+        const popupUrl = new URL('/src/ordemServico.html', window.location.origin);
+        popupUrl.searchParams.set('popupMode', 'credenciamento-termo');
+        popupUrl.searchParams.set('autoOpen', 'insert');
+        popupUrl.searchParams.set('termoAdesao', termoAdesao);
+
+        const popupWidth = 1480;
+        const popupHeight = 920;
+        const screenLeft = typeof window.screenLeft === 'number' ? window.screenLeft : window.screenX || 0;
+        const screenTop = typeof window.screenTop === 'number' ? window.screenTop : window.screenY || 0;
+        const outerWidth = typeof window.outerWidth === 'number' && window.outerWidth > 0 ? window.outerWidth : window.innerWidth;
+        const outerHeight = typeof window.outerHeight === 'number' && window.outerHeight > 0 ? window.outerHeight : window.innerHeight;
+        const left = Math.max(screenLeft + Math.round((outerWidth - popupWidth) / 2), 0);
+        const top = Math.max(screenTop + Math.round((outerHeight - popupHeight) / 2), 0);
+        const popupFeatures = `width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`;
+        const popupWindow = window.open(popupUrl.toString(), 'tegfinanc-ordem-servico-popup', popupFeatures);
+
+        if (popupWindow && typeof popupWindow.focus === 'function') {
+          popupWindow.focus();
+        }
       };
 
       const buildUrl = () => {
@@ -4408,6 +5084,7 @@
         inicioVigencia: inicioVigenciaInput.value,
         terminoVigencia: terminoVigenciaInput.value,
         compDataAditivo: compDataAditivoInput.value,
+        dataRescisao: isStatusTermoRescindido() ? dataRescisaoInput.value : '',
         tipoTermo: normalizeText(tipoTermoInput.value, 100),
         especificacaoSei: normalizeText(especificacaoSeiInput.value, 255),
         valorContrato: normalizeDecimalInput(valorContratoInput.value),
@@ -4457,16 +5134,42 @@
           return;
         }
 
+        if (normalizeText(payload.statusTermo, 100).toUpperCase() === 'RESCINDIDO' && !payload.dataRescisao) {
+          errors.dataRescisao.textContent = 'Data de rescisao e obrigatoria quando o status do termo for Rescindido.';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          revealFirstFormError({ dataRescisao: errors.dataRescisao.textContent });
+          return;
+        }
+
+        if (payload.dataRescisao && payload.dataRescisao < getTodayDateInputValue()) {
+          errors.dataRescisao.textContent = 'Data de rescisao deve ser maior ou igual a hoje.';
+          feedback.textContent = 'Corrija os campos do credenciamento termo para continuar.';
+          revealFirstFormError({ dataRescisao: errors.dataRescisao.textContent });
+          return;
+        }
+
+        const isRescisao = normalizeText(payload.statusTermo, 100).toUpperCase() === 'RESCINDIDO';
+
+        if (isRescisao && !window.confirm(`Confirma a rescisao do termo ${payload.termoAdesao}?
+
+As OrdemServico ativas relacionadas serao canceladas e receberao data de encerramento em ${payload.dataRescisao}.`)) {
+          feedback.textContent = 'Rescisao cancelada pelo usuario.';
+          return;
+        }
+
         feedback.textContent = 'Salvando registro...';
 
         try {
+          const requestPayload = isRescisao
+            ? { ...payload, confirmRescisao: true }
+            : payload;
           const response = await fetch(editingCodigo ? `/api/termo/${encodeURIComponent(editingCodigo)}` : '/api/termo', {
             method: editingCodigo ? 'PUT' : 'POST',
             headers: {
               'Content-Type': 'application/json',
               Accept: 'application/json',
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(requestPayload),
           });
 
           if (!response.ok) {
@@ -4483,10 +5186,23 @@
             throw new Error(responsePayload.message || 'Falha ao salvar o registro.');
           }
 
+          const responsePayload = await response.json().catch(() => ({}));
+          const canceledOrdemServicos = Number(responsePayload?.canceledOrdemServicos || 0);
+          const successMessage = canceledOrdemServicos > 0
+            ? `${editingCodigo ? 'Registro alterado com sucesso.' : 'Registro cadastrado com sucesso.'} ${canceledOrdemServicos} OrdemServico ativa(s) cancelada(s).`
+            : (editingCodigo ? 'Registro alterado com sucesso.' : 'Registro cadastrado com sucesso.');
+
+          const shouldOpenOrdemServico = !editingCodigo
+            && window.confirm('Deseja emitir uma OrdemServico para este termo?');
+
           hidePanels();
           clearForm();
-          showBanner(editingCodigo ? 'Registro alterado com sucesso.' : 'Registro cadastrado com sucesso.');
+          showBanner(successMessage);
           await loadItems();
+
+          if (shouldOpenOrdemServico) {
+            openOrdemServicoPopupFromTermo(responsePayload?.item || requestPayload);
+          }
         } catch (error) {
           if (!feedback.textContent.trim()) {
             feedback.textContent = error instanceof Error ? error.message : 'Falha ao salvar o registro.';
@@ -4599,6 +5315,12 @@
       emitContratoButton.addEventListener('click', () => {
         void handleEmitContrato();
       });
+      emitDespachoRescisaoButton.addEventListener('click', () => {
+        void handleEmitDespachoRescisao();
+      });
+      emitRescisaoButton.addEventListener('click', () => {
+        void handleEmitRescisao();
+      });
       closeFormModalButton.addEventListener('click', hideForm);
       closeLastAditivoButton.addEventListener('click', hideLastAditivoEditor);
       cancelLastAditivoButton.addEventListener('click', hideLastAditivoEditor);
@@ -4614,6 +5336,14 @@
       dismissContratoButton.addEventListener('click', hideContrato);
       printContratoButton.addEventListener('click', handlePrintContrato);
       downloadContratoDocButton.addEventListener('click', downloadTermoContratoAsDoc);
+      closeDespachoRescisaoButton.addEventListener('click', hideDespachoRescisao);
+      dismissDespachoRescisaoButton.addEventListener('click', hideDespachoRescisao);
+      printDespachoRescisaoButton.addEventListener('click', handlePrintDespachoRescisao);
+      downloadDespachoRescisaoDocButton.addEventListener('click', downloadTermoDespachoRescisaoAsDoc);
+      closeRescisaoButton.addEventListener('click', hideRescisao);
+      dismissRescisaoButton.addEventListener('click', hideRescisao);
+      printRescisaoButton.addEventListener('click', handlePrintRescisao);
+      downloadRescisaoDocButton.addEventListener('click', downloadTermoRescisaoAsDoc);
       closeLinkedAditivosModalButton.addEventListener('click', hideLinkedAditivos);
       insertLinkedAditivoButton.addEventListener('click', () => {
         void handleInsertLinkedAditivo();
@@ -4680,6 +5410,18 @@
         }
       });
 
+      despachoRescisaoModal.addEventListener('click', (event) => {
+        if (event.target === despachoRescisaoModal) {
+          hideDespachoRescisao();
+        }
+      });
+
+      rescisaoModal.addEventListener('click', (event) => {
+        if (event.target === rescisaoModal) {
+          hideRescisao();
+        }
+      });
+
       document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') {
           return;
@@ -4722,6 +5464,16 @@
 
         if (!contratoModal.classList.contains('dsc-hidden')) {
           hideContrato();
+          return;
+        }
+
+        if (!despachoRescisaoModal.classList.contains('dsc-hidden')) {
+          hideDespachoRescisao();
+          return;
+        }
+
+        if (!rescisaoModal.classList.contains('dsc-hidden')) {
+          hideRescisao();
         }
       });
 
@@ -4954,11 +5706,13 @@
         valorContratoInput.value = formatCurrencyInput(valorContratoInput.value);
         syncDerivedTermoFields();
         syncEmitContratoButtonState();
+        syncEmitRescisaoButtonState();
       });
       [
         inicioVigenciaInput,
         terminoVigenciaInput,
         compDataAditivoInput,
+        dataRescisaoInput,
         dataAssinaturaInput,
         dataPublicacaoInput,
         vencimentoGeralInput,
@@ -4972,6 +5726,23 @@
         }
         void syncDespachoButtonState();
       });
+      statusTermoOptionInputs.forEach((input) => {
+        input.addEventListener('change', () => {
+          if (input.checked) {
+            setStatusTermoValue(input.value);
+          } else {
+            const selectedInput = statusTermoOptionInputs.find((option) => option.checked);
+            setStatusTermoValue(selectedInput?.value || '');
+          }
+
+          if (errors.statusTermo.textContent.trim()) {
+            errors.statusTermo.textContent = '';
+          }
+
+          syncEmitRescisaoButtonState();
+          syncEmitDespachoRescisaoButtonState();
+        });
+      });
       terminoVigenciaInput.addEventListener('input', () => {
         syncDerivedTermoFields();
       });
@@ -4984,6 +5755,7 @@
         { input: inicioVigenciaInput, errorElement: errors.inicioVigencia, invalidMessage: 'Inicio de vigencia invalido.' },
         { input: terminoVigenciaInput, errorElement: errors.terminoVigencia, invalidMessage: 'Termino de vigencia invalido.' },
         { input: compDataAditivoInput, errorElement: errors.compDataAditivo, invalidMessage: 'Comp data do aditivo invalida.' },
+        { input: dataRescisaoInput, errorElement: errors.dataRescisao, invalidMessage: 'Data de rescisao invalida.' },
         { input: dataAssinaturaInput, errorElement: errors.dataAssinatura, invalidMessage: 'Data de assinatura invalida.' },
         { input: dataPublicacaoInput, errorElement: errors.dataPublicacao, invalidMessage: 'Data de publicacao invalida.' },
         { input: vencimentoGeralInput, errorElement: errors.vencimentoGeral, invalidMessage: 'Vencimento geral invalido.' },
@@ -4993,6 +5765,11 @@
           input.dataset.dateValidationInvalid = '';
           if (errorElement.textContent.trim()) {
             errorElement.textContent = '';
+          }
+
+          if (input === dataRescisaoInput) {
+            syncEmitRescisaoButtonState();
+            syncEmitDespachoRescisaoButtonState();
           }
         });
 
@@ -5106,6 +5883,7 @@
           clearForm();
           fillForm(item);
           showForm('view');
+          void refreshRelatedFieldsOnFormEntry();
           return;
         }
 
@@ -5116,6 +5894,7 @@
           clearForm();
           fillForm(item);
           showForm('edit');
+          void refreshRelatedFieldsOnFormEntry();
           return;
         }
 

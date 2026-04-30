@@ -340,7 +340,7 @@
                     <div class="dsc-assinatura-field dsc-span-12">
                       <label for="assinatura-data-display">Data assinatura:</label>
                       <div class="dsc-assinatura-inline-actions">
-                        <input class="dsc-assinatura-input dsc-assinatura-input-highlight" id="assinatura-data-display" type="text" placeholder="dd/mm/aaaa" />
+                        <input class="dsc-assinatura-input dsc-assinatura-input-highlight" id="assinatura-data-display" type="text" placeholder="dd/mm/yyyy" />
                         <button type="button" class="dsc-btn dsc-btn-blue dsc-assinatura-fill-date-button" id="fill-assinatura-date-button">Preencher Data</button>
                       </div>
                     </div>
@@ -788,7 +788,7 @@
         const parsedDate = parseDisplayDateToIso(dataDisplayInput.value);
 
         if (!parsedDate) {
-          setFeedback('Informe uma data valida no formato dd/mm/aaaa.', 'error');
+          setFeedback('Informe uma data valida no formato dd/mm/yyyy.', 'error');
           dataDisplayInput.focus();
           return;
         }

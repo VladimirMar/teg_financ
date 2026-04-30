@@ -436,7 +436,7 @@
             <div class="dsc-eol-field dsc-span-12">
               <label for="eol-data-eol-display">Data EOL:</label>
               <div class="dsc-eol-inline-actions">
-                <input class="dsc-eol-input dsc-eol-input-highlight" id="eol-data-eol-display" type="text" placeholder="dd/mm/aaaa" />
+                <input class="dsc-eol-input dsc-eol-input-highlight" id="eol-data-eol-display" type="text" placeholder="dd/mm/yyyy" />
                 <button type="button" class="dsc-btn dsc-btn-blue dsc-eol-fill-date-button" id="fill-change-date-button">Preencher Data</button>
               </div>
             </div>
@@ -990,7 +990,7 @@
         }
         const parsedDate = parseDisplayDateToIso(dataEolDisplayInput.value);
         if (!parsedDate) {
-          setFeedback('Informe uma data valida no formato dd/mm/aaaa.', 'error');
+          setFeedback('Informe uma data valida no formato dd/mm/yyyy.', 'error');
           dataEolDisplayInput.focus();
           return;
         }

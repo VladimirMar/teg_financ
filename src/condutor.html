@@ -352,6 +352,7 @@
       let totalRejectionPages = 1;
       let currentRejectionSearch = '';
       let editingCodigo = null;
+      let originalCpfValue = '';
       let bannerTimeoutId = null;
 
       const normalizeTipoVinculoValue = (value) => (value || '')
@@ -813,6 +814,11 @@
       const validateActiveOrdemServicoCpf = async (cpfValue = cpfInput.value) => {
         const normalizedCpf = normalizeCpf(cpfValue);
 
+        if (editingCodigo !== null && normalizedCpf === originalCpfValue) {
+          cpfError.textContent = '';
+          return true;
+        }
+
         if (normalizedCpf.replace(/\D/g, '').length !== 11) {
           cpfError.textContent = '';
           return true;
@@ -837,7 +843,7 @@
           activeCpfValidationTimeoutId = null;
         }
 
-        if (normalizedCpf.replace(/\D/g, '').length !== 11) {
+        if ((editingCodigo !== null && normalizedCpf === originalCpfValue) || normalizedCpf.replace(/\D/g, '').length !== 11) {
           activeCpfValidationRequestId += 1;
           cpfError.textContent = '';
           return;
@@ -1248,6 +1254,7 @@
 
       const startInsert = ({ cpf = '' } = {}) => {
         editingCodigo = null;
+        originalCpfValue = '';
         form.reset();
         setSelectedTipoVinculo('');
         resetMessages();
@@ -1257,6 +1264,7 @@
 
       const startEdit = (item) => {
         editingCodigo = item.codigo;
+        originalCpfValue = normalizeCpf(item.cpf_condutor || '');
         nomeInput.value = item.condutor;
         cpfInput.value = item.cpf_condutor;
         crmcInput.value = item.crmc;
@@ -1270,6 +1278,7 @@
 
       const startView = (item) => {
         editingCodigo = item.codigo;
+        originalCpfValue = normalizeCpf(item.cpf_condutor || '');
         nomeInput.value = item.condutor;
         cpfInput.value = item.cpf_condutor;
         crmcInput.value = item.crmc;

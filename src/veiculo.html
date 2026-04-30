@@ -587,6 +587,19 @@
 
         return parsed;
       };
+      const formatEditableDateTyping = (value) => {
+        const digits = String(value ?? '').replace(/\D/g, '').slice(0, 8);
+
+        if (digits.length <= 2) {
+          return digits;
+        }
+
+        if (digits.length <= 4) {
+          return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+        }
+
+        return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+      };
       const enableFullDateSelection = (input) => {
         if (!input) {
           return;
@@ -614,9 +627,17 @@
           input.dataset.dateOriginalValue = input.value;
           input.type = 'text';
           input.inputMode = 'numeric';
-          input.placeholder = 'dd/mm/aaaa';
+          input.placeholder = 'dd/mm/yyyy';
           input.value = toEditableDateDisplay(input.value);
           selectAllContent();
+        });
+
+        input.addEventListener('input', () => {
+          if (input.type !== 'text') {
+            return;
+          }
+
+          input.value = formatEditableDateTyping(input.value);
         });
 
         input.addEventListener('mouseup', (event) => {
@@ -963,6 +984,18 @@
       };
 
       const validateSeguroInicioField = () => {
+        const seguroInicio = getComparableDateInputValue(seguroInicioInput);
+
+        if (!seguroInicio) {
+          seguroInicioError.textContent = '';
+          return false;
+        }
+
+        if (!isTodayOrFutureDate(seguroInicio)) {
+          seguroInicioError.textContent = 'Data inicial do seguro deve ser maior ou igual a hoje.';
+          return true;
+        }
+
         seguroInicioError.textContent = '';
         return false;
       };
@@ -992,6 +1025,7 @@
 
       const syncSeguroTerminoMin = () => {
         const currentDate = getCurrentDateInputValue();
+        seguroInicioInput.min = currentDate;
         seguroTerminoInput.min = seguroInicioInput.value && seguroInicioInput.value > currentDate
           ? seguroInicioInput.value
           : currentDate;
@@ -1278,12 +1312,19 @@
         return label || codigo;
       };
 
-      const validateActiveOrdemServicoPlaca = async (placaValue = placasInput.value) => {
+      const validateActiveOrdemServicoPlaca = async (placaValue = placasInput.value, { showFormatError = false } = {}) => {
         const normalizedPlaca = normalizePlaca(placaValue);
 
-        if (!normalizedPlaca || !isValidPlaca(normalizedPlaca)) {
+        if (!normalizedPlaca) {
           placasError.textContent = '';
           return true;
+        }
+
+        if (!isValidPlaca(normalizedPlaca)) {
+          placasError.textContent = showFormatError
+            ? 'Placa deve seguir o formato ABC-1234 ou ABC-1D23.'
+            : '';
+          return !showFormatError;
         }
 
         const activeItem = await fetchActiveOrdemServicoByPlaca(normalizedPlaca);
@@ -1862,7 +1903,7 @@
       });
 
       placasInput.addEventListener('blur', () => {
-        void validateActiveOrdemServicoPlaca();
+        void validateActiveOrdemServicoPlaca(placasInput.value, { showFormatError: true });
       });
 
       formTabButtons.forEach((button) => {

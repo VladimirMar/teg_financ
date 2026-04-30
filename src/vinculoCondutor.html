@@ -449,6 +449,20 @@
           return parsed;
         };
 
+        const formatEditableDateTyping = (value) => {
+          const digits = String(value ?? '').replace(/\D/g, '').slice(0, 8);
+
+          if (digits.length <= 2) {
+            return digits;
+          }
+
+          if (digits.length <= 4) {
+            return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+          }
+
+          return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+        };
+
         const enableFullDateSelection = (input) => {
           if (!input) {
             return;
@@ -476,9 +490,17 @@
             input.dataset.dateOriginalValue = input.value;
             input.type = 'text';
             input.inputMode = 'numeric';
-            input.placeholder = 'dd/mm/aaaa';
+            input.placeholder = 'dd/mm/yyyy';
             input.value = toEditableDateDisplay(input.value);
             selectAllContent();
+          });
+
+          input.addEventListener('input', () => {
+            if (input.type !== 'text') {
+              return;
+            }
+
+            input.value = formatEditableDateTyping(input.value);
           });
 
           input.addEventListener('mouseup', (event) => {

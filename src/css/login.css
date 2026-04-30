@@ -937,6 +937,19 @@ body:has(#ordem-servico-search) #ordem-servico-search {
   font-size: 1.1rem;
 }
 
+.dsc-inline-action-field-vinculo-compact {
+  grid-template-columns: minmax(0, 1fr) 40px;
+  gap: 4px;
+}
+
+.dsc-inline-action-field-vinculo-compact .dsc-inline-action-button {
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 1rem;
+}
+
 .dsc-form-row-ordem-servico-vigencia {
   grid-template-columns: minmax(220px, 280px);
 }
@@ -947,7 +960,8 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 }
 
 .dsc-form-row-ordem-servico-vinculos-middle {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(170px, 0.9fr) minmax(240px, 1.2fr) minmax(160px, 0.75fr);
+  column-gap: 8px;
 }
 
 .dsc-form-row-ordem-servico-vinculos-bottom {
@@ -961,7 +975,8 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 }
 
 .dsc-form-row-ordem-servico-vinculos-final {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(170px, 0.9fr) minmax(240px, 1.2fr) minmax(160px, 0.75fr);
+  column-gap: 8px;
 }
 
 .dsc-form-row-ordem-servico-operacional {
@@ -993,12 +1008,22 @@ body:has(#ordem-servico-search) #ordem-servico-search {
 }
 
 .dsc-form-row-ordem-servico-situacao {
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  grid-template-columns: minmax(360px, 1.45fr) minmax(150px, 0.55fr) minmax(170px, 0.65fr);
   align-items: end;
+  column-gap: 10px;
 }
 
 .dsc-form-row-ordem-servico-situacao .dsc-radio-field-group {
   align-self: stretch;
+}
+
+.dsc-form-row-ordem-servico-situacao .dsc-radio-group {
+  gap: 8px 12px;
+}
+
+.dsc-form-row-ordem-servico-situacao .dsc-radio-option {
+  gap: 6px;
+  font-size: 0.95rem;
 }
 
 .dsc-form-column-stack {
@@ -2266,7 +2291,7 @@ body:has(#ordem-servico-rejection-grid-body) .dsc-access-grid td {
   }
 
   .dsc-form-row-ordem-servico-situacao {
-    grid-template-columns: minmax(0, 1fr) minmax(180px, 260px);
+    grid-template-columns: 1fr;
   }
 
   #credenciada-form .dsc-form-section-card,
